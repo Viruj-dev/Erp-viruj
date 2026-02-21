@@ -1,0 +1,31 @@
+{
+  "name": "@erp_virujhealth/api",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@erp_virujhealth/auth": "workspace:*",
+    "@erp_virujhealth/db": "workspace:*",
+    "@erp_virujhealth/env": "workspace:*",
+    "@orpc/client": "^1.12.2",
+    "@orpc/openapi": "catalog:",
+    "@orpc/server": "catalog:",
+    "@orpc/zod": "catalog:",
+    "@types/pg": "^8.16.0",
+    "dotenv": "catalog:",
+    "drizzle-orm": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@erp_virujhealth/config": "workspace:*",
+    "hono": "catalog:",
+    "typescript": "catalog:"
+  }
+}

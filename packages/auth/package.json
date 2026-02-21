@@ -1,0 +1,24 @@
+{
+  "name": "@erp_virujhealth/auth",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@erp_virujhealth/db": "workspace:*",
+    "@erp_virujhealth/env": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@erp_virujhealth/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "extends": "@erp_virujhealth/config/tsconfig.base.json",
+  "compilerOptions": {
+    "strictNullChecks": true
+  }
+}
