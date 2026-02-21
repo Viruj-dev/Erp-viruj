@@ -65,3 +65,4 @@ erp_virujhealth/
 - `bun run db:generate`: Generate database client/types
 - `bun run db:migrate`: Run database migrations
 - `bun run db:studio`: Open database studio UI
+# Erp-viruj
