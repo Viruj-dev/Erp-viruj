@@ -9,7 +9,17 @@ import { Appointments } from "@/components/appointments/appointments";
 import { Profile } from "@/components/profile/profile";
 import { ManageServices } from "@/components/manage/manage-services";
 import { Community } from "@/components/community/community";
+import { Subscription } from "@/components/subscription/subscription";
 import { AnimatePresence, motion } from "framer-motion";
+
+const pageShellClasses: Record<string, string> = {
+  dashboard: "page-shell page-shell-dashboard",
+  appointments: "page-shell page-shell-appointments",
+  profile: "page-shell page-shell-profile",
+  manage: "page-shell page-shell-manage",
+  community: "page-shell page-shell-community",
+  subscription: "page-shell page-shell-subscription",
+};
 
 export default function Home() {
   const { state } = useApp();
@@ -30,17 +40,23 @@ export default function Home() {
         return <ManageServices />;
       case "community":
         return <Community />;
+      case "subscription":
+        return <Subscription />;
       default:
         return <Dashboard />;
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-[var(--bg-body)]">
+    <div
+      className={`flex min-h-screen overflow-x-clip bg-[var(--bg-body)] ${
+        pageShellClasses[state.currentPage] ?? pageShellClasses.dashboard
+      }`}
+    >
       <Sidebar />
-      <div className="flex-1 lg:pl-[var(--sidebar-width)] flex flex-col">
+      <div className="flex min-w-0 flex-1 flex-col lg:pl-[var(--sidebar-width)]">
         <TopHeader />
-        <main className="flex-1 p-4 md:p-8">
+        <main className="page-shell-main flex-1 overflow-x-clip p-4 md:p-6 xl:p-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={state.currentPage}
@@ -48,6 +64,7 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
+              className="mx-auto min-w-0 w-full max-w-[1500px]"
             >
               {renderContent()}
             </motion.div>

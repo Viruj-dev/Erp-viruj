@@ -1,183 +1,277 @@
 "use client";
 
-import React from "react";
 import { useApp } from "@/store/app-context";
 import { motion } from "framer-motion";
-import { Save, Upload, Plus, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import {
+  BadgeCheck,
+  Camera,
+  Globe2,
+  Hospital,
+  Mail,
+  MapPin,
+  Phone,
+  Save,
+  Shield,
+  Sparkles,
+  Stethoscope,
+} from "lucide-react";
+
+const providerMeta = {
+  hospital: {
+    label: "Hospital profile",
+    descriptor: "Facility operations and trust layer",
+    icon: Hospital,
+  },
+  doctor: {
+    label: "Doctor profile",
+    descriptor: "Clinical credibility and patient-facing identity",
+    icon: Stethoscope,
+  },
+  clinic: {
+    label: "Clinic profile",
+    descriptor: "Location, specialties, and service confidence",
+    icon: Hospital,
+  },
+  pathology: {
+    label: "Lab profile",
+    descriptor: "Diagnostics, reporting, and quality standards",
+    icon: Shield,
+  },
+  radiology: {
+    label: "Radiology profile",
+    descriptor: "Imaging capabilities and turnaround trust",
+    icon: Shield,
+  },
+} as const;
+
+const serviceTags = [
+  "Cardiology",
+  "Emergency care",
+  "Diagnostics",
+  "Same-day consults",
+  "Insurance desk",
+  "Teleconsultation",
+];
+
+const trustBlocks = [
+  { label: "Profile strength", value: "88%", note: "3 fields missing" },
+  { label: "Avg rating", value: "4.8", note: "Across 126 reviews" },
+  { label: "Response SLA", value: "< 10m", note: "For inbound queries" },
+];
 
 export function Profile() {
   const { state } = useApp();
+  const key =
+    state.providerType === ""
+      ? "hospital"
+      : (state.providerType as keyof typeof providerMeta);
+  const meta = providerMeta[key];
+  const Icon = meta.icon;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in">
-      <div className="glass-card rounded-[2.5rem] overflow-hidden">
-        <div className="p-8 border-b border-white/5 flex items-center justify-between">
-          <div>
-            <h3 className="text-2xl font-black text-white italic">
-              Provider Details
-            </h3>
-            <p className="text-[#94a3b8] text-sm">
-              Manage your professional information
+    <div className="space-y-6 animate-in">
+      <motion.section
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="surface-panel relative overflow-hidden rounded-[2rem] bg-[linear-gradient(140deg,rgba(14,116,144,0.4),rgba(15,23,42,0.9)_42%,rgba(76,29,149,0.4))] p-6 md:p-8"
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(45,212,191,0.12),_transparent_30%)]" />
+        <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-200">
+              <Sparkles className="h-3.5 w-3.5" />
+              {meta.label}
+            </div>
+            <h1 className="mt-4 text-3xl font-black tracking-tight text-white md:text-5xl">
+              Present a profile that patients, partners, and your own staff can
+              trust quickly.
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm text-slate-300 md:text-base">
+              This page controls the public identity of your provider brand:
+              contact details, specialties, credentials, and operational
+              confidence signals.
             </p>
           </div>
-          <button className="flex items-center gap-2 px-6 py-3 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all active:scale-95">
-            <Save className="w-4 h-4" />
-            SAVE CHANGES
-          </button>
+          <div className="grid gap-3 sm:grid-cols-3 xl:w-[420px]">
+            {trustBlocks.map((block) => (
+              <div
+                key={block.label}
+                className="rounded-2xl border border-white/10 bg-slate-950/40 p-4"
+              >
+                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500">
+                  {block.label}
+                </p>
+                <p className="mt-2 text-3xl font-black text-white">
+                  {block.value}
+                </p>
+                <p className="text-xs text-slate-400">{block.note}</p>
+              </div>
+            ))}
+          </div>
         </div>
+      </motion.section>
 
-        <div className="p-8 space-y-12">
-          {/* Basic Info */}
-          <section className="space-y-6">
-            <h4 className="flex items-center gap-2 text-primary text-xs font-black uppercase tracking-widest">
-              <span className="w-6 h-px bg-primary/30"></span> Basic Information
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-[#64748b] uppercase pl-1">
-                  Organization / Provider Name
-                </label>
-                <input
-                  type="text"
-                  defaultValue={state.userName}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-[#f1f5f9] focus:outline-none focus:border-primary transition-all"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-[#64748b] uppercase pl-1">
-                  Contact Email
-                </label>
-                <input
-                  type="email"
-                  defaultValue={state.userEmail}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-[#f1f5f9] focus:outline-none focus:border-primary transition-all"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-[#64748b] uppercase pl-1">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  placeholder="+91 9876543210"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-[#f1f5f9] focus:outline-none focus:border-primary transition-all"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-[#64748b] uppercase pl-1">
-                  Registration / License No
-                </label>
-                <input
-                  type="text"
-                  placeholder="REG-XXXXX"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-[#f1f5f9] focus:outline-none focus:border-primary transition-all"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-[#64748b] uppercase pl-1">
-                Address
-              </label>
-              <textarea
-                placeholder="Full address with city, state, pincode"
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-[#f1f5f9] focus:outline-none focus:border-primary transition-all h-24 resize-none"
-              />
-            </div>
-          </section>
-
-          {/* Logo Upload */}
-          <section className="space-y-6">
-            <h4 className="flex items-center gap-2 text-primary text-xs font-black uppercase tracking-widest">
-              <span className="w-6 h-px bg-primary/30"></span> Logo / Identity
-            </h4>
-            <div className="w-full border-2 border-dashed border-white/10 rounded-3xl p-12 hover:border-primary/50 transition-all cursor-pointer group bg-primary/5">
-              <div className="flex flex-col items-center justify-center space-y-4">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                  <Upload className="w-8 h-8" />
+      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <section className="surface-panel rounded-[2rem] bg-[linear-gradient(180deg,rgba(15,23,42,0.82),rgba(30,41,59,0.64))] p-6">
+          <div className="rounded-[1.75rem] border border-white/8 bg-[linear-gradient(135deg,rgba(34,211,238,0.12),rgba(15,23,42,0.42))] p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-[1.5rem] bg-slate-950/45 text-cyan-300">
+                  <Icon className="h-8 w-8" />
                 </div>
-                <div className="text-center">
-                  <p className="text-[#f1f5f9] font-bold">
-                    Click to upload or drag & drop
-                  </p>
-                  <p className="text-xs text-[#64748b] mt-1 uppercase tracking-widest">
-                    PNG, JPG, WebP · Max 5MB
-                  </p>
+                <div>
+                  <h2 className="text-2xl font-black text-white">
+                    {state.userName || "Viruj Provider"}
+                  </h2>
+                  <p className="text-sm text-slate-300">{meta.descriptor}</p>
+                </div>
+              </div>
+              <button className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-slate-300 transition hover:bg-white/[0.08]">
+                <Camera className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-[1.3rem] bg-white/[0.04] px-4 py-3 text-sm text-slate-200">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-cyan-300" />
+                  {state.userEmail || "provider@virujhealth.com"}
+                </div>
+              </div>
+              <div className="rounded-[1.3rem] bg-white/[0.04] px-4 py-3 text-sm text-slate-200">
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-emerald-300" />
+                  +91 98765 43210
+                </div>
+              </div>
+              <div className="rounded-[1.3rem] bg-white/[0.04] px-4 py-3 text-sm text-slate-200">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-amber-300" />
+                  Noida Sector 62, Uttar Pradesh
+                </div>
+              </div>
+              <div className="rounded-[1.3rem] bg-white/[0.04] px-4 py-3 text-sm text-slate-200">
+                <div className="flex items-center gap-2">
+                  <Globe2 className="h-4 w-4 text-violet-300" />
+                  virujhealth.com/provider
                 </div>
               </div>
             </div>
-          </section>
+          </div>
 
-          {/* Dynamic Provider Fields (Simplified for now) */}
-          <section className="space-y-6">
-            <h4 className="flex items-center gap-2 text-primary text-xs font-black uppercase tracking-widest">
-              <span className="w-6 h-px bg-primary/30"></span>{" "}
-              {state.providerType.toUpperCase()} DETAILS
-            </h4>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-[#64748b] uppercase pl-1">
-                  Specialization / Type
-                </label>
-                <select className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-[#f1f5f9] focus:outline-none focus:border-primary appearance-none">
-                  <option className="bg-[#1e293b]">Multi-Specialty</option>
-                  <option className="bg-[#1e293b]">
-                    Individual Practitioner
-                  </option>
-                  <option className="bg-[#1e293b]">Outpatient Care</option>
-                </select>
+          <div className="mt-6 rounded-[1.75rem] border border-white/8 bg-white/[0.03] p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-black text-white">
+                  Verification stack
+                </h3>
+                <p className="text-sm text-slate-400">
+                  The trust indicators surfaced to patients
+                </p>
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-[#64748b] uppercase pl-1">
-                  Experience / Scale
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. 15 Years or 250 Beds"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-[#f1f5f9] focus:outline-none focus:border-primary transition-all"
-                />
-              </div>
+              <BadgeCheck className="h-5 w-5 text-emerald-300" />
             </div>
-
-            <div className="space-y-4">
-              <label className="text-xs font-bold text-[#64748b] uppercase pl-1">
-                Services Provided
-              </label>
-              <div className="flex flex-wrap gap-2 p-4 bg-white/5 border border-white/10 rounded-xl min-h-[100px]">
-                {["Emergency", "ICU", "OPD", "Surgery", "Pharmacy"].map(
-                  (tag) => (
-                    <span
-                      key={tag}
-                      className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary text-xs font-bold rounded-lg border border-primary/20"
-                    >
-                      {tag}
-                      <X className="w-3 h-3 cursor-pointer hover:text-white" />
-                    </span>
-                  )
-                )}
-                <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-lg border border-dashed border-white/20">
-                  <Plus className="w-3 h-3 text-[#64748b]" />
-                  <input
-                    type="text"
-                    placeholder="Add..."
-                    className="bg-transparent border-none outline-none text-xs w-20 text-[#f1f5f9]"
-                  />
+            <div className="mt-4 space-y-3">
+              {[
+                "Registration number verified",
+                "Consultation hours synced",
+                "Insurance support badge enabled",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="rounded-[1.2rem] bg-slate-950/40 px-4 py-3 text-sm text-slate-300"
+                >
+                  {item}
                 </div>
-              </div>
+              ))}
             </div>
+          </div>
+        </section>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-[#64748b] uppercase pl-1">
-                About Organization
-              </label>
-              <textarea
-                placeholder="Describe your achievements, accreditations, and core values..."
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-[#f1f5f9] focus:outline-none focus:border-primary transition-all h-32 resize-none"
-              />
+        <section className="surface-panel rounded-[2rem] bg-[linear-gradient(180deg,rgba(30,41,59,0.78),rgba(15,23,42,0.68))] p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-black text-white">
+                Provider information
+              </h2>
+              <p className="text-sm text-slate-400">
+                Refine the data shown to patients and partner teams
+              </p>
             </div>
-          </section>
-        </div>
+            <button className="inline-flex items-center gap-2 rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-400">
+              <Save className="h-4 w-4" />
+              Save changes
+            </button>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {[
+              {
+                label: "Provider name",
+                value: state.userName || "Viruj Provider",
+              },
+              {
+                label: "Primary email",
+                value: state.userEmail || "provider@virujhealth.com",
+              },
+              {
+                label: "Phone number",
+                value: "+91 98765 43210",
+              },
+              {
+                label: "Registration ID",
+                value: "VRJ-UP-24019",
+              },
+            ].map((field) => (
+              <label key={field.label} className="block">
+                <span className="mb-2 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                  {field.label}
+                </span>
+                <input
+                  defaultValue={field.value}
+                  className="w-full rounded-[1.2rem] border border-white/10 bg-slate-950/35 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-400/40"
+                />
+              </label>
+            ))}
+          </div>
+
+          <label className="mt-4 block">
+            <span className="mb-2 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+              Address
+            </span>
+            <textarea
+              defaultValue="Tower A, Sector 62, Noida, Uttar Pradesh 201309"
+              className="h-24 w-full resize-none rounded-[1.2rem] border border-white/10 bg-slate-950/35 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-400/40"
+            />
+          </label>
+
+          <div className="mt-4">
+            <span className="mb-2 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+              Key services
+            </span>
+            <div className="flex flex-wrap gap-2 rounded-[1.2rem] border border-white/10 bg-slate-950/35 p-4">
+              {serviceTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs font-semibold text-cyan-200"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <label className="mt-4 block">
+            <span className="mb-2 block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+              About provider
+            </span>
+            <textarea
+              defaultValue="Viruj Health delivers coordinated outpatient care, diagnostics, and specialist access with a strong emphasis on queue management and patient responsiveness."
+              className="h-32 w-full resize-none rounded-[1.2rem] border border-white/10 bg-slate-950/35 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-400/40"
+            />
+          </label>
+        </section>
       </div>
     </div>
   );
