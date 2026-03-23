@@ -13,6 +13,18 @@ import { logger } from "hono/logger";
 
 const app = new Hono();
 
+app.onError((err, c) => {
+  console.error("Hono error:", err);
+  return c.json(
+    {
+      error: "Internal Server Error",
+      message: err.message,
+      stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+    },
+    500
+  );
+});
+
 app.use(logger());
 app.use(
   "/*",
@@ -200,4 +212,10 @@ app.get("/", (c) => {
   return c.text("OK");
 });
 
-export default app;
+const port = process.env.PORT || 3002;
+console.log(`ERP Server starting on port ${port}`);
+
+export default {
+  port,
+  fetch: app.fetch,
+};

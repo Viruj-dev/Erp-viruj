@@ -19,7 +19,7 @@ import {
   Video,
   XCircle,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Tab = "today" | "upcoming" | "history";
 type Status =
@@ -31,7 +31,7 @@ type Status =
 type Mode = "In-person" | "Video" | "Follow-up";
 
 type Appointment = {
-  id: number;
+  id: string;
   patient: string;
   service: string;
   doctor: string;
@@ -49,10 +49,26 @@ type Appointment = {
   wait: string;
 };
 
+type ServerAppointment = {
+  id: string;
+  patientName: string;
+  doctorName: string;
+  doctorSpecialty: string | null;
+  departmentName: string | null;
+  appointmentDate: string;
+  appointmentTime: string;
+  appointmentMode: string;
+  hospitalAddress: string | null;
+  patientPhone: string | null;
+  reason: string | null;
+  approvalNotes: string | null;
+  status: string;
+};
+
 const appointmentData: Record<Tab, Appointment[]> = {
   today: [
     {
-      id: 1,
+      id: "1",
       patient: "Aarav Khanna",
       service: "Cardiac review",
       doctor: "Dr. Meera Sethi",
@@ -70,7 +86,7 @@ const appointmentData: Record<Tab, Appointment[]> = {
       wait: "Patient arrived",
     },
     {
-      id: 2,
+      id: "2",
       patient: "Nisha Arora",
       service: "Post-op follow-up",
       doctor: "Dr. Rohan Gupta",
@@ -88,7 +104,7 @@ const appointmentData: Record<Tab, Appointment[]> = {
       wait: "12 min",
     },
     {
-      id: 3,
+      id: "3",
       patient: "Kabir Jain",
       service: "Dermatology consult",
       doctor: "Dr. Aditi Rana",
@@ -108,7 +124,7 @@ const appointmentData: Record<Tab, Appointment[]> = {
   ],
   upcoming: [
     {
-      id: 4,
+      id: "4",
       patient: "Sana Verma",
       service: "ENT screening",
       doctor: "Dr. Vivek Menon",
@@ -126,7 +142,7 @@ const appointmentData: Record<Tab, Appointment[]> = {
       wait: "2 days",
     },
     {
-      id: 5,
+      id: "5",
       patient: "Ritu Bansal",
       service: "Prenatal consult",
       doctor: "Dr. Kavya Suri",
@@ -144,7 +160,7 @@ const appointmentData: Record<Tab, Appointment[]> = {
       wait: "3 days",
     },
     {
-      id: 6,
+      id: "6",
       patient: "Dev Malhotra",
       service: "Neurology review",
       doctor: "Dr. Parth Anand",
@@ -164,7 +180,7 @@ const appointmentData: Record<Tab, Appointment[]> = {
   ],
   history: [
     {
-      id: 7,
+      id: "7",
       patient: "Ishita Rao",
       service: "Lab review",
       doctor: "Dr. Manav Goyal",
@@ -182,7 +198,7 @@ const appointmentData: Record<Tab, Appointment[]> = {
       wait: "Done",
     },
     {
-      id: 8,
+      id: "8",
       patient: "Raghav Bedi",
       service: "MRI consult",
       doctor: "Dr. Simran Kohli",
@@ -257,11 +273,159 @@ const boardStats = [
   },
 ];
 
+function mapStatus(value: string): Status {
+  switch (value) {
+    case "approved":
+      return "confirmed";
+    case "completed":
+      return "completed";
+    case "cancelled":
+    case "rejected":
+    case "no_show":
+      return "cancelled";
+    default:
+      return "pending";
+  }
+}
+
+function mapMode(value: string): Mode {
+  if (value === "video") return "Video";
+  return "In-person";
+}
+
+function formatWait(value: string, date: Date) {
+  if (value === "completed") return "Done";
+  if (value === "cancelled" || value === "rejected" || value === "no_show") {
+    return "Closed";
+  }
+
+  const diffMs = date.getTime() - Date.now();
+  if (diffMs <= 0) return "Ready";
+  const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+  if (diffHours < 24) return `${diffHours} hr`;
+  return `${Math.round(diffHours / 24)} days`;
+}
+
+function toAppointment(serverAppointment: ServerAppointment): Appointment {
+  const appointmentDate = new Date(serverAppointment.appointmentDate);
+
+  return {
+    id: serverAppointment.id,
+    patient: serverAppointment.patientName,
+    service:
+      serverAppointment.departmentName ||
+      serverAppointment.reason ||
+      "Consultation",
+    doctor: serverAppointment.doctorName,
+    department:
+      serverAppointment.doctorSpecialty ||
+      serverAppointment.departmentName ||
+      "General care",
+    time: serverAppointment.appointmentTime,
+    dateLabel: appointmentDate.toLocaleDateString("en-US", {
+      weekday: "short",
+    }),
+    dateNumber: appointmentDate.toLocaleDateString("en-US", {
+      day: "2-digit",
+    }),
+    duration: "30 min",
+    mode: mapMode(serverAppointment.appointmentMode),
+    status: mapStatus(serverAppointment.status),
+    location: serverAppointment.hospitalAddress || "Viruj care network",
+    phone: serverAppointment.patientPhone || "Not provided",
+    notes:
+      serverAppointment.reason ||
+      serverAppointment.approvalNotes ||
+      "No clinical notes added yet.",
+    pulse:
+      serverAppointment.status === "pending_approval"
+        ? "Awaiting approval"
+        : serverAppointment.status === "approved"
+          ? "Approved"
+          : serverAppointment.status === "completed"
+            ? "Closed"
+            : "Needs review",
+    wait: formatWait(serverAppointment.status, appointmentDate),
+  };
+}
+
+function partitionAppointments(serverAppointments: ServerAppointment[]) {
+  const today = new Date();
+  const isSameDay = (left: Date, right: Date) =>
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate();
+
+  return serverAppointments.reduce<Record<Tab, Appointment[]>>(
+    (accumulator, serverAppointment) => {
+      const appointment = toAppointment(serverAppointment);
+      const appointmentDate = new Date(serverAppointment.appointmentDate);
+      const isHistory =
+        appointment.status === "completed" || appointment.status === "cancelled";
+
+      if (isHistory) {
+        accumulator.history.push(appointment);
+      } else if (isSameDay(appointmentDate, today)) {
+        accumulator.today.push(appointment);
+      } else {
+        accumulator.upcoming.push(appointment);
+      }
+
+      return accumulator;
+    },
+    {
+      today: [],
+      upcoming: [],
+      history: [],
+    },
+  );
+}
+
 export function Appointments() {
   const [activeTab, setActiveTab] = useState<Tab>("today");
   const [query, setQuery] = useState("");
+  const [remoteAppointments, setRemoteAppointments] = useState<
+    Record<Tab, Appointment[]>
+  >(appointmentData);
+  const [isSyncing, setIsSyncing] = useState(true);
 
-  const appointments = appointmentData[activeTab];
+  useEffect(() => {
+    const loadAppointments = async () => {
+      try {
+        const response = await fetch("/rpc/appointments.getAll", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({}),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to fetch ERP appointments: ${response.status} ${response.statusText} - ${errorText.substring(0, 100)}`);
+        }
+
+        const data = (await response.json()) as ServerAppointment[];
+        const nextState = partitionAppointments(data);
+
+        setRemoteAppointments({
+          today: nextState.today.length > 0 ? nextState.today : appointmentData.today,
+          upcoming:
+            nextState.upcoming.length > 0 ? nextState.upcoming : appointmentData.upcoming,
+          history:
+            nextState.history.length > 0 ? nextState.history : appointmentData.history,
+        });
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsSyncing(false);
+      }
+    };
+
+    void loadAppointments();
+  }, []);
+
+  const appointments = remoteAppointments[activeTab];
 
   const filteredAppointments = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -280,7 +444,76 @@ export function Appointments() {
   }, [appointments, query]);
 
   const selectedAppointment =
-    filteredAppointments[0] ?? appointments[0] ?? appointmentData.today[0];
+    filteredAppointments[0] ?? appointments[0] ?? remoteAppointments.today[0];
+
+  const syncAppointments = async () => {
+    setIsSyncing(true);
+    try {
+      const response = await fetch("/rpc/appointments.getAll", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to refresh appointments: ${response.status} ${response.statusText} - ${errorText.substring(0, 100)}`);
+      }
+
+      const data = (await response.json()) as ServerAppointment[];
+      const nextState = partitionAppointments(data);
+
+      setRemoteAppointments({
+        today: nextState.today.length > 0 ? nextState.today : appointmentData.today,
+        upcoming:
+          nextState.upcoming.length > 0
+            ? nextState.upcoming
+            : appointmentData.upcoming,
+        history:
+          nextState.history.length > 0
+            ? nextState.history
+            : appointmentData.history,
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleStatusUpdate = async (
+    id: string,
+    status:
+      | "approved"
+      | "rejected"
+      | "completed"
+      | "cancelled"
+      | "no_show",
+  ) => {
+    try {
+      const response = await fetch("/rpc/appointments.updateStatus", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+          status,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to update appointment: ${response.status} ${response.statusText} - ${errorText.substring(0, 100)}`);
+      }
+
+      await syncAppointments();
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const statusCount = filteredAppointments.reduce<Record<Status, number>>(
     (accumulator, appointment) => {
@@ -295,6 +528,10 @@ export function Appointments() {
       cancelled: 0,
     }
   );
+
+  if (!selectedAppointment) {
+    return null;
+  }
 
   return (
     <div className="min-w-0 space-y-6 animate-in">
@@ -328,13 +565,13 @@ export function Appointments() {
           <div className="grid gap-3 sm:grid-cols-3 xl:w-[420px]">
             <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 backdrop-blur">
               <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400">
-                Checked in
+                Pending
               </p>
               <p className="mt-2 text-3xl font-black text-white">
-                {statusCount["checked-in"]}
+                {statusCount.pending}
               </p>
               <p className="text-xs text-slate-400">
-                Patients ready for consult
+                Requests waiting for ERP approval
               </p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 backdrop-blur">
@@ -348,13 +585,13 @@ export function Appointments() {
             </div>
             <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 backdrop-blur">
               <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400">
-                Attention
+                History
               </p>
               <p className="mt-2 text-3xl font-black text-white">
-                {statusCount.pending + statusCount.cancelled}
+                {statusCount.completed + statusCount.cancelled}
               </p>
               <p className="text-xs text-slate-400">
-                Pending or reschedule cases
+                Completed or unsuccessful outcomes
               </p>
             </div>
           </div>
@@ -448,7 +685,7 @@ export function Appointments() {
                 <p className="text-sm text-slate-400">
                   {filteredAppointments.length} appointment
                   {filteredAppointments.length === 1 ? "" : "s"} visible in this
-                  view
+                  view {isSyncing ? "• syncing" : ""}
                 </p>
               </div>
               <button className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-300 transition hover:bg-white/[0.08]">
@@ -543,11 +780,35 @@ export function Appointments() {
                         </div>
 
                         <div className="flex flex-col gap-2 md:w-40">
-                          <button className="rounded-2xl bg-cyan-500 px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-cyan-400">
-                            Open chart
+                          <button
+                            onClick={() =>
+                              handleStatusUpdate(
+                                appointment.id,
+                                appointment.status === "pending"
+                                  ? "approved"
+                                  : "completed",
+                              )
+                            }
+                            className="rounded-2xl bg-cyan-500 px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-cyan-400"
+                          >
+                            {appointment.status === "pending"
+                              ? "Approve"
+                              : "Mark done"}
                           </button>
-                          <button className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/[0.08]">
-                            Reschedule
+                          <button
+                            onClick={() =>
+                              handleStatusUpdate(
+                                appointment.id,
+                                appointment.status === "pending"
+                                  ? "rejected"
+                                  : "cancelled",
+                              )
+                            }
+                            className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/[0.08]"
+                          >
+                            {appointment.status === "pending"
+                              ? "Reject"
+                              : "Cancel"}
                           </button>
                         </div>
                       </motion.article>
@@ -657,16 +918,45 @@ export function Appointments() {
               </div>
 
               <div className="grid gap-3">
-                <button className="flex items-center justify-between rounded-[1.4rem] border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm font-bold text-emerald-200 transition hover:bg-emerald-400/15">
-                  Confirm arrival and notify doctor
+                <button
+                  onClick={() =>
+                    handleStatusUpdate(
+                      selectedAppointment.id,
+                      selectedAppointment.status === "pending"
+                        ? "approved"
+                        : "completed",
+                    )
+                  }
+                  className="flex items-center justify-between rounded-[1.4rem] border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm font-bold text-emerald-200 transition hover:bg-emerald-400/15"
+                >
+                  {selectedAppointment.status === "pending"
+                    ? "Approve appointment request"
+                    : "Mark appointment completed"}
                   <CheckCheck className="h-4 w-4" />
                 </button>
-                <button className="flex items-center justify-between rounded-[1.4rem] border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm font-bold text-amber-200 transition hover:bg-amber-400/15">
-                  Shift slot by 15 minutes
+                <button
+                  onClick={() =>
+                    handleStatusUpdate(selectedAppointment.id, "no_show")
+                  }
+                  className="flex items-center justify-between rounded-[1.4rem] border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm font-bold text-amber-200 transition hover:bg-amber-400/15"
+                >
+                  Mark patient as no-show
                   <CalendarDays className="h-4 w-4" />
                 </button>
-                <button className="flex items-center justify-between rounded-[1.4rem] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm font-bold text-rose-200 transition hover:bg-rose-400/15">
-                  Cancel or move to next available slot
+                <button
+                  onClick={() =>
+                    handleStatusUpdate(
+                      selectedAppointment.id,
+                      selectedAppointment.status === "pending"
+                        ? "rejected"
+                        : "cancelled",
+                    )
+                  }
+                  className="flex items-center justify-between rounded-[1.4rem] border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm font-bold text-rose-200 transition hover:bg-rose-400/15"
+                >
+                  {selectedAppointment.status === "pending"
+                    ? "Reject appointment request"
+                    : "Cancel appointment"}
                   <XCircle className="h-4 w-4" />
                 </button>
               </div>

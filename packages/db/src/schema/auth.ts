@@ -1,28 +1,75 @@
-import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import { relations, sql } from "drizzle-orm";
+import {
+  boolean,
+  check,
+  index,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
 
-export const user = pgTable("user", {
+export const appRoles = [
+  "PATIENT",
+  "DOCTOR",
+  "HOSPITAL",
+  "CLINIC",
+  "RADIOLOGY",
+  "PATHOLOGY",
+] as const;
+
+export type AppRole = (typeof appRoles)[number];
+
+export const appRoleEnum = pgEnum("app_role", appRoles);
+
+export const organization = pgTable("organizations", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  emailVerified: boolean("email_verified").default(false).notNull(),
-  image: text("image"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .$onUpdate(() => new Date())
     .notNull(),
 });
 
+export const user = pgTable(
+  "users",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    email: text("email").notNull().unique(),
+    emailVerified: boolean("email_verified").default(false).notNull(),
+    image: text("image"),
+    role: appRoleEnum("role").default("PATIENT").notNull(),
+    organizationId: text("organization_id").references(() => organization.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("users_role_idx").on(table.role),
+    index("users_organization_id_idx").on(table.organizationId),
+    check(
+      "users_role_organization_check",
+      sql`(${table.role} = 'PATIENT' AND ${table.organizationId} IS NULL) OR (${table.role} <> 'PATIENT' AND ${table.organizationId} IS NOT NULL)`
+    ),
+  ]
+);
+
 export const session = pgTable(
-  "session",
+  "sessions",
   {
     id: text("id").primaryKey(),
     expiresAt: timestamp("expires_at").notNull(),
     token: text("token").notNull().unique(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .defaultNow()
+      .$onUpdate(() => new Date())
       .notNull(),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
@@ -30,11 +77,11 @@ export const session = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (table) => [index("session_userId_idx").on(table.userId)],
+  (table) => [index("sessions_user_id_idx").on(table.userId)]
 );
 
 export const account = pgTable(
-  "account",
+  "accounts",
   {
     id: text("id").primaryKey(),
     accountId: text("account_id").notNull(),
@@ -51,14 +98,15 @@ export const account = pgTable(
     password: text("password"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .defaultNow()
+      .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => [index("account_userId_idx").on(table.userId)],
+  (table) => [index("accounts_user_id_idx").on(table.userId)]
 );
 
 export const verification = pgTable(
-  "verification",
+  "verifications",
   {
     id: text("id").primaryKey(),
     identifier: text("identifier").notNull(),
@@ -67,13 +115,21 @@ export const verification = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => [index("verification_identifier_idx").on(table.identifier)],
+  (table) => [index("verifications_identifier_idx").on(table.identifier)]
 );
 
-export const userRelations = relations(user, ({ many }) => ({
+export const organizationRelations = relations(organization, ({ many }) => ({
+  users: many(user),
+}));
+
+export const userRelations = relations(user, ({ many, one }) => ({
+  organization: one(organization, {
+    fields: [user.organizationId],
+    references: [organization.id],
+  }),
   sessions: many(session),
   accounts: many(account),
 }));

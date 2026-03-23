@@ -36,13 +36,15 @@
   },
   "dependencies": {
     "@erp_virujhealth/env": "workspace:*",
-    "dotenv": "catalog:",
+    "dotenv": "^17.3.1",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@erp_virujhealth/config": "workspace:*",
+    "@neondatabase/serverless": "^1.0.2",
     "@types/bun": "catalog:",
     "eslint": "latest",
+    "postgres": "^3.4.8",
     "prettier": "latest",
     "stylelint": "latest",
     "turbo": "^2.6.3",
