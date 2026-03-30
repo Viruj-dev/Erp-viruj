@@ -1,15 +1,23 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Manrope, Public_Sans } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/store/app-context";
 import { Providers } from "@/lib/providers";
 
-const inter = Inter({ subsets: ["latin"] });
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-headline",
+});
+
+const publicSans = Public_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
-  title: "MedConnect — Healthcare Provider Portal",
+  title: "Viruj Health Clinical ERP",
   description:
-    "Manage appointments, profiles, community and subscriptions for hospitals, doctors, clinics, pathology and radiology centers.",
+    "ERP-demo UI transplanted into the Viruj Health web app for clinical operations, patient records, scheduling, staffing and analytics.",
 };
 
 export default function RootLayout({
@@ -19,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${manrope.variable} ${publicSans.variable} font-sans`}>
         <AppProvider>
           <Providers>{children}</Providers>
         </AppProvider>

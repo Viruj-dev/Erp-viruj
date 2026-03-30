@@ -1,223 +1,70 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #0ea5e9;
-  --color-primary-light: #38bdf8;
-  --color-primary-dark: #0284c7;
-  --color-accent: #10b981;
-  --color-accent-light: #34d399;
-  --color-accent-dark: #059669;
-  --color-teal: #14b8a6;
-  --color-teal-light: #2dd4bf;
+  --color-primary: #00478d;
+  --color-primary-container: #005eb8;
+  --color-primary-fixed: #d7e3ff;
+  --color-on-primary-fixed: #001b3d;
+  --color-secondary: #006a6a;
+  --color-secondary-container: #8cf3f3;
+  --color-tertiary: #154bf1;
+  --color-surface: #f7f9fb;
+  --color-surface-container: #eceef0;
+  --color-surface-container-low: #f2f4f6;
+  --color-surface-container-high: #e3e8ee;
+  --color-surface-container-highest: #d8dde7;
+  --color-surface-container-lowest: #ffffff;
+  --color-on-surface: #191c1e;
+  --color-on-surface-variant: #424752;
+  --color-outline: #727783;
+  --color-outline-variant: #c2c6d4;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
 
-  --color-bg-dark: #0b1120;
-  --color-bg-body: #0f172a;
-  --color-bg-surface: #1e293b;
-
-  --color-text-primary: #f1f5f9;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
-
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --font-headline: var(--font-headline);
+  --font-sans: var(--font-sans);
 }
 
 :root {
-  --primary: #0ea5e9;
-  --primary-light: #38bdf8;
-  --primary-dark: #0284c7;
-  --accent: #10b981;
-  --accent-light: #34d399;
-  --accent-dark: #059669;
-  --teal: #14b8a6;
-  --teal-light: #2dd4bf;
-
-  --bg-dark: #0b1120;
-  --bg-body: #0f172a;
-  --bg-surface: #1e293b;
-  --bg-card: rgba(30, 41, 59, 0.7);
-  --bg-glass: rgba(30, 41, 59, 0.45);
-  --bg-hover: rgba(14, 165, 233, 0.08);
-
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --text-accent: #38bdf8;
-
-  --border: rgba(148, 163, 184, 0.12);
-  --border-active: rgba(14, 165, 233, 0.4);
-
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #3b82f6;
-
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-
-  --sidebar-width: 260px;
-  --header-height: 64px;
+  color-scheme: light;
 }
 
-body {
-  background: var(--bg-body);
-  color: var(--text-primary);
-  min-height: 100vh;
-  overflow-x: hidden;
-  line-height: 1.6;
-}
+@layer base {
+  html {
+    background: #f7f9fb;
+  }
 
-.page-shell {
-  position: relative;
-  isolation: isolate;
-}
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background:
+      radial-gradient(circle at top left, rgba(0, 94, 184, 0.08), transparent 22%),
+      linear-gradient(180deg, #fbfcfd 0%, #f3f6f9 100%);
+    color: #191c1e;
+    font-family: var(--font-sans);
+    line-height: 1.6;
+  }
 
-.page-shell::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  background:
-    radial-gradient(
-      circle at top left,
-      rgba(255, 255, 255, 0.06),
-      transparent 26%
-    ),
-    linear-gradient(180deg, rgba(15, 23, 42, 0.86), rgba(15, 23, 42, 0.98));
-}
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-headline);
+  }
 
-.page-shell::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.95;
-}
-
-.page-shell-main {
-  position: relative;
-}
-
-.page-shell-dashboard::after {
-  background:
-    radial-gradient(
-      circle at 14% 12%,
-      rgba(34, 211, 238, 0.15),
-      transparent 20%
-    ),
-    radial-gradient(circle at 88% 18%, rgba(16, 185, 129, 0.1), transparent 18%);
-}
-
-.page-shell-appointments::after {
-  background:
-    linear-gradient(135deg, rgba(245, 158, 11, 0.08), transparent 28%),
-    radial-gradient(
-      circle at 78% 14%,
-      rgba(34, 211, 238, 0.14),
-      transparent 18%
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0,
-      transparent 38px,
-      rgba(255, 255, 255, 0.03) 38px,
-      rgba(255, 255, 255, 0.03) 39px
-    );
-}
-
-.page-shell-profile::after {
-  background:
-    radial-gradient(
-      circle at 18% 18%,
-      rgba(56, 189, 248, 0.12),
-      transparent 18%
-    ),
-    radial-gradient(
-      circle at 84% 12%,
-      rgba(168, 85, 247, 0.1),
-      transparent 14%
-    ),
-    linear-gradient(160deg, transparent 0%, rgba(255, 255, 255, 0.025) 100%);
-}
-
-.page-shell-manage::after {
-  background:
-    linear-gradient(180deg, rgba(16, 185, 129, 0.08), transparent 26%),
-    radial-gradient(circle at 80% 18%, rgba(34, 211, 238, 0.1), transparent 16%);
-}
-
-.page-shell-community::after {
-  background:
-    radial-gradient(
-      circle at 12% 10%,
-      rgba(168, 85, 247, 0.12),
-      transparent 18%
-    ),
-    radial-gradient(
-      circle at 80% 12%,
-      rgba(244, 114, 182, 0.1),
-      transparent 16%
-    ),
-    linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.03) 100%);
-}
-
-.page-shell-subscription::after {
-  background:
-    radial-gradient(
-      circle at 20% 12%,
-      rgba(217, 70, 239, 0.12),
-      transparent 18%
-    ),
-    radial-gradient(
-      circle at 84% 14%,
-      rgba(16, 185, 129, 0.1),
-      transparent 16%
-    ),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 38%);
+  * {
+    box-sizing: border-box;
+  }
 }
 
 @layer utilities {
-  .glass {
-    background: var(--bg-glass);
-    backdrop-filter: blur(16px);
-    border: 1px solid var(--border);
+  .headline {
+    font-family: var(--font-headline);
   }
 
-  .glass-card {
-    background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border);
-    box-shadow:
-      0 4px 20px rgba(0, 0, 0, 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
-
-  .surface-panel {
-    min-width: 0;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow:
-      0 18px 50px rgba(2, 6, 23, 0.28),
-      inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-in {
-  animation: fadeIn 0.5s ease-out both;
 }

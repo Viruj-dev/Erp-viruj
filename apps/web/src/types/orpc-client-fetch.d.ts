@@ -1,7 +1,7 @@
 declare module "@orpc/client/fetch" {
   import type { ClientContext, ClientLink } from "@orpc/client";
 
-  export interface RPCLinkOptions<T extends ClientContext> {
+  export interface RPCLinkOptions {
     baseUrl: string;
     fetch?: (
       request: Request,
@@ -13,7 +13,7 @@ declare module "@orpc/client/fetch" {
   }
 
   export class RPCLink<T extends ClientContext> implements ClientLink<T> {
-    constructor(options: RPCLinkOptions<T>);
+    constructor(options: RPCLinkOptions);
     call(
       path: readonly string[],
       input: unknown,

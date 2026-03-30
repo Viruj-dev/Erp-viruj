@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 type ProviderType =
   | "hospital"
@@ -32,32 +32,32 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AppState>({
-    providerType: "",
-    isLoggedIn: false,
-    userName: "",
-    userEmail: "",
+const defaultState: AppState = {
+  providerType: "",
+  isLoggedIn: false,
+  userName: "",
+  userEmail: "",
+  currentPage: "dashboard",
+  isSignUp: false,
+};
+
+function getInitialState(): AppState {
+  if (typeof window === "undefined") {
+    return defaultState;
+  }
+
+  return {
+    providerType: (localStorage.getItem("providerType") as ProviderType) || "",
+    isLoggedIn: localStorage.getItem("isLoggedIn") === "true",
+    userName: localStorage.getItem("userName") || "",
+    userEmail: localStorage.getItem("userEmail") || "",
     currentPage: "dashboard",
     isSignUp: false,
-  });
+  };
+}
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    const providerType =
-      (localStorage.getItem("providerType") as ProviderType) || "";
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    const userName = localStorage.getItem("userName") || "";
-    const userEmail = localStorage.getItem("userEmail") || "";
-
-    setState((prev) => ({
-      ...prev,
-      providerType,
-      isLoggedIn,
-      userName,
-      userEmail,
-    }));
-  }, []);
+export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<AppState>(getInitialState);
 
   const setProviderType = (type: ProviderType) => {
     setState((s) => ({ ...s, providerType: type }));
@@ -86,14 +86,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     localStorage.clear();
-    setState({
-      providerType: "",
-      isLoggedIn: false,
-      userName: "",
-      userEmail: "",
-      currentPage: "dashboard",
-      isSignUp: false,
-    });
+    setState(defaultState);
   };
 
   return (
