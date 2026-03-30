@@ -65,11 +65,11 @@ export function ErpDemoCommunity() {
         <div className="rounded-[1.8rem] border border-outline-variant/20 bg-surface-container-low p-4">
           <div className="space-y-1">
             {[
-              ["Feed", <Globe key="feed" size={18} />],
-              ["Knowledge Base", <FileText key="kb" size={18} />],
-              ["Groups", <Users key="groups" size={18} />],
-              ["Saved", <Bookmark key="saved" size={18} />],
-            ].map(([label, icon], index) => (
+              { label: "Feed", icon: <Globe key="feed" size={18} /> },
+              { label: "Knowledge Base", icon: <FileText key="kb" size={18} /> },
+              { label: "Groups", icon: <Users key="groups" size={18} /> },
+              { label: "Saved", icon: <Bookmark key="saved" size={18} /> },
+            ].map(({ label, icon }, index) => (
               <button
                 key={label}
                 className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-black transition-colors ${
@@ -187,9 +187,9 @@ export function ErpDemoCommunity() {
           </p>
           <div className="mt-5 space-y-4">
             {[
-              ["Dr. Michael Chen", "Pediatrician", "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&h=100&fit=crop"],
-              ["Dr. Anna Smith", "Radiologist", "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=100&h=100&fit=crop"],
-            ].map(([name, role, image]) => (
+              { name: "Dr. Michael Chen", role: "Pediatrician", image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&h=100&fit=crop" },
+              { name: "Dr. Anna Smith", role: "Radiologist", image: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=100&h=100&fit=crop" },
+            ].map(({ name, role, image }) => (
               <div key={name} className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <img alt={name} className="h-8 w-8 rounded-lg object-cover" src={image} />
