@@ -199,7 +199,6 @@ app.get("/test-panel", (c) => {
                 const res = await rpcCall('test.resetCounter', { name });
                 if (res) document.getElementById('counter-value').innerText = res.value;
             }
-
             // Initial load
             getCounter();
         </script>

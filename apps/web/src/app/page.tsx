@@ -1,10 +1,7 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Building2, LogOut } from "lucide-react";
-import { ErpDemoAppointments } from "@/components/erp-demo/appointments";
 import { ErpDemoAnalytics } from "@/components/erp-demo/analytics";
+import { ErpDemoAppointments } from "@/components/erp-demo/appointments";
 import { ErpDemoCommunity } from "@/components/erp-demo/community";
 import { ErpDemoDashboard } from "@/components/erp-demo/dashboard";
 import { ErpDemoLogin } from "@/components/erp-demo/login";
@@ -16,6 +13,9 @@ import { ErpDemoTopBar } from "@/components/erp-demo/top-bar";
 import type { ErpDemoPage } from "@/components/erp-demo/types";
 import { authClient, setActiveOrganization } from "@/lib/auth-client";
 import { useApp } from "@/store/app-context";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, Building2, LogOut } from "lucide-react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 const fallbackPage: ErpDemoPage = "dashboard";
 
@@ -218,8 +218,8 @@ function OrganizationAccessScreen({
               Choose the workspace you want to run.
             </h1>
             <p className="mt-4 max-w-xl text-sm leading-relaxed text-on-surface-variant">
-              Signed in as {userEmail}. Your account is authenticated, but an active
-              organization is required before the ERP dashboard can load.
+              Signed in as {userEmail}. Your account is authenticated, but an
+              active organization is required before the ERP dashboard can load.
             </p>
           </div>
           <button
@@ -265,8 +265,8 @@ function OrganizationAccessScreen({
               No organization membership found
             </h2>
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-on-surface-variant">
-              Create a new organization from the onboarding flow or ask an owner/admin
-              to send you a Better Auth invitation ID.
+              Create a new organization from the onboarding flow or ask an
+              owner/admin to send you a Better Auth invitation ID.
             </p>
             <button
               className="mt-6 rounded-full bg-primary px-5 py-3 text-sm font-bold text-white shadow-md transition-opacity hover:opacity-90"
