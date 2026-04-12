@@ -3,7 +3,7 @@ import { appointments } from "@erp_virujhealth/db/schema/appointments";
 import { desc, eq } from "drizzle-orm";
 import z from "zod";
 
-import { erpProcedure } from "../index";
+import { permissionedErpProcedure } from "../index";
 
 const appointmentStatusSchema = z.enum([
   "pending_approval",
@@ -15,20 +15,27 @@ const appointmentStatusSchema = z.enum([
 ]);
 
 export const appointmentsRouter = {
-  getAll: erpProcedure.handler(async () => {
+  getAll: permissionedErpProcedure({
+    appointment: ["read"],
+  }).handler(async () => {
     return db
       .select()
       .from(appointments)
-      .orderBy(desc(appointments.createdAt), desc(appointments.appointmentDate));
+      .orderBy(
+        desc(appointments.createdAt),
+        desc(appointments.appointmentDate)
+      );
   }),
 
-  updateStatus: erpProcedure
+  updateStatus: permissionedErpProcedure({
+    appointment: ["update"],
+  })
     .input(
       z.object({
         id: z.string().min(1),
         status: appointmentStatusSchema,
         approvalNotes: z.string().trim().optional().nullable(),
-      }),
+      })
     )
     .handler(async ({ input, context }) => {
       const now = new Date();

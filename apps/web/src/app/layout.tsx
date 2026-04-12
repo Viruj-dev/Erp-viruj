@@ -3,6 +3,7 @@ import { Manrope, Public_Sans } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/store/app-context";
 import { Providers } from "@/lib/providers";
+import { DevtoolsWrapper } from "@/components/devtools-wrapper";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -31,6 +32,7 @@ export default function RootLayout({
         <AppProvider>
           <Providers>{children}</Providers>
         </AppProvider>
+        <DevtoolsWrapper />
       </body>
     </html>
   );

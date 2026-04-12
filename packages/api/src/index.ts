@@ -1,4 +1,4 @@
-import { PATIENT_ROLE } from "@erp_virujhealth/auth";
+import { hasOrganizationPermission } from "@erp_virujhealth/auth";
 import { ORPCError, os } from "@orpc/server";
 
 import type { Context } from "./context";
@@ -17,22 +17,43 @@ const requireAuth = o.middleware(async ({ context, next }) => {
 
 export const protectedProcedure = publicProcedure.use(requireAuth);
 
-const requireErpAccess = o.middleware(async ({ context, next }) => {
-  const session = context.session;
+const requireOrganizationMembership = o.middleware(
+  async ({ context, next }) => {
+    const session = context.session;
 
-  if (!session?.user) {
-    throw new ORPCError("UNAUTHORIZED");
+    if (!session?.user) {
+      throw new ORPCError("UNAUTHORIZED");
+    }
+
+    if (!session.activeOrganization || !session.activeMember) {
+      throw new ORPCError("FORBIDDEN", {
+        message:
+          "An active organization membership is required for ERP routes.",
+      });
+    }
+
+    return next();
   }
+);
 
-  if ((session.user as unknown as { role: string }).role === PATIENT_ROLE) {
-    throw new ORPCError("FORBIDDEN", {
-      message: "Patient users cannot access ERP routes.",
-    });
-  }
+export const erpProcedure = protectedProcedure.use(
+  requireOrganizationMembership
+);
 
-  return next();
-});
+export const permissionedErpProcedure = (
+  permissions: Parameters<typeof hasOrganizationPermission>[1]
+) =>
+  erpProcedure.use(async ({ context, next }) => {
+    const memberRole = context.session?.activeMember?.role;
 
-export const erpProcedure = protectedProcedure.use(requireErpAccess);
+    if (!memberRole || !hasOrganizationPermission(memberRole, permissions)) {
+      throw new ORPCError("FORBIDDEN", {
+        message:
+          "Your organization role does not have permission for this action.",
+      });
+    }
+
+    return next();
+  });
 
 export * from "./routers/index";
