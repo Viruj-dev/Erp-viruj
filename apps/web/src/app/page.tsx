@@ -62,7 +62,13 @@ export default function Home() {
     sessionState.data?.user?.email ||
     "Clinical User";
 
-  if (!isHydrated || sessionState.isPending) {
+  const isAuthPending =
+    sessionState.isPending ||
+    organizationsState.isPending ||
+    activeOrganizationState.isPending ||
+    activeMemberState.isPending;
+
+  if (!isHydrated || isAuthPending) {
     return <LoadingScreen />;
   }
 

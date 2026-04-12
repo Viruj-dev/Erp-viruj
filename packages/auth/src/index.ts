@@ -3,6 +3,7 @@ import * as schema from "@erp_virujhealth/db/schema/auth";
 import { env } from "@erp_virujhealth/env/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { and, eq } from "drizzle-orm";
 import {
   createAccessControl,
   customSession,
@@ -92,9 +93,9 @@ export const hasOrganizationPermission = (
     return false;
   }
 
-  const authorize = definition.authorize as (
-    request: ErpPermissionRequest
-  ) => { success: boolean };
+  const authorize = definition.authorize as (request: ErpPermissionRequest) => {
+    success: boolean;
+  };
 
   return authorize(permissions).success;
 };
@@ -143,60 +144,88 @@ export const auth = betterAuth({
         },
       },
     }),
-    customSession(async (session) => {
-      const activeOrganizationId = (
-        session.session as {
-          activeOrganizationId?: string | null;
+    customSession(async ({ session, user }) => {
+      try {
+        const activeOrganizationId = (
+          session as {
+            activeOrganizationId?: string | null;
+          }
+        ).activeOrganizationId;
+
+        if (!activeOrganizationId) {
+          return {
+            activeMember: null,
+            activeOrganization: null,
+            session,
+            user,
+          };
         }
-      ).activeOrganizationId;
 
+        const [membership] = await db
+          .select({
+            createdAt: schema.member.createdAt,
+            id: schema.member.id,
+            organizationId: schema.member.organizationId,
+            role: schema.member.role,
+            userId: schema.member.userId,
+            organization: {
+              createdAt: schema.organization.createdAt,
+              id: schema.organization.id,
+              logo: schema.organization.logo,
+              metadata: schema.organization.metadata,
+              name: schema.organization.name,
+              organizationType: schema.organization.organizationType,
+              slug: schema.organization.slug,
+              updatedAt: schema.organization.updatedAt,
+            },
+          })
+          .from(schema.member)
+          .leftJoin(
+            schema.organization,
+            eq(schema.member.organizationId, schema.organization.id)
+          )
+          .where(
+            and(
+              eq(schema.member.organizationId, activeOrganizationId),
+              eq(schema.member.userId, user.id)
+            )
+          )
+          .limit(1);
 
-      if (!activeOrganizationId) {
+        return {
+          activeMember: membership
+            ? {
+                createdAt: membership.createdAt,
+                id: membership.id,
+                organizationId: membership.organizationId,
+                role: membership.role,
+                userId: membership.userId,
+              }
+            : null,
+          activeOrganization: membership?.organization?.id
+            ? {
+                createdAt: membership.organization.createdAt!,
+                id: membership.organization.id,
+                logo: membership.organization.logo,
+                metadata: membership.organization.metadata,
+                name: membership.organization.name!,
+                organizationType: membership.organization.organizationType!,
+                slug: membership.organization.slug!,
+                updatedAt: membership.organization.updatedAt!,
+              }
+            : null,
+          session,
+          user,
+        };
+      } catch (error) {
+        console.error("[Auth] Error in customSession:", error);
         return {
           activeMember: null,
           activeOrganization: null,
-          session: session.session,
-          user: session.user,
+          session,
+          user,
         };
       }
-
-      const membership = await db.query.member.findFirst({
-        where: (member, { and, eq }) =>
-          and(
-            eq(member.organizationId, activeOrganizationId),
-            eq(member.userId, session.user.id)
-          ),
-        with: {
-          organization: true,
-        },
-      });
-
-
-      return {
-        activeMember: membership
-          ? {
-              createdAt: membership.createdAt,
-              id: membership.id,
-              organizationId: membership.organizationId,
-              role: membership.role,
-              userId: membership.userId,
-            }
-          : null,
-        activeOrganization: membership?.organization
-          ? {
-              createdAt: membership.organization.createdAt,
-              id: membership.organization.id,
-              logo: membership.organization.logo,
-              metadata: membership.organization.metadata,
-              name: membership.organization.name,
-              organizationType: membership.organization.organizationType,
-              slug: membership.organization.slug,
-              updatedAt: membership.organization.updatedAt,
-            }
-          : null,
-        session: session.session,
-        user: session.user,
-      };
     }),
   ],
 });
