@@ -9,13 +9,18 @@ import {
   customSession,
   organization,
 } from "better-auth/plugins";
-import { devtools } from "./devtools";
+import { type OrganizationMemberRole } from "./roles";
 import { z } from "zod";
 
 export {
   organizationTypes,
   type OrganizationType,
 } from "@erp_virujhealth/db/schema/auth";
+export {
+  organizationRoleOptions,
+  organizationRoleSchema,
+  type OrganizationMemberRole,
+} from "./roles";
 
 export const erpStatements = {
   appointment: ["read", "update"] as const,
@@ -74,7 +79,6 @@ export const organizationRoles = {
   }),
 } as const;
 
-export type OrganizationMemberRole = keyof typeof organizationRoles;
 export type ErpPermissionRequest = Partial<{
   [Key in keyof typeof erpStatements]: Array<
     (typeof erpStatements)[Key][number]
@@ -82,6 +86,84 @@ export type ErpPermissionRequest = Partial<{
 }>;
 
 const organizationTypeSchema = z.enum(schema.organizationTypes);
+
+type SessionOrganizationMembership = Awaited<
+  ReturnType<typeof resolveActiveOrganizationMembership>
+>;
+
+const resolveActiveOrganizationMembership = async (
+  userId: string,
+  activeOrganizationId?: string | null
+) => {
+  const memberships = await db
+    .select({
+      createdAt: schema.member.createdAt,
+      id: schema.member.id,
+      organizationId: schema.member.organizationId,
+      role: schema.member.role,
+      userId: schema.member.userId,
+      organization: {
+        createdAt: schema.organization.createdAt,
+        id: schema.organization.id,
+        logo: schema.organization.logo,
+        metadata: schema.organization.metadata,
+        name: schema.organization.name,
+        organizationType: schema.organization.organizationType,
+        slug: schema.organization.slug,
+        updatedAt: schema.organization.updatedAt,
+      },
+    })
+    .from(schema.member)
+    .leftJoin(
+      schema.organization,
+      eq(schema.member.organizationId, schema.organization.id)
+    )
+    .where(eq(schema.member.userId, userId));
+
+  if (memberships.length === 0) {
+    return null;
+  }
+
+  const activeMembership =
+    memberships.find(
+      (membership) => membership.organizationId === activeOrganizationId
+    ) ?? (memberships.length === 1 ? memberships[0] : null);
+
+  return activeMembership ?? null;
+};
+
+const buildSessionOrganizationContext = (
+  membership: SessionOrganizationMembership
+) => {
+  if (!membership) {
+    return {
+      activeMember: null,
+      activeOrganization: null,
+    };
+  }
+
+  return {
+    activeMember: {
+      createdAt: membership.createdAt,
+      id: membership.id,
+      organizationId: membership.organizationId,
+      role: membership.role,
+      userId: membership.userId,
+    },
+    activeOrganization: membership.organization?.id
+      ? {
+          createdAt: membership.organization.createdAt!,
+          id: membership.organization.id,
+          logo: membership.organization.logo,
+          metadata: membership.organization.metadata,
+          name: membership.organization.name!,
+          organizationType: membership.organization.organizationType!,
+          slug: membership.organization.slug!,
+          updatedAt: membership.organization.updatedAt!,
+        }
+      : null,
+  };
+};
 
 export const hasOrganizationPermission = (
   role: string,
@@ -117,7 +199,6 @@ export const auth = betterAuth({
     },
   },
   plugins: [
-    devtools.serverPlugin,
     organization({
       ac: accessControl,
       allowUserToCreateOrganization: true,
@@ -151,69 +232,47 @@ export const auth = betterAuth({
             activeOrganizationId?: string | null;
           }
         ).activeOrganizationId;
+        const membership = activeOrganizationId
+          ? await db
+              .select({
+                createdAt: schema.member.createdAt,
+                id: schema.member.id,
+                organizationId: schema.member.organizationId,
+                role: schema.member.role,
+                userId: schema.member.userId,
+                organization: {
+                  createdAt: schema.organization.createdAt,
+                  id: schema.organization.id,
+                  logo: schema.organization.logo,
+                  metadata: schema.organization.metadata,
+                  name: schema.organization.name,
+                  organizationType: schema.organization.organizationType,
+                  slug: schema.organization.slug,
+                  updatedAt: schema.organization.updatedAt,
+                },
+              })
+              .from(schema.member)
+              .leftJoin(
+                schema.organization,
+                eq(schema.member.organizationId, schema.organization.id)
+              )
+              .where(
+                and(
+                  eq(schema.member.organizationId, activeOrganizationId),
+                  eq(schema.member.userId, user.id)
+                )
+              )
+              .limit(1)
+              .then((memberships) => memberships[0] ?? null)
+          : await resolveActiveOrganizationMembership(
+              user.id,
+              activeOrganizationId
+            );
 
-        if (!activeOrganizationId) {
-          return {
-            activeMember: null,
-            activeOrganization: null,
-            session,
-            user,
-          };
-        }
-
-        const [membership] = await db
-          .select({
-            createdAt: schema.member.createdAt,
-            id: schema.member.id,
-            organizationId: schema.member.organizationId,
-            role: schema.member.role,
-            userId: schema.member.userId,
-            organization: {
-              createdAt: schema.organization.createdAt,
-              id: schema.organization.id,
-              logo: schema.organization.logo,
-              metadata: schema.organization.metadata,
-              name: schema.organization.name,
-              organizationType: schema.organization.organizationType,
-              slug: schema.organization.slug,
-              updatedAt: schema.organization.updatedAt,
-            },
-          })
-          .from(schema.member)
-          .leftJoin(
-            schema.organization,
-            eq(schema.member.organizationId, schema.organization.id)
-          )
-          .where(
-            and(
-              eq(schema.member.organizationId, activeOrganizationId),
-              eq(schema.member.userId, user.id)
-            )
-          )
-          .limit(1);
+        const organizationContext = buildSessionOrganizationContext(membership);
 
         return {
-          activeMember: membership
-            ? {
-                createdAt: membership.createdAt,
-                id: membership.id,
-                organizationId: membership.organizationId,
-                role: membership.role,
-                userId: membership.userId,
-              }
-            : null,
-          activeOrganization: membership?.organization?.id
-            ? {
-                createdAt: membership.organization.createdAt!,
-                id: membership.organization.id,
-                logo: membership.organization.logo,
-                metadata: membership.organization.metadata,
-                name: membership.organization.name!,
-                organizationType: membership.organization.organizationType!,
-                slug: membership.organization.slug!,
-                updatedAt: membership.organization.updatedAt!,
-              }
-            : null,
+          ...organizationContext,
           session,
           user,
         };

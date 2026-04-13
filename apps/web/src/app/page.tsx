@@ -73,10 +73,24 @@ export default function Home() {
   }
 
   if (!sessionState.data?.user) {
-    return <ErpDemoLogin onAuthenticated={() => sessionState.refetch()} />;
+    return (
+      <ErpDemoLogin
+        onAuthenticated={async () => {
+          await sessionState.refetch();
+          await organizationsState.refetch();
+          await activeOrganizationState.refetch();
+          await activeMemberState.refetch();
+        }}
+      />
+    );
   }
 
-  if (!activeOrganizationState.data || !activeMemberState.data) {
+  const hasOrganizationChoices = (organizationsState.data?.length ?? 0) > 0;
+
+  if (
+    hasOrganizationChoices &&
+    (!activeOrganizationState.data || !activeMemberState.data)
+  ) {
     return (
       <OrganizationAccessScreen
         isLoading={organizationsState.isPending}

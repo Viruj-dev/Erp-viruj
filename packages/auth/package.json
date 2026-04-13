@@ -14,7 +14,6 @@
     "@erp_virujhealth/db": "workspace:*",
     "@erp_virujhealth/env": "workspace:*",
     "better-auth": "catalog:",
-    "better-auth-devtools": "^0.1.1-alpha.9",
     "dotenv": "catalog:",
     "drizzle-orm": "^0.45.2",
     "zod": "catalog:"

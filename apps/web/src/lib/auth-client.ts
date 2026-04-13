@@ -1,6 +1,5 @@
 "use client";
 
-import { devtoolsClientPlugin } from "better-auth-devtools/plugin";
 import {
   customSessionClient,
   organizationClient,
@@ -15,7 +14,6 @@ const authBaseUrl =
 export const authClient = createAuthClient({
   baseURL: authBaseUrl,
   plugins: [
-    devtoolsClientPlugin(),
     organizationClient({
       schema: {
         organization: {
@@ -32,14 +30,17 @@ export const authClient = createAuthClient({
 });
 
 const organizationActions = authClient as unknown as {
-  acceptInvitation: (input: {
-    invitationId: string;
-  }) => Promise<unknown>;
+  acceptInvitation: (input: { invitationId: string }) => Promise<unknown>;
   createOrganization: (input: {
     name: string;
     organizationType: string;
     slug: string;
-  }) => Promise<unknown>;
+  }) => Promise<{
+    error?: {
+      message?: string;
+    } | null;
+    id?: string;
+  } | null>;
   setActiveOrganization: (input: {
     organizationId: string;
   }) => Promise<unknown>;

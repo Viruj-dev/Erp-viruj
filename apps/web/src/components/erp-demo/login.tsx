@@ -16,6 +16,7 @@ import {
   acceptInvitation,
   authClient,
   createOrganization,
+  setActiveOrganization,
 } from "@/lib/auth-client";
 
 type Step = "login" | "onboarding" | "invitation";
@@ -40,7 +41,7 @@ const organizationTypeOptions: Array<{
 export function ErpDemoLogin({
   onAuthenticated,
 }: {
-  onAuthenticated: () => void;
+  onAuthenticated: () => Promise<void> | void;
 }) {
   const [step, setStep] = useState<Step>("login");
   const [isPending, setIsPending] = useState(false);
@@ -87,7 +88,7 @@ export function ErpDemoLogin({
       }
 
       setSuccessMessage("Secure session authorized.");
-      onAuthenticated();
+      await onAuthenticated();
     } finally {
       setIsPending(false);
     }
@@ -125,8 +126,22 @@ export function ErpDemoLogin({
         return;
       }
 
+      if (organizationResult?.id) {
+        const setActiveOrganizationResult = await setActiveOrganization({
+          organizationId: organizationResult.id,
+        });
+
+        if (hasError(setActiveOrganizationResult)) {
+          setErrorMessage(
+            setActiveOrganizationResult.error.message ||
+              "Organization was created, but the owner workspace could not be activated."
+          );
+          return;
+        }
+      }
+
       setSuccessMessage("Organization created and owner session activated.");
-      onAuthenticated();
+      await onAuthenticated();
     } finally {
       setIsPending(false);
     }
@@ -171,7 +186,7 @@ export function ErpDemoLogin({
       }
 
       setSuccessMessage("Invitation accepted. Preparing your organization access.");
-      onAuthenticated();
+      await onAuthenticated();
     } finally {
       setIsPending(false);
     }
