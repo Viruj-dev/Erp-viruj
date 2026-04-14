@@ -8,8 +8,8 @@ import { createAuthClient } from "better-auth/react";
 
 const authBaseUrl =
   typeof window !== "undefined"
-    ? `${window.location.origin}/api/auth`
-    : `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002"}/api/auth`;
+    ? `${window.location.origin}/auth`
+    : `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002"}/auth`;
 
 export const authClient = createAuthClient({
   baseURL: authBaseUrl,

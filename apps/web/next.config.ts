@@ -8,8 +8,8 @@ const nextConfig: NextConfig = {
         destination: `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002"}/rpc/:path*`,
       },
       {
-        source: "/api/auth/:path*",
-        destination: `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002"}/api/auth/:path*`,
+        source: "/auth/:path*",
+        destination: `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002"}/auth/:path*`,
       },
     ];
   },

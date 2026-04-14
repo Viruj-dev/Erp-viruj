@@ -1,7 +1,5 @@
-"use client";
-
-import { ErpHomeScreen } from "@/features/dashboard/screens/erp-home-screen";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <ErpHomeScreen />;
+  redirect("/auth");
 }

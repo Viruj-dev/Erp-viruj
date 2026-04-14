@@ -1,6 +1,5 @@
 "use client";
 
-import { ErpDemoLogin } from "@/features/auth/components/login-screen";
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import { ErpDemoAnalytics } from "@/features/dashboard/components/analytics";
 import { ErpDemoAppointments } from "@/features/dashboard/components/appointments";
@@ -16,11 +15,13 @@ import { LoadingScreen } from "@/features/shell/components/loading-screen";
 import { authClient, setActiveOrganization } from "@/lib/auth-client";
 import { useApp } from "@/store/app-context";
 import { AnimatePresence, motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
 const fallbackPage: ErpDemoPage = "dashboard";
 
 export function ErpHomeScreen() {
+  const router = useRouter();
   const { state, reset, setCurrentPage } = useApp();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -69,21 +70,22 @@ export function ErpHomeScreen() {
     activeOrganizationState.isPending ||
     activeMemberState.isPending;
 
+  useEffect(() => {
+    if (!isHydrated || isAuthPending) {
+      return;
+    }
+
+    if (!sessionState.data?.user) {
+      router.replace("/auth");
+    }
+  }, [isAuthPending, isHydrated, router, sessionState.data?.user]);
+
   if (!isHydrated || isAuthPending) {
     return <LoadingScreen />;
   }
 
   if (!sessionState.data?.user) {
-    return (
-      <ErpDemoLogin
-        onAuthenticated={async () => {
-          await sessionState.refetch();
-          await organizationsState.refetch();
-          await activeOrganizationState.refetch();
-          await activeMemberState.refetch();
-        }}
-      />
-    );
+    return <LoadingScreen />;
   }
 
   const hasOrganizationChoices = (organizationsState.data?.length ?? 0) > 0;
