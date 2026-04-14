@@ -11,7 +11,10 @@ export function MiniBarChart({ data }: { data: readonly BarDatum[] }) {
   return (
     <div className="flex h-64 items-end gap-3">
       {data.map((item) => (
-        <div key={item.name} className="flex flex-1 flex-col items-center gap-3">
+        <div
+          key={item.name}
+          className="flex flex-1 flex-col items-center gap-3"
+        >
           <div className="flex h-full w-full items-end rounded-2xl bg-surface-container-low px-2 pb-2">
             <div
               className="w-full rounded-xl bg-gradient-to-t from-primary to-primary-container"
@@ -72,7 +75,7 @@ export function LineCompare({ data }: { data: readonly LineDatum[] }) {
   const width = 100;
   const height = 100;
   const max = Math.max(
-    ...data.flatMap((item) => [item.revenue, item.expenses]),
+    ...data.flatMap((item) => [item.revenue, item.expenses])
   );
 
   const buildPath = (key: "revenue" | "expenses") =>
@@ -91,8 +94,18 @@ export function LineCompare({ data }: { data: readonly LineDatum[] }) {
         preserveAspectRatio="none"
         viewBox={`0 0 ${width} ${height}`}
       >
-        <path d={buildPath("expenses")} fill="none" stroke="#006a6a" strokeWidth="2.5" />
-        <path d={buildPath("revenue")} fill="none" stroke="#00478d" strokeWidth="2.5" />
+        <path
+          d={buildPath("expenses")}
+          fill="none"
+          stroke="#006a6a"
+          strokeWidth="2.5"
+        />
+        <path
+          d={buildPath("revenue")}
+          fill="none"
+          stroke="#00478d"
+          strokeWidth="2.5"
+        />
       </svg>
       <div className="grid grid-cols-7 gap-2">
         {data.map((item) => (

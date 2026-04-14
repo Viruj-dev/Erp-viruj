@@ -66,7 +66,10 @@ export function ErpDemoCommunity() {
           <div className="space-y-1">
             {[
               { label: "Feed", icon: <Globe key="feed" size={18} /> },
-              { label: "Knowledge Base", icon: <FileText key="kb" size={18} /> },
+              {
+                label: "Knowledge Base",
+                icon: <FileText key="kb" size={18} />,
+              },
               { label: "Groups", icon: <Users key="groups" size={18} /> },
               { label: "Saved", icon: <Bookmark key="saved" size={18} /> },
             ].map(({ label, icon }, index) => (
@@ -92,10 +95,15 @@ export function ErpDemoCommunity() {
           </p>
           <div className="mt-5 space-y-4">
             {topics.map((topic) => (
-              <div key={topic.name} className="flex items-center justify-between">
+              <div
+                key={topic.name}
+                className="flex items-center justify-between"
+              >
                 <div>
                   <p className="font-semibold text-on-surface">{topic.name}</p>
-                  <p className="mt-1 text-xs text-on-surface-variant">{topic.posts} posts</p>
+                  <p className="mt-1 text-xs text-on-surface-variant">
+                    {topic.posts} posts
+                  </p>
                 </div>
                 <TrendingUp className="text-outline" size={16} />
               </div>
@@ -124,7 +132,10 @@ export function ErpDemoCommunity() {
                   <IconButton icon={<Globe size={18} />} />
                   <IconButton icon={<Lock size={18} />} />
                 </div>
-                <button className="flex items-center gap-2 rounded-xl bg-primary px-6 py-2 text-sm font-black text-white shadow-md" type="button">
+                <button
+                  className="flex items-center gap-2 rounded-xl bg-primary px-6 py-2 text-sm font-black text-white shadow-md"
+                  type="button"
+                >
                   <Plus size={16} />
                   Post
                 </button>
@@ -135,14 +146,25 @@ export function ErpDemoCommunity() {
 
         <div className="space-y-4">
           {posts.map((post) => (
-            <article key={post.id} className="rounded-[1.8rem] border border-outline-variant/20 bg-surface-container-low p-6">
+            <article
+              key={post.id}
+              className="rounded-[1.8rem] border border-outline-variant/20 bg-surface-container-low p-6"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <img alt={post.author} className="h-10 w-10 rounded-xl object-cover" src={post.avatar} />
+                  <img
+                    alt={post.author}
+                    className="h-10 w-10 rounded-xl object-cover"
+                    src={post.avatar}
+                  />
                   <div>
                     <div className="flex items-center gap-1">
-                      <p className="font-semibold text-on-surface">{post.author}</p>
-                      {post.verified ? <CheckCircle2 className="text-primary" size={14} /> : null}
+                      <p className="font-semibold text-on-surface">
+                        {post.author}
+                      </p>
+                      {post.verified ? (
+                        <CheckCircle2 className="text-primary" size={14} />
+                      ) : null}
                     </div>
                     <p className="text-[11px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
                       {post.role} | {post.time}
@@ -152,12 +174,19 @@ export function ErpDemoCommunity() {
                 <IconButton icon={<MoreHorizontal size={18} />} />
               </div>
 
-              <h3 className="mt-5 font-headline text-2xl font-black text-on-surface">{post.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-on-surface-variant">{post.content}</p>
+              <h3 className="mt-5 font-headline text-2xl font-black text-on-surface">
+                {post.title}
+              </h3>
+              <p className="mt-3 text-sm leading-7 text-on-surface-variant">
+                {post.content}
+              </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {post.tags.map((tag) => (
-                  <span key={tag} className="rounded-full bg-surface-container-high px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">
+                  <span
+                    key={tag}
+                    className="rounded-full bg-surface-container-high px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant"
+                  >
                     #{tag}
                   </span>
                 ))}
@@ -165,14 +194,28 @@ export function ErpDemoCommunity() {
 
               <div className="mt-5 flex items-center justify-between border-t border-outline-variant/20 pt-4">
                 <div className="flex items-center gap-5">
-                  <ActionText icon={<ThumbsUp size={16} />} text={`${post.likes}`} />
-                  <ActionText icon={<MessageSquare size={16} />} text={`${post.comments}`} />
+                  <ActionText
+                    icon={<ThumbsUp size={16} />}
+                    text={`${post.likes}`}
+                  />
+                  <ActionText
+                    icon={<MessageSquare size={16} />}
+                    text={`${post.comments}`}
+                  />
                   <ActionText icon={<Share2 size={16} />} text="Share" />
                 </div>
-                <button className={`rounded-lg p-2 ${
-                  post.bookmarked ? "bg-primary/10 text-primary" : "text-on-surface-variant hover:bg-surface-container-high"
-                }`} type="button">
-                  <Bookmark fill={post.bookmarked ? "currentColor" : "none"} size={16} />
+                <button
+                  className={`rounded-lg p-2 ${
+                    post.bookmarked
+                      ? "bg-primary/10 text-primary"
+                      : "text-on-surface-variant hover:bg-surface-container-high"
+                  }`}
+                  type="button"
+                >
+                  <Bookmark
+                    fill={post.bookmarked ? "currentColor" : "none"}
+                    size={16}
+                  />
                 </button>
               </div>
             </article>
@@ -187,18 +230,40 @@ export function ErpDemoCommunity() {
           </p>
           <div className="mt-5 space-y-4">
             {[
-              { name: "Dr. Michael Chen", role: "Pediatrician", image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&h=100&fit=crop" },
-              { name: "Dr. Anna Smith", role: "Radiologist", image: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=100&h=100&fit=crop" },
+              {
+                name: "Dr. Michael Chen",
+                role: "Pediatrician",
+                image:
+                  "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&h=100&fit=crop",
+              },
+              {
+                name: "Dr. Anna Smith",
+                role: "Radiologist",
+                image:
+                  "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=100&h=100&fit=crop",
+              },
             ].map(({ name, role, image }) => (
-              <div key={name} className="flex items-center justify-between gap-3">
+              <div
+                key={name}
+                className="flex items-center justify-between gap-3"
+              >
                 <div className="flex items-center gap-3">
-                  <img alt={name} className="h-8 w-8 rounded-lg object-cover" src={image} />
+                  <img
+                    alt={name}
+                    className="h-8 w-8 rounded-lg object-cover"
+                    src={image}
+                  />
                   <div>
-                    <p className="text-sm font-semibold text-on-surface">{name}</p>
+                    <p className="text-sm font-semibold text-on-surface">
+                      {name}
+                    </p>
                     <p className="text-xs text-on-surface-variant">{role}</p>
                   </div>
                 </div>
-                <button className="rounded-lg bg-primary/10 p-2 text-primary" type="button">
+                <button
+                  className="rounded-lg bg-primary/10 p-2 text-primary"
+                  type="button"
+                >
                   <Plus size={14} />
                 </button>
               </div>
@@ -210,10 +275,12 @@ export function ErpDemoCommunity() {
           <span className="inline-flex rounded-xl bg-white/18 p-3">
             <Award size={22} />
           </span>
-          <h3 className="mt-5 font-headline text-2xl font-black">Clinical excellence</h3>
+          <h3 className="mt-5 font-headline text-2xl font-black">
+            Clinical excellence
+          </h3>
           <p className="mt-3 text-sm leading-7 text-white/82">
-            You are in the top 5% of contributors this month. Keep sharing relevant
-            operational insight with the network.
+            You are in the top 5% of contributors this month. Keep sharing
+            relevant operational insight with the network.
           </p>
         </div>
       </aside>
@@ -223,7 +290,10 @@ export function ErpDemoCommunity() {
 
 function IconButton({ icon }: { icon: React.ReactNode }) {
   return (
-    <button className="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high" type="button">
+    <button
+      className="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high"
+      type="button"
+    >
       {icon}
     </button>
   );
@@ -231,7 +301,10 @@ function IconButton({ icon }: { icon: React.ReactNode }) {
 
 function ActionText({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
-    <button className="flex items-center gap-2 text-sm font-semibold text-on-surface-variant hover:text-primary" type="button">
+    <button
+      className="flex items-center gap-2 text-sm font-semibold text-on-surface-variant hover:text-primary"
+      type="button"
+    >
       {icon}
       {text}
     </button>

@@ -3,7 +3,7 @@ import { appointments } from "@erp_virujhealth/db/schema/appointments";
 import { desc, eq } from "drizzle-orm";
 import z from "zod";
 
-import { permissionedErpProcedure } from "../index";
+import { permissionedErpProcedure } from "../middleware/auth";
 
 const appointmentStatusSchema = z.enum([
   "pending_approval",

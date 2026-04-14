@@ -26,7 +26,10 @@ export function ErpDemoTopBar({
           {titles[currentPage] ?? "Viruj Health"}
         </h2>
         <div className="relative hidden lg:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-outline" size={18} />
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+            size={18}
+          />
           <input
             className="w-80 rounded-lg border-none bg-surface-container-low py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20"
             placeholder="Search patients, records, doctors..."

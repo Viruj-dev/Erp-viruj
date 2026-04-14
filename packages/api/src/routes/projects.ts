@@ -3,7 +3,7 @@ import { projects, projectTasks } from "@erp_virujhealth/db/schema/projects";
 import { desc, eq } from "drizzle-orm";
 import z from "zod";
 
-import { publicProcedure } from "../index";
+import { publicProcedure } from "../middleware/auth";
 
 const prioritySchema = z.enum(["low", "medium", "high"]);
 

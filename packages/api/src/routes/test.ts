@@ -3,7 +3,7 @@ import { counters } from "@erp_virujhealth/db/schema/counter";
 import { eq } from "drizzle-orm";
 import z from "zod";
 
-import { publicProcedure } from "../index";
+import { publicProcedure } from "../middleware/auth";
 
 export const testRouter = {
   ping: publicProcedure.handler(() => {
@@ -21,7 +21,7 @@ export const testRouter = {
         .from(counters)
         .where(eq(counters.name, input.name))
         .limit(1);
-      
+
       if (result.length === 0) {
         // Create it if it doesn't exist
         const [inserted] = await db
@@ -30,7 +30,7 @@ export const testRouter = {
           .returning();
         return inserted;
       }
-      
+
       return result[0];
     }),
 
@@ -61,7 +61,7 @@ export const testRouter = {
         .set({ value: current.value + input.amount })
         .where(eq(counters.name, input.name))
         .returning();
-      
+
       return updated;
     }),
 
@@ -73,7 +73,7 @@ export const testRouter = {
         .set({ value: 0 })
         .where(eq(counters.name, input.name))
         .returning();
-      
+
       return updated;
     }),
 };

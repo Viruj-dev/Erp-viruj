@@ -185,7 +185,9 @@ export function ErpDemoLogin({
         return;
       }
 
-      setSuccessMessage("Invitation accepted. Preparing your organization access.");
+      setSuccessMessage(
+        "Invitation accepted. Preparing your organization access."
+      );
       await onAuthenticated();
     } finally {
       setIsPending(false);
@@ -203,7 +205,10 @@ export function ErpDemoLogin({
           />
         </div>
         <div className="relative z-10 max-w-lg">
-          <motion.div animate={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: -20 }}>
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: -20 }}
+          >
             <span className="font-headline text-3xl font-black tracking-tight text-white">
               Viruj Health
             </span>
@@ -223,12 +228,14 @@ export function ErpDemoLogin({
             initial={{ opacity: 0, y: 20 }}
             transition={{ delay: 0.35 }}
           >
-            Secure Better Auth sessions, organization-scoped roles, and Neon-backed
-            clinical operations in one ERP workspace.
+            Secure Better Auth sessions, organization-scoped roles, and
+            Neon-backed clinical operations in one ERP workspace.
           </motion.p>
           <div className="mt-12 flex gap-4">
             <FeaturePill
-              icon={<ShieldCheck className="text-secondary-container" size={24} />}
+              icon={
+                <ShieldCheck className="text-secondary-container" size={24} />
+              }
               subtitle="Org-scoped sessions"
               title="Role Controlled"
             />
@@ -262,7 +269,11 @@ export function ErpDemoLogin({
                 </header>
 
                 <div className="grid grid-cols-3 gap-2 rounded-lg bg-surface-container-low p-1">
-                  <RoleCard active icon={<Building2 size={20} />} label="Hospital" />
+                  <RoleCard
+                    active
+                    icon={<Building2 size={20} />}
+                    label="Hospital"
+                  />
                   <RoleCard icon={<Stethoscope size={20} />} label="Doctor" />
                   <RoleCard icon={<Microscope size={20} />} label="Lab" />
                 </div>
@@ -287,7 +298,10 @@ export function ErpDemoLogin({
                   <FormField
                     label="Password"
                     onChange={(value) =>
-                      setLoginForm((current) => ({ ...current, password: value }))
+                      setLoginForm((current) => ({
+                        ...current,
+                        password: value,
+                      }))
                     }
                     placeholder="Enter your secure password"
                     required
@@ -374,8 +388,8 @@ export function ErpDemoLogin({
                 <div className="flex gap-4 rounded-xl border border-primary-fixed bg-primary-fixed/30 p-4">
                   <Info className="mt-1 text-primary" size={18} />
                   <p className="text-xs leading-relaxed text-on-primary-fixed">
-                    This flow creates the owner account first, then provisions the
-                    organization and activates it in the current session.
+                    This flow creates the owner account first, then provisions
+                    the organization and activates it in the current session.
                   </p>
                 </div>
 
@@ -416,7 +430,10 @@ export function ErpDemoLogin({
                     <FormField
                       label="Owner Name"
                       onChange={(value) =>
-                        setOnboardingForm((current) => ({ ...current, name: value }))
+                        setOnboardingForm((current) => ({
+                          ...current,
+                          name: value,
+                        }))
                       }
                       placeholder="Dr. Sarah Mitchell"
                       required
@@ -426,7 +443,10 @@ export function ErpDemoLogin({
                     <FormField
                       label="Owner Email"
                       onChange={(value) =>
-                        setOnboardingForm((current) => ({ ...current, email: value }))
+                        setOnboardingForm((current) => ({
+                          ...current,
+                          email: value,
+                        }))
                       }
                       placeholder="chief.admin@viruj.health"
                       required
@@ -487,7 +507,8 @@ export function ErpDemoLogin({
                     Accept Invitation
                   </h2>
                   <p className="mt-2 text-on-surface-variant">
-                    Join an existing clinical institution with a Better Auth invitation ID
+                    Join an existing clinical institution with a Better Auth
+                    invitation ID
                   </p>
                 </header>
 
@@ -515,7 +536,10 @@ export function ErpDemoLogin({
                     <FormField
                       label="Email"
                       onChange={(value) =>
-                        setInvitationForm((current) => ({ ...current, email: value }))
+                        setInvitationForm((current) => ({
+                          ...current,
+                          email: value,
+                        }))
                       }
                       placeholder="doctor@hospital.org"
                       required
@@ -525,7 +549,10 @@ export function ErpDemoLogin({
                     <FormField
                       label="Name"
                       onChange={(value) =>
-                        setInvitationForm((current) => ({ ...current, name: value }))
+                        setInvitationForm((current) => ({
+                          ...current,
+                          name: value,
+                        }))
                       }
                       placeholder="Dr. Michael Chen"
                       type="text"
@@ -742,8 +769,8 @@ function hasError(result: unknown): result is BetterAuthResult & {
 } {
   return Boolean(
     result &&
-      typeof result === "object" &&
-      "error" in result &&
-      (result as BetterAuthResult).error
+    typeof result === "object" &&
+    "error" in result &&
+    (result as BetterAuthResult).error
   );
 }

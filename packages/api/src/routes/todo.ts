@@ -3,7 +3,7 @@ import { todo } from "@erp_virujhealth/db/schema/todo";
 import { eq } from "drizzle-orm";
 import z from "zod";
 
-import { publicProcedure } from "../index";
+import { publicProcedure } from "../middleware/auth";
 
 export const todoRouter = {
   getAll: publicProcedure.handler(async () => {
@@ -21,10 +21,15 @@ export const todoRouter = {
   toggle: publicProcedure
     .input(z.object({ id: z.number(), completed: z.boolean() }))
     .handler(async ({ input }) => {
-      return await db.update(todo).set({ completed: input.completed }).where(eq(todo.id, input.id));
+      return await db
+        .update(todo)
+        .set({ completed: input.completed })
+        .where(eq(todo.id, input.id));
     }),
 
-  delete: publicProcedure.input(z.object({ id: z.number() })).handler(async ({ input }) => {
-    return await db.delete(todo).where(eq(todo.id, input.id));
-  }),
+  delete: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .handler(async ({ input }) => {
+      return await db.delete(todo).where(eq(todo.id, input.id));
+    }),
 };

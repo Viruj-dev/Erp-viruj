@@ -11,15 +11,16 @@ import {
   MoreVertical,
   X,
 } from "lucide-react";
-import { appointments } from "@/components/erp-demo/data";
+import { appointments } from "@/features/dashboard/components/data";
 
 export function ErpDemoAppointments() {
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(
-    appointments[0]?.id ?? "",
+    appointments[0]?.id ?? ""
   );
   const selectedAppointment =
-    appointments.find((appointment) => appointment.id === selectedAppointmentId) ??
-    appointments[0];
+    appointments.find(
+      (appointment) => appointment.id === selectedAppointmentId
+    ) ?? appointments[0];
 
   if (!selectedAppointment) {
     return null;
@@ -29,17 +30,33 @@ export function ErpDemoAppointments() {
     <div className="space-y-8 p-6 lg:p-8">
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         <TopMetric label="Total bookings" note="+12%" value="1,284" />
-        <TopMetric label="Confirmed" note="Stable" value="842" tone="secondary" />
-        <TopMetric label="Pending review" note="Urgent" value="43" tone="tertiary" />
+        <TopMetric
+          label="Confirmed"
+          note="Stable"
+          value="842"
+          tone="secondary"
+        />
+        <TopMetric
+          label="Pending review"
+          note="Urgent"
+          value="43"
+          tone="tertiary"
+        />
         <TopMetric label="Cancellations" note="-2%" value="18" tone="neutral" />
       </section>
 
       <section className="flex flex-wrap items-center justify-between gap-4 rounded-[1.5rem] bg-surface-container-low p-3">
         <div className="flex rounded-xl bg-white p-1 shadow-sm">
-          <button className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white" type="button">
+          <button
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white"
+            type="button"
+          >
             Table View
           </button>
-          <button className="rounded-lg px-4 py-2 text-sm font-semibold text-on-surface-variant" type="button">
+          <button
+            className="rounded-lg px-4 py-2 text-sm font-semibold text-on-surface-variant"
+            type="button"
+          >
             Calendar
           </button>
         </div>
@@ -67,35 +84,56 @@ export function ErpDemoAppointments() {
                 <tr
                   key={appointment.id}
                   className={`cursor-pointer transition-colors hover:bg-surface-container-low ${
-                    appointment.id === selectedAppointment.id ? "bg-surface-container-low" : ""
+                    appointment.id === selectedAppointment.id
+                      ? "bg-surface-container-low"
+                      : ""
                   }`}
                   onClick={() => setSelectedAppointmentId(appointment.id)}
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       {appointment.patientAvatar ? (
-                        <img alt={appointment.patientName} className="h-10 w-10 rounded-full object-cover" src={appointment.patientAvatar} />
+                        <img
+                          alt={appointment.patientName}
+                          className="h-10 w-10 rounded-full object-cover"
+                          src={appointment.patientAvatar}
+                        />
                       ) : (
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-black text-primary">
                           {getInitials(appointment.patientName)}
                         </div>
                       )}
                       <div>
-                        <p className="font-semibold text-on-surface">{appointment.patientName}</p>
-                        <p className="text-xs text-on-surface-variant">{appointment.patientId}</p>
+                        <p className="font-semibold text-on-surface">
+                          {appointment.patientName}
+                        </p>
+                        <p className="text-xs text-on-surface-variant">
+                          {appointment.patientId}
+                        </p>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="font-medium text-on-surface">{appointment.date}</p>
-                    <p className="text-xs text-on-surface-variant">{appointment.time}</p>
+                    <p className="font-medium text-on-surface">
+                      {appointment.date}
+                    </p>
+                    <p className="text-xs text-on-surface-variant">
+                      {appointment.time}
+                    </p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={statusClassName(appointment.status)}>{appointment.status}</span>
+                    <span className={statusClassName(appointment.status)}>
+                      {appointment.status}
+                    </span>
                   </td>
-                  <td className="px-6 py-4 text-on-surface-variant">{appointment.doctor}</td>
+                  <td className="px-6 py-4 text-on-surface-variant">
+                    {appointment.doctor}
+                  </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="rounded-lg p-2 text-outline hover:bg-surface-container-low" type="button">
+                    <button
+                      className="rounded-lg p-2 text-outline hover:bg-surface-container-low"
+                      type="button"
+                    >
                       <MoreVertical size={16} />
                     </button>
                   </td>
@@ -107,7 +145,10 @@ export function ErpDemoAppointments() {
             <p>Showing 1 to 4 of 258 entries</p>
             <div className="flex items-center gap-1">
               <PaginationIcon icon={<ChevronLeft size={16} />} />
-              <button className="h-8 w-8 rounded-lg bg-primary text-xs font-black text-white" type="button">
+              <button
+                className="h-8 w-8 rounded-lg bg-primary text-xs font-black text-white"
+                type="button"
+              >
                 1
               </button>
               <PaginationIcon label="2" />
@@ -123,9 +164,14 @@ export function ErpDemoAppointments() {
               <h3 className="font-headline text-2xl font-black text-on-surface">
                 Appointment details
               </h3>
-              <p className="mt-1 text-sm text-on-surface-variant">Ref {selectedAppointment.id}</p>
+              <p className="mt-1 text-sm text-on-surface-variant">
+                Ref {selectedAppointment.id}
+              </p>
             </div>
-            <button className="rounded-full p-2 text-outline hover:bg-surface-container-low" type="button">
+            <button
+              className="rounded-full p-2 text-outline hover:bg-surface-container-low"
+              type="button"
+            >
               <X size={16} />
             </button>
           </div>
@@ -135,10 +181,15 @@ export function ErpDemoAppointments() {
               <img
                 alt={selectedAppointment.patientName}
                 className="h-16 w-16 rounded-[1rem] object-cover"
-                src={selectedAppointment.patientAvatar || "https://images.unsplash.com/photo-1559839734-2b71f1536783?w=100&h=100&fit=crop"}
+                src={
+                  selectedAppointment.patientAvatar ||
+                  "https://images.unsplash.com/photo-1559839734-2b71f1536783?w=100&h=100&fit=crop"
+                }
               />
               <div>
-                <p className="font-semibold text-on-surface">{selectedAppointment.patientName}</p>
+                <p className="font-semibold text-on-surface">
+                  {selectedAppointment.patientName}
+                </p>
                 <p className="mt-1 text-sm text-on-surface-variant">
                   Patient ID: {selectedAppointment.patientId}
                 </p>
@@ -152,7 +203,10 @@ export function ErpDemoAppointments() {
               items={[
                 ["Date", selectedAppointment.date],
                 ["Time slot", selectedAppointment.time],
-                ["Service type", `${selectedAppointment.department} consultation`],
+                [
+                  "Service type",
+                  `${selectedAppointment.department} consultation`,
+                ],
                 ["Location", "North Wing, Room 4B"],
               ]}
               title="Schedule information"
@@ -185,7 +239,9 @@ export function ErpDemoAppointments() {
                     <p className="truncate text-sm font-semibold text-on-surface">
                       Lab_Results_Aug.pdf
                     </p>
-                    <p className="text-xs text-on-surface-variant">1.2 MB | Aug 14, 2023</p>
+                    <p className="text-xs text-on-surface-variant">
+                      1.2 MB | Aug 14, 2023
+                    </p>
                   </div>
                   <Download className="text-outline" size={18} />
                 </div>
@@ -204,44 +260,69 @@ export function ErpDemoAppointments() {
       </section>
 
       <section>
-        <h4 className="font-headline text-2xl font-black text-on-surface">Upcoming week preview</h4>
+        <h4 className="font-headline text-2xl font-black text-on-surface">
+          Upcoming week preview
+        </h4>
         <div className="mt-5 grid gap-4 md:grid-cols-4 xl:grid-cols-7">
-          {["Mon 12", "Tue 13", "Wed 14 (Today)", "Thu 15", "Fri 16", "Sat 17", "Sun 18"].map(
-            (day, index) => (
-              <div key={day} className={`rounded-[1.5rem] border p-4 shadow-sm ${
-                index === 2 ? "scale-[1.02] border-primary bg-white" : "border-outline-variant/20 bg-surface-container-lowest opacity-75"
-              }`}>
-                <p className={`text-xs font-black uppercase tracking-[0.18em] ${
+          {[
+            "Mon 12",
+            "Tue 13",
+            "Wed 14 (Today)",
+            "Thu 15",
+            "Fri 16",
+            "Sat 17",
+            "Sun 18",
+          ].map((day, index) => (
+            <div
+              key={day}
+              className={`rounded-[1.5rem] border p-4 shadow-sm ${
+                index === 2
+                  ? "scale-[1.02] border-primary bg-white"
+                  : "border-outline-variant/20 bg-surface-container-lowest opacity-75"
+              }`}
+            >
+              <p
+                className={`text-xs font-black uppercase tracking-[0.18em] ${
                   index === 2 ? "text-primary" : "text-on-surface-variant"
-                }`}>
-                  {day}
-                </p>
-                <div className="mt-4 space-y-2">
-                  {index === 2 ? (
-                    <>
-                      <PreviewLine color="bg-secondary" text="12 appts" />
-                      <PreviewLine color="bg-error" text="2 emergency" />
-                      <p className="border-t border-outline-variant/20 pt-3 text-[11px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
-                        Next: 09:30 AM
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <div className="h-1 rounded-full bg-surface-container-high" />
-                      <div className="h-1 w-2/3 rounded-full bg-surface-container-high" />
-                    </>
-                  )}
-                </div>
+                }`}
+              >
+                {day}
+              </p>
+              <div className="mt-4 space-y-2">
+                {index === 2 ? (
+                  <>
+                    <PreviewLine color="bg-secondary" text="12 appts" />
+                    <PreviewLine color="bg-error" text="2 emergency" />
+                    <p className="border-t border-outline-variant/20 pt-3 text-[11px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+                      Next: 09:30 AM
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="h-1 rounded-full bg-surface-container-high" />
+                    <div className="h-1 w-2/3 rounded-full bg-surface-container-high" />
+                  </>
+                )}
               </div>
-            ),
-          )}
+            </div>
+          ))}
         </div>
       </section>
     </div>
   );
 }
 
-function TopMetric({ label, note, tone = "primary", value }: { label: string; note: string; tone?: "primary" | "secondary" | "tertiary" | "neutral"; value: string }) {
+function TopMetric({
+  label,
+  note,
+  tone = "primary",
+  value,
+}: {
+  label: string;
+  note: string;
+  tone?: "primary" | "secondary" | "tertiary" | "neutral";
+  value: string;
+}) {
   const tones = {
     primary: "bg-primary/10 text-primary",
     secondary: "bg-secondary/10 text-secondary",
@@ -253,27 +334,53 @@ function TopMetric({ label, note, tone = "primary", value }: { label: string; no
     <div className="rounded-[1.5rem] border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
       <div className="flex items-start justify-between">
         <span className={`rounded-2xl p-3 ${tones[tone]}`}>
-          {tone === "primary" ? <CalendarDays size={18} /> : tone === "secondary" ? <Check size={18} /> : tone === "tertiary" ? <FileText size={18} /> : <X size={18} />}
+          {tone === "primary" ? (
+            <CalendarDays size={18} />
+          ) : tone === "secondary" ? (
+            <Check size={18} />
+          ) : tone === "tertiary" ? (
+            <FileText size={18} />
+          ) : (
+            <X size={18} />
+          )}
         </span>
-        <span className="text-xs font-black uppercase tracking-[0.16em] text-on-surface-variant">{note}</span>
+        <span className="text-xs font-black uppercase tracking-[0.16em] text-on-surface-variant">
+          {note}
+        </span>
       </div>
-      <p className="mt-5 text-[11px] font-black uppercase tracking-[0.22em] text-on-surface-variant">{label}</p>
-      <p className="mt-2 font-headline text-4xl font-black text-on-surface">{value}</p>
+      <p className="mt-5 text-[11px] font-black uppercase tracking-[0.22em] text-on-surface-variant">
+        {label}
+      </p>
+      <p className="mt-2 font-headline text-4xl font-black text-on-surface">
+        {value}
+      </p>
     </div>
   );
 }
 
 function FilterChip({ label }: { label: string }) {
   return (
-    <button className="rounded-xl border border-outline-variant/20 bg-white px-4 py-2 text-sm font-semibold text-on-surface" type="button">
+    <button
+      className="rounded-xl border border-outline-variant/20 bg-white px-4 py-2 text-sm font-semibold text-on-surface"
+      type="button"
+    >
       {label}
     </button>
   );
 }
 
-function PaginationIcon({ icon, label }: { icon?: React.ReactNode; label?: string }) {
+function PaginationIcon({
+  icon,
+  label,
+}: {
+  icon?: React.ReactNode;
+  label?: string;
+}) {
   return (
-    <button className="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-black text-on-surface-variant hover:bg-white" type="button">
+    <button
+      className="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-black text-on-surface-variant hover:bg-white"
+      type="button"
+    >
       {icon ?? label}
     </button>
   );
@@ -289,15 +396,27 @@ function statusClassName(status: string) {
   return "inline-flex rounded-full bg-surface-container-high px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant";
 }
 
-function DetailGrid({ items, title }: { items: [string, string][]; title: string }) {
+function DetailGrid({
+  items,
+  title,
+}: {
+  items: [string, string][];
+  title: string;
+}) {
   return (
     <div>
-      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-on-surface-variant">{title}</p>
+      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-on-surface-variant">
+        {title}
+      </p>
       <div className="mt-3 grid grid-cols-2 gap-4">
         {items.map(([label, value]) => (
           <div key={label}>
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">{label}</p>
-            <p className="mt-2 text-sm font-semibold text-on-surface">{value}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">
+              {label}
+            </p>
+            <p className="mt-2 text-sm font-semibold text-on-surface">
+              {value}
+            </p>
           </div>
         ))}
       </div>
@@ -305,7 +424,13 @@ function DetailGrid({ items, title }: { items: [string, string][]; title: string
   );
 }
 
-function ActionButton({ label, variant }: { label: string; variant: "primary" | "secondary" | "ghost" }) {
+function ActionButton({
+  label,
+  variant,
+}: {
+  label: string;
+  variant: "primary" | "secondary" | "ghost";
+}) {
   const className =
     variant === "primary"
       ? "bg-primary text-white shadow-md"
@@ -313,18 +438,31 @@ function ActionButton({ label, variant }: { label: string; variant: "primary" | 
         ? "border border-outline-variant/30 bg-white text-on-surface"
         : "border border-secondary/20 bg-transparent text-secondary";
 
-  return <button className={`rounded-xl px-4 py-3 text-sm font-black ${className}`} type="button">{label}</button>;
+  return (
+    <button
+      className={`rounded-xl px-4 py-3 text-sm font-black ${className}`}
+      type="button"
+    >
+      {label}
+    </button>
+  );
 }
 
 function PreviewLine({ color, text }: { color: string; text: string }) {
   return (
     <div className="flex items-center gap-2">
       <span className={`h-2 w-2 rounded-full ${color}`} />
-      <p className="text-[11px] font-black uppercase tracking-[0.16em] text-on-surface">{text}</p>
+      <p className="text-[11px] font-black uppercase tracking-[0.16em] text-on-surface">
+        {text}
+      </p>
     </div>
   );
 }
 
 function getInitials(name: string) {
-  return name.split(" ").map((part) => part[0]).join("").slice(0, 2);
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2);
 }

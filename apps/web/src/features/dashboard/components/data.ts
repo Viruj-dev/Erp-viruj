@@ -1,4 +1,7 @@
-import type { AppointmentRecord, PatientRecord } from "@/components/erp-demo/types";
+import type {
+  AppointmentRecord,
+  PatientRecord,
+} from "@/features/dashboard/components/types";
 
 export const weeklyBookings = [
   { name: "Mon", value: 60 },

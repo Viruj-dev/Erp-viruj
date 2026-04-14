@@ -54,7 +54,8 @@ const tabs = [
 ] as const;
 
 export function ErpDemoSettings({ userName }: { userName: string }) {
-  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]["id"]>("profile");
+  const [activeTab, setActiveTab] =
+    useState<(typeof tabs)[number]["id"]>("profile");
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = () => {
@@ -78,9 +79,13 @@ export function ErpDemoSettings({ userName }: { userName: string }) {
                 onClick={() => setActiveTab(tab.id)}
                 type="button"
               >
-                <span className={`rounded-xl p-2 ${
-                  activeTab === tab.id ? "bg-white/18" : "bg-surface-container-highest"
-                }`}>
+                <span
+                  className={`rounded-xl p-2 ${
+                    activeTab === tab.id
+                      ? "bg-white/18"
+                      : "bg-surface-container-highest"
+                  }`}
+                >
                   <tab.icon size={18} />
                 </span>
                 <span>
@@ -100,7 +105,10 @@ export function ErpDemoSettings({ userName }: { userName: string }) {
             Deleting this account would permanently remove access to the demo
             workspace and linked institution data.
           </p>
-          <button className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-error px-4 py-3 text-sm font-black text-white shadow-md" type="button">
+          <button
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-error px-4 py-3 text-sm font-black text-white shadow-md"
+            type="button"
+          >
             <Trash2 size={16} />
             Delete Account
           </button>
@@ -119,7 +127,12 @@ export function ErpDemoSettings({ userName }: { userName: string }) {
                   Manage your professional clinical identity.
                 </p>
               </div>
-              <button className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-black text-white shadow-md disabled:opacity-60" disabled={isSaving} onClick={handleSave} type="button">
+              <button
+                className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-black text-white shadow-md disabled:opacity-60"
+                disabled={isSaving}
+                onClick={handleSave}
+                type="button"
+              >
                 <Save size={16} />
                 {isSaving ? "Saving..." : "Save Changes"}
               </button>
@@ -128,24 +141,42 @@ export function ErpDemoSettings({ userName }: { userName: string }) {
             <section className="space-y-8 rounded-[2rem] border border-outline-variant/20 bg-surface-container-low p-8">
               <div className="flex flex-col gap-6 md:flex-row md:items-center">
                 <div className="group relative">
-                  <img alt="Profile" className="h-24 w-24 rounded-[1.5rem] border-4 border-surface object-cover shadow-lg" src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&h=200&fit=crop" />
-                  <button className="absolute inset-0 flex items-center justify-center rounded-[1.5rem] bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100" type="button">
+                  <img
+                    alt="Profile"
+                    className="h-24 w-24 rounded-[1.5rem] border-4 border-surface object-cover shadow-lg"
+                    src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&h=200&fit=crop"
+                  />
+                  <button
+                    className="absolute inset-0 flex items-center justify-center rounded-[1.5rem] bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                    type="button"
+                  >
                     <Camera size={20} />
                   </button>
                 </div>
                 <div>
-                  <h3 className="font-headline text-2xl font-black text-on-surface">Profile photo</h3>
+                  <h3 className="font-headline text-2xl font-black text-on-surface">
+                    Profile photo
+                  </h3>
                   <p className="mt-2 text-sm leading-7 text-on-surface-variant">
-                    Update your image so colleagues can identify you quickly across the
-                    dashboard, community feed, and workflow views.
+                    Update your image so colleagues can identify you quickly
+                    across the dashboard, community feed, and workflow views.
                   </p>
                 </div>
               </div>
 
               <div className="grid gap-6 md:grid-cols-2">
-                <Field defaultValue={userName || "Dr. Sarah Mitchell"} label="Full Name" />
-                <Field defaultValue="Senior Cardiologist" label="Professional Role" />
-                <Field defaultValue="s.mitchell@viruj.health" label="Email Address" />
+                <Field
+                  defaultValue={userName || "Dr. Sarah Mitchell"}
+                  label="Full Name"
+                />
+                <Field
+                  defaultValue="Senior Cardiologist"
+                  label="Professional Role"
+                />
+                <Field
+                  defaultValue="s.mitchell@viruj.health"
+                  label="Email Address"
+                />
                 <Field defaultValue="+1 (555) 012-3456" label="Phone Number" />
               </div>
 
@@ -170,8 +201,12 @@ export function ErpDemoSettings({ userName }: { userName: string }) {
                       <Shield size={18} />
                     </span>
                     <div>
-                      <p className="font-semibold text-on-surface">Verified clinician</p>
-                      <p className="text-sm text-on-surface-variant">Institutional ID: VIRUJ-ST-001</p>
+                      <p className="font-semibold text-on-surface">
+                        Verified clinician
+                      </p>
+                      <p className="text-sm text-on-surface-variant">
+                        Institutional ID: VIRUJ-ST-001
+                      </p>
                     </div>
                   </div>
                   <span className="inline-flex items-center gap-2 rounded-full bg-secondary-container/45 px-3 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-secondary">
@@ -188,9 +223,9 @@ export function ErpDemoSettings({ userName }: { userName: string }) {
               {tabs.find((tab) => tab.id === activeTab)?.label}
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-on-surface-variant">
-              The active shell from ERP-demo is now installed. This tab is present in
-              the new UI, but only the main profile surface has been expanded with form
-              content for this pass.
+              The active shell from ERP-demo is now installed. This tab is
+              present in the new UI, but only the main profile surface has been
+              expanded with form content for this pass.
             </p>
           </div>
         )}
@@ -199,13 +234,23 @@ export function ErpDemoSettings({ userName }: { userName: string }) {
   );
 }
 
-function Field({ defaultValue, label }: { defaultValue: string; label: string }) {
+function Field({
+  defaultValue,
+  label,
+}: {
+  defaultValue: string;
+  label: string;
+}) {
   return (
     <div>
       <label className="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-on-surface-variant">
         {label}
       </label>
-      <input className="mt-2 w-full rounded-xl border-none bg-surface-container-highest px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20" defaultValue={defaultValue} type="text" />
+      <input
+        className="mt-2 w-full rounded-xl border-none bg-surface-container-highest px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20"
+        defaultValue={defaultValue}
+        type="text"
+      />
     </div>
   );
 }

@@ -83,24 +83,36 @@ const staffMembers = [
 ];
 
 export function ErpDemoStaff() {
-  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(staffMembers[0]?.id ?? null);
-  const selectedStaff = staffMembers.find((member) => member.id === selectedStaffId) ?? null;
+  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(
+    staffMembers[0]?.id ?? null
+  );
+  const selectedStaff =
+    staffMembers.find((member) => member.id === selectedStaffId) ?? null;
 
   return (
     <div className="space-y-6 p-6 lg:p-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-3">
           <Badge icon={<Users size={16} />} text="124 total staff" />
-          <Badge icon={<Award size={16} />} text="82 on duty" tone="secondary" />
+          <Badge
+            icon={<Award size={16} />}
+            text="82 on duty"
+            tone="secondary"
+          />
         </div>
-        <button className="flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-black text-white shadow-md" type="button">
+        <button
+          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-black text-white shadow-md"
+          type="button"
+        >
           <UserPlus size={16} />
           Add Member
         </button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-12">
-        <div className={`${selectedStaff ? "lg:col-span-8" : "lg:col-span-12"} grid gap-4 md:grid-cols-2 xl:grid-cols-3`}>
+        <div
+          className={`${selectedStaff ? "lg:col-span-8" : "lg:col-span-12"} grid gap-4 md:grid-cols-2 xl:grid-cols-3`}
+        >
           {staffMembers.map((member) => (
             <button
               key={member.id}
@@ -114,20 +126,32 @@ export function ErpDemoStaff() {
             >
               <div className="flex items-start justify-between">
                 <div className="relative">
-                  <img alt={member.name} className="h-14 w-14 rounded-2xl object-cover" src={member.image} />
-                  <span className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white ${
-                    member.status === "active" ? "bg-secondary" : "bg-error"
-                  }`} />
+                  <img
+                    alt={member.name}
+                    className="h-14 w-14 rounded-2xl object-cover"
+                    src={member.image}
+                  />
+                  <span
+                    className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white ${
+                      member.status === "active" ? "bg-secondary" : "bg-error"
+                    }`}
+                  />
                 </div>
               </div>
-              <h3 className="mt-4 font-headline text-xl font-black text-on-surface">{member.name}</h3>
-              <p className="mt-1 text-xs font-black uppercase tracking-[0.2em] text-primary">{member.role}</p>
+              <h3 className="mt-4 font-headline text-xl font-black text-on-surface">
+                {member.name}
+              </h3>
+              <p className="mt-1 text-xs font-black uppercase tracking-[0.2em] text-primary">
+                {member.role}
+              </p>
               <div className="mt-5 flex items-center justify-between border-t border-outline-variant/20 pt-4 text-sm">
                 <span className="flex items-center gap-2 text-on-surface-variant">
                   <Briefcase size={14} />
                   {member.department}
                 </span>
-                <span className="font-black text-on-surface">{member.rating}</span>
+                <span className="font-black text-on-surface">
+                  {member.rating}
+                </span>
               </div>
             </button>
           ))}
@@ -137,13 +161,23 @@ export function ErpDemoStaff() {
           <aside className="space-y-6 lg:col-span-4">
             <div className="overflow-hidden rounded-[2rem] border border-outline-variant/20 bg-surface-container-low shadow-xl">
               <div className="relative h-32 bg-gradient-to-r from-primary to-primary-container">
-                <button className="absolute right-4 top-4 rounded-full bg-white/20 p-2 text-white" onClick={() => setSelectedStaffId(null)} type="button">
+                <button
+                  className="absolute right-4 top-4 rounded-full bg-white/20 p-2 text-white"
+                  onClick={() => setSelectedStaffId(null)}
+                  type="button"
+                >
                   <X size={16} />
                 </button>
               </div>
               <div className="px-6 pb-6">
-                <img alt={selectedStaff.name} className="-mt-12 h-24 w-24 rounded-[1.4rem] border-4 border-surface object-cover shadow-lg" src={selectedStaff.image} />
-                <h2 className="mt-4 font-headline text-3xl font-black text-on-surface">{selectedStaff.name}</h2>
+                <img
+                  alt={selectedStaff.name}
+                  className="-mt-12 h-24 w-24 rounded-[1.4rem] border-4 border-surface object-cover shadow-lg"
+                  src={selectedStaff.image}
+                />
+                <h2 className="mt-4 font-headline text-3xl font-black text-on-surface">
+                  {selectedStaff.name}
+                </h2>
                 <p className="mt-1 text-sm text-on-surface-variant">
                   {selectedStaff.role} | {selectedStaff.id}
                 </p>
@@ -154,10 +188,19 @@ export function ErpDemoStaff() {
                 </div>
 
                 <div className="mt-8 space-y-6">
-                  <DetailBlock title="Professional bio" value={selectedStaff.bio} />
+                  <DetailBlock
+                    title="Professional bio"
+                    value={selectedStaff.bio}
+                  />
                   <div className="grid grid-cols-2 gap-4">
-                    <SmallStat label="Patients" value={`${selectedStaff.patients}`} />
-                    <SmallStat label="Experience" value={selectedStaff.experience} />
+                    <SmallStat
+                      label="Patients"
+                      value={`${selectedStaff.patients}`}
+                    />
+                    <SmallStat
+                      label="Experience"
+                      value={selectedStaff.experience}
+                    />
                   </div>
                   <div>
                     <p className="text-[11px] font-black uppercase tracking-[0.22em] text-on-surface-variant">
@@ -165,7 +208,10 @@ export function ErpDemoStaff() {
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {selectedStaff.specializations.map((specialization) => (
-                        <span key={specialization} className="rounded-full border border-secondary/20 bg-secondary-container/35 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-secondary">
+                        <span
+                          key={specialization}
+                          className="rounded-full border border-secondary/20 bg-secondary-container/35 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-secondary"
+                        >
                           {specialization}
                         </span>
                       ))}
@@ -182,20 +228,41 @@ export function ErpDemoStaff() {
   );
 }
 
-function Badge({ icon, text, tone = "primary" }: { icon: React.ReactNode; text: string; tone?: "primary" | "secondary" }) {
+function Badge({
+  icon,
+  text,
+  tone = "primary",
+}: {
+  icon: React.ReactNode;
+  text: string;
+  tone?: "primary" | "secondary";
+}) {
   return (
-    <div className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-black ${
-      tone === "primary" ? "border-outline-variant/20 bg-surface-container-low text-on-surface" : "border-secondary/15 bg-secondary-container/35 text-secondary"
-    }`}>
+    <div
+      className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-black ${
+        tone === "primary"
+          ? "border-outline-variant/20 bg-surface-container-low text-on-surface"
+          : "border-secondary/15 bg-secondary-container/35 text-secondary"
+      }`}
+    >
       {icon}
       {text}
     </div>
   );
 }
 
-function ContactButton({ icon, label }: { icon: React.ReactNode; label: string }) {
+function ContactButton({
+  icon,
+  label,
+}: {
+  icon: React.ReactNode;
+  label: string;
+}) {
   return (
-    <button className="flex items-center justify-center gap-2 rounded-xl bg-surface-container-high px-4 py-3 text-sm font-black text-on-surface" type="button">
+    <button
+      className="flex items-center justify-center gap-2 rounded-xl bg-surface-container-high px-4 py-3 text-sm font-black text-on-surface"
+      type="button"
+    >
       {icon}
       {label}
     </button>
@@ -205,7 +272,9 @@ function ContactButton({ icon, label }: { icon: React.ReactNode; label: string }
 function DetailBlock({ title, value }: { title: string; value: string }) {
   return (
     <div>
-      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-on-surface-variant">{title}</p>
+      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-on-surface-variant">
+        {title}
+      </p>
       <p className="mt-3 text-sm leading-7 text-on-surface-variant">{value}</p>
     </div>
   );
@@ -214,7 +283,9 @@ function DetailBlock({ title, value }: { title: string; value: string }) {
 function SmallStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[1.2rem] border border-outline-variant/15 bg-surface-container-lowest p-4">
-      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">{label}</p>
+      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+        {label}
+      </p>
       <p className="mt-2 text-sm font-semibold text-on-surface">{value}</p>
     </div>
   );

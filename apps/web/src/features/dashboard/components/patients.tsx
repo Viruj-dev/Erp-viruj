@@ -12,10 +12,12 @@ import {
   UserPlus,
   Wind,
 } from "lucide-react";
-import { patients } from "@/components/erp-demo/data";
+import { patients } from "@/features/dashboard/components/data";
 
 export function ErpDemoPatients() {
-  const [selectedPatientId, setSelectedPatientId] = useState(patients[0]?.id ?? "");
+  const [selectedPatientId, setSelectedPatientId] = useState(
+    patients[0]?.id ?? ""
+  );
   const selectedPatient =
     patients.find((patient) => patient.id === selectedPatientId) ?? patients[0];
 
@@ -35,11 +37,17 @@ export function ErpDemoPatients() {
           </h2>
         </div>
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-primary hover:bg-primary/6" type="button">
+          <button
+            className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-primary hover:bg-primary/6"
+            type="button"
+          >
             <Download size={16} />
             Export Report
           </button>
-          <button className="flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white shadow-md" type="button">
+          <button
+            className="flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white shadow-md"
+            type="button"
+          >
             <UserPlus size={16} />
             Add Patient
           </button>
@@ -66,19 +74,31 @@ export function ErpDemoPatients() {
                 type="button"
               >
                 {patient.avatar ? (
-                  <img alt={patient.name} className="h-12 w-12 rounded-2xl object-cover" src={patient.avatar} />
+                  <img
+                    alt={patient.name}
+                    className="h-12 w-12 rounded-2xl object-cover"
+                    src={patient.avatar}
+                  />
                 ) : (
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 font-headline text-lg font-black text-primary">
                     {getInitials(patient.name)}
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-on-surface">{patient.name}</p>
-                  <p className="mt-1 text-xs text-on-surface-variant">{patient.id}</p>
+                  <p className="truncate font-semibold text-on-surface">
+                    {patient.name}
+                  </p>
+                  <p className="mt-1 text-xs text-on-surface-variant">
+                    {patient.id}
+                  </p>
                 </div>
-                <span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${
-                  patient.status === "Critical" ? "bg-error-container text-error" : "bg-secondary-container/45 text-secondary"
-                }`}>
+                <span
+                  className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${
+                    patient.status === "Critical"
+                      ? "bg-error-container text-error"
+                      : "bg-secondary-container/45 text-secondary"
+                  }`}
+                >
                   {patient.status}
                 </span>
               </button>
@@ -96,19 +116,31 @@ export function ErpDemoPatients() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div>
-                      <h3 className="font-headline text-3xl font-black text-on-surface">{selectedPatient.name}</h3>
+                      <h3 className="font-headline text-3xl font-black text-on-surface">
+                        {selectedPatient.name}
+                      </h3>
                       <p className="mt-2 text-sm text-on-surface-variant">
-                        {selectedPatient.gender} | {selectedPatient.age} years | {selectedPatient.bloodGroup}
+                        {selectedPatient.gender} | {selectedPatient.age} years |{" "}
+                        {selectedPatient.bloodGroup}
                       </p>
                     </div>
-                    <button className="flex items-center gap-2 rounded-xl bg-surface-container-low px-4 py-2 text-sm font-bold text-on-surface" type="button">
+                    <button
+                      className="flex items-center gap-2 rounded-xl bg-surface-container-low px-4 py-2 text-sm font-bold text-on-surface"
+                      type="button"
+                    >
                       <Share2 size={16} />
                       Share Profile
                     </button>
                   </div>
                   <div className="mt-6 grid gap-3 md:grid-cols-2">
-                    <ContactRow icon={<Phone size={16} />} text={selectedPatient.phone} />
-                    <ContactRow icon={<Mail size={16} />} text={selectedPatient.email} />
+                    <ContactRow
+                      icon={<Phone size={16} />}
+                      text={selectedPatient.phone}
+                    />
+                    <ContactRow
+                      icon={<Mail size={16} />}
+                      text={selectedPatient.email}
+                    />
                   </div>
                 </div>
               </div>
@@ -122,8 +154,14 @@ export function ErpDemoPatients() {
                 </p>
               </div>
               <div className="mt-5 space-y-3">
-                <AlertCard body="Severe anaphylactic risk" title="Penicillin allergy" />
-                <AlertCard body="Last A1C: 7.8% (elevated)" title="Type 2 diabetes" />
+                <AlertCard
+                  body="Severe anaphylactic risk"
+                  title="Penicillin allergy"
+                />
+                <AlertCard
+                  body="Last A1C: 7.8% (elevated)"
+                  title="Type 2 diabetes"
+                />
               </div>
             </div>
           </section>
@@ -135,21 +173,39 @@ export function ErpDemoPatients() {
                   <h4 className="font-headline text-2xl font-black text-on-surface">
                     Chronic conditions
                   </h4>
-                  <button className="text-xs font-black uppercase tracking-[0.2em] text-primary" type="button">
+                  <button
+                    className="text-xs font-black uppercase tracking-[0.2em] text-primary"
+                    type="button"
+                  >
                     Full history
                   </button>
                 </div>
                 <div className="mt-6 space-y-4">
                   {selectedPatient.conditions.map((condition) => (
-                    <div key={condition.id} className="flex gap-4 rounded-[1.25rem] bg-surface-container-low p-4">
-                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
-                        condition.type === "cardio" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
-                      }`}>
-                        {condition.type === "cardio" ? <Activity size={18} /> : <Wind size={18} />}
+                    <div
+                      key={condition.id}
+                      className="flex gap-4 rounded-[1.25rem] bg-surface-container-low p-4"
+                    >
+                      <div
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
+                          condition.type === "cardio"
+                            ? "bg-primary/10 text-primary"
+                            : "bg-secondary/10 text-secondary"
+                        }`}
+                      >
+                        {condition.type === "cardio" ? (
+                          <Activity size={18} />
+                        ) : (
+                          <Wind size={18} />
+                        )}
                       </div>
                       <div>
-                        <p className="font-semibold text-on-surface">{condition.name}</p>
-                        <p className="mt-1 text-sm leading-6 text-on-surface-variant">{condition.notes}</p>
+                        <p className="font-semibold text-on-surface">
+                          {condition.name}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-on-surface-variant">
+                          {condition.notes}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -161,21 +217,30 @@ export function ErpDemoPatients() {
                   <h4 className="font-headline text-2xl font-black text-on-surface">
                     Care timeline
                   </h4>
-                  <button className="text-xs font-black uppercase tracking-[0.2em] text-primary" type="button">
+                  <button
+                    className="text-xs font-black uppercase tracking-[0.2em] text-primary"
+                    type="button"
+                  >
                     Schedule new
                   </button>
                 </div>
                 <div className="relative mt-6 space-y-8 border-l border-outline-variant/30 pl-6">
                   {selectedPatient.timeline.map((event) => (
                     <div key={event.id} className="relative">
-                      <span className={`absolute -left-[31px] top-1 h-3 w-3 rounded-full border-4 border-white ${
-                        event.type === "upcoming" ? "bg-primary" : "bg-outline"
-                      }`} />
+                      <span
+                        className={`absolute -left-[31px] top-1 h-3 w-3 rounded-full border-4 border-white ${
+                          event.type === "upcoming"
+                            ? "bg-primary"
+                            : "bg-outline"
+                        }`}
+                      />
                       <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
                         {event.type === "upcoming" ? "Upcoming - " : ""}
                         {event.date}
                       </p>
-                      <p className="mt-2 font-semibold text-on-surface">{event.title}</p>
+                      <p className="mt-2 font-semibold text-on-surface">
+                        {event.title}
+                      </p>
                       <p className="mt-1 text-sm text-on-surface-variant">
                         {event.doctor} | {event.location}
                       </p>
@@ -193,9 +258,21 @@ export function ErpDemoPatients() {
                 Latest vitals
               </h4>
               <div className="mt-5 grid grid-cols-3 gap-4">
-                <VitalCard label="BPM" status="Normal" value={`${selectedPatient.vitals.bpm}`} />
-                <VitalCard label="BP" status="Stable" value={selectedPatient.vitals.bp} />
-                <VitalCard label="SpO2" status="Ideal" value={`${selectedPatient.vitals.spo2}%`} />
+                <VitalCard
+                  label="BPM"
+                  status="Normal"
+                  value={`${selectedPatient.vitals.bpm}`}
+                />
+                <VitalCard
+                  label="BP"
+                  status="Stable"
+                  value={selectedPatient.vitals.bp}
+                />
+                <VitalCard
+                  label="SpO2"
+                  status="Ideal"
+                  value={`${selectedPatient.vitals.spo2}%`}
+                />
               </div>
             </div>
 
@@ -204,14 +281,17 @@ export function ErpDemoPatients() {
                 Insurance policy
               </h4>
               <p className="mt-2 text-sm text-on-surface-variant">
-                {selectedPatient.insurance.provider} | {selectedPatient.insurance.policyNumber}
+                {selectedPatient.insurance.provider} |{" "}
+                {selectedPatient.insurance.policyNumber}
               </p>
               <div className="mt-6 flex items-center justify-between rounded-[1.25rem] bg-surface-container-low p-4">
                 <div>
                   <p className="text-[11px] font-black uppercase tracking-[0.22em] text-on-surface-variant">
                     Coverage
                   </p>
-                  <p className="mt-2 font-semibold text-on-surface">{selectedPatient.insurance.status}</p>
+                  <p className="mt-2 font-semibold text-on-surface">
+                    {selectedPatient.insurance.status}
+                  </p>
                 </div>
                 <div className="flex h-14 w-20 items-center justify-center rounded-xl border border-dashed border-outline-variant/40 bg-white">
                   <CreditCard className="text-outline" size={24} />
@@ -226,7 +306,11 @@ export function ErpDemoPatients() {
 }
 
 function getInitials(name: string) {
-  return name.split(" ").map((part) => part[0]).join("").slice(0, 2);
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2);
 }
 
 function ContactRow({ icon, text }: { icon: React.ReactNode; text: string }) {
@@ -247,12 +331,26 @@ function AlertCard({ body, title }: { body: string; title: string }) {
   );
 }
 
-function VitalCard({ label, status, value }: { label: string; status: string; value: string }) {
+function VitalCard({
+  label,
+  status,
+  value,
+}: {
+  label: string;
+  status: string;
+  value: string;
+}) {
   return (
     <div className="rounded-[1.2rem] bg-surface-container-low p-4 text-center">
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant">{label}</p>
-      <p className="mt-2 font-headline text-2xl font-black text-on-surface">{value}</p>
-      <p className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-secondary">{status}</p>
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant">
+        {label}
+      </p>
+      <p className="mt-2 font-headline text-2xl font-black text-on-surface">
+        {value}
+      </p>
+      <p className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-secondary">
+        {status}
+      </p>
     </div>
   );
 }
