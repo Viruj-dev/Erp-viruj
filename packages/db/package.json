@@ -17,15 +17,14 @@
   },
   "dependencies": {
     "@erp_virujhealth/env": "workspace:*",
-    "@neondatabase/serverless": "^1.0.2",
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
+    "postgres": "^3.4.8",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@erp_virujhealth/config": "workspace:*",
     "drizzle-kit": "^0.31.8",
-    "postgres": "^3.4.8",
     "typescript": "catalog:"
   }
 }

@@ -3,9 +3,7 @@ export type ErpDemoPage =
   | "appointments"
   | "patients"
   | "staff"
-  | "community"
-  | "analytics"
-  | "settings";
+  | "analytics";
 
 export interface PatientCondition {
   id: string;

@@ -7,16 +7,18 @@ const titles: Record<string, string> = {
   appointments: "Appointment Scheduling",
   patients: "Patient Management",
   staff: "Staff Directory",
-  community: "Clinical Community",
   analytics: "Performance Analytics",
-  settings: "System Settings",
 };
 
 export function ErpDemoTopBar({
   currentPage,
+  organizationLabel,
+  roleLabel,
   userName,
 }: {
   currentPage: string;
+  organizationLabel: string;
+  roleLabel: string;
   userName: string;
 }) {
   return (
@@ -58,7 +60,9 @@ export function ErpDemoTopBar({
             <p className="text-xs font-bold text-on-surface">
               {userName || "Dr. Sarah Chen"}
             </p>
-            <p className="text-[10px] text-outline">Chief Administrator</p>
+            <p className="text-[10px] text-outline">
+              {roleLabel} | {organizationLabel}
+            </p>
           </div>
           <img
             alt="User profile"

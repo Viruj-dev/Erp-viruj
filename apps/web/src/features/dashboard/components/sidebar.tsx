@@ -9,9 +9,7 @@ import {
   ChevronLeft,
   LayoutDashboard,
   LogOut,
-  MessageSquare,
   PlusCircle,
-  Settings,
   Stethoscope,
   Users,
 } from "lucide-react";
@@ -21,23 +19,25 @@ const navItems = [
   { id: "appointments", label: "Appointments", icon: Calendar },
   { id: "patients", label: "Patients", icon: Users },
   { id: "staff", label: "Staff", icon: BadgeCheck },
-  { id: "community", label: "Community", icon: MessageSquare },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
-  { id: "settings", label: "Settings", icon: Settings },
 ] as const;
 
 export function ErpDemoSidebar({
+  allowedPages,
   currentPage,
   isCollapsed,
   onLogout,
   onPageChange,
   onToggle,
+  organizationLabel,
 }: {
+  allowedPages: ErpDemoPage[];
   currentPage: string;
   isCollapsed: boolean;
   onLogout: () => void;
   onPageChange: (page: ErpDemoPage) => void;
   onToggle: () => void;
+  organizationLabel: string;
 }) {
   return (
     <aside
@@ -61,7 +61,7 @@ export function ErpDemoSidebar({
               Viruj Health
             </h1>
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-              Clinical ERP
+              {organizationLabel} ERP
             </p>
           </div>
         ) : null}
@@ -78,7 +78,9 @@ export function ErpDemoSidebar({
       </div>
 
       <nav className="flex-1 space-y-1">
-        {navItems.map((item) => {
+        {navItems
+          .filter((item) => allowedPages.includes(item.id))
+          .map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
 
