@@ -1,308 +1,383 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Activity,
-  AlertTriangle,
-  CreditCard,
-  Download,
-  Mail,
-  Phone,
-  Share2,
-  UserPlus,
-  Wind,
-} from "lucide-react";
 import { patients } from "@/features/dashboard/components/data";
+import type { PatientRecord } from "@/features/dashboard/components/types";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Clock,
+  Download,
+  Filter,
+  TrendingUp,
+  UserRoundPlus,
+  UsersRound,
+} from "lucide-react";
+
+type PatientDirectoryRecord = PatientRecord & {
+  condition: string;
+  mrn: string;
+  visitContext: string;
+};
+
+const supplementalPatients: PatientDirectoryRecord[] = [
+  {
+    age: 34,
+    avatar:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&h=120&fit=crop",
+    bloodGroup: "A Positive",
+    condition: "Type 1 Diabetic",
+    conditions: [],
+    email: "aria.sterling@example.com",
+    gender: "Female",
+    id: "MRN-2024-8891",
+    insurance: {
+      policyNumber: "VH-8891",
+      provider: "Viruj Care",
+      status: "Active",
+    },
+    lastVisit: "2023-10-12",
+    mrn: "MRN-2024-8891",
+    name: "Aria Sterling",
+    phone: "+1 (555) 821-4981",
+    status: "Stable",
+    timeline: [],
+    visitContext: "Routine Follow-up",
+    vitals: { bp: "118/76", bpm: 72, spo2: 99 },
+  },
+  {
+    age: 68,
+    avatar:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop",
+    bloodGroup: "B Positive",
+    condition: "Hypertension",
+    conditions: [],
+    email: "julian.vane@example.com",
+    gender: "Male",
+    id: "MRN-2024-1204",
+    insurance: {
+      policyNumber: "VH-1204",
+      provider: "Viruj Care",
+      status: "Active",
+    },
+    lastVisit: "2023-10-24",
+    mrn: "MRN-2024-1204",
+    name: "Julian Vane",
+    phone: "+1 (555) 662-1204",
+    status: "Critical",
+    timeline: [],
+    visitContext: "Critical Escalation",
+    vitals: { bp: "148/92", bpm: 84, spo2: 96 },
+  },
+];
+
+const directoryPatients: PatientDirectoryRecord[] = [
+  ...supplementalPatients,
+  ...patients.map((patient, index) => ({
+    ...patient,
+    condition:
+      patient.conditions[0]?.name ??
+      ["Post-Op Recovery", "Asthma Management", "Osteoarthritis"][index] ??
+      "General Review",
+    mrn: patient.id.replace("VH-", "MRN-"),
+    visitContext:
+      patient.status === "Critical"
+        ? "Critical Escalation"
+        : ([
+            "In-patient Observation",
+            "Tele-consult Scheduled",
+            "Physiotherapy Review",
+          ][index] ?? "Routine Follow-up"),
+  })),
+].slice(0, 5);
 
 export function ErpDemoPatients() {
-  const [selectedPatientId, setSelectedPatientId] = useState(
-    patients[0]?.id ?? ""
-  );
-  const selectedPatient =
-    patients.find((patient) => patient.id === selectedPatientId) ?? patients[0];
-
-  if (!selectedPatient) {
-    return null;
-  }
-
   return (
-    <div className="space-y-8 p-6 lg:p-8">
-      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.28em] text-on-surface-variant">
-            Patient longitudinal record
-          </p>
-          <h2 className="mt-3 font-headline text-3xl font-black text-on-surface">
-            2,482 patient entries in this demo workspace
-          </h2>
-        </div>
-        <div className="flex gap-3">
-          <button
-            className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-primary hover:bg-primary/6"
-            type="button"
-          >
-            <Download size={16} />
-            Export Report
-          </button>
-          <button
-            className="flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white shadow-md"
-            type="button"
-          >
-            <UserPlus size={16} />
-            Add Patient
-          </button>
-        </div>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
-        <aside className="rounded-[2rem] border border-outline-variant/25 bg-surface-container-lowest shadow-sm">
-          <div className="border-b border-outline-variant/20 px-5 py-4">
-            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-on-surface-variant">
-              Recent records
-            </p>
+    <div className="space-y-7 p-5 lg:p-8">
+      <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px_220px]">
+        <div className="rounded-xl bg-[#003463] p-7 text-white shadow-sm">
+          <div className="flex items-start justify-between gap-5">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">
+                Total Longitudinal Records
+              </p>
+              <p className="mt-2 font-headline text-4xl font-black leading-none">
+                12,842
+              </p>
+            </div>
+            <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-white/10 text-white/70">
+              <UsersRound size={20} />
+            </span>
           </div>
-          <div className="max-h-[780px] divide-y divide-outline-variant/12 overflow-y-auto">
-            {patients.map((patient) => (
-              <button
+          <span className="mt-7 inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-2 text-xs font-black text-white/72">
+            <TrendingUp size={13} />
+            8.4% increase from last quarter
+          </span>
+        </div>
+
+        <MetricCard
+          icon={<UserRoundPlus className="text-secondary" size={18} />}
+          label="New patients (month)"
+          note="+12.5% vs last month"
+          value="342"
+        />
+        <MetricCard
+          icon={<Clock className="text-error" size={18} />}
+          label="Avg. triage wait"
+          note="Steady clinic flow"
+          noteTone="error"
+          value="14m"
+        />
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex gap-2">
+            <ToolButton icon={<Filter size={14} />} label="Filter" />
+            <ToolButton icon={<Download size={14} />} label="Export" />
+          </div>
+          <div className="flex items-center gap-3 text-xs font-semibold text-on-surface-variant">
+            <span>Showing 1-10 of 12,842 patients</span>
+            <button
+              className="rounded-lg p-2 text-outline transition hover:bg-surface-container-low"
+              type="button"
+            >
+              <ArrowLeft size={14} />
+            </button>
+            <button
+              className="rounded-lg bg-surface-container-low p-2 text-primary transition hover:bg-primary/10"
+              type="button"
+            >
+              <ArrowRight size={14} />
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container-lowest shadow-sm">
+          <div className="grid grid-cols-[1.45fr_0.75fr_0.9fr_0.9fr_0.65fr] gap-4 border-b border-outline-variant/15 bg-surface-container-low px-6 py-4 text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+            <span>Patient Name</span>
+            <span>MRN / ID</span>
+            <span>Last Visit</span>
+            <span>Condition / Triage</span>
+            <span className="text-right">Actions</span>
+          </div>
+
+          <div className="divide-y divide-outline-variant/12">
+            {directoryPatients.map((patient) => (
+              <div
+                className="grid grid-cols-[1.45fr_0.75fr_0.9fr_0.9fr_0.65fr] items-center gap-4 px-6 py-4 text-sm transition hover:bg-surface-container-low"
                 key={patient.id}
-                className={`flex w-full items-start gap-4 px-5 py-4 text-left transition-colors ${
-                  patient.id === selectedPatient.id
-                    ? "bg-surface-container-low"
-                    : "hover:bg-surface-container-low"
-                }`}
-                onClick={() => setSelectedPatientId(patient.id)}
-                type="button"
               >
-                {patient.avatar ? (
-                  <img
-                    alt={patient.name}
-                    className="h-12 w-12 rounded-2xl object-cover"
-                    src={patient.avatar}
-                  />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 font-headline text-lg font-black text-primary">
-                    {getInitials(patient.name)}
+                <div className="flex min-w-0 items-center gap-3">
+                  {patient.avatar ? (
+                    <img
+                      alt={patient.name}
+                      className="h-11 w-11 shrink-0 rounded-lg object-cover"
+                      src={patient.avatar}
+                    />
+                  ) : (
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 font-headline text-sm font-black text-primary">
+                      {getInitials(patient.name)}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate font-headline text-base font-black text-on-surface">
+                      {patient.name}
+                    </p>
+                    <p className="truncate text-xs font-medium text-on-surface-variant">
+                      {patient.gender.charAt(0)} - {patient.age} yrs -{" "}
+                      {patient.condition}
+                    </p>
                   </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-on-surface">
-                    {patient.name}
+                </div>
+
+                <span className="font-mono text-xs font-semibold text-on-surface-variant">
+                  {patient.mrn}
+                </span>
+
+                <div>
+                  <p className="font-black text-on-surface">
+                    {formatDate(patient.lastVisit)}
                   </p>
-                  <p className="mt-1 text-xs text-on-surface-variant">
-                    {patient.id}
+                  <p
+                    className={`text-xs font-black ${
+                      patient.status === "Critical"
+                        ? "text-error"
+                        : "text-secondary"
+                    }`}
+                  >
+                    {patient.visitContext}
                   </p>
                 </div>
-                <span
-                  className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${
-                    patient.status === "Critical"
-                      ? "bg-error-container text-error"
-                      : "bg-secondary-container/45 text-secondary"
-                  }`}
+
+                <TriageBadge status={patient.status} />
+
+                <button
+                  className="text-right text-xs font-black text-primary transition hover:text-primary-container"
+                  type="button"
                 >
-                  {patient.status}
-                </span>
-              </button>
+                  Open Chart
+                </button>
+              </div>
             ))}
           </div>
-        </aside>
 
-        <div className="space-y-6">
-          <section className="grid gap-6 xl:grid-cols-[1.6fr_0.8fr]">
-            <div className="rounded-[2rem] border border-outline-variant/25 bg-surface-container-lowest p-6 shadow-sm">
-              <div className="flex flex-col gap-6 md:flex-row">
-                <div className="flex h-24 w-24 items-center justify-center rounded-[1.6rem] bg-primary font-headline text-3xl font-black text-white shadow-lg">
-                  {getInitials(selectedPatient.name)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                    <div>
-                      <h3 className="font-headline text-3xl font-black text-on-surface">
-                        {selectedPatient.name}
-                      </h3>
-                      <p className="mt-2 text-sm text-on-surface-variant">
-                        {selectedPatient.gender} | {selectedPatient.age} years |{" "}
-                        {selectedPatient.bloodGroup}
-                      </p>
-                    </div>
-                    <button
-                      className="flex items-center gap-2 rounded-xl bg-surface-container-low px-4 py-2 text-sm font-bold text-on-surface"
-                      type="button"
-                    >
-                      <Share2 size={16} />
-                      Share Profile
-                    </button>
-                  </div>
-                  <div className="mt-6 grid gap-3 md:grid-cols-2">
-                    <ContactRow
-                      icon={<Phone size={16} />}
-                      text={selectedPatient.phone}
-                    />
-                    <ContactRow
-                      icon={<Mail size={16} />}
-                      text={selectedPatient.email}
-                    />
-                  </div>
-                </div>
-              </div>
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/15 px-6 py-5">
+            <button
+              className="inline-flex items-center gap-2 text-sm font-black text-on-surface-variant transition hover:text-primary"
+              type="button"
+            >
+              <ArrowLeft size={14} />
+              Previous
+            </button>
+            <div className="flex items-center gap-3 text-sm font-black text-on-surface">
+              <button
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white"
+                type="button"
+              >
+                1
+              </button>
+              <button className="h-9 w-9" type="button">
+                2
+              </button>
+              <button className="h-9 w-9" type="button">
+                3
+              </button>
+              <span>...</span>
+              <button className="h-9 w-9" type="button">
+                128
+              </button>
             </div>
-
-            <div className="rounded-[2rem] border border-error/15 bg-error-container/45 p-6">
-              <div className="flex items-center gap-2 text-error">
-                <AlertTriangle size={18} />
-                <p className="text-[11px] font-black uppercase tracking-[0.24em]">
-                  Critical alerts
-                </p>
-              </div>
-              <div className="mt-5 space-y-3">
-                <AlertCard
-                  body="Severe anaphylactic risk"
-                  title="Penicillin allergy"
-                />
-                <AlertCard
-                  body="Last A1C: 7.8% (elevated)"
-                  title="Type 2 diabetes"
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-[2rem] border border-outline-variant/25 bg-surface-container-lowest p-6 shadow-sm">
-            <div className="grid gap-8 xl:grid-cols-2">
-              <div>
-                <div className="flex items-center justify-between">
-                  <h4 className="font-headline text-2xl font-black text-on-surface">
-                    Chronic conditions
-                  </h4>
-                  <button
-                    className="text-xs font-black uppercase tracking-[0.2em] text-primary"
-                    type="button"
-                  >
-                    Full history
-                  </button>
-                </div>
-                <div className="mt-6 space-y-4">
-                  {selectedPatient.conditions.map((condition) => (
-                    <div
-                      key={condition.id}
-                      className="flex gap-4 rounded-[1.25rem] bg-surface-container-low p-4"
-                    >
-                      <div
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
-                          condition.type === "cardio"
-                            ? "bg-primary/10 text-primary"
-                            : "bg-secondary/10 text-secondary"
-                        }`}
-                      >
-                        {condition.type === "cardio" ? (
-                          <Activity size={18} />
-                        ) : (
-                          <Wind size={18} />
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-on-surface">
-                          {condition.name}
-                        </p>
-                        <p className="mt-1 text-sm leading-6 text-on-surface-variant">
-                          {condition.notes}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between">
-                  <h4 className="font-headline text-2xl font-black text-on-surface">
-                    Care timeline
-                  </h4>
-                  <button
-                    className="text-xs font-black uppercase tracking-[0.2em] text-primary"
-                    type="button"
-                  >
-                    Schedule new
-                  </button>
-                </div>
-                <div className="relative mt-6 space-y-8 border-l border-outline-variant/30 pl-6">
-                  {selectedPatient.timeline.map((event) => (
-                    <div key={event.id} className="relative">
-                      <span
-                        className={`absolute -left-[31px] top-1 h-3 w-3 rounded-full border-4 border-white ${
-                          event.type === "upcoming"
-                            ? "bg-primary"
-                            : "bg-outline"
-                        }`}
-                      />
-                      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-                        {event.type === "upcoming" ? "Upcoming - " : ""}
-                        {event.date}
-                      </p>
-                      <p className="mt-2 font-semibold text-on-surface">
-                        {event.title}
-                      </p>
-                      <p className="mt-1 text-sm text-on-surface-variant">
-                        {event.doctor} | {event.location}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="grid gap-6 lg:grid-cols-2">
-            <div className="rounded-[2rem] border border-outline-variant/25 bg-surface-container-lowest p-6 shadow-sm">
-              <h4 className="flex items-center gap-2 font-headline text-xl font-black text-on-surface">
-                <Activity className="text-primary" size={18} />
-                Latest vitals
-              </h4>
-              <div className="mt-5 grid grid-cols-3 gap-4">
-                <VitalCard
-                  label="BPM"
-                  status="Normal"
-                  value={`${selectedPatient.vitals.bpm}`}
-                />
-                <VitalCard
-                  label="BP"
-                  status="Stable"
-                  value={selectedPatient.vitals.bp}
-                />
-                <VitalCard
-                  label="SpO2"
-                  status="Ideal"
-                  value={`${selectedPatient.vitals.spo2}%`}
-                />
-              </div>
-            </div>
-
-            <div className="rounded-[2rem] border border-outline-variant/25 bg-surface-container-lowest p-6 shadow-sm">
-              <h4 className="font-headline text-xl font-black text-on-surface">
-                Insurance policy
-              </h4>
-              <p className="mt-2 text-sm text-on-surface-variant">
-                {selectedPatient.insurance.provider} |{" "}
-                {selectedPatient.insurance.policyNumber}
-              </p>
-              <div className="mt-6 flex items-center justify-between rounded-[1.25rem] bg-surface-container-low p-4">
-                <div>
-                  <p className="text-[11px] font-black uppercase tracking-[0.22em] text-on-surface-variant">
-                    Coverage
-                  </p>
-                  <p className="mt-2 font-semibold text-on-surface">
-                    {selectedPatient.insurance.status}
-                  </p>
-                </div>
-                <div className="flex h-14 w-20 items-center justify-center rounded-xl border border-dashed border-outline-variant/40 bg-white">
-                  <CreditCard className="text-outline" size={24} />
-                </div>
-              </div>
-            </div>
-          </section>
+            <button
+              className="inline-flex items-center gap-2 text-sm font-black text-primary transition hover:text-primary-container"
+              type="button"
+            >
+              Next
+              <ArrowRight size={14} />
+            </button>
+          </div>
         </div>
-      </div>
+      </section>
+
+      <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_330px]">
+        <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-on-surface-variant">
+                Longitudinal Data Integrity
+              </p>
+              <p className="mt-5 text-sm font-black text-on-surface">
+                Profile Completion Rate
+              </p>
+            </div>
+            <span className="text-sm font-black text-secondary">94%</span>
+          </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-container-high">
+            <div className="h-full w-[94%] rounded-full bg-secondary" />
+          </div>
+          <p className="mt-5 text-sm font-medium italic text-on-surface-variant">
+            Clinicians are reminded to update family medical history for 42
+            pending patient profiles.
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-6 text-center shadow-sm">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <UsersRound size={22} />
+          </span>
+          <h3 className="mt-5 font-headline text-lg font-black text-on-surface">
+            Demographic Shift
+          </h3>
+          <p className="mx-auto mt-2 max-w-52 text-sm font-medium text-on-surface-variant">
+            Geriatric intake has increased by 4% since last quarter.
+          </p>
+          <button
+            className="mt-5 text-xs font-black text-primary transition hover:text-primary-container"
+            type="button"
+          >
+            View Analytics Report
+          </button>
+        </div>
+      </section>
     </div>
   );
+}
+
+function MetricCard({
+  icon,
+  label,
+  note,
+  noteTone = "secondary",
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  note: string;
+  noteTone?: "secondary" | "error";
+  value: string;
+}) {
+  return (
+    <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">
+          {label}
+        </p>
+        {icon}
+      </div>
+      <p className="mt-7 font-headline text-3xl font-black text-on-surface">
+        {value}
+      </p>
+      <p
+        className={`mt-5 text-xs font-black ${
+          noteTone === "error" ? "text-error" : "text-secondary"
+        }`}
+      >
+        {note}
+      </p>
+    </div>
+  );
+}
+
+function ToolButton({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <button
+      className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 bg-surface-container-lowest px-4 py-2.5 text-xs font-black text-on-surface shadow-sm transition hover:bg-surface-container-low"
+      type="button"
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function TriageBadge({ status }: { status: PatientRecord["status"] }) {
+  const className =
+    status === "Critical"
+      ? "bg-error-container/70 text-error"
+      : status === "Recovered"
+        ? "bg-surface-container-high text-on-surface-variant"
+        : "bg-secondary-container/55 text-secondary";
+  const label =
+    status === "Critical"
+      ? "Urgent"
+      : status === "Recovered"
+        ? "Monitoring"
+        : "Stable";
+
+  return (
+    <span
+      className={`w-fit rounded-full px-3 py-1 text-xs font-black ${className}`}
+    >
+      {label}
+    </span>
+  );
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
 }
 
 function getInitials(name: string) {
@@ -311,46 +386,4 @@ function getInitials(name: string) {
     .map((part) => part[0])
     .join("")
     .slice(0, 2);
-}
-
-function ContactRow({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl bg-surface-container-low px-4 py-3 text-sm text-on-surface">
-      <span className="text-outline">{icon}</span>
-      {text}
-    </div>
-  );
-}
-
-function AlertCard({ body, title }: { body: string; title: string }) {
-  return (
-    <div className="rounded-[1.25rem] bg-white/70 p-4">
-      <p className="font-semibold text-error">{title}</p>
-      <p className="mt-1 text-sm text-on-surface-variant">{body}</p>
-    </div>
-  );
-}
-
-function VitalCard({
-  label,
-  status,
-  value,
-}: {
-  label: string;
-  status: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-[1.2rem] bg-surface-container-low p-4 text-center">
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant">
-        {label}
-      </p>
-      <p className="mt-2 font-headline text-2xl font-black text-on-surface">
-        {value}
-      </p>
-      <p className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-secondary">
-        {status}
-      </p>
-    </div>
-  );
 }

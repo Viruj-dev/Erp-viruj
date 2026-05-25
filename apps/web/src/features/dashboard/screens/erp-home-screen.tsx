@@ -3,6 +3,7 @@
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import { ErpDemoAnalytics } from "@/features/dashboard/components/analytics";
 import { ErpDemoAppointments } from "@/features/dashboard/components/appointments";
+import { ErpDemoCommunity } from "@/features/dashboard/components/community";
 import { ErpDemoDashboard } from "@/features/dashboard/components/dashboard";
 import { ErpDemoPatients } from "@/features/dashboard/components/patients";
 import { ErpDemoSidebar } from "@/features/dashboard/components/sidebar";
@@ -398,6 +399,8 @@ function PageContent({
       return <ErpDemoPatients />;
     case "staff":
       return <ErpDemoStaff />;
+    case "community":
+      return <ErpDemoCommunity />;
     case "analytics":
       return <ErpDemoAnalytics />;
     case "dashboard":

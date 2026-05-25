@@ -5,8 +5,9 @@ import { Bell, ChevronDown, Grid, Search } from "lucide-react";
 const titles: Record<string, string> = {
   dashboard: "Clinical Dashboard",
   appointments: "Appointment Scheduling",
-  patients: "Patient Management",
+  patients: "Patient Directory",
   staff: "Staff Directory",
+  community: "Community",
   analytics: "Performance Analytics",
 };
 
@@ -77,7 +78,8 @@ export function ErpDemoTopBar({
 }
 
 function formatRole(role: string) {
-  return role.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (letter) =>
-    letter.toUpperCase()
-  );
+  return role
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }

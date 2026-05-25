@@ -7,6 +7,7 @@ import {
   BadgeCheck,
   Calendar,
   ChevronLeft,
+  MessagesSquare,
   LayoutDashboard,
   LogOut,
   PlusCircle,
@@ -19,6 +20,7 @@ const navItems = [
   { id: "appointments", label: "Appointments", icon: Calendar },
   { id: "patients", label: "Patients", icon: Users },
   { id: "staff", label: "Staff", icon: BadgeCheck },
+  { id: "community", label: "Community", icon: MessagesSquare },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
 ] as const;
 
@@ -81,32 +83,32 @@ export function ErpDemoSidebar({
         {navItems
           .filter((item) => allowedPages.includes(item.id))
           .map((item) => {
-          const Icon = item.icon;
-          const isActive = currentPage === item.id;
+            const Icon = item.icon;
+            const isActive = currentPage === item.id;
 
-          return (
-            <button
-              key={item.id}
-              className={cn(
-                "flex w-full items-center rounded-lg transition-all duration-200",
-                isCollapsed ? "justify-center p-2" : "gap-3 px-4 py-2",
-                isActive
-                  ? "bg-white text-blue-700 shadow-sm"
-                  : "text-slate-600 hover:bg-slate-200 hover:translate-x-1"
-              )}
-              onClick={() => onPageChange(item.id)}
-              title={isCollapsed ? item.label : undefined}
-              type="button"
-            >
-              <Icon size={18} />
-              {!isCollapsed ? (
-                <span className="whitespace-nowrap text-[13px] font-medium">
-                  {item.label}
-                </span>
-              ) : null}
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={item.id}
+                className={cn(
+                  "flex w-full items-center rounded-lg transition-all duration-200",
+                  isCollapsed ? "justify-center p-2" : "gap-3 px-4 py-2",
+                  isActive
+                    ? "bg-white text-blue-700 shadow-sm"
+                    : "text-slate-600 hover:bg-slate-200 hover:translate-x-1"
+                )}
+                onClick={() => onPageChange(item.id)}
+                title={isCollapsed ? item.label : undefined}
+                type="button"
+              >
+                <Icon size={18} />
+                {!isCollapsed ? (
+                  <span className="whitespace-nowrap text-[13px] font-medium">
+                    {item.label}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
       </nav>
 
       <div className="space-y-1 border-t border-slate-200 pt-4">

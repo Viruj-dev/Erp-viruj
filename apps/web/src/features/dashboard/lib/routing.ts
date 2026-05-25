@@ -10,32 +10,35 @@ export const organizationTypeOptions = [
   "radiology",
 ] as const;
 
-export type DashboardOrganizationType = (typeof organizationTypeOptions)[number];
+export type DashboardOrganizationType =
+  (typeof organizationTypeOptions)[number];
 
 export const dashboardPageOptions = [
   "dashboard",
   "appointments",
   "patients",
   "staff",
+  "community",
   "analytics",
 ] as const;
 
 export type DashboardPage = (typeof dashboardPageOptions)[number];
 
-export const organizationTypeLabels: Record<DashboardOrganizationType, string> = {
-  clinic: "Clinic",
-  doctor: "Doctor",
-  hospital: "Hospital",
-  pathology: "Pathology",
-  radiology: "Radiology",
-};
+export const organizationTypeLabels: Record<DashboardOrganizationType, string> =
+  {
+    clinic: "Clinic",
+    doctor: "Doctor",
+    hospital: "Hospital",
+    pathology: "Pathology",
+    radiology: "Radiology",
+  };
 
 export const defaultDashboardPageByRole: Record<
   OrganizationMemberRole,
   DashboardPage
 > = {
   APPOINTMENT_HANDLER: "appointments",
-  COMMUNITY_MANAGER: "dashboard",
+  COMMUNITY_MANAGER: "community",
   FINANCE_MANAGER: "analytics",
   ORG_ADMIN: "dashboard",
   admin: "dashboard",
@@ -52,16 +55,44 @@ export const allowedDashboardPagesByRole: Record<
   DashboardPage[]
 > = {
   APPOINTMENT_HANDLER: ["dashboard", "appointments", "patients"],
-  COMMUNITY_MANAGER: ["dashboard"],
+  COMMUNITY_MANAGER: ["dashboard", "community"],
   FINANCE_MANAGER: ["dashboard", "patients", "analytics"],
-  ORG_ADMIN: ["dashboard", "appointments", "patients", "staff", "analytics"],
-  admin: ["dashboard", "appointments", "patients", "staff", "analytics"],
+  ORG_ADMIN: [
+    "dashboard",
+    "appointments",
+    "patients",
+    "staff",
+    "community",
+    "analytics",
+  ],
+  admin: [
+    "dashboard",
+    "appointments",
+    "patients",
+    "staff",
+    "community",
+    "analytics",
+  ],
   billing: ["dashboard", "patients", "analytics"],
-  doctor: ["dashboard", "appointments", "patients", "analytics"],
-  lab_tech: ["dashboard", "patients", "staff", "analytics"],
-  manager: ["dashboard", "appointments", "patients", "staff", "analytics"],
-  owner: ["dashboard", "appointments", "patients", "staff", "analytics"],
-  receptionist: ["dashboard", "appointments", "patients", "staff"],
+  doctor: ["dashboard", "appointments", "patients", "community", "analytics"],
+  lab_tech: ["dashboard", "patients", "staff", "community", "analytics"],
+  manager: [
+    "dashboard",
+    "appointments",
+    "patients",
+    "staff",
+    "community",
+    "analytics",
+  ],
+  owner: [
+    "dashboard",
+    "appointments",
+    "patients",
+    "staff",
+    "community",
+    "analytics",
+  ],
+  receptionist: ["dashboard", "appointments", "patients", "staff", "community"],
 };
 
 export function isDashboardOrganizationType(
@@ -74,12 +105,16 @@ export function isDashboardPage(value: string): value is DashboardPage {
   return dashboardPageOptions.includes(value as DashboardPage);
 }
 
-export function getAllowedDashboardPages(role?: string | null): DashboardPage[] {
+export function getAllowedDashboardPages(
+  role?: string | null
+): DashboardPage[] {
   const fallbackRole: OrganizationMemberRole = "ORG_ADMIN";
 
-  return allowedDashboardPagesByRole[
-    (role as OrganizationMemberRole | undefined) ?? fallbackRole
-  ] ?? allowedDashboardPagesByRole[fallbackRole];
+  return (
+    allowedDashboardPagesByRole[
+      (role as OrganizationMemberRole | undefined) ?? fallbackRole
+    ] ?? allowedDashboardPagesByRole[fallbackRole]
+  );
 }
 
 export function getDefaultDashboardPage(role?: string | null): DashboardPage {

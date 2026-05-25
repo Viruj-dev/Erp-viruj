@@ -1,297 +1,527 @@
 "use client";
 
+import { orpc } from "@/lib/orpc";
+import { useQuery } from "@tanstack/react-query";
 import {
   Award,
-  Bookmark,
+  BadgeCheck,
+  BarChart3,
   CheckCircle2,
-  FileText,
-  Globe,
-  Lock,
+  FileQuestion,
+  HeartPulse,
+  ImageIcon,
+  Link,
   MessageSquare,
   MoreHorizontal,
-  Plus,
+  Paperclip,
+  Send,
   Share2,
+  ShieldCheck,
   ThumbsUp,
-  TrendingUp,
-  Users,
 } from "lucide-react";
+import { useMemo, useState } from "react";
 
-const posts = [
-  {
-    id: "P-001",
-    author: "Dr. Sarah Mitchell",
-    role: "Senior Cardiologist",
-    avatar:
-      "https://images.unsplash.com/photo-1559839734-2b71f1536780?w=100&h=100&fit=crop",
-    time: "2 hours ago",
-    title: "New protocol for post-op cardiac care",
-    content:
-      "We have fully rolled out the HeartSync protocol. Early indicators show a 12% reduction in average recovery time.",
-    tags: ["Cardiology", "Protocol", "Research"],
-    likes: 42,
-    comments: 12,
-    verified: true,
-    bookmarked: true,
-  },
-  {
-    id: "P-002",
-    author: "Dr. James Wilson",
-    role: "Neurologist",
-    avatar:
-      "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&h=100&fit=crop",
-    time: "5 hours ago",
-    title: "AI in early epilepsy detection",
-    content:
-      "Our EEG analysis study is now live and we are looking for collaborators for a broader validation round.",
-    tags: ["Neurology", "AI", "Collaboration"],
-    likes: 28,
-    comments: 8,
-    verified: true,
-    bookmarked: false,
-  },
-];
+type CommunityTab = "global" | "announcements" | "qa" | "resources";
 
-const topics = [
-  { name: "#Telehealth2024", posts: 1240 },
-  { name: "#PrecisionMedicine", posts: 850 },
-  { name: "#ClinicalAI", posts: 620 },
-  { name: "#MentalHealthAwareness", posts: 450 },
+type CommunityPost = {
+  id: string;
+  author: {
+    avatar: string;
+    name: string;
+    role: string;
+    verified: boolean;
+  };
+  category: CommunityTab;
+  comments: number;
+  content: string;
+  image?: string;
+  likes: number;
+  postedAt: string;
+};
+
+type CommunityQuestion = {
+  answer: {
+    author: string;
+    content: string;
+    role: string;
+  };
+  askedBy: string;
+  id: string;
+  question: string;
+  reference: string;
+};
+
+type CommunityContributor = {
+  avatar: string;
+  name: string;
+  role: string;
+};
+
+type CommunityTrend = {
+  label: string;
+  meta: string;
+  type: string;
+};
+
+type CommunityFeed = {
+  announcement: {
+    body: string;
+    cta: string;
+    title: string;
+  };
+  contributors: CommunityContributor[];
+  metrics: {
+    engagementLabel: string;
+    newPosts: number;
+    unansweredQa: number;
+  };
+  posts: CommunityPost[];
+  question: CommunityQuestion;
+  trends: CommunityTrend[];
+};
+
+const communityFeed: CommunityFeed = {
+  announcement: {
+    body: "Phase 3 of the pediatric wellness initiative starts Monday. Ensure all patient records for the 5-12 age group are reconciled by Friday evening.",
+    cta: "Review Guidelines",
+    title: "National Vaccination Drive Update - Spring 2024",
+  },
+  contributors: [
+    {
+      avatar:
+        "https://images.unsplash.com/photo-1559839734-2b71f1536780?w=100&h=100&fit=crop",
+      name: "Dr. Aria Verma",
+      role: "Radiology Lead",
+    },
+    {
+      avatar:
+        "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&h=100&fit=crop",
+      name: "James Miller, MD",
+      role: "Critical Care",
+    },
+    {
+      avatar:
+        "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=100&h=100&fit=crop",
+      name: "Dr. Elena Rocha",
+      role: "Pediatrics",
+    },
+  ],
+  metrics: {
+    engagementLabel: "Last 24 hours activity",
+    newPosts: 24,
+    unansweredQa: 8,
+  },
+  posts: [
+    {
+      id: "COMM-001",
+      author: {
+        avatar:
+          "https://images.unsplash.com/photo-1559839734-2b71f1536780?w=100&h=100&fit=crop",
+        name: "Dr. Sarah Thompson",
+        role: "Cardiology Specialist",
+        verified: true,
+      },
+      category: "global",
+      comments: 12,
+      content:
+        "Latest findings in hypertension management show a significant correlation between wearable HRV data and preventative outcomes. We have updated the Hypertension Protocol in the resource center.",
+      image:
+        "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&h=560&fit=crop",
+      likes: 42,
+      postedAt: "2h ago",
+    },
+    {
+      id: "COMM-002",
+      author: {
+        avatar:
+          "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&h=100&fit=crop",
+        name: "Care Coordination Desk",
+        role: "Public Announcements",
+        verified: true,
+      },
+      category: "announcements",
+      comments: 6,
+      content:
+        "Radiology slots have been extended until 8 PM for this week. Appointment handlers can begin assigning overflow cases to the evening roster.",
+      likes: 31,
+      postedAt: "4h ago",
+    },
+  ],
+  question: {
+    answer: {
+      author: "Dr. Michael Chen",
+      content:
+        "Great question. For this specific trial, we recommend avoiding grapefruit juice as it can interfere with metabolism of the active agent. Detailed list sent to your patient portal.",
+      role: "Principal Investigator",
+    },
+    askedBy: "Patient #A920",
+    id: "QA-204",
+    question:
+      "Are there specific dietary restrictions for the new trial medication?",
+    reference:
+      "I started the Phase II study yesterday. Should I be avoiding any specific foods like grapefruit or high-iron vegetables?",
+  },
+  trends: [
+    {
+      label: "Post-Op Recovery AI",
+      meta: "12 posts + 4 announcements",
+      type: "Clinical Protocol",
+    },
+    {
+      label: "2024 Insurance Compliance",
+      meta: "3 posts + 2 active Q&As",
+      type: "Policy Update",
+    },
+    {
+      label: "Precision Oncology 2.0",
+      meta: "18 posts + Trending globally",
+      type: "New Research",
+    },
+  ],
+};
+
+const tabs: Array<{ id: CommunityTab; label: string }> = [
+  { id: "global", label: "Global Feed" },
+  { id: "announcements", label: "Public Announcements" },
+  { id: "qa", label: "Patient Q&A" },
+  { id: "resources", label: "Resources" },
 ];
 
 export function ErpDemoCommunity() {
+  const [activeTab, setActiveTab] = useState<CommunityTab>("global");
+  const [composerText, setComposerText] = useState("");
+  const communityStatusQuery = useQuery(orpc.community.summary.queryOptions());
+  const visiblePosts = useMemo(
+    () =>
+      activeTab === "global"
+        ? communityFeed.posts
+        : communityFeed.posts.filter((post) => post.category === activeTab),
+    [activeTab]
+  );
+
   return (
-    <div className="grid gap-6 p-6 lg:grid-cols-12 lg:p-8">
-      <aside className="space-y-6 lg:col-span-3">
-        <div className="rounded-[1.8rem] border border-outline-variant/20 bg-surface-container-low p-4">
-          <div className="space-y-1">
-            {[
-              { label: "Feed", icon: <Globe key="feed" size={18} /> },
-              {
-                label: "Knowledge Base",
-                icon: <FileText key="kb" size={18} />,
-              },
-              { label: "Groups", icon: <Users key="groups" size={18} /> },
-              { label: "Saved", icon: <Bookmark key="saved" size={18} /> },
-            ].map(({ label, icon }, index) => (
-              <button
-                key={label}
-                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-black transition-colors ${
-                  index === 0
-                    ? "bg-primary text-white shadow-md"
-                    : "text-on-surface-variant hover:bg-surface-container-high"
-                }`}
-                type="button"
-              >
-                {icon}
-                {label}
-              </button>
-            ))}
+    <div className="grid gap-6 p-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:p-8">
+      <main className="space-y-6">
+        <section className="relative overflow-hidden rounded-xl bg-[#003463] p-7 text-white shadow-sm">
+          <div className="absolute right-8 top-10 h-36 w-36 rounded-full border-[28px] border-white/5" />
+          <div className="absolute bottom-8 right-16 text-white/8">
+            <HeartPulse size={112} strokeWidth={1.6} />
           </div>
-        </div>
-
-        <div className="rounded-[1.8rem] border border-outline-variant/20 bg-surface-container-low p-5">
-          <p className="text-[11px] font-black uppercase tracking-[0.24em] text-on-surface-variant">
-            Trending topics
+          <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-white/55">
+            <BadgeCheck size={13} />
+            New Announcement
           </p>
-          <div className="mt-5 space-y-4">
-            {topics.map((topic) => (
-              <div
-                key={topic.name}
-                className="flex items-center justify-between"
-              >
-                <div>
-                  <p className="font-semibold text-on-surface">{topic.name}</p>
-                  <p className="mt-1 text-xs text-on-surface-variant">
-                    {topic.posts} posts
-                  </p>
-                </div>
-                <TrendingUp className="text-outline" size={16} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </aside>
+          <h1 className="mt-5 max-w-2xl font-headline text-4xl font-black leading-tight">
+            {communityFeed.announcement.title}
+          </h1>
+          <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-white/70">
+            {communityFeed.announcement.body}
+          </p>
+          <button
+            className="mt-6 rounded-lg bg-white px-5 py-3 text-xs font-black text-primary shadow-sm transition hover:bg-primary-fixed"
+            type="button"
+          >
+            {communityFeed.announcement.cta}
+          </button>
+        </section>
 
-      <main className="space-y-6 lg:col-span-6">
-        <div className="rounded-[1.8rem] border border-outline-variant/20 bg-surface-container-low p-5">
-          <div className="flex gap-4">
-            <img
-              alt="Current user"
-              className="h-10 w-10 rounded-xl object-cover"
+        <section className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-4 shadow-sm">
+          <div className="flex gap-3">
+            <Avatar
+              alt="Current contributor"
               src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100&h=100&fit=crop"
             />
-            <div className="flex-1 space-y-3">
+            <div className="min-w-0 flex-1">
               <textarea
-                className="w-full resize-none rounded-xl border border-outline-variant/12 bg-surface-container-lowest p-3 text-sm focus:ring-2 focus:ring-primary/20"
-                placeholder="Share a clinical insight or update..."
-                rows={2}
+                className="h-12 w-full resize-none rounded-lg border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm font-semibold text-on-surface outline-none transition focus:border-primary"
+                onChange={(event) => setComposerText(event.target.value)}
+                placeholder="Share a clinical update or clinical insight..."
+                value={composerText}
               />
-              <div className="flex items-center justify-between">
-                <div className="flex gap-2">
-                  <IconButton icon={<FileText size={18} />} />
-                  <IconButton icon={<Globe size={18} />} />
-                  <IconButton icon={<Lock size={18} />} />
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-on-surface-variant">
+                  <IconButton icon={<ImageIcon size={16} />} label="Image" />
+                  <IconButton icon={<Paperclip size={16} />} label="Attach" />
+                  <IconButton icon={<Link size={16} />} label="Reference" />
                 </div>
                 <button
-                  className="flex items-center gap-2 rounded-xl bg-primary px-6 py-2 text-sm font-black text-white shadow-md"
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-xs font-black text-white shadow-sm disabled:opacity-50"
+                  disabled={!composerText.trim()}
                   type="button"
                 >
-                  <Plus size={16} />
+                  <Send size={14} />
                   Post
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="space-y-4">
-          {posts.map((post) => (
-            <article
-              key={post.id}
-              className="rounded-[1.8rem] border border-outline-variant/20 bg-surface-container-low p-6"
+        <section className="flex flex-wrap gap-4 border-b border-outline-variant/20">
+          {tabs.map((tab) => (
+            <button
+              className={`border-b-2 px-1 pb-3 text-xs font-black transition ${
+                activeTab === tab.id
+                  ? "border-primary text-primary"
+                  : "border-transparent text-on-surface-variant hover:text-primary"
+              }`}
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              type="button"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <img
-                    alt={post.author}
-                    className="h-10 w-10 rounded-xl object-cover"
-                    src={post.avatar}
-                  />
-                  <div>
-                    <div className="flex items-center gap-1">
-                      <p className="font-semibold text-on-surface">
-                        {post.author}
-                      </p>
-                      {post.verified ? (
-                        <CheckCircle2 className="text-primary" size={14} />
-                      ) : null}
-                    </div>
-                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
-                      {post.role} | {post.time}
-                    </p>
-                  </div>
-                </div>
-                <IconButton icon={<MoreHorizontal size={18} />} />
-              </div>
-
-              <h3 className="mt-5 font-headline text-2xl font-black text-on-surface">
-                {post.title}
-              </h3>
-              <p className="mt-3 text-sm leading-7 text-on-surface-variant">
-                {post.content}
-              </p>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {post.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full bg-surface-container-high px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-
-              <div className="mt-5 flex items-center justify-between border-t border-outline-variant/20 pt-4">
-                <div className="flex items-center gap-5">
-                  <ActionText
-                    icon={<ThumbsUp size={16} />}
-                    text={`${post.likes}`}
-                  />
-                  <ActionText
-                    icon={<MessageSquare size={16} />}
-                    text={`${post.comments}`}
-                  />
-                  <ActionText icon={<Share2 size={16} />} text="Share" />
-                </div>
-                <button
-                  className={`rounded-lg p-2 ${
-                    post.bookmarked
-                      ? "bg-primary/10 text-primary"
-                      : "text-on-surface-variant hover:bg-surface-container-high"
-                  }`}
-                  type="button"
-                >
-                  <Bookmark
-                    fill={post.bookmarked ? "currentColor" : "none"}
-                    size={16}
-                  />
-                </button>
-              </div>
-            </article>
+              {tab.label}
+            </button>
           ))}
-        </div>
+        </section>
+
+        <section className="space-y-5">
+          {visiblePosts.length === 0 && activeTab !== "qa" ? (
+            <EmptyState text="No posts in this channel yet." />
+          ) : null}
+
+          {visiblePosts.map((post) => (
+            <CommunityPostCard key={post.id} post={post} />
+          ))}
+
+          {(activeTab === "global" || activeTab === "qa") && (
+            <QuestionCard question={communityFeed.question} />
+          )}
+        </section>
       </main>
 
-      <aside className="space-y-6 lg:col-span-3">
-        <div className="rounded-[1.8rem] border border-outline-variant/20 bg-surface-container-low p-5">
-          <p className="text-[11px] font-black uppercase tracking-[0.24em] text-on-surface-variant">
-            Suggested experts
+      <aside className="space-y-6">
+        <section className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
+          <h2 className="font-headline text-lg font-black text-on-surface">
+            Engagement Overview
+          </h2>
+          <p className="mt-1 text-xs font-semibold text-on-surface-variant">
+            {communityFeed.metrics.engagementLabel}
           </p>
-          <div className="mt-5 space-y-4">
-            {[
-              {
-                name: "Dr. Michael Chen",
-                role: "Pediatrician",
-                image:
-                  "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&h=100&fit=crop",
-              },
-              {
-                name: "Dr. Anna Smith",
-                role: "Radiologist",
-                image:
-                  "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=100&h=100&fit=crop",
-              },
-            ].map(({ name, role, image }) => (
+          <MetricBar
+            label="New Posts"
+            value={communityFeed.metrics.newPosts}
+            width="88%"
+          />
+          <MetricBar
+            label="Unanswered Q&A"
+            value={communityFeed.metrics.unansweredQa}
+            width="52%"
+          />
+          <button
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-surface-container-low px-4 py-3 text-xs font-black text-primary transition hover:bg-primary/10"
+            type="button"
+          >
+            <BarChart3 size={14} />
+            View Analytics Report
+          </button>
+          {communityStatusQuery.data ? (
+            <p className="mt-3 text-[11px] font-bold text-secondary">
+              Backend module ready for{" "}
+              {communityStatusQuery.data.organizationType || "organization"}.
+            </p>
+          ) : null}
+        </section>
+
+        <section className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
+          <h2 className="flex items-center gap-2 font-headline text-lg font-black text-on-surface">
+            <ShieldCheck className="text-secondary" size={18} />
+            Verified Contributors
+          </h2>
+          <div className="mt-4 space-y-4">
+            {communityFeed.contributors.map((contributor) => (
               <div
-                key={name}
                 className="flex items-center justify-between gap-3"
+                key={contributor.name}
               >
-                <div className="flex items-center gap-3">
-                  <img
-                    alt={name}
-                    className="h-8 w-8 rounded-lg object-cover"
-                    src={image}
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-on-surface">
-                      {name}
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar alt={contributor.name} src={contributor.avatar} />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-on-surface">
+                      {contributor.name}
                     </p>
-                    <p className="text-xs text-on-surface-variant">{role}</p>
+                    <p className="truncate text-xs font-medium text-on-surface-variant">
+                      {contributor.role}
+                    </p>
                   </div>
                 </div>
                 <button
-                  className="rounded-lg bg-primary/10 p-2 text-primary"
+                  className="rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-black text-primary"
                   type="button"
                 >
-                  <Plus size={14} />
+                  Profile
                 </button>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
-        <div className="rounded-[1.8rem] bg-gradient-to-br from-primary to-primary-container p-5 text-white">
-          <span className="inline-flex rounded-xl bg-white/18 p-3">
-            <Award size={22} />
-          </span>
-          <h3 className="mt-5 font-headline text-2xl font-black">
-            Clinical excellence
-          </h3>
-          <p className="mt-3 text-sm leading-7 text-white/82">
-            You are in the top 5% of contributors this month. Keep sharing
-            relevant operational insight with the network.
+        <section className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
+          <h2 className="font-headline text-lg font-black text-on-surface">
+            Trending in Health
+          </h2>
+          <div className="mt-4 space-y-4">
+            {communityFeed.trends.map((trend) => (
+              <div key={trend.label}>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+                  {trend.type}
+                </p>
+                <p className="mt-1 text-sm font-black text-on-surface">
+                  {trend.label}
+                </p>
+                <p className="mt-1 text-xs font-medium text-on-surface-variant">
+                  {trend.meta}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="overflow-hidden rounded-xl bg-[#006a5e] p-5 text-white shadow-sm">
+          <Award size={24} />
+          <h2 className="mt-4 font-headline text-lg font-black">
+            Get Verified
+          </h2>
+          <p className="mt-2 text-sm font-medium leading-6 text-white/72">
+            Become a trusted voice. Verified badges help patients identify
+            authorized healthcare providers.
           </p>
-        </div>
+          <button
+            className="mt-5 w-full rounded-lg bg-white/75 px-4 py-3 text-xs font-black text-[#004c45] transition hover:bg-white"
+            type="button"
+          >
+            Submit Credentials
+          </button>
+        </section>
       </aside>
     </div>
   );
 }
 
-function IconButton({ icon }: { icon: React.ReactNode }) {
+function CommunityPostCard({ post }: { post: CommunityPost }) {
+  return (
+    <article className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <Avatar alt={post.author.name} src={post.author.avatar} />
+          <div className="min-w-0">
+            <div className="flex items-center gap-1">
+              <p className="truncate text-sm font-black text-on-surface">
+                {post.author.name}
+              </p>
+              {post.author.verified ? (
+                <CheckCircle2 className="shrink-0 text-primary" size={14} />
+              ) : null}
+            </div>
+            <p className="truncate text-xs font-medium text-on-surface-variant">
+              {post.author.role} | {post.postedAt}
+            </p>
+          </div>
+        </div>
+        <IconButton icon={<MoreHorizontal size={16} />} label="More" />
+      </div>
+
+      <p className="mt-5 text-sm font-medium leading-7 text-on-surface">
+        {post.content}
+      </p>
+
+      {post.image ? (
+        <img
+          alt=""
+          className="mt-5 aspect-[16/7] w-full rounded-lg object-cover"
+          src={post.image}
+        />
+      ) : null}
+
+      <div className="mt-5 flex flex-wrap items-center gap-5 border-t border-outline-variant/15 pt-4">
+        <ActionText icon={<ThumbsUp size={15} />} text={`${post.likes}`} />
+        <ActionText
+          icon={<MessageSquare size={15} />}
+          text={`${post.comments}`}
+        />
+        <ActionText icon={<Share2 size={15} />} text="Share" />
+      </div>
+    </article>
+  );
+}
+
+function QuestionCard({ question }: { question: CommunityQuestion }) {
+  return (
+    <article className="rounded-xl border border-secondary/35 bg-surface-container-lowest p-5 shadow-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-md bg-secondary/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-secondary">
+          Patient Q&A
+        </span>
+        <span className="text-xs font-black text-on-surface-variant">
+          Question from {question.askedBy}
+        </span>
+      </div>
+      <h3 className="mt-4 font-headline text-xl font-black text-on-surface">
+        {question.question}
+      </h3>
+      <p className="mt-2 text-sm font-medium leading-6 text-on-surface-variant">
+        {question.reference}
+      </p>
+      <div className="mt-5 rounded-lg bg-surface-container-low p-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <FileQuestion size={16} />
+          </div>
+          <div>
+            <p className="text-sm font-black text-on-surface">
+              {question.answer.author}
+            </p>
+            <p className="text-xs font-medium text-on-surface-variant">
+              {question.answer.role}
+            </p>
+          </div>
+        </div>
+        <p className="mt-3 text-sm font-medium italic leading-6 text-on-surface-variant">
+          {question.answer.content}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+function MetricBar({
+  label,
+  value,
+  width,
+}: {
+  label: string;
+  value: number;
+  width: string;
+}) {
+  return (
+    <div className="mt-5">
+      <div className="flex items-center justify-between text-xs font-black">
+        <span className="text-on-surface">{label}</span>
+        <span className="text-primary">
+          {value.toString().padStart(2, "0")}
+        </span>
+      </div>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-container-high">
+        <div className="h-full rounded-full bg-primary" style={{ width }} />
+      </div>
+    </div>
+  );
+}
+
+function Avatar({ alt, src }: { alt: string; src: string }) {
+  return (
+    <img
+      alt={alt}
+      className="h-10 w-10 shrink-0 rounded-full object-cover"
+      src={src}
+    />
+  );
+}
+
+function IconButton({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <button
-      className="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high"
+      aria-label={label}
+      className="rounded-lg p-2 text-on-surface-variant transition hover:bg-surface-container-high hover:text-primary"
       type="button"
     >
       {icon}
@@ -302,11 +532,19 @@ function IconButton({ icon }: { icon: React.ReactNode }) {
 function ActionText({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
     <button
-      className="flex items-center gap-2 text-sm font-semibold text-on-surface-variant hover:text-primary"
+      className="inline-flex items-center gap-2 text-xs font-black text-on-surface-variant transition hover:text-primary"
       type="button"
     >
       {icon}
       {text}
     </button>
+  );
+}
+
+function EmptyState({ text }: { text: string }) {
+  return (
+    <div className="rounded-xl border border-dashed border-outline-variant/30 bg-surface-container-lowest p-6 text-sm font-bold text-on-surface-variant">
+      {text}
+    </div>
   );
 }
