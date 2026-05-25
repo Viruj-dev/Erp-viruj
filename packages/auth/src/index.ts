@@ -9,7 +9,11 @@ import {
   customSession,
   organization,
 } from "better-auth/plugins";
-import { type OrganizationMemberRole } from "./roles";
+import {
+  type ErpOrganizationRole,
+  type OrganizationMemberRole,
+  normalizeOrganizationMemberRole,
+} from "./roles";
 import { z } from "zod";
 
 export {
@@ -19,63 +23,115 @@ export {
 export {
   organizationRoleOptions,
   organizationRoleSchema,
+  normalizeOrganizationMemberRole,
+  type ErpOrganizationRole,
   type OrganizationMemberRole,
 } from "./roles";
 
 export const erpStatements = {
-  appointment: ["read", "update"] as const,
+  appointment: ["read", "update", "manage"] as const,
+  billing: ["read", "manage"] as const,
+  community: ["read", "manage"] as const,
   invitation: ["read", "create", "cancel"] as const,
   member: ["read", "create", "update", "delete"] as const,
   organization: ["read", "update", "delete"] as const,
+  patient: ["read"] as const,
   project: ["read", "create", "update", "delete"] as const,
+  schedule: ["read", "manage"] as const,
 } as const;
 
 const accessControl = createAccessControl(erpStatements);
 
 export const organizationRoles = {
-  admin: accessControl.newRole({
-    appointment: ["read", "update"],
+  ORG_ADMIN: accessControl.newRole({
+    appointment: ["read", "update", "manage"],
+    billing: ["read", "manage"],
+    community: ["read", "manage"],
     invitation: ["read", "create", "cancel"],
     member: ["read", "create", "update", "delete"],
     organization: ["read", "update"],
+    patient: ["read"],
     project: ["read", "create", "update", "delete"],
+    schedule: ["read", "manage"],
+  }),
+  APPOINTMENT_HANDLER: accessControl.newRole({
+    appointment: ["read", "update", "manage"],
+    organization: ["read"],
+    patient: ["read"],
+    project: ["read"],
+    schedule: ["read", "manage"],
+  }),
+  COMMUNITY_MANAGER: accessControl.newRole({
+    community: ["read", "manage"],
+    organization: ["read"],
+    project: ["read"],
+  }),
+  FINANCE_MANAGER: accessControl.newRole({
+    billing: ["read", "manage"],
+    organization: ["read"],
+    project: ["read"],
+  }),
+  admin: accessControl.newRole({
+    appointment: ["read", "update", "manage"],
+    billing: ["read", "manage"],
+    community: ["read", "manage"],
+    invitation: ["read", "create", "cancel"],
+    member: ["read", "create", "update", "delete"],
+    organization: ["read", "update"],
+    patient: ["read"],
+    project: ["read", "create", "update", "delete"],
+    schedule: ["read", "manage"],
   }),
   billing: accessControl.newRole({
-    appointment: ["read"],
+    billing: ["read", "manage"],
     organization: ["read"],
     project: ["read"],
   }),
   doctor: accessControl.newRole({
-    appointment: ["read", "update"],
+    appointment: ["read", "update", "manage"],
     member: ["read"],
     organization: ["read"],
+    patient: ["read"],
     project: ["read", "create", "update"],
+    schedule: ["read", "manage"],
   }),
   lab_tech: accessControl.newRole({
-    appointment: ["read", "update"],
+    appointment: ["read", "update", "manage"],
     organization: ["read"],
+    patient: ["read"],
     project: ["read"],
+    schedule: ["read", "manage"],
   }),
   manager: accessControl.newRole({
-    appointment: ["read", "update"],
+    appointment: ["read", "update", "manage"],
+    billing: ["read", "manage"],
+    community: ["read", "manage"],
     invitation: ["read", "create", "cancel"],
     member: ["read", "create", "update"],
     organization: ["read", "update"],
+    patient: ["read"],
     project: ["read", "create", "update", "delete"],
+    schedule: ["read", "manage"],
   }),
   owner: accessControl.newRole({
-    appointment: ["read", "update"],
+    appointment: ["read", "update", "manage"],
+    billing: ["read", "manage"],
+    community: ["read", "manage"],
     invitation: ["read", "create", "cancel"],
     member: ["read", "create", "update", "delete"],
     organization: ["read", "update", "delete"],
+    patient: ["read"],
     project: ["read", "create", "update", "delete"],
+    schedule: ["read", "manage"],
   }),
   receptionist: accessControl.newRole({
-    appointment: ["read", "update"],
+    appointment: ["read", "update", "manage"],
     invitation: ["read"],
     member: ["read"],
     organization: ["read"],
+    patient: ["read"],
     project: ["read", "create"],
+    schedule: ["read", "manage"],
   }),
 } as const;
 
@@ -169,7 +225,11 @@ export const hasOrganizationPermission = (
   role: string,
   permissions: ErpPermissionRequest
 ) => {
-  const definition = organizationRoles[role as OrganizationMemberRole];
+  const normalizedRole = normalizeOrganizationMemberRole(role);
+  const definition =
+    organizationRoles[
+      (normalizedRole ?? role) as ErpOrganizationRole | OrganizationMemberRole
+    ];
 
   if (!definition) {
     return false;
@@ -204,7 +264,7 @@ export const auth = betterAuth({
     organization({
       ac: accessControl,
       allowUserToCreateOrganization: true,
-      creatorRole: "owner",
+      creatorRole: "ORG_ADMIN",
       invitationLimit: 250,
       membershipLimit: 500,
       requireEmailVerificationOnInvitation: false,

@@ -5,6 +5,7 @@ import type { OrganizationMemberRole } from "@erp_virujhealth/auth/roles";
 export const organizationTypeOptions = [
   "hospital",
   "clinic",
+  "doctor",
   "pathology",
   "radiology",
 ] as const;
@@ -23,6 +24,7 @@ export type DashboardPage = (typeof dashboardPageOptions)[number];
 
 export const organizationTypeLabels: Record<DashboardOrganizationType, string> = {
   clinic: "Clinic",
+  doctor: "Doctor",
   hospital: "Hospital",
   pathology: "Pathology",
   radiology: "Radiology",
@@ -32,6 +34,10 @@ export const defaultDashboardPageByRole: Record<
   OrganizationMemberRole,
   DashboardPage
 > = {
+  APPOINTMENT_HANDLER: "appointments",
+  COMMUNITY_MANAGER: "dashboard",
+  FINANCE_MANAGER: "analytics",
+  ORG_ADMIN: "dashboard",
   admin: "dashboard",
   billing: "analytics",
   doctor: "appointments",
@@ -45,6 +51,10 @@ export const allowedDashboardPagesByRole: Record<
   OrganizationMemberRole,
   DashboardPage[]
 > = {
+  APPOINTMENT_HANDLER: ["dashboard", "appointments", "patients"],
+  COMMUNITY_MANAGER: ["dashboard"],
+  FINANCE_MANAGER: ["dashboard", "patients", "analytics"],
+  ORG_ADMIN: ["dashboard", "appointments", "patients", "staff", "analytics"],
   admin: ["dashboard", "appointments", "patients", "staff", "analytics"],
   billing: ["dashboard", "patients", "analytics"],
   doctor: ["dashboard", "appointments", "patients", "analytics"],
@@ -65,7 +75,7 @@ export function isDashboardPage(value: string): value is DashboardPage {
 }
 
 export function getAllowedDashboardPages(role?: string | null): DashboardPage[] {
-  const fallbackRole: OrganizationMemberRole = "owner";
+  const fallbackRole: OrganizationMemberRole = "ORG_ADMIN";
 
   return allowedDashboardPagesByRole[
     (role as OrganizationMemberRole | undefined) ?? fallbackRole
@@ -73,7 +83,7 @@ export function getAllowedDashboardPages(role?: string | null): DashboardPage[] 
 }
 
 export function getDefaultDashboardPage(role?: string | null): DashboardPage {
-  const fallbackRole: OrganizationMemberRole = "owner";
+  const fallbackRole: OrganizationMemberRole = "ORG_ADMIN";
 
   return (
     defaultDashboardPageByRole[

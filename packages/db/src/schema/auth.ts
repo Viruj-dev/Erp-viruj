@@ -13,11 +13,22 @@ import {
 export const organizationTypes = [
   "hospital",
   "clinic",
+  "doctor",
   "radiology",
   "pathology",
 ] as const;
 
 export type OrganizationType = (typeof organizationTypes)[number];
+
+export function normalizeOrganizationType(value: string): OrganizationType {
+  const normalized = value.trim().toLowerCase();
+
+  if (organizationTypes.includes(normalized as OrganizationType)) {
+    return normalized as OrganizationType;
+  }
+
+  throw new Error("Invalid organization type");
+}
 
 export const organizationTypeEnum = pgEnum(
   "organization_type",

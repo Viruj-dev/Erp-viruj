@@ -1,9 +1,9 @@
 import { db } from "@erp_virujhealth/db";
 import { appointments } from "@erp_virujhealth/db/schema/appointments";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import z from "zod";
 
-import { permissionedErpProcedure } from "../middleware/auth";
+import { permissionedErpProcedure, requireErpActor } from "../middleware/auth";
 
 const appointmentStatusSchema = z.enum([
   "pending_approval",
@@ -17,10 +17,13 @@ const appointmentStatusSchema = z.enum([
 export const appointmentsRouter = {
   getAll: permissionedErpProcedure({
     appointment: ["read"],
-  }).handler(async () => {
+  }).handler(async ({ context }) => {
+    const actor = requireErpActor(context);
+
     return db
       .select()
       .from(appointments)
+      .where(eq(appointments.organizationId, actor.organizationId))
       .orderBy(
         desc(appointments.createdAt),
         desc(appointments.appointmentDate)
@@ -38,6 +41,7 @@ export const appointmentsRouter = {
       })
     )
     .handler(async ({ input, context }) => {
+      const actor = requireErpActor(context);
       const now = new Date();
       const approver =
         context.session?.user?.name || context.session?.user?.email || "ERP";
@@ -64,7 +68,12 @@ export const appointmentsRouter = {
       const [updated] = await db
         .update(appointments)
         .set(updatePayload)
-        .where(eq(appointments.id, input.id))
+        .where(
+          and(
+            eq(appointments.id, input.id),
+            eq(appointments.organizationId, actor.organizationId)
+          )
+        )
         .returning();
 
       if (!updated) {

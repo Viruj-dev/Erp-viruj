@@ -1,7 +1,7 @@
 import { hasOrganizationPermission } from "@erp_virujhealth/auth";
 import { ORPCError, os } from "@orpc/server";
 
-import type { Context } from "../context";
+import type { Context, ErpActor } from "../context";
 
 export const o = os.$context<Context>();
 
@@ -23,7 +23,7 @@ const requireOrganizationMembership = o.middleware(
       throw new ORPCError("UNAUTHORIZED");
     }
 
-    if (!session.activeOrganization || !session.activeMember) {
+    if (!context.actor) {
       throw new ORPCError("FORBIDDEN", {
         message:
           "An active organization membership is required for ERP routes.",
@@ -44,7 +44,7 @@ export const permissionedErpProcedure = (
   permissions: Parameters<typeof hasOrganizationPermission>[1]
 ) =>
   erpProcedure.use(async ({ context, next }) => {
-    const memberRole = context.session?.activeMember?.role;
+    const memberRole = context.actor?.role;
 
     if (!memberRole || !hasOrganizationPermission(memberRole, permissions)) {
       throw new ORPCError("FORBIDDEN", {
@@ -55,3 +55,13 @@ export const permissionedErpProcedure = (
 
     return next();
   });
+
+export function requireErpActor(context: Context): ErpActor {
+  if (!context.actor) {
+    throw new ORPCError("FORBIDDEN", {
+      message: "An active organization actor is required for ERP routes.",
+    });
+  }
+
+  return context.actor;
+}

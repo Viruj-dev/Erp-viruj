@@ -4,6 +4,7 @@ import {
   member,
   organization,
   organizationTypes,
+  normalizeOrganizationType,
   session,
 } from "@erp_virujhealth/db/schema/auth";
 import { and, eq } from "drizzle-orm";
@@ -27,9 +28,9 @@ export function registerAuthRoutes(app: Hono) {
       const requestedType =
         typeof body.organizationType === "string" ? body.organizationType : "";
       const organizationType = organizationTypes.includes(
-        requestedType as (typeof organizationTypes)[number]
+        requestedType.trim().toLowerCase() as (typeof organizationTypes)[number]
       )
-        ? (requestedType as (typeof organizationTypes)[number])
+        ? normalizeOrganizationType(requestedType)
         : defaultOrganizationType;
 
       const name =
@@ -78,7 +79,7 @@ export function registerAuthRoutes(app: Hono) {
           .values({
             id: randomUUID(),
             organizationId: selectedOrganization.organizationId,
-            role: "owner",
+            role: "ORG_ADMIN",
             userId: authSession.user.id,
           })
           .onConflictDoNothing();

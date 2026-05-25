@@ -1,9 +1,13 @@
 import { index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { organization } from "./auth";
 
 export const appointments = pgTable(
   "appointments",
   {
     id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
     patientUserId: text("patient_user_id"),
     patientName: text("patient_name").notNull(),
     patientPhone: text("patient_phone"),
@@ -37,6 +41,15 @@ export const appointments = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
+    index("appointments_organization_id_idx").on(table.organizationId),
+    index("appointments_organization_status_idx").on(
+      table.organizationId,
+      table.status
+    ),
+    index("appointments_organization_date_idx").on(
+      table.organizationId,
+      table.appointmentDate
+    ),
     index("appointments_status_idx").on(table.status),
     index("appointments_appointment_date_idx").on(table.appointmentDate),
     index("appointments_patient_user_id_idx").on(table.patientUserId),
