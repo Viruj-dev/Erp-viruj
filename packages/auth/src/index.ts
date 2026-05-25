@@ -29,6 +29,7 @@ export {
 } from "./roles";
 
 export const erpStatements = {
+  audit: ["read"] as const,
   appointment: ["read", "update", "manage"] as const,
   billing: ["read", "manage"] as const,
   community: ["read", "manage"] as const,
@@ -44,6 +45,7 @@ const accessControl = createAccessControl(erpStatements);
 
 export const organizationRoles = {
   ORG_ADMIN: accessControl.newRole({
+    audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
     community: ["read", "manage"],
@@ -72,6 +74,7 @@ export const organizationRoles = {
     project: ["read"],
   }),
   admin: accessControl.newRole({
+    audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
     community: ["read", "manage"],
@@ -103,6 +106,7 @@ export const organizationRoles = {
     schedule: ["read", "manage"],
   }),
   manager: accessControl.newRole({
+    audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
     community: ["read", "manage"],
@@ -114,6 +118,7 @@ export const organizationRoles = {
     schedule: ["read", "manage"],
   }),
   owner: accessControl.newRole({
+    audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
     community: ["read", "manage"],

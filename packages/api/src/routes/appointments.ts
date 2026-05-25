@@ -3,6 +3,7 @@ import { appointments } from "@erp_virujhealth/db/schema/appointments";
 import { and, desc, eq } from "drizzle-orm";
 import z from "zod";
 
+import { recordAuditLog } from "../lib/audit";
 import { permissionedErpProcedure, requireErpActor } from "../middleware/auth";
 
 const appointmentStatusSchema = z.enum([
@@ -65,21 +66,54 @@ export const appointmentsRouter = {
         updatePayload.cancelledAt = now;
       }
 
-      const [updated] = await db
-        .update(appointments)
-        .set(updatePayload)
-        .where(
-          and(
-            eq(appointments.id, input.id),
-            eq(appointments.organizationId, actor.organizationId)
+      return db.transaction(async (tx) => {
+        const [currentAppointment] = await tx
+          .select({
+            id: appointments.id,
+            status: appointments.status,
+          })
+          .from(appointments)
+          .where(
+            and(
+              eq(appointments.id, input.id),
+              eq(appointments.organizationId, actor.organizationId)
+            )
           )
-        )
-        .returning();
+          .limit(1);
 
-      if (!updated) {
-        throw new Error("Appointment not found");
-      }
+        if (!currentAppointment) {
+          throw new Error("Appointment not found");
+        }
 
-      return updated;
+        const [updated] = await tx
+          .update(appointments)
+          .set(updatePayload)
+          .where(
+            and(
+              eq(appointments.id, input.id),
+              eq(appointments.organizationId, actor.organizationId)
+            )
+          )
+          .returning();
+
+        if (!updated) {
+          throw new Error("Appointment not found");
+        }
+
+        await recordAuditLog({
+          action: "APPOINTMENT_STATUS_UPDATED",
+          actor,
+          db: tx,
+          entityId: updated.id,
+          entityType: "Appointment",
+          metadata: {
+            approvalNotes: input.approvalNotes ?? null,
+            fromStatus: currentAppointment.status,
+            toStatus: input.status,
+          },
+        });
+
+        return updated;
+      });
     }),
 };
