@@ -4,6 +4,7 @@ import {
   Activity,
   CalendarDays,
   FileText,
+  LockKeyhole,
   ShieldCheck,
   TrendingUp,
   UserPlus,
@@ -11,16 +12,38 @@ import {
 } from "lucide-react";
 import {
   departmentSplit,
-  revenueTrend,
   weeklyBookings,
 } from "@/features/dashboard/components/data";
 import {
-  DonutStat,
-  LineCompare,
   MiniBarChart,
 } from "@/features/dashboard/components/chart-primitives";
 
-export function ErpDemoDashboard({ userName }: { userName: string }) {
+const roleModuleAccess: Record<string, string[]> = {
+  APPOINTMENT_HANDLER: ["Appointments", "Patients", "Schedules"],
+  COMMUNITY_MANAGER: ["Community", "Public profile"],
+  FINANCE_MANAGER: ["Billing", "Payments", "Patient billing view"],
+  ORG_ADMIN: [
+    "Staff",
+    "Appointments",
+    "Patients",
+    "Billing",
+    "Community",
+    "Schedules",
+  ],
+};
+
+export function ErpDemoDashboard({
+  organizationLabel,
+  roleLabel,
+  userName,
+}: {
+  organizationLabel: string;
+  roleLabel: string;
+  userName: string;
+}) {
+  const normalizedRole = roleLabel.toUpperCase().replace(/\s+/g, "_");
+  const modules = roleModuleAccess[normalizedRole] ?? roleModuleAccess.ORG_ADMIN;
+
   return (
     <div className="space-y-8 p-6 lg:p-10">
       <section className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
@@ -29,12 +52,11 @@ export function ErpDemoDashboard({ userName }: { userName: string }) {
             Clinical command center
           </p>
           <h1 className="mt-4 max-w-xl font-headline text-4xl font-black leading-tight lg:text-5xl">
-            {userName || "Dr. Sarah Chen"}, your floor is moving cleanly today.
+            {userName || "ERP Admin"}, your {organizationLabel.toLowerCase()} workspace is ready.
           </h1>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-white/78">
-            Throughput is stable, approvals are under control, and emergency
-            load is below forecast. The dashboard below is the ERP-demo shell
-            now driving the web app.
+            You are signed in as {formatRole(roleLabel)}. Use Staff to invite
+            test users, switch roles, remove access, and verify audit logging.
           </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
             <MetricChip label="Consults today" value="86" />
@@ -55,17 +77,27 @@ export function ErpDemoDashboard({ userName }: { userName: string }) {
             </div>
             <ShieldCheck className="text-secondary" size={22} />
           </div>
-          <div className="mt-8 flex justify-center">
-            <DonutStat
-              color="#00478d"
-              label="optimal"
-              total={1284}
-              value={1130}
-            />
+          <div className="mt-6 rounded-2xl border border-primary/10 bg-primary-container/10 p-4">
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">
+              Current actor
+            </p>
+            <p className="mt-3 font-headline text-2xl font-black text-on-surface">
+              {formatRole(roleLabel)}
+            </p>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Tenant: {organizationLabel}
+            </p>
           </div>
-          <div className="mt-8 space-y-3 text-sm">
-            <LegendRow color="#00478d" label="Accepted" value="1,130" />
-            <LegendRow color="#d8dde7" label="Rejected" value="154" />
+          <div className="mt-5 space-y-2">
+            {modules.map((module) => (
+              <div
+                className="flex items-center gap-2 rounded-xl bg-surface-container-low px-3 py-2 text-sm font-semibold text-on-surface"
+                key={module}
+              >
+                <LockKeyhole size={14} />
+                {module}
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -103,18 +135,34 @@ export function ErpDemoDashboard({ userName }: { userName: string }) {
 
       <section className="grid gap-6 xl:grid-cols-[1.2fr_1fr]">
         <Panel
+          eyebrow="Testing workflow"
+          title="Auth and access checks"
+          description="Use this sequence after creating an ORG_ADMIN account."
+        >
+          <div className="space-y-3">
+            <ActivityRow
+              badge="1"
+              detail="Create an organization from the auth page."
+              title="Confirm admin lands here as ORG_ADMIN"
+            />
+            <ActivityRow
+              badge="2"
+              detail="Open Staff, invite APPOINTMENT_HANDLER or FINANCE_MANAGER."
+              title="Copy the invitation ID from Pending Invitations"
+            />
+            <ActivityRow
+              badge="3"
+              detail="Sign out, accept invite, and verify navigation changes."
+              title="Check Recent Audit for every staff action"
+            />
+          </div>
+        </Panel>
+        <Panel
           eyebrow="Weekly booking trends"
           title="Patient flow by day"
           description="The demo dashboard's primary chart translated to the Next app."
         >
           <MiniBarChart data={weeklyBookings} />
-        </Panel>
-        <Panel
-          eyebrow="Revenue comparison"
-          title="Income versus operating spend"
-          description="Sample finance series carried over from ERP-demo."
-        >
-          <LineCompare data={revenueTrend} />
         </Panel>
       </section>
 
@@ -215,6 +263,12 @@ export function ErpDemoDashboard({ userName }: { userName: string }) {
         </div>
       </section>
     </div>
+  );
+}
+
+function formatRole(role: string) {
+  return role.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (letter) =>
+    letter.toUpperCase()
   );
 }
 

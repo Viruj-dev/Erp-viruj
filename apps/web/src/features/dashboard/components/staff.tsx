@@ -4,15 +4,22 @@ import { orpc } from "@/lib/orpc";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
+  ArrowRight,
   BadgeCheck,
+  BriefcaseMedical,
   Clock,
+  Download,
+  Edit3,
+  Filter,
   Mail,
+  MoreVertical,
+  Search,
   ShieldCheck,
   Trash2,
   UserPlus,
   Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const roleOptions = [
   "APPOINTMENT_HANDLER",
@@ -34,9 +41,12 @@ export function ErpDemoStaff() {
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<StaffRole>("APPOINTMENT_HANDLER");
-  const [selectedRole, setSelectedRole] =
-    useState<StaffRole>("APPOINTMENT_HANDLER");
+  const [selectedRole, setSelectedRole] = useState<StaffRole>(
+    "APPOINTMENT_HANDLER"
+  );
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [query, setQuery] = useState("");
 
   const membersQuery = useQuery(orpc.staff.listMembers.queryOptions());
   const invitationsQuery = useQuery(orpc.staff.listInvitations.queryOptions());
@@ -84,13 +94,28 @@ export function ErpDemoStaff() {
   const members = membersQuery.data ?? [];
   const invitations = invitationsQuery.data ?? [];
   const auditLogs = auditQuery.data ?? [];
+  const pendingInvitations = invitations.filter(
+    (invitation) => invitation.status === "pending"
+  );
+  const filteredMembers = useMemo(
+    () =>
+      members.filter((member) => {
+        const target = [member.name, member.email, member.role]
+          .join(" ")
+          .toLowerCase();
+
+        return (
+          (roleFilter === "all" || member.role === roleFilter) &&
+          target.includes(query.toLowerCase().trim())
+        );
+      }),
+    [members, query, roleFilter]
+  );
   const selectedStaff =
     members.find((member) => member.id === selectedStaffId) ??
     members[0] ??
     null;
-  const pendingInvitations = invitations.filter(
-    (invitation) => invitation.status === "pending"
-  );
+  const verifiedCount = members.filter((member) => member.emailVerified).length;
 
   useEffect(() => {
     if (selectedStaff?.role && isStaffRole(selectedStaff.role)) {
@@ -133,109 +158,235 @@ export function ErpDemoStaff() {
   };
 
   return (
-    <div className="space-y-6 p-6 lg:p-8">
-      <div className="grid gap-4 md:grid-cols-3">
-        <MetricBadge
-          icon={<Users size={16} />}
-          label="Active staff"
-          value={`${members.length}`}
-        />
-        <MetricBadge
-          icon={<Clock size={16} />}
-          label="Pending invites"
-          tone="secondary"
-          value={`${pendingInvitations.length}`}
-        />
-        <MetricBadge
-          icon={<ShieldCheck size={16} />}
-          label="Role model"
-          value="MVP RBAC"
-        />
-      </div>
-
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-headline text-2xl font-black text-on-surface">
-                Staff Directory
-              </h2>
-              <p className="mt-1 text-sm text-on-surface-variant">
-                Organization-scoped ERP users and their operational roles.
-              </p>
-            </div>
+    <div className="space-y-7 p-5 lg:p-8">
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_330px]">
+        <div className="overflow-hidden rounded-xl bg-[#002a52] p-7 text-white shadow-sm">
+          <p className="font-headline text-2xl font-black">
+            Staff Workforce Overview
+          </p>
+          <p className="mt-2 max-w-2xl text-sm font-medium text-white/65">
+            Real-time status of clinical and administrative personnel across all
+            active departments.
+          </p>
+          <div className="mt-7 grid gap-5 sm:grid-cols-3">
+            <HeroMetric label="Total active" value={members.length} />
+            <HeroMetric label="Verified staff" value={verifiedCount} />
+            <HeroMetric
+              label="Pending invites"
+              value={pendingInvitations.length}
+            />
           </div>
+        </div>
 
+        <div className="rounded-xl border-l-4 border-secondary bg-surface-container-lowest p-5 shadow-sm">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-secondary/10 text-secondary">
+            <BriefcaseMedical size={20} />
+          </div>
+          <p className="mt-5 text-xs font-black uppercase tracking-[0.18em] text-primary">
+            Critical role
+          </p>
+          <h3 className="mt-2 font-headline text-lg font-black text-on-surface">
+            Shift Coverage Gap
+          </h3>
+          <p className="mt-2 text-sm font-medium leading-6 text-on-surface-variant">
+            {pendingInvitations.length > 0
+              ? `${pendingInvitations.length} pending staff invitation${
+                  pendingInvitations.length === 1 ? "" : "s"
+                } require follow-up before roster close.`
+              : "All invited staff have responded. Continue auditing roster coverage by role."}
+          </p>
+          <button
+            className="mt-5 inline-flex items-center gap-2 text-xs font-black text-primary"
+            type="button"
+          >
+            Resolve Staffing Alert
+            <ArrowRight size={14} />
+          </button>
+        </div>
+      </section>
+
+      <section className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {["all", ...roleOptions].map((option) => (
+            <button
+              className={`rounded-lg px-3 py-2 text-xs font-black transition ${
+                roleFilter === option
+                  ? "bg-primary text-white"
+                  : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high"
+              }`}
+              key={option}
+              onClick={() => setRoleFilter(option)}
+              type="button"
+            >
+              {option === "all" ? "All Staff" : formatRole(option)}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="relative">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+              size={14}
+            />
+            <input
+              className="w-72 rounded-lg border border-outline-variant/20 bg-white py-2 pl-9 pr-3 text-xs font-semibold text-on-surface outline-none focus:border-primary"
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search staff members..."
+              value={query}
+            />
+          </span>
+          <button
+            className="inline-flex items-center gap-2 rounded-lg bg-surface-container-low px-3 py-2 text-xs font-black text-on-surface transition hover:bg-surface-container-high"
+            type="button"
+          >
+            <Filter size={14} />
+            Advanced Filters
+          </button>
+        </div>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="space-y-5">
           {membersQuery.isPending ? (
             <EmptyState text="Loading staff accounts..." />
           ) : membersQuery.isError ? (
             <EmptyState text="Unable to load staff accounts." tone="error" />
-          ) : members.length === 0 ? (
-            <EmptyState text="No staff accounts have joined this organization yet." />
+          ) : filteredMembers.length === 0 ? (
+            <EmptyState text="No staff accounts match the current filters." />
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {members.map((member) => (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {filteredMembers.map((member) => (
                 <button
-                  className={`rounded-2xl border p-5 text-left transition-all ${
+                  className={`rounded-xl border bg-surface-container-lowest p-5 text-left shadow-sm transition ${
                     selectedStaff?.id === member.id
-                      ? "border-primary bg-primary-container/10 ring-2 ring-primary/15"
-                      : "border-outline-variant/20 bg-surface-container-low hover:border-primary/35 hover:shadow-lg"
+                      ? "border-primary ring-2 ring-primary/15"
+                      : "border-outline-variant/20 hover:border-primary/35 hover:shadow-md"
                   }`}
                   key={member.id}
                   onClick={() => setSelectedStaffId(member.id)}
                   type="button"
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-sm font-black uppercase text-white">
-                        {getInitials(member.name, member.email)}
-                      </div>
+                      <StaffAvatar email={member.email} name={member.name} />
                       <div className="min-w-0">
-                        <h3 className="truncate font-headline text-lg font-black text-on-surface">
-                          {member.name}
+                        <h3 className="truncate font-headline text-base font-black text-on-surface">
+                          {member.name || "Unnamed staff"}
                         </h3>
-                        <p className="truncate text-sm text-on-surface-variant">
+                        <p className="truncate text-xs font-medium text-on-surface-variant">
                           {member.email}
                         </p>
                       </div>
                     </div>
-                    <StatusDot isActive={member.emailVerified} />
+                    <div className="flex items-center gap-2 text-outline">
+                      <Edit3 size={14} />
+                      <MoreVertical size={14} />
+                    </div>
                   </div>
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    <RolePill role={member.role} />
-                    <span className="rounded-full bg-surface-container-high px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-on-surface-variant">
-                      {member.emailVerified ? "Verified" : "Unverified"}
-                    </span>
+
+                  <div className="mt-5 grid grid-cols-2 gap-3">
+                    <InfoBox label="Role" value={formatRole(member.role)} />
+                    <InfoBox
+                      label="Status"
+                      value={member.emailVerified ? "On Duty" : "Pending"}
+                      valueTone={member.emailVerified ? "good" : "muted"}
+                    />
+                  </div>
+
+                  <div className="mt-5 flex flex-wrap justify-between gap-2 border-t border-outline-variant/12 pt-4">
+                    <SmallAction label="Audit Access" />
+                    <SmallAction
+                      label={member.emailVerified ? "View Logins" : "Verify"}
+                    />
                   </div>
                 </button>
               ))}
             </div>
           )}
+
+          <section className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+              <h3 className="font-headline text-lg font-black text-on-surface">
+                Longitudinal Staff Record
+              </h3>
+              <button
+                className="inline-flex items-center gap-2 text-xs font-black text-primary"
+                type="button"
+              >
+                Export Full Roster
+                <Download size={13} />
+              </button>
+            </div>
+            <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_auto] gap-4 border-t border-outline-variant/15 bg-surface-container-low px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+              <span>Name & Identifier</span>
+              <span>Department</span>
+              <span>Access Level</span>
+              <span>Last Activity</span>
+              <span>Actions</span>
+            </div>
+            <div className="divide-y divide-outline-variant/12">
+              {members.slice(0, 6).map((member) => (
+                <div
+                  className="grid grid-cols-[1.2fr_1fr_1fr_1fr_auto] items-center gap-4 px-5 py-4 text-sm"
+                  key={member.id}
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <StaffAvatar
+                      email={member.email}
+                      name={member.name}
+                      small
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate font-black text-on-surface">
+                        {member.name || member.email}
+                      </p>
+                      <p className="truncate text-xs text-on-surface-variant">
+                        ID: {member.userId}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="font-semibold text-on-surface-variant">
+                    {departmentFromRole(member.role)}
+                  </span>
+                  <RolePill role={member.role} />
+                  <span className="text-xs font-semibold text-on-surface-variant">
+                    {formatDate(member.createdAt)}
+                  </span>
+                  <button
+                    className="text-xs font-black text-primary"
+                    type="button"
+                  >
+                    Audit Access
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
 
         <aside className="space-y-5">
           <form
-            className="rounded-2xl border border-outline-variant/20 bg-surface-container-low p-5 shadow-sm"
+            className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm"
             onSubmit={handleInvite}
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white">
                 <UserPlus size={18} />
               </div>
               <div>
                 <h3 className="font-headline text-lg font-black text-on-surface">
-                  Invite Staff
+                  Onboard New Staff
                 </h3>
-                <p className="text-xs text-on-surface-variant">
-                  Creates a pending organization invitation.
+                <p className="text-xs font-medium text-on-surface-variant">
+                  Creates a pending backend organization invitation.
                 </p>
               </div>
             </div>
 
-            <label className="mt-5 block text-[11px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+            <label className="mt-5 block text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
               Email
               <input
-                className="mt-2 w-full rounded-xl border border-outline-variant/30 bg-surface px-4 py-3 text-sm font-semibold normal-case tracking-normal text-on-surface outline-none transition focus:border-primary"
+                className="mt-2 w-full rounded-lg border border-outline-variant/25 bg-surface px-3 py-2.5 text-sm font-semibold normal-case tracking-normal text-on-surface outline-none transition focus:border-primary"
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="staff@organization.com"
                 type="email"
@@ -243,10 +394,10 @@ export function ErpDemoStaff() {
               />
             </label>
 
-            <label className="mt-4 block text-[11px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+            <label className="mt-4 block text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
               Role
               <select
-                className="mt-2 w-full rounded-xl border border-outline-variant/30 bg-surface px-4 py-3 text-sm font-semibold normal-case tracking-normal text-on-surface outline-none transition focus:border-primary"
+                className="mt-2 w-full rounded-lg border border-outline-variant/25 bg-surface px-3 py-2.5 text-sm font-semibold normal-case tracking-normal text-on-surface outline-none transition focus:border-primary"
                 onChange={(event) => setRole(event.target.value as StaffRole)}
                 value={role}
               >
@@ -259,13 +410,13 @@ export function ErpDemoStaff() {
             </label>
 
             {inviteMutation.isError ? (
-              <p className="mt-4 rounded-xl bg-error-container/20 px-4 py-3 text-sm font-semibold text-error">
+              <p className="mt-4 rounded-lg bg-error-container/30 px-3 py-2 text-sm font-semibold text-error">
                 {inviteMutation.error.message || "Unable to invite staff."}
               </p>
             ) : null}
 
             <button
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-black text-white shadow-md transition hover:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-black text-white shadow-md transition hover:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
               disabled={inviteMutation.isPending}
               type="submit"
             >
@@ -274,10 +425,77 @@ export function ErpDemoStaff() {
             </button>
           </form>
 
-          <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-low p-5 shadow-sm">
-            <h3 className="font-headline text-lg font-black text-on-surface">
-              Pending Invitations
-            </h3>
+          {selectedStaff ? (
+            <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
+              <h3 className="font-headline text-lg font-black text-on-surface">
+                Selected Account
+              </h3>
+              <div className="mt-4 space-y-3 text-sm">
+                <Detail label="Name" value={selectedStaff.name || "Unnamed"} />
+                <Detail label="Email" value={selectedStaff.email} />
+                <Detail label="Role" value={formatRole(selectedStaff.role)} />
+                <Detail
+                  label="Status"
+                  value={
+                    selectedStaff.emailVerified ? "Verified" : "Unverified"
+                  }
+                />
+                <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+                  Change Role
+                  <select
+                    className="mt-2 w-full rounded-lg border border-outline-variant/25 bg-surface px-3 py-2.5 text-sm font-semibold normal-case tracking-normal text-on-surface outline-none transition focus:border-primary"
+                    onChange={(event) =>
+                      setSelectedRole(event.target.value as StaffRole)
+                    }
+                    value={selectedRole}
+                  >
+                    {roleOptions.map((roleOption) => (
+                      <option key={roleOption} value={roleOption}>
+                        {roleLabels[roleOption]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {updateRoleMutation.isError || removeStaffMutation.isError ? (
+                  <p className="rounded-lg bg-error-container/30 px-3 py-2 text-sm font-semibold text-error">
+                    {updateRoleMutation.error?.message ||
+                      removeStaffMutation.error?.message ||
+                      "Unable to update staff access."}
+                  </p>
+                ) : null}
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    className="rounded-lg bg-primary px-4 py-3 text-sm font-black text-white transition hover:scale-[0.99] disabled:opacity-60"
+                    disabled={
+                      updateRoleMutation.isPending ||
+                      selectedRole === selectedStaff.role
+                    }
+                    onClick={handleUpdateRole}
+                    type="button"
+                  >
+                    Save Role
+                  </button>
+                  <button
+                    className="flex items-center justify-center gap-2 rounded-lg border border-error/20 px-4 py-3 text-sm font-black text-error transition hover:bg-error-container/20 disabled:opacity-60"
+                    disabled={removeStaffMutation.isPending}
+                    onClick={handleRemoveStaff}
+                    type="button"
+                  >
+                    <Trash2 size={15} />
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
+            <div className="flex items-center gap-2">
+              <Clock size={16} />
+              <h3 className="font-headline text-lg font-black text-on-surface">
+                Pending Invitations
+              </h3>
+            </div>
             <div className="mt-4 space-y-3">
               {invitationsQuery.isPending ? (
                 <EmptyState text="Loading invitations..." compact />
@@ -286,7 +504,7 @@ export function ErpDemoStaff() {
               ) : (
                 pendingInvitations.map((invitation) => (
                   <div
-                    className="rounded-xl border border-outline-variant/15 bg-surface-container-lowest p-4"
+                    className="rounded-lg border border-outline-variant/15 bg-surface-container-low p-4"
                     key={invitation.id}
                   >
                     <p className="truncate text-sm font-black text-on-surface">
@@ -294,13 +512,10 @@ export function ErpDemoStaff() {
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <RolePill role={invitation.role} />
-                      <span className="rounded-full bg-secondary-container/35 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-secondary">
+                      <span className="rounded-full bg-secondary-container/35 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-secondary">
                         {invitation.status}
                       </span>
                     </div>
-                    <p className="mt-3 text-xs text-on-surface-variant">
-                      Invitation ID: {invitation.id}
-                    </p>
                     <button
                       className="mt-3 inline-flex items-center gap-2 rounded-lg border border-error/20 px-3 py-2 text-xs font-black text-error transition hover:bg-error-container/20 disabled:opacity-60"
                       disabled={cancelInvitationMutation.isPending}
@@ -320,69 +535,7 @@ export function ErpDemoStaff() {
             </div>
           </div>
 
-          {selectedStaff ? (
-            <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-low p-5 shadow-sm">
-              <h3 className="font-headline text-lg font-black text-on-surface">
-                Selected Account
-              </h3>
-              <div className="mt-4 space-y-3 text-sm">
-                <Detail label="Name" value={selectedStaff.name} />
-                <Detail label="Email" value={selectedStaff.email} />
-                <Detail label="Role" value={formatRole(selectedStaff.role)} />
-                <Detail
-                  label="Status"
-                  value={selectedStaff.emailVerified ? "Verified" : "Unverified"}
-                />
-                <label className="block text-[11px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
-                  Change Role
-                  <select
-                    className="mt-2 w-full rounded-xl border border-outline-variant/30 bg-surface px-4 py-3 text-sm font-semibold normal-case tracking-normal text-on-surface outline-none transition focus:border-primary"
-                    onChange={(event) =>
-                      setSelectedRole(event.target.value as StaffRole)
-                    }
-                    value={selectedRole}
-                  >
-                    {roleOptions.map((roleOption) => (
-                      <option key={roleOption} value={roleOption}>
-                        {roleLabels[roleOption]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {updateRoleMutation.isError || removeStaffMutation.isError ? (
-                  <p className="rounded-xl bg-error-container/20 px-4 py-3 text-sm font-semibold text-error">
-                    {updateRoleMutation.error?.message ||
-                      removeStaffMutation.error?.message ||
-                      "Unable to update staff access."}
-                  </p>
-                ) : null}
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    className="rounded-xl bg-primary px-4 py-3 text-sm font-black text-white transition hover:scale-[0.99] disabled:opacity-60"
-                    disabled={
-                      updateRoleMutation.isPending ||
-                      selectedRole === selectedStaff.role
-                    }
-                    onClick={handleUpdateRole}
-                    type="button"
-                  >
-                    Save Role
-                  </button>
-                  <button
-                    className="flex items-center justify-center gap-2 rounded-xl border border-error/20 px-4 py-3 text-sm font-black text-error transition hover:bg-error-container/20 disabled:opacity-60"
-                    disabled={removeStaffMutation.isPending}
-                    onClick={handleRemoveStaff}
-                    type="button"
-                  >
-                    <Trash2 size={15} />
-                    Remove
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-low p-5 shadow-sm">
+          <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
             <div className="flex items-center gap-2">
               <Activity size={16} />
               <h3 className="font-headline text-lg font-black text-on-surface">
@@ -397,7 +550,7 @@ export function ErpDemoStaff() {
               ) : (
                 auditLogs.slice(0, 5).map((log) => (
                   <div
-                    className="rounded-xl border border-outline-variant/15 bg-surface-container-lowest p-4"
+                    className="rounded-lg border border-outline-variant/15 bg-surface-container-low p-4"
                     key={log.id}
                   >
                     <p className="text-sm font-black text-on-surface">
@@ -418,33 +571,70 @@ export function ErpDemoStaff() {
   );
 }
 
-function MetricBadge({
-  icon,
-  label,
-  tone = "primary",
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  tone?: "primary" | "secondary";
-  value: string;
-}) {
+function HeroMetric({ label, value }: { label: string; value: number }) {
   return (
-    <div
-      className={`rounded-2xl border p-5 ${
-        tone === "primary"
-          ? "border-outline-variant/20 bg-surface-container-low"
-          : "border-secondary/15 bg-secondary-container/35"
-      }`}
-    >
-      <div className="flex items-center gap-2 text-sm font-black text-on-surface-variant">
-        {icon}
+    <div>
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">
         {label}
-      </div>
-      <p className="mt-3 font-headline text-3xl font-black text-on-surface">
+      </p>
+      <p className="mt-1 font-headline text-4xl font-black text-white">
         {value}
       </p>
     </div>
+  );
+}
+
+function StaffAvatar({
+  email,
+  name,
+  small = false,
+}: {
+  email: string;
+  name: string;
+  small?: boolean;
+}) {
+  return (
+    <div
+      className={`flex shrink-0 items-center justify-center rounded-full bg-primary/10 font-black uppercase text-primary ${
+        small ? "h-9 w-9 text-xs" : "h-12 w-12 text-sm"
+      }`}
+    >
+      {getInitials(name, email)}
+    </div>
+  );
+}
+
+function InfoBox({
+  label,
+  value,
+  valueTone = "default",
+}: {
+  label: string;
+  value: string;
+  valueTone?: "default" | "good" | "muted";
+}) {
+  const tone =
+    valueTone === "good"
+      ? "text-secondary"
+      : valueTone === "muted"
+        ? "text-outline"
+        : "text-on-surface";
+
+  return (
+    <div className="rounded-lg bg-surface-container-low px-3 py-2">
+      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-on-surface-variant">
+        {label}
+      </p>
+      <p className={`mt-1 truncate text-xs font-black ${tone}`}>{value}</p>
+    </div>
+  );
+}
+
+function SmallAction({ label }: { label: string }) {
+  return (
+    <span className="text-[10px] font-black uppercase tracking-[0.12em] text-primary">
+      {label}
+    </span>
   );
 }
 
@@ -459,7 +649,7 @@ function EmptyState({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-dashed p-5 text-sm font-semibold ${
+      className={`rounded-xl border border-dashed p-5 text-sm font-semibold ${
         compact ? "py-4" : "min-h-32"
       } ${
         tone === "error"
@@ -474,25 +664,15 @@ function EmptyState({
 
 function RolePill({ role }: { role: string }) {
   return (
-    <span className="rounded-full border border-primary/15 bg-primary-container/15 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-primary">
+    <span className="w-fit rounded-full border border-primary/15 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
       {formatRole(role)}
     </span>
   );
 }
 
-function StatusDot({ isActive }: { isActive: boolean }) {
-  return (
-    <span
-      className={`mt-1 h-3 w-3 rounded-full ${
-        isActive ? "bg-secondary" : "bg-outline-variant"
-      }`}
-    />
-  );
-}
-
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-xl bg-surface-container-high px-4 py-3">
+    <div className="flex items-center justify-between gap-4 rounded-lg bg-surface-container-low px-3 py-2.5">
       <span className="text-on-surface-variant">{label}</span>
       <span className="truncate font-black text-on-surface">{value}</span>
     </div>
@@ -516,6 +696,22 @@ function formatDate(value: string | Date) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function departmentFromRole(role: string) {
+  if (role === "APPOINTMENT_HANDLER") {
+    return "Appointments";
+  }
+
+  if (role === "COMMUNITY_MANAGER") {
+    return "Community";
+  }
+
+  if (role === "FINANCE_MANAGER") {
+    return "Finance";
+  }
+
+  return "Administration";
 }
 
 function isStaffRole(role: string): role is StaffRole {

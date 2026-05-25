@@ -132,9 +132,7 @@ export function ErpHomeScreen({
         const organization = getAuthActionData<{
           id?: string;
           organizationType?: string;
-        }>(
-          organizationResult
-        );
+        }>(organizationResult);
         let organizationId = organization?.id;
 
         if (!organizationId) {
@@ -168,7 +166,10 @@ export function ErpHomeScreen({
         router.replace(buildDashboardPath(organizationType));
       })
       .catch((error) => {
-        console.error("[Auth] Failed to provision default organization:", error);
+        console.error(
+          "[Auth] Failed to provision default organization:",
+          error
+        );
       })
       .finally(() => setIsProvisioningOrganization(false));
   }, [
@@ -185,24 +186,32 @@ export function ErpHomeScreen({
     sessionState.data?.user,
   ]);
 
-  const currentPage = isErpDemoPage(requestedPage) ? requestedPage : fallbackPage;
+  const currentPage = isErpDemoPage(requestedPage)
+    ? requestedPage
+    : fallbackPage;
   const userName =
     sessionState.data?.user?.name ||
     sessionState.data?.user?.email ||
     "Clinical User";
   const activeOrganization = activeOrganizationState.data;
   const activeMember = activeMemberState.data;
-  const activeOrganizationType = activeOrganization?.organizationType;
+  const routeDashboardOrganizationType = isDashboardOrganizationType(
+    routeOrganizationType
+  )
+    ? routeOrganizationType
+    : null;
+  const activeOrganizationType =
+    activeOrganization?.organizationType &&
+    isDashboardOrganizationType(activeOrganization.organizationType)
+      ? activeOrganization.organizationType
+      : (routeDashboardOrganizationType ?? "hospital");
   const activeMemberRole = activeMember?.role;
   const allowedPages = getAllowedDashboardPages(activeMemberRole);
   const resolvedPage = resolveAccessibleDashboardPage(
     currentPage,
     activeMemberRole
   );
-  const organizationLabel =
-    activeOrganizationType && isDashboardOrganizationType(activeOrganizationType)
-      ? organizationTypeLabels[activeOrganizationType]
-      : "Organization";
+  const organizationLabel = organizationTypeLabels[activeOrganizationType];
   const roleLabel = activeMemberRole
     ? activeMemberRole.replace(/_/g, " ")
     : "member";
@@ -223,20 +232,18 @@ export function ErpHomeScreen({
       isAuthPending ||
       !activeOrganization ||
       !activeMember ||
-      !activeOrganization.organizationType ||
-      !isDashboardOrganizationType(activeOrganization.organizationType)
+      !activeOrganizationType
     ) {
       return;
     }
 
     const expectedPath = buildDashboardPath(
-      activeOrganization.organizationType,
+      activeOrganizationType,
       resolvedPage
     );
 
     const routeMatchesOrganization =
-      isDashboardOrganizationType(routeOrganizationType) &&
-      routeOrganizationType === activeOrganization.organizationType;
+      routeDashboardOrganizationType === activeOrganizationType;
 
     if (!routeMatchesOrganization || requestedPage !== resolvedPage) {
       router.replace(expectedPath);
@@ -244,10 +251,12 @@ export function ErpHomeScreen({
   }, [
     activeMember,
     activeOrganization,
+    activeOrganizationType,
     isAuthPending,
     isHydrated,
     requestedPage,
     resolvedPage,
+    routeDashboardOrganizationType,
     routeOrganizationType,
     router,
   ]);
@@ -331,12 +340,7 @@ export function ErpHomeScreen({
           }
         }}
         onPageChange={(page) => {
-          if (
-            activeOrganizationType &&
-            isDashboardOrganizationType(activeOrganizationType)
-          ) {
-            router.push(buildDashboardPath(activeOrganizationType, page));
-          }
+          router.push(buildDashboardPath(activeOrganizationType, page));
         }}
         onToggle={() => setIsSidebarCollapsed((value) => !value)}
         organizationLabel={organizationLabel}
@@ -362,7 +366,12 @@ export function ErpHomeScreen({
               initial={{ opacity: 0, y: 12 }}
               transition={{ duration: 0.2 }}
             >
-              <PageContent currentPage={resolvedPage} userName={userName} />
+              <PageContent
+                currentPage={resolvedPage}
+                organizationLabel={organizationLabel}
+                roleLabel={roleLabel}
+                userName={userName}
+              />
             </motion.div>
           </AnimatePresence>
         </div>
@@ -373,9 +382,13 @@ export function ErpHomeScreen({
 
 function PageContent({
   currentPage,
+  organizationLabel,
+  roleLabel,
   userName,
 }: {
   currentPage: ErpDemoPage;
+  organizationLabel: string;
+  roleLabel: string;
   userName: string;
 }) {
   switch (currentPage) {
@@ -389,7 +402,13 @@ function PageContent({
       return <ErpDemoAnalytics />;
     case "dashboard":
     default:
-      return <ErpDemoDashboard userName={userName} />;
+      return (
+        <ErpDemoDashboard
+          organizationLabel={organizationLabel}
+          roleLabel={roleLabel}
+          userName={userName}
+        />
+      );
   }
 }
 
@@ -403,7 +422,9 @@ function buildAutoOrganizationName(identifier?: string | null) {
   }
 
   const localName = identifier.split("@")[0]?.trim();
-  return localName ? `${localName}'s Viruj Workspace` : "Viruj Health Workspace";
+  return localName
+    ? `${localName}'s Viruj Workspace`
+    : "Viruj Health Workspace";
 }
 
 function buildAutoOrganizationSlug(identifier?: string | null) {

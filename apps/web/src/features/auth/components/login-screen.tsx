@@ -20,7 +20,12 @@ import {
 } from "@/lib/auth-client";
 
 type Step = "login" | "onboarding" | "invitation";
-type OrganizationType = "clinic" | "hospital" | "pathology" | "radiology";
+type OrganizationType =
+  | "clinic"
+  | "doctor"
+  | "hospital"
+  | "pathology"
+  | "radiology";
 
 type BetterAuthResult = {
   error?: {
@@ -34,6 +39,7 @@ const organizationTypeOptions: Array<{
 }> = [
   { label: "Multi-specialty Hospital", value: "hospital" },
   { label: "Private Clinic", value: "clinic" },
+  { label: "Individual Doctor", value: "doctor" },
   { label: "Pathology Lab", value: "pathology" },
   { label: "Radiology Center", value: "radiology" },
 ];
@@ -133,7 +139,7 @@ export function ErpDemoLogin({
         return;
       }
 
-      setSuccessMessage("Organization ready and owner session activated.");
+      setSuccessMessage("Organization ready and ORG_ADMIN session activated.");
       await onAuthenticated();
     } finally {
       setIsPending(false);
@@ -229,20 +235,20 @@ export function ErpDemoLogin({
             transition={{ delay: 0.35 }}
           >
             Secure Better Auth sessions, organization-scoped roles, and
-            Neon-backed clinical operations in one ERP workspace.
+            Drizzle-backed clinical operations in one ERP workspace.
           </motion.p>
           <div className="mt-12 flex gap-4">
             <FeaturePill
               icon={
                 <ShieldCheck className="text-secondary-container" size={24} />
               }
-              subtitle="Org-scoped sessions"
+              subtitle="Tenant-scoped sessions"
               title="Role Controlled"
             />
             <FeaturePill
               icon={<Zap className="text-secondary-container" size={24} />}
-              subtitle="Neon + Drizzle"
-              title="Serverless Ready"
+              subtitle="Bun + Hono + Drizzle"
+              title="MVP Ready"
             />
           </div>
         </div>
@@ -264,7 +270,7 @@ export function ErpDemoLogin({
                     Welcome back
                   </h2>
                   <p className="mt-2 text-on-surface-variant">
-                    Access your clinical ecosystem
+                    Access the organization workspace that manages Viruj app demand
                   </p>
                 </header>
 
@@ -277,6 +283,8 @@ export function ErpDemoLogin({
                   <RoleCard icon={<Stethoscope size={20} />} label="Doctor" />
                   <RoleCard icon={<Microscope size={20} />} label="Lab" />
                 </div>
+
+                <TestGuide />
 
                 <form
                   className="space-y-5"
@@ -340,7 +348,7 @@ export function ErpDemoLogin({
                     }}
                     type="button"
                   >
-                    Initialize New Organization
+                    Create Test Organization
                   </button>
                   <button
                     className="w-full rounded-lg border border-outline-variant/20 py-3 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-low"
@@ -350,7 +358,7 @@ export function ErpDemoLogin({
                     }}
                     type="button"
                   >
-                    Join Existing Organization
+                    Accept Staff Invitation
                   </button>
                 </div>
               </motion.div>
@@ -370,7 +378,7 @@ export function ErpDemoLogin({
                       Organization Setup
                     </h2>
                     <p className="mt-2 italic text-on-surface-variant">
-                      Better Auth owner onboarding
+                      Viruj-managed organization onboarding
                     </p>
                   </div>
                   <button
@@ -388,8 +396,9 @@ export function ErpDemoLogin({
                 <div className="flex gap-4 rounded-xl border border-primary-fixed bg-primary-fixed/30 p-4">
                   <Info className="mt-1 text-primary" size={18} />
                   <p className="text-xs leading-relaxed text-on-primary-fixed">
-                    This flow creates the owner account first, then provisions
-                    the organization and activates it in the current session.
+                    This creates an ERP admin account, provisions the
+                    organization, and activates an ORG_ADMIN session for
+                    testing staff and audit flows.
                   </p>
                 </div>
 
@@ -448,7 +457,7 @@ export function ErpDemoLogin({
                           email: value,
                         }))
                       }
-                      placeholder="chief.admin@viruj.health"
+                      placeholder="admin@apollo.test"
                       required
                       type="email"
                       value={onboardingForm.email}
@@ -462,7 +471,7 @@ export function ErpDemoLogin({
                         password: value,
                       }))
                     }
-                    placeholder="Minimum secure owner password"
+                      placeholder="Minimum secure admin password"
                     required
                     type="password"
                     value={onboardingForm.password}
@@ -480,14 +489,14 @@ export function ErpDemoLogin({
                       }}
                       type="button"
                     >
-                      I have an invitation
+                      Accept staff invitation
                     </button>
                     <button
                       className="flex-1 rounded-lg bg-primary py-3 font-bold text-white shadow-md transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                       disabled={isPending}
                       type="submit"
                     >
-                      {isPending ? "Creating..." : "Create Organization"}
+                      {isPending ? "Creating..." : "Create ORG_ADMIN"}
                     </button>
                   </div>
                 </form>
@@ -507,8 +516,8 @@ export function ErpDemoLogin({
                     Accept Invitation
                   </h2>
                   <p className="mt-2 text-on-surface-variant">
-                    Join an existing clinical institution with a Better Auth
-                    invitation ID
+                    Join an existing organization with the invitation ID shown
+                    on the Staff page.
                   </p>
                 </header>
 
@@ -541,7 +550,7 @@ export function ErpDemoLogin({
                           email: value,
                         }))
                       }
-                      placeholder="doctor@hospital.org"
+                    placeholder="staff@apollo.test"
                       required
                       type="email"
                       value={invitationForm.email}
@@ -593,7 +602,7 @@ export function ErpDemoLogin({
                   }}
                   type="button"
                 >
-                  Back to Organization Creation
+                    Back to organization creation
                 </button>
               </motion.div>
             ) : null}
@@ -689,6 +698,30 @@ function RoleCard({
         {label}
       </span>
     </button>
+  );
+}
+
+function TestGuide() {
+  return (
+    <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low p-4">
+      <p className="text-[11px] font-black uppercase tracking-[0.24em] text-primary">
+        Test path
+      </p>
+      <ol className="mt-3 space-y-2 text-sm text-on-surface-variant">
+        <li>
+          <strong className="text-on-surface">1.</strong> Create an
+          organization admin.
+        </li>
+        <li>
+          <strong className="text-on-surface">2.</strong> Open Staff and invite
+          a role-based user.
+        </li>
+        <li>
+          <strong className="text-on-surface">3.</strong> Sign out, accept the
+          invitation, and verify dashboard access.
+        </li>
+      </ol>
+    </div>
   );
 }
 

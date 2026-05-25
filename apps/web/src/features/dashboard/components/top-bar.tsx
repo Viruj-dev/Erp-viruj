@@ -61,7 +61,7 @@ export function ErpDemoTopBar({
               {userName || "Dr. Sarah Chen"}
             </p>
             <p className="text-[10px] text-outline">
-              {roleLabel} | {organizationLabel}
+              {formatRole(roleLabel)} | {organizationLabel}
             </p>
           </div>
           <img
@@ -73,5 +73,11 @@ export function ErpDemoTopBar({
         </div>
       </div>
     </header>
+  );
+}
+
+function formatRole(role: string) {
+  return role.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (letter) =>
+    letter.toUpperCase()
   );
 }
