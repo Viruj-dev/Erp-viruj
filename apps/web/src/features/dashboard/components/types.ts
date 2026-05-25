@@ -4,6 +4,12 @@ export type ErpDemoPage =
   | "patients"
   | "staff"
   | "community"
+  | "billing"
+  | "settings"
+  | "settings-alert-rules"
+  | "settings-audit-logs"
+  | "settings-storage"
+  | "settings-data-export"
   | "analytics";
 
 export interface PatientCondition {

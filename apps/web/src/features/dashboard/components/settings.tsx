@@ -1,256 +1,431 @@
 "use client";
 
-import { useState } from "react";
 import {
-  Bell,
-  Camera,
-  CheckCircle2,
-  CreditCard,
+  BellRing,
   Database,
-  HelpCircle,
-  Save,
-  Shield,
-  Trash2,
-  User,
+  Download,
+  FileImage,
+  Filter,
+  ShieldCheck,
+  SlidersHorizontal,
 } from "lucide-react";
+import { useState } from "react";
 
-const tabs = [
-  {
-    id: "profile",
-    label: "Profile Settings",
-    description: "Personal information and clinical identity",
-    icon: User,
-  },
-  {
-    id: "security",
-    label: "Security & Access",
-    description: "Password, 2FA, and institutional keys",
-    icon: Shield,
-  },
-  {
-    id: "notifications",
-    label: "Notifications",
-    description: "Alerts, reminders, and system updates",
-    icon: Bell,
-  },
-  {
-    id: "billing",
-    label: "Billing & Plans",
-    description: "Subscription and institutional billing",
-    icon: CreditCard,
-  },
-  {
-    id: "data",
-    label: "Data Management",
-    description: "Exports, backups, and storage",
-    icon: Database,
-  },
-  {
-    id: "support",
-    label: "Support & Help",
-    description: "Documentation and direct support",
-    icon: HelpCircle,
-  },
+export type SettingsSection =
+  | "profile"
+  | "alerts"
+  | "audit"
+  | "storage"
+  | "export";
+
+const auditLogs = [
+  ["May 24, 09:12 AM", "Dr. Smith", "EHR_ACCESS", "#PX-88219", "Success"],
+  [
+    "May 24, 08:45 AM",
+    "System Admin",
+    "SEC_POLICY_MOD",
+    "#ORG-AUTH-84",
+    "Success",
+  ],
+  [
+    "May 23, 11:20 PM",
+    "Automated Task",
+    "BACKUP_FAILED",
+    "#SYS-SRV-01",
+    "Warning",
+  ],
+  ["May 23, 04:30 PM", "Nurse Joy", "PT_UPDATE", "#PX-90812", "Success"],
 ] as const;
 
-export function ErpDemoSettings({ userName }: { userName: string }) {
-  const [activeTab, setActiveTab] =
-    useState<(typeof tabs)[number]["id"]>("profile");
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleSave = () => {
-    setIsSaving(true);
-    setTimeout(() => setIsSaving(false), 1200);
-  };
+export function ErpDemoSettings({
+  section = "profile",
+}: {
+  section?: SettingsSection;
+}) {
+  const [alertRules, setAlertRules] = useState({
+    billing: false,
+    emergency: true,
+    lab: true,
+  });
 
   return (
-    <div className="grid gap-8 p-6 lg:grid-cols-12 lg:p-8">
-      <aside className="space-y-6 lg:col-span-4">
-        <div className="rounded-[2rem] border border-outline-variant/20 bg-surface-container-low p-4">
-          <div className="space-y-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                className={`flex w-full items-start gap-4 rounded-[1.2rem] px-4 py-4 text-left transition-colors ${
-                  activeTab === tab.id
-                    ? "bg-primary text-white shadow-md"
-                    : "text-on-surface-variant hover:bg-surface-container-high"
-                }`}
-                onClick={() => setActiveTab(tab.id)}
-                type="button"
-              >
-                <span
-                  className={`rounded-xl p-2 ${
-                    activeTab === tab.id
-                      ? "bg-white/18"
-                      : "bg-surface-container-highest"
-                  }`}
-                >
-                  <tab.icon size={18} />
-                </span>
-                <span>
-                  <span className="block text-sm font-black">{tab.label}</span>
-                  <span className="mt-1 block text-xs leading-5 opacity-80">
-                    {tab.description}
-                  </span>
-                </span>
-              </button>
-            ))}
+    <div className="space-y-7 p-5 lg:p-8">
+      {section === "profile" ? (
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <OrganizationProfile />
+          <aside className="space-y-6">
+            <PlanCard />
+            <StoragePanel />
+          </aside>
+        </section>
+      ) : null}
+
+      {section === "alerts" ? (
+        <section className="max-w-2xl rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-sm">
+          <h1 className="flex items-center gap-3 font-headline text-2xl font-black text-on-surface">
+            <BellRing className="text-secondary" size={22} />
+            Alert Rules
+          </h1>
+          <div className="mt-7 space-y-6">
+            <AlertToggle
+              checked={alertRules.emergency}
+              description="Instant SMS/Push for triage events"
+              label="Emergency Alerts"
+              onChange={() =>
+                setAlertRules((rules) => ({
+                  ...rules,
+                  emergency: !rules.emergency,
+                }))
+              }
+            />
+            <AlertToggle
+              checked={alertRules.lab}
+              description="Email digest of pending results"
+              label="Lab Turnaround"
+              onChange={() =>
+                setAlertRules((rules) => ({ ...rules, lab: !rules.lab }))
+              }
+            />
+            <AlertToggle
+              checked={alertRules.billing}
+              description="Monthly financial PDF generation"
+              label="Billing Reports"
+              onChange={() =>
+                setAlertRules((rules) => ({
+                  ...rules,
+                  billing: !rules.billing,
+                }))
+              }
+            />
           </div>
-        </div>
+        </section>
+      ) : null}
 
-        <div className="rounded-[2rem] border border-error/20 bg-error-container/35 p-6">
-          <p className="text-sm font-black text-error">Danger zone</p>
-          <p className="mt-3 text-sm leading-7 text-on-surface-variant">
-            Deleting this account would permanently remove access to the demo
-            workspace and linked institution data.
-          </p>
-          <button
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-error px-4 py-3 text-sm font-black text-white shadow-md"
-            type="button"
-          >
-            <Trash2 size={16} />
-            Delete Account
-          </button>
-        </div>
-      </aside>
+      {section === "audit" ? <AuditLogPanel /> : null}
 
-      <main className="lg:col-span-8">
-        {activeTab === "profile" ? (
-          <div className="space-y-8">
-            <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="font-headline text-4xl font-black text-on-surface">
-                  Profile settings
-                </h2>
-                <p className="mt-2 text-sm text-on-surface-variant">
-                  Manage your professional clinical identity.
-                </p>
-              </div>
-              <button
-                className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-black text-white shadow-md disabled:opacity-60"
-                disabled={isSaving}
-                onClick={handleSave}
-                type="button"
-              >
-                <Save size={16} />
-                {isSaving ? "Saving..." : "Save Changes"}
-              </button>
-            </header>
-
-            <section className="space-y-8 rounded-[2rem] border border-outline-variant/20 bg-surface-container-low p-8">
-              <div className="flex flex-col gap-6 md:flex-row md:items-center">
-                <div className="group relative">
-                  <img
-                    alt="Profile"
-                    className="h-24 w-24 rounded-[1.5rem] border-4 border-surface object-cover shadow-lg"
-                    src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=200&h=200&fit=crop"
-                  />
-                  <button
-                    className="absolute inset-0 flex items-center justify-center rounded-[1.5rem] bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100"
-                    type="button"
-                  >
-                    <Camera size={20} />
-                  </button>
-                </div>
-                <div>
-                  <h3 className="font-headline text-2xl font-black text-on-surface">
-                    Profile photo
-                  </h3>
-                  <p className="mt-2 text-sm leading-7 text-on-surface-variant">
-                    Update your image so colleagues can identify you quickly
-                    across the dashboard, community feed, and workflow views.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                <Field
-                  defaultValue={userName || "Dr. Sarah Mitchell"}
-                  label="Full Name"
-                />
-                <Field
-                  defaultValue="Senior Cardiologist"
-                  label="Professional Role"
-                />
-                <Field
-                  defaultValue="s.mitchell@viruj.health"
-                  label="Email Address"
-                />
-                <Field defaultValue="+1 (555) 012-3456" label="Phone Number" />
-              </div>
-
-              <div>
-                <label className="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-on-surface-variant">
-                  Professional Bio
-                </label>
-                <textarea
-                  className="mt-2 w-full resize-none rounded-xl border-none bg-surface-container-highest px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20"
-                  defaultValue="Specializing in complex cardiovascular procedures with a focus on minimally invasive techniques. Lead researcher for the HeartSync initiative."
-                  rows={4}
-                />
-              </div>
-
-              <div className="border-t border-outline-variant/20 pt-6">
-                <p className="font-headline text-2xl font-black text-on-surface">
-                  Institutional verification
-                </p>
-                <div className="mt-4 flex flex-col gap-4 rounded-[1.5rem] border border-primary/10 bg-primary-fixed/25 p-4 md:flex-row md:items-center md:justify-between">
-                  <div className="flex items-center gap-4">
-                    <span className="rounded-xl bg-primary/10 p-3 text-primary">
-                      <Shield size={18} />
-                    </span>
-                    <div>
-                      <p className="font-semibold text-on-surface">
-                        Verified clinician
-                      </p>
-                      <p className="text-sm text-on-surface-variant">
-                        Institutional ID: VIRUJ-ST-001
-                      </p>
-                    </div>
-                  </div>
-                  <span className="inline-flex items-center gap-2 rounded-full bg-secondary-container/45 px-3 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-secondary">
-                    <CheckCircle2 size={14} />
-                    Active
-                  </span>
-                </div>
-              </div>
-            </section>
-          </div>
-        ) : (
-          <div className="rounded-[2rem] border border-outline-variant/20 bg-surface-container-low p-8">
-            <h2 className="font-headline text-3xl font-black text-on-surface">
-              {tabs.find((tab) => tab.id === activeTab)?.label}
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-on-surface-variant">
-              The active shell from ERP-demo is now installed. This tab is
-              present in the new UI, but only the main profile surface has been
-              expanded with form content for this pass.
+      {section === "storage" ? (
+        <section className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
+          <StoragePanel />
+          <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-sm">
+            <h1 className="font-headline text-2xl font-black text-on-surface">
+              Storage Governance
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm font-medium text-on-surface-variant">
+              Track organization storage across patient records, medical
+              imaging, and encrypted clinical logs.
             </p>
+            <div className="mt-7 grid gap-4 md:grid-cols-3">
+              <StorageMetric label="Patient files" value="8.2 TB" />
+              <StorageMetric label="DICOM archive" value="4.5 TB" />
+              <StorageMetric label="Audit retention" value="18 mo" />
+            </div>
           </div>
-        )}
-      </main>
+        </section>
+      ) : null}
+
+      {section === "export" ? <DataExportPanel /> : null}
     </div>
   );
 }
 
-function Field({
-  defaultValue,
-  label,
-}: {
-  defaultValue: string;
-  label: string;
-}) {
+function OrganizationProfile() {
   return (
-    <div>
-      <label className="px-1 text-[11px] font-black uppercase tracking-[0.22em] text-on-surface-variant">
+    <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-headline text-2xl font-black text-primary">
+            Organization Profile
+          </h1>
+          <p className="mt-2 text-sm font-medium text-on-surface-variant">
+            Manage your clinical branding and public identity.
+          </p>
+        </div>
+        <button
+          className="rounded-lg bg-surface-container-low px-5 py-2.5 text-xs font-black text-primary transition hover:bg-primary/10"
+          type="button"
+        >
+          Update Profile
+        </button>
+      </div>
+
+      <div className="mt-8 flex flex-col gap-5 rounded-xl bg-surface-container-low p-5 md:flex-row md:items-center">
+        <div className="flex h-24 w-24 shrink-0 flex-col items-center justify-center rounded-lg border border-dashed border-outline-variant bg-surface-container-lowest text-outline">
+          <FileImage size={22} />
+          <span className="mt-2 text-xs font-semibold">Logo</span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-headline text-lg font-black text-on-surface">
+            Official Branding
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-on-surface-variant">
+            This logo will appear on all patient reports, appointment reminders,
+            and your clinical portal. Recommended size: 512x512px.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <FormatBadge label="PNG" />
+            <FormatBadge label="SVG" />
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 grid gap-6 md:grid-cols-2">
+        <Field
+          label="Organization Name"
+          value="Viruj Health Specialized Center"
+        />
+        <Field label="Registration ID" value="HOSP-2024-UI-X99" />
+        <Field label="Contact Email" value="admin@virujhealth.com" />
+        <Field label="Support Line" value="+1 (555) 000-8888" />
+      </div>
+    </div>
+  );
+}
+
+function PlanCard() {
+  return (
+    <div className="rounded-xl bg-[#003463] p-6 text-white shadow-sm">
+      <ShieldCheck className="text-secondary-container" size={22} />
+      <div className="mt-6 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-headline text-2xl font-black">
+            Elite Care Access
+          </h2>
+          <p className="mt-1 text-sm font-medium text-white/62">
+            Your subscription is active until Dec 2024.
+          </p>
+        </div>
+        <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white/70">
+          Pro Plan
+        </span>
+      </div>
+      <p className="mt-8 font-headline text-4xl font-black">
+        $1,499{" "}
+        <span className="font-sans text-sm font-medium text-white/55">
+          /month
+        </span>
+      </p>
+      <button
+        className="mt-7 w-full rounded-lg bg-white/75 px-4 py-3 text-xs font-black uppercase tracking-[0.08em] text-primary transition hover:bg-white"
+        type="button"
+      >
+        Manage Billing
+      </button>
+    </div>
+  );
+}
+
+function StoragePanel() {
+  return (
+    <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-sm">
+      <h1 className="font-headline text-lg font-black uppercase tracking-[0.12em] text-on-surface-variant">
+        Storage Usage
+      </h1>
+      <StorageBar label="Patient Records" value={82} />
+      <StorageBar label="Imaging (DICOM)" tone="secondary" value={45} />
+    </div>
+  );
+}
+
+function AuditLogPanel() {
+  return (
+    <section className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="flex items-center gap-3 font-headline text-2xl font-black text-on-surface">
+          <SlidersHorizontal className="text-primary" size={22} />
+          Clinical Audit Logs
+        </h1>
+        <div className="flex gap-2">
+          <button
+            className="inline-flex items-center gap-2 rounded-lg bg-surface-container-low px-4 py-2.5 text-xs font-black uppercase tracking-[0.08em] text-on-surface-variant"
+            type="button"
+          >
+            <Filter size={13} />
+            Filter
+          </button>
+          <button
+            className="inline-flex items-center gap-2 rounded-lg bg-primary/10 px-4 py-2.5 text-xs font-black uppercase tracking-[0.08em] text-primary"
+            type="button"
+          >
+            <Download size={13} />
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-8 overflow-hidden">
+        <div className="grid grid-cols-[1.15fr_1fr_1fr_1fr_0.75fr] gap-4 border-b border-outline-variant/15 pb-4 text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+          <span>Timestamp</span>
+          <span>Entity / User</span>
+          <span>Action Type</span>
+          <span>Resource ID</span>
+          <span>Status</span>
+        </div>
+        <div className="divide-y divide-outline-variant/12">
+          {auditLogs.map(([timestamp, entity, action, resource, status]) => (
+            <div
+              className="grid grid-cols-[1.15fr_1fr_1fr_1fr_0.75fr] items-center gap-4 py-4 text-sm"
+              key={`${timestamp}-${resource}`}
+            >
+              <span className="font-medium text-on-surface-variant">
+                {timestamp}
+              </span>
+              <span className="font-black text-on-surface">{entity}</span>
+              <span
+                className={`w-fit rounded-md px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${
+                  status === "Warning"
+                    ? "bg-error-container text-error"
+                    : action === "PT_UPDATE"
+                      ? "bg-secondary-container/50 text-secondary"
+                      : "bg-primary/10 text-primary"
+                }`}
+              >
+                {action}
+              </span>
+              <span className="font-mono text-xs font-semibold text-on-surface-variant">
+                {resource}
+              </span>
+              <span
+                className={`font-black ${
+                  status === "Warning" ? "text-error" : "text-on-surface"
+                }`}
+              >
+                {status}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DataExportPanel() {
+  return (
+    <section className="rounded-xl border-l-4 border-error bg-surface-container-lowest p-6 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <span className="rounded-lg bg-error-container p-3 text-error">
+            <Database size={20} />
+          </span>
+          <div>
+            <h1 className="font-headline text-lg font-black text-on-surface">
+              Export All Organization Data
+            </h1>
+            <p className="mt-1 max-w-3xl text-sm font-medium text-on-surface-variant">
+              Securely download all patient records, medical history, and
+              clinical logs in an encrypted archive.
+            </p>
+          </div>
+        </div>
+        <button
+          className="rounded-lg border border-error px-7 py-3 text-xs font-black uppercase tracking-[0.12em] text-error transition hover:bg-error-container/30"
+          type="button"
+        >
+          Request Export
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <label className="block">
+      <span className="text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
         {label}
-      </label>
+      </span>
       <input
-        className="mt-2 w-full rounded-xl border-none bg-surface-container-highest px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20"
-        defaultValue={defaultValue}
+        className="mt-2 w-full rounded-lg border border-outline-variant/15 bg-surface-container-low px-4 py-3 text-sm font-semibold text-on-surface outline-none transition focus:border-primary"
+        defaultValue={value}
         type="text"
       />
+    </label>
+  );
+}
+
+function FormatBadge({ label }: { label: string }) {
+  return (
+    <span className="rounded-md bg-primary/10 px-2 py-1 text-[10px] font-black text-primary">
+      {label}
+    </span>
+  );
+}
+
+function StorageMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-surface-container-low p-5">
+      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">
+        {label}
+      </p>
+      <p className="mt-3 font-headline text-3xl font-black text-on-surface">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function StorageBar({
+  label,
+  tone = "primary",
+  value,
+}: {
+  label: string;
+  tone?: "primary" | "secondary";
+  value: number;
+}) {
+  return (
+    <div className="mt-6">
+      <div className="flex items-center justify-between text-xs font-black">
+        <span className="uppercase tracking-[0.12em] text-on-surface">
+          {label}
+        </span>
+        <span>{value}%</span>
+      </div>
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-container-high">
+        <div
+          className={`h-full rounded-full ${
+            tone === "secondary" ? "bg-secondary" : "bg-primary"
+          }`}
+          style={{ width: `${value}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function AlertToggle({
+  checked,
+  description,
+  label,
+  onChange,
+}: {
+  checked: boolean;
+  description: string;
+  label: string;
+  onChange: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <p className="font-black text-on-surface">{label}</p>
+        <p className="mt-1 text-xs font-medium text-on-surface-variant">
+          {description}
+        </p>
+      </div>
+      <button
+        aria-pressed={checked}
+        className={`relative h-7 w-12 rounded-full transition ${
+          checked ? "bg-primary" : "bg-surface-container-high"
+        }`}
+        onClick={onChange}
+        type="button"
+      >
+        <span
+          className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition ${
+            checked ? "left-6" : "left-1"
+          }`}
+        />
+      </button>
     </div>
   );
 }

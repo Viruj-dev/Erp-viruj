@@ -3,9 +3,11 @@
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import { ErpDemoAnalytics } from "@/features/dashboard/components/analytics";
 import { ErpDemoAppointments } from "@/features/dashboard/components/appointments";
+import { ErpDemoBilling } from "@/features/dashboard/components/billing";
 import { ErpDemoCommunity } from "@/features/dashboard/components/community";
 import { ErpDemoDashboard } from "@/features/dashboard/components/dashboard";
 import { ErpDemoPatients } from "@/features/dashboard/components/patients";
+import { ErpDemoSettings } from "@/features/dashboard/components/settings";
 import { ErpDemoSidebar } from "@/features/dashboard/components/sidebar";
 import { ErpDemoStaff } from "@/features/dashboard/components/staff";
 import { ErpDemoTopBar } from "@/features/dashboard/components/top-bar";
@@ -401,6 +403,18 @@ function PageContent({
       return <ErpDemoStaff />;
     case "community":
       return <ErpDemoCommunity />;
+    case "billing":
+      return <ErpDemoBilling />;
+    case "settings":
+      return <ErpDemoSettings section="profile" />;
+    case "settings-alert-rules":
+      return <ErpDemoSettings section="alerts" />;
+    case "settings-audit-logs":
+      return <ErpDemoSettings section="audit" />;
+    case "settings-storage":
+      return <ErpDemoSettings section="storage" />;
+    case "settings-data-export":
+      return <ErpDemoSettings section="export" />;
     case "analytics":
       return <ErpDemoAnalytics />;
     case "dashboard":

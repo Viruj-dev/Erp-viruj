@@ -6,14 +6,18 @@ import {
   BarChart3,
   BadgeCheck,
   Calendar,
+  ChevronDown,
   ChevronLeft,
-  MessagesSquare,
   LayoutDashboard,
   LogOut,
+  MessagesSquare,
   PlusCircle,
+  ReceiptText,
+  Settings,
   Stethoscope,
   Users,
 } from "lucide-react";
+import { useState } from "react";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -21,7 +25,16 @@ const navItems = [
   { id: "patients", label: "Patients", icon: Users },
   { id: "staff", label: "Staff", icon: BadgeCheck },
   { id: "community", label: "Community", icon: MessagesSquare },
+  { id: "billing", label: "Billing", icon: ReceiptText },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
+] as const;
+
+const settingsOptions = [
+  { id: "settings", label: "Organization Profile" },
+  { id: "settings-alert-rules", label: "Alert Rules" },
+  { id: "settings-audit-logs", label: "Clinical Audit Logs" },
+  { id: "settings-storage", label: "Storage Usage" },
+  { id: "settings-data-export", label: "Data Export" },
 ] as const;
 
 export function ErpDemoSidebar({
@@ -41,6 +54,11 @@ export function ErpDemoSidebar({
   onToggle: () => void;
   organizationLabel: string;
 }) {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(
+    currentPage.startsWith("settings")
+  );
+  const canAccessSettings = allowedPages.includes("settings");
+
   return (
     <aside
       className={cn(
@@ -109,6 +127,66 @@ export function ErpDemoSidebar({
               </button>
             );
           })}
+
+        {canAccessSettings ? (
+          <div>
+            <button
+              className={cn(
+                "flex w-full items-center rounded-lg transition-all duration-200",
+                isCollapsed ? "justify-center p-2" : "gap-3 px-4 py-2",
+                currentPage.startsWith("settings")
+                  ? "bg-white text-blue-700 shadow-sm"
+                  : "text-slate-600 hover:bg-slate-200 hover:translate-x-1"
+              )}
+              onClick={() => {
+                if (isCollapsed) {
+                  onPageChange("settings");
+                  return;
+                }
+
+                setIsSettingsOpen((value) => !value);
+              }}
+              title={isCollapsed ? "Settings" : undefined}
+              type="button"
+            >
+              <Settings size={18} />
+              {!isCollapsed ? (
+                <>
+                  <span className="flex-1 whitespace-nowrap text-left text-[13px] font-medium">
+                    Settings
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "transition-transform",
+                      isSettingsOpen && "rotate-180"
+                    )}
+                    size={14}
+                  />
+                </>
+              ) : null}
+            </button>
+
+            {!isCollapsed && isSettingsOpen ? (
+              <div className="ml-7 mt-1 space-y-1 border-l border-slate-200 pl-3">
+                {settingsOptions.map((option) => (
+                  <button
+                    className={cn(
+                      "block w-full rounded-md px-3 py-2 text-left text-[12px] font-semibold transition hover:bg-white hover:text-blue-700",
+                      currentPage === option.id
+                        ? "bg-white text-blue-700"
+                        : "text-slate-500"
+                    )}
+                    key={option.id}
+                    onClick={() => onPageChange(option.id)}
+                    type="button"
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </nav>
 
       <div className="space-y-1 border-t border-slate-200 pt-4">

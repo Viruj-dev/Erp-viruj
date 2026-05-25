@@ -8,6 +8,12 @@ const titles: Record<string, string> = {
   patients: "Patient Directory",
   staff: "Staff Directory",
   community: "Community",
+  billing: "Billing & Invoices",
+  settings: "Organization Settings",
+  "settings-alert-rules": "Alert Rules",
+  "settings-audit-logs": "Clinical Audit Logs",
+  "settings-storage": "Storage Usage",
+  "settings-data-export": "Data Export",
   analytics: "Performance Analytics",
 };
 
