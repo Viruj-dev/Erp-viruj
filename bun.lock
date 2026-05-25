@@ -6,7 +6,6 @@
       "name": "erp_virujhealth",
       "dependencies": {
         "@erp_virujhealth/env": "workspace:*",
-        "better-auth-devtools": "^0.1.1-alpha.9",
         "dotenv": "^17.3.1",
         "drizzle-orm": "^0.45.2",
         "zod": "catalog:",
@@ -36,7 +35,9 @@
         "@orpc/zod": "catalog:",
         "better-auth": "catalog:",
         "dotenv": "catalog:",
+        "drizzle-orm": "catalog:",
         "hono": "catalog:",
+        "postgres": "^3.4.9",
         "zod": "catalog:",
       },
       "devDependencies": {
@@ -107,7 +108,6 @@
         "@erp_virujhealth/db": "workspace:*",
         "@erp_virujhealth/env": "workspace:*",
         "better-auth": "catalog:",
-        "better-auth-devtools": "^0.1.1-alpha.9",
         "dotenv": "catalog:",
         "drizzle-orm": "^0.45.2",
         "zod": "catalog:",
@@ -125,15 +125,14 @@
       "name": "@erp_virujhealth/db",
       "dependencies": {
         "@erp_virujhealth/env": "workspace:*",
-        "@neondatabase/serverless": "^1.0.2",
         "dotenv": "catalog:",
         "drizzle-orm": "catalog:",
+        "postgres": "^3.4.8",
         "zod": "catalog:",
       },
       "devDependencies": {
         "@erp_virujhealth/config": "workspace:*",
         "drizzle-kit": "^0.31.8",
-        "postgres": "^3.4.8",
         "typescript": "catalog:",
       },
     },
@@ -680,8 +679,6 @@
     "baseline-browser-mapping": ["baseline-browser-mapping@2.10.0", "", { "bin": { "baseline-browser-mapping": "dist/cli.cjs" } }, "sha512-lIyg0szRfYbiy67j9KN8IyeD7q7hcmqnJ1ddWmNt19ItGpNN64mnllmxUNFIOdOm6by97jlL6wfpTTJrmnjWAA=="],
 
     "better-auth": ["better-auth@1.4.18", "", { "dependencies": { "@better-auth/core": "1.4.18", "@better-auth/telemetry": "1.4.18", "@better-auth/utils": "0.3.0", "@better-fetch/fetch": "1.1.21", "@noble/ciphers": "^2.0.0", "@noble/hashes": "^2.0.0", "better-call": "1.1.8", "defu": "^6.1.4", "jose": "^6.1.0", "kysely": "^0.28.5", "nanostores": "^1.0.1", "zod": "^4.3.5" }, "peerDependencies": { "@lynx-js/react": "*", "@prisma/client": "^5.0.0 || ^6.0.0 || ^7.0.0", "@sveltejs/kit": "^2.0.0", "@tanstack/react-start": "^1.0.0", "@tanstack/solid-start": "^1.0.0", "better-sqlite3": "^12.0.0", "drizzle-kit": ">=0.31.4", "drizzle-orm": ">=0.41.0", "mongodb": "^6.0.0 || ^7.0.0", "mysql2": "^3.0.0", "next": "^14.0.0 || ^15.0.0 || ^16.0.0", "pg": "^8.0.0", "prisma": "^5.0.0 || ^6.0.0 || ^7.0.0", "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0", "solid-js": "^1.0.0", "svelte": "^4.0.0 || ^5.0.0", "vitest": "^2.0.0 || ^3.0.0 || ^4.0.0", "vue": "^3.0.0" }, "optionalPeers": ["@lynx-js/react", "@prisma/client", "@sveltejs/kit", "@tanstack/react-start", "@tanstack/solid-start", "better-sqlite3", "drizzle-kit", "drizzle-orm", "mongodb", "mysql2", "next", "pg", "prisma", "react", "react-dom", "solid-js", "svelte", "vitest", "vue"] }, "sha512-bnyifLWBPcYVltH3RhS7CM62MoelEqC6Q+GnZwfiDWNfepXoQZBjEvn4urcERC7NTKgKq5zNBM8rvPvRBa6xcg=="],
-
-    "better-auth-devtools": ["better-auth-devtools@0.1.1-alpha.9", "", { "peerDependencies": { "better-auth": ">=1.2.0", "react": ">=18.0.0", "react-dom": ">=18.0.0" } }, "sha512-3iwHNPqTgVS+boM4dafXFAlgQQO0l8IhNgfKoPikN2VytkssqyGY27aZdm9Vqxi0ApIoty3TPgX8lFEUBnWYlg=="],
 
     "better-call": ["better-call@1.1.8", "", { "dependencies": { "@better-auth/utils": "^0.3.0", "@better-fetch/fetch": "^1.1.4", "rou3": "^0.7.10", "set-cookie-parser": "^2.7.1" }, "peerDependencies": { "zod": "^4.0.0" }, "optionalPeers": ["zod"] }, "sha512-XMQ2rs6FNXasGNfMjzbyroSwKwYbZ/T3IxruSS6U2MJRsSYh3wYtG3o6H00ZlKZ/C/UPOAD97tqgQJNsxyeTXw=="],
 

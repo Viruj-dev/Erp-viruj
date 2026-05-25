@@ -15,8 +15,8 @@ import { useState } from "react";
 import {
   acceptInvitation,
   authClient,
-  createOrganization,
-  setActiveOrganization,
+  bootstrapOrganization,
+  getAuthActionError,
 } from "@/lib/auth-client";
 
 type Step = "login" | "onboarding" | "invitation";
@@ -106,41 +106,34 @@ export function ErpDemoLogin({
       });
 
       if (hasError(signUpResult)) {
-        setErrorMessage(
-          signUpResult.error.message || "Unable to create your user account."
-        );
-        return;
-      }
-
-      const organizationResult = await createOrganization({
-        name: onboardingForm.organizationName,
-        organizationType: onboardingForm.organizationType,
-        slug: buildOrganizationSlug(onboardingForm.organizationName),
-      });
-
-      if (hasError(organizationResult)) {
-        setErrorMessage(
-          organizationResult.error.message ||
-            "Account created, but organization setup failed."
-        );
-        return;
-      }
-
-      if (organizationResult?.id) {
-        const setActiveOrganizationResult = await setActiveOrganization({
-          organizationId: organizationResult.id,
+        const signInResult = await authClient.signIn.email({
+          email: onboardingForm.email,
+          password: onboardingForm.password,
         });
 
-        if (hasError(setActiveOrganizationResult)) {
+        if (hasError(signInResult)) {
           setErrorMessage(
-            setActiveOrganizationResult.error.message ||
-              "Organization was created, but the owner workspace could not be activated."
+            signUpResult.error.message ||
+              signInResult.error.message ||
+              "Unable to create your user account. If this email already exists, use the login form."
           );
           return;
         }
       }
 
-      setSuccessMessage("Organization created and owner session activated.");
+      const bootstrapResult = await bootstrapOrganization({
+        name: onboardingForm.organizationName,
+        organizationType: onboardingForm.organizationType,
+        slug: buildOrganizationSlug(onboardingForm.organizationName),
+      });
+      const bootstrapError = getAuthActionError(bootstrapResult);
+
+      if (bootstrapError) {
+        setErrorMessage(bootstrapError);
+        return;
+      }
+
+      setSuccessMessage("Organization ready and owner session activated.");
       await onAuthenticated();
     } finally {
       setIsPending(false);
@@ -173,13 +166,20 @@ export function ErpDemoLogin({
         }
       }
 
+      if (!acceptInvitation) {
+        setErrorMessage("Invitation auth actions are unavailable.");
+        return;
+      }
+
       const invitationResult = await acceptInvitation({
         invitationId: invitationForm.invitationId,
       });
 
-      if (hasError(invitationResult)) {
+      const invitationError = getAuthActionError(invitationResult);
+
+      if (invitationError) {
         setErrorMessage(
-          invitationResult.error.message ||
+          invitationError ||
             "Invitation could not be accepted. Verify the invitation ID."
         );
         return;

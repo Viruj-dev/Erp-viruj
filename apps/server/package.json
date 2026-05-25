@@ -19,7 +19,9 @@
     "@orpc/zod": "catalog:",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
+    "drizzle-orm": "catalog:",
     "hono": "catalog:",
+    "postgres": "^3.4.9",
     "zod": "catalog:"
   },
   "devDependencies": {

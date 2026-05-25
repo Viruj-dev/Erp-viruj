@@ -6,13 +6,14 @@ import {
   getDefaultDashboardPage,
   isDashboardOrganizationType,
 } from "@/features/dashboard/lib/routing";
-import { LoadingScreen } from "@/features/shell/components/loading-screen";
 import { authClient, setActiveOrganization } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 export function ErpAuthScreen() {
   const router = useRouter();
+  const [isActivatingOnlyOrganization, setIsActivatingOnlyOrganization] =
+    useState(false);
   const isHydrated = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -29,18 +30,33 @@ export function ErpAuthScreen() {
     if (
       !sessionState.data?.user ||
       activeOrganizationState.data?.id ||
-      organizations.length !== 1
+      organizations.length !== 1 ||
+      isActivatingOnlyOrganization ||
+      !setActiveOrganization
     ) {
       return;
     }
 
+    setIsActivatingOnlyOrganization(true);
     void setActiveOrganization({
       organizationId: organizations[0].id,
-    });
+    })
+      .then(() =>
+        Promise.all([
+          sessionState.refetch(),
+          activeOrganizationState.refetch(),
+          activeMemberState.refetch(),
+        ])
+      )
+      .finally(() => setIsActivatingOnlyOrganization(false));
   }, [
+    activeMemberState,
     activeOrganizationState.data?.id,
+    activeOrganizationState,
+    isActivatingOnlyOrganization,
     organizationsState.data,
     sessionState.data?.user,
+    sessionState,
   ]);
 
   useEffect(() => {
@@ -74,19 +90,6 @@ export function ErpAuthScreen() {
     router,
     sessionState.data?.user,
   ]);
-
-  if (
-    !isHydrated ||
-    sessionState.isPending ||
-    activeOrganizationState.isPending ||
-    activeMemberState.isPending
-  ) {
-    return <LoadingScreen />;
-  }
-
-  if (sessionState.data?.user) {
-    return <LoadingScreen />;
-  }
 
   return (
     <ErpDemoLogin
