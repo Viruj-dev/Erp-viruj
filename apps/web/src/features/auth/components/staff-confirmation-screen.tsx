@@ -1,6 +1,6 @@
 "use client";
 
-import { orpc } from "@/lib/orpc";
+import { virujBackend } from "@/lib/viruj-backend";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
@@ -27,7 +27,8 @@ export function StaffConfirmationScreen({
   } | null>(null);
 
   const confirmMutation = useMutation(
-    orpc.staff.confirmInvitation.mutationOptions({
+    {
+      mutationFn: virujBackend.staff.confirmInvitation,
       onSuccess: (result) => {
         setConfirmedAccess({
           email: result.email,
@@ -35,7 +36,7 @@ export function StaffConfirmationScreen({
           role: result.role,
         });
       },
-    })
+    }
   );
 
   const isConfirming = confirmMutation.isPending;

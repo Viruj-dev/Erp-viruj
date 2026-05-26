@@ -1,6 +1,6 @@
 "use client";
 
-import { orpc } from "@/lib/orpc";
+import { virujBackend } from "@/lib/viruj-backend";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
@@ -58,16 +58,20 @@ export function ErpDemoAppointments({
   >(null);
   const [decisionReason, setDecisionReason] = useState("");
 
-  const appointmentsQuery = useQuery(orpc.appointments.getAll.queryOptions());
+  const appointmentsQuery = useQuery({
+    queryFn: virujBackend.appointments.list,
+    queryKey: virujBackend.appointments.key,
+  });
   const updateStatusMutation = useMutation(
-    orpc.appointments.updateStatus.mutationOptions({
+    {
+      mutationFn: virujBackend.appointments.updateStatus,
       onSuccess: async () => {
         setDecisionReason("");
         await queryClient.invalidateQueries({
-          queryKey: orpc.appointments.getAll.key(),
+          queryKey: virujBackend.appointments.key,
         });
       },
-    })
+    }
   );
 
   const appointments = appointmentsQuery.data ?? [];

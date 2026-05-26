@@ -1,7 +1,7 @@
 "use client";
 
-import { orpc } from "@/lib/orpc";
 import { authClient } from "@/lib/auth-client";
+import { virujBackend } from "@/lib/viruj-backend";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
@@ -67,24 +67,34 @@ export function ErpDemoStaff() {
   const [query, setQuery] = useState("");
   const [isEntryDialogOpen, setIsEntryDialogOpen] = useState(false);
 
-  const membersQuery = useQuery(orpc.staff.listMembers.queryOptions());
-  const invitationsQuery = useQuery(orpc.staff.listInvitations.queryOptions());
-  const auditQuery = useQuery(orpc.audit.recent.queryOptions());
+  const membersQuery = useQuery({
+    queryFn: virujBackend.staff.listMembers,
+    queryKey: virujBackend.staff.membersKey,
+  });
+  const invitationsQuery = useQuery({
+    queryFn: virujBackend.staff.listInvitations,
+    queryKey: virujBackend.staff.invitationsKey,
+  });
+  const auditQuery = useQuery({
+    queryFn: virujBackend.audit.recent,
+    queryKey: virujBackend.audit.key,
+  });
   const invalidateStaffData = async () => {
     await Promise.all([
       queryClient.invalidateQueries({
-        queryKey: orpc.audit.recent.key(),
+        queryKey: virujBackend.audit.key,
       }),
       queryClient.invalidateQueries({
-        queryKey: orpc.staff.listInvitations.key(),
+        queryKey: virujBackend.staff.invitationsKey,
       }),
       queryClient.invalidateQueries({
-        queryKey: orpc.staff.listMembers.key(),
+        queryKey: virujBackend.staff.membersKey,
       }),
     ]);
   };
   const inviteMutation = useMutation(
-    orpc.staff.invite.mutationOptions({
+    {
+      mutationFn: virujBackend.staff.invite,
       onSuccess: async (result) => {
         const onboarding = (result as StaffInviteResult).onboarding ?? null;
         setCredentialPreview(onboarding);
@@ -95,25 +105,28 @@ export function ErpDemoStaff() {
         }
         await invalidateStaffData();
       },
-    })
+    }
   );
   const updateRoleMutation = useMutation(
-    orpc.staff.updateRole.mutationOptions({
+    {
+      mutationFn: virujBackend.staff.updateRole,
       onSuccess: invalidateStaffData,
-    })
+    }
   );
   const removeStaffMutation = useMutation(
-    orpc.staff.remove.mutationOptions({
+    {
+      mutationFn: virujBackend.staff.remove,
       onSuccess: async () => {
         setSelectedStaffId(null);
         await invalidateStaffData();
       },
-    })
+    }
   );
   const cancelInvitationMutation = useMutation(
-    orpc.staff.cancelInvitation.mutationOptions({
+    {
+      mutationFn: virujBackend.staff.cancelInvitation,
       onSuccess: invalidateStaffData,
-    })
+    }
   );
 
   const members = membersQuery.data ?? [];

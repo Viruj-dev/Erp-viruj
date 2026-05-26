@@ -1,6 +1,6 @@
 "use client";
 
-import { orpc } from "@/lib/orpc";
+import { virujBackend } from "@/lib/viruj-backend";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -73,7 +73,10 @@ const invoices: InvoiceRecord[] = [
 const chartBars = [42, 58, 73, 51, 86, 55, 46, 92, 80, 71];
 
 export function ErpDemoBilling() {
-  const billingStatusQuery = useQuery(orpc.billing.summary.queryOptions());
+  const billingStatusQuery = useQuery({
+    queryFn: () => virujBackend.modules.summary("billing"),
+    queryKey: virujBackend.modules.key("billing"),
+  });
 
   return (
     <div className="grid gap-6 p-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:p-8">

@@ -10,13 +10,9 @@
     "start": "bun run dist/index.mjs"
   },
   "dependencies": {
-    "@erp_virujhealth/api": "workspace:*",
     "@erp_virujhealth/auth": "workspace:*",
     "@erp_virujhealth/db": "workspace:*",
     "@erp_virujhealth/env": "workspace:*",
-    "@orpc/openapi": "catalog:",
-    "@orpc/server": "catalog:",
-    "@orpc/zod": "catalog:",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",

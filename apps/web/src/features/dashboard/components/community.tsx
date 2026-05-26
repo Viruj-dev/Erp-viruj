@@ -1,6 +1,6 @@
 "use client";
 
-import { orpc } from "@/lib/orpc";
+import { virujBackend } from "@/lib/viruj-backend";
 import { useQuery } from "@tanstack/react-query";
 import {
   Award,
@@ -190,7 +190,10 @@ const tabs: Array<{ id: CommunityTab; label: string }> = [
 export function ErpDemoCommunity() {
   const [activeTab, setActiveTab] = useState<CommunityTab>("global");
   const [composerText, setComposerText] = useState("");
-  const communityStatusQuery = useQuery(orpc.community.summary.queryOptions());
+  const communityStatusQuery = useQuery({
+    queryFn: () => virujBackend.modules.summary("community"),
+    queryKey: virujBackend.modules.key("community"),
+  });
   const visiblePosts = useMemo(
     () =>
       activeTab === "global"
