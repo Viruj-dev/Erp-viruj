@@ -321,7 +321,7 @@ export function ErpDemoStaff() {
                         {member.name || member.email}
                       </p>
                       <p className="truncate text-xs text-on-surface-variant">
-                        ID: {member.userId}
+                        {member.email}
                       </p>
                     </div>
                   </div>
@@ -332,12 +332,39 @@ export function ErpDemoStaff() {
                   <span className="text-xs font-semibold text-on-surface-variant">
                     {formatDate(member.createdAt)}
                   </span>
-                  <button
-                    className="text-xs font-black text-primary"
-                    type="button"
-                  >
-                    Audit Access
-                  </button>
+                  <div className="flex items-center justify-end gap-1">
+                    {member.userId === currentUserId ? (
+                      <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-primary">
+                        You
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          aria-label={`Edit role for ${member.name || member.email}`}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg text-on-surface-variant transition hover:bg-primary/10 hover:text-primary"
+                          onClick={() => {
+                            setEditingStaff(member);
+                            setEditRole(
+                              isStaffRole(member.role)
+                                ? member.role
+                                : "APPOINTMENT_HANDLER"
+                            );
+                          }}
+                          type="button"
+                        >
+                          <Edit3 size={13} />
+                        </button>
+                        <button
+                          aria-label={`Delete ${member.name || member.email}`}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg text-on-surface-variant transition hover:bg-error/10 hover:text-error"
+                          onClick={() => setDeletingStaff(member)}
+                          type="button"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

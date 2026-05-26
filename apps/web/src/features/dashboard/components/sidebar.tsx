@@ -27,6 +27,7 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
+import { authClient } from "@/lib/auth-client";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -81,6 +82,8 @@ export function ErpDemoSidebar({
   );
   const canAccessSettings = visibleSettingsOptions.length > 0;
 
+  const activeMemberState = authClient.useActiveMember();
+
   return (
     <aside
       className={cn(
@@ -124,7 +127,9 @@ export function ErpDemoSidebar({
           .filter((item) => allowedPages.includes(item.id))
           .map((item) => {
             const Icon = item.icon;
+            const activeMemberRole = activeMemberState.data?.role;
             const isAppointmentItem = item.id === "appointments";
+            const showAppointmentDropdown = isAppointmentItem && activeMemberRole !== "ORG_ADMIN";
             const isActive = isAppointmentItem
               ? currentPage.startsWith("appointments")
               : currentPage === item.id;
@@ -140,7 +145,7 @@ export function ErpDemoSidebar({
                       : "text-slate-600 hover:bg-slate-200 hover:translate-x-1"
                   )}
                   onClick={() => {
-                    if (isAppointmentItem) {
+                    if (showAppointmentDropdown) {
                       if (isCollapsed) {
                         onPageChange("appointments-dashboard");
                         return;
@@ -161,7 +166,7 @@ export function ErpDemoSidebar({
                       <span className="flex-1 whitespace-nowrap text-left text-[13px] font-medium">
                         {item.label}
                       </span>
-                      {isAppointmentItem ? (
+                      {showAppointmentDropdown ? (
                         <ChevronDown
                           className={cn(
                             "transition-transform",
@@ -174,7 +179,7 @@ export function ErpDemoSidebar({
                   ) : null}
                 </button>
 
-                {isAppointmentItem && !isCollapsed && isAppointmentsOpen ? (
+                {showAppointmentDropdown && !isCollapsed && isAppointmentsOpen ? (
                   <div className="ml-7 mt-1 space-y-1 border-l border-slate-200 pl-3">
                     {appointmentOptions.map((option) => {
                       const OptionIcon = option.icon;
