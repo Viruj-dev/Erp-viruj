@@ -2,7 +2,7 @@ declare module "@orpc/client/fetch" {
   import type { ClientContext, ClientLink } from "@orpc/client";
 
   export interface RPCLinkOptions {
-    baseUrl: string;
+    url: string;
     fetch?: (
       request: Request,
       init: RequestInit | undefined,

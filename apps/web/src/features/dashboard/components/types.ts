@@ -1,5 +1,6 @@
 export type ErpDemoPage =
   | "dashboard"
+  | "finance"
   | "appointments"
   | "patients"
   | "staff"
@@ -10,7 +11,13 @@ export type ErpDemoPage =
   | "settings-audit-logs"
   | "settings-storage"
   | "settings-data-export"
-  | "analytics";
+  | "analytics"
+  | "doctors"
+  | "radiology"
+  | "pathology"
+  | "pharmacy"
+  | "notifications"
+  | "reports";
 
 export interface PatientCondition {
   id: string;

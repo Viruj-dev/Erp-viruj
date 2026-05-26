@@ -6,6 +6,7 @@ import { ErpDemoAppointments } from "@/features/dashboard/components/appointment
 import { ErpDemoBilling } from "@/features/dashboard/components/billing";
 import { ErpDemoCommunity } from "@/features/dashboard/components/community";
 import { ErpDemoDashboard } from "@/features/dashboard/components/dashboard";
+import { ErpEnterpriseModule } from "@/features/dashboard/components/enterprise-module";
 import { ErpDemoPatients } from "@/features/dashboard/components/patients";
 import { ErpDemoSettings } from "@/features/dashboard/components/settings";
 import { ErpDemoSidebar } from "@/features/dashboard/components/sidebar";
@@ -395,6 +396,8 @@ function PageContent({
   userName: string;
 }) {
   switch (currentPage) {
+    case "finance":
+      return <ErpDemoBilling />;
     case "appointments":
       return <ErpDemoAppointments />;
     case "patients":
@@ -417,6 +420,20 @@ function PageContent({
       return <ErpDemoSettings section="export" />;
     case "analytics":
       return <ErpDemoAnalytics />;
+    case "doctors":
+      return <ErpEnterpriseModule module="doctors" roleLabel={roleLabel} />;
+    case "radiology":
+      return <ErpEnterpriseModule module="radiology" roleLabel={roleLabel} />;
+    case "pathology":
+      return <ErpEnterpriseModule module="pathology" roleLabel={roleLabel} />;
+    case "pharmacy":
+      return <ErpEnterpriseModule module="pharmacy" roleLabel={roleLabel} />;
+    case "notifications":
+      return (
+        <ErpEnterpriseModule module="notifications" roleLabel={roleLabel} />
+      );
+    case "reports":
+      return <ErpEnterpriseModule module="reports" roleLabel={roleLabel} />;
     case "dashboard":
     default:
       return (

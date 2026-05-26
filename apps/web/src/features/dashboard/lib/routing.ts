@@ -1,5 +1,3 @@
-"use client";
-
 import type { OrganizationMemberRole } from "@erp_virujhealth/auth/roles";
 
 export const organizationTypeOptions = [
@@ -15,6 +13,7 @@ export type DashboardOrganizationType =
 
 export const dashboardPageOptions = [
   "dashboard",
+  "finance",
   "appointments",
   "patients",
   "staff",
@@ -26,6 +25,12 @@ export const dashboardPageOptions = [
   "settings-storage",
   "settings-data-export",
   "analytics",
+  "doctors",
+  "radiology",
+  "pathology",
+  "pharmacy",
+  "notifications",
+  "reports",
 ] as const;
 
 export type DashboardPage = (typeof dashboardPageOptions)[number];
@@ -45,15 +50,15 @@ export const defaultDashboardPageByRole: Record<
 > = {
   APPOINTMENT_HANDLER: "appointments",
   COMMUNITY_MANAGER: "community",
-  FINANCE_MANAGER: "billing",
+  FINANCE_MANAGER: "finance",
   ORG_ADMIN: "dashboard",
   admin: "dashboard",
-  billing: "billing",
-  doctor: "appointments",
-  lab_tech: "analytics",
+  billing: "finance",
+  doctor: "doctors",
+  lab_tech: "pathology",
   manager: "staff",
   owner: "dashboard",
-  receptionist: "patients",
+  receptionist: "appointments",
 };
 
 export const allowedDashboardPagesByRole: Record<
@@ -62,9 +67,10 @@ export const allowedDashboardPagesByRole: Record<
 > = {
   APPOINTMENT_HANDLER: ["dashboard", "appointments", "patients"],
   COMMUNITY_MANAGER: ["dashboard", "community"],
-  FINANCE_MANAGER: ["dashboard", "patients", "billing", "analytics"],
+  FINANCE_MANAGER: ["dashboard", "finance", "billing", "reports"],
   ORG_ADMIN: [
     "dashboard",
+    "finance",
     "appointments",
     "patients",
     "staff",
@@ -76,9 +82,16 @@ export const allowedDashboardPagesByRole: Record<
     "settings-storage",
     "settings-data-export",
     "analytics",
+    "doctors",
+    "radiology",
+    "pathology",
+    "pharmacy",
+    "notifications",
+    "reports",
   ],
   admin: [
     "dashboard",
+    "finance",
     "appointments",
     "patients",
     "staff",
@@ -90,12 +103,19 @@ export const allowedDashboardPagesByRole: Record<
     "settings-storage",
     "settings-data-export",
     "analytics",
+    "doctors",
+    "radiology",
+    "pathology",
+    "pharmacy",
+    "notifications",
+    "reports",
   ],
-  billing: ["dashboard", "patients", "billing", "analytics"],
-  doctor: ["dashboard", "appointments", "patients", "community", "analytics"],
-  lab_tech: ["dashboard", "patients", "staff", "community", "analytics"],
+  billing: ["dashboard", "finance", "billing", "reports"],
+  doctor: ["dashboard", "doctors", "appointments", "patients", "reports"],
+  lab_tech: ["dashboard", "pathology", "patients", "reports"],
   manager: [
     "dashboard",
+    "finance",
     "appointments",
     "patients",
     "staff",
@@ -107,9 +127,16 @@ export const allowedDashboardPagesByRole: Record<
     "settings-storage",
     "settings-data-export",
     "analytics",
+    "doctors",
+    "radiology",
+    "pathology",
+    "pharmacy",
+    "notifications",
+    "reports",
   ],
   owner: [
     "dashboard",
+    "finance",
     "appointments",
     "patients",
     "staff",
@@ -121,8 +148,14 @@ export const allowedDashboardPagesByRole: Record<
     "settings-storage",
     "settings-data-export",
     "analytics",
+    "doctors",
+    "radiology",
+    "pathology",
+    "pharmacy",
+    "notifications",
+    "reports",
   ],
-  receptionist: ["dashboard", "appointments", "patients", "staff", "community"],
+  receptionist: ["dashboard", "appointments", "patients", "notifications"],
 };
 
 export function isDashboardOrganizationType(
@@ -133,6 +166,43 @@ export function isDashboardOrganizationType(
 
 export function isDashboardPage(value: string): value is DashboardPage {
   return dashboardPageOptions.includes(value as DashboardPage);
+}
+
+export function normalizeDashboardModule(value: string): DashboardPage {
+  switch (value) {
+    case "admin":
+      return "dashboard";
+    case "finance":
+      return "finance";
+    case "appointments":
+    case "appointment":
+      return "appointments";
+    case "community":
+      return "community";
+    case "analytics":
+      return "analytics";
+    case "doctors":
+    case "doctor":
+      return "doctors";
+    case "radiology":
+      return "radiology";
+    case "pathology":
+      return "pathology";
+    case "pharmacy":
+      return "pharmacy";
+    case "notifications":
+      return "notifications";
+    case "reports":
+      return "reports";
+    case "patients":
+      return "patients";
+    case "staff":
+      return "staff";
+    case "billing":
+      return "billing";
+    default:
+      return isDashboardPage(value) ? value : "dashboard";
+  }
 }
 
 export function getAllowedDashboardPages(

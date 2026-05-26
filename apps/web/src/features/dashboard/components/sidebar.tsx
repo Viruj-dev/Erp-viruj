@@ -8,24 +8,30 @@ import {
   Calendar,
   ChevronDown,
   ChevronLeft,
+  FileBarChart,
+  FlaskConical,
   LayoutDashboard,
   LogOut,
   MessagesSquare,
+  Microscope,
   PlusCircle,
   ReceiptText,
   Settings,
   Stethoscope,
+  Pill,
+  Bell,
+  ScanLine,
   Users,
 } from "lucide-react";
 import { useState } from "react";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "finance", label: "Finance", icon: ReceiptText },
   { id: "appointments", label: "Appointments", icon: Calendar },
   { id: "patients", label: "Patients", icon: Users },
   { id: "staff", label: "Staff", icon: BadgeCheck },
   { id: "community", label: "Community", icon: MessagesSquare },
-  { id: "billing", label: "Billing", icon: ReceiptText },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
 ] as const;
 

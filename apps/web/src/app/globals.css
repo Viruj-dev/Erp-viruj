@@ -38,7 +38,11 @@
     min-height: 100vh;
     overflow-x: hidden;
     background:
-      radial-gradient(circle at top left, rgba(0, 94, 184, 0.08), transparent 22%),
+      radial-gradient(
+        circle at top left,
+        rgba(0, 94, 184, 0.08),
+        transparent 22%
+      ),
       linear-gradient(180deg, #fbfcfd 0%, #f3f6f9 100%);
     color: #191c1e;
     font-family: var(--font-sans);
@@ -60,6 +64,11 @@
 }
 
 @layer utilities {
+  .erp-dialog-backdrop {
+    background: rgba(9, 20, 33, 0.46);
+    backdrop-filter: blur(12px) saturate(0.82);
+  }
+
   .headline {
     font-family: var(--font-headline);
   }

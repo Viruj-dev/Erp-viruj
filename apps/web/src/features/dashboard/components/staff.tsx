@@ -18,6 +18,7 @@ import {
   Trash2,
   UserPlus,
   Users,
+  X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -36,10 +37,24 @@ const roleLabels: Record<(typeof roleOptions)[number], string> = {
 };
 
 type StaffRole = (typeof roleOptions)[number];
+type StaffInviteResult = {
+  onboarding?: {
+    emailSent?: boolean;
+    loginUrl?: string;
+    temporaryCredentials?: {
+      email: string;
+      password: string;
+    } | null;
+  };
+};
 
 export function ErpDemoStaff() {
   const queryClient = useQueryClient();
+
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [credentialPreview, setCredentialPreview] =
+    useState<StaffInviteResult["onboarding"]>(null);
   const [role, setRole] = useState<StaffRole>("APPOINTMENT_HANDLER");
   const [selectedRole, setSelectedRole] = useState<StaffRole>(
     "APPOINTMENT_HANDLER"
@@ -47,6 +62,7 @@ export function ErpDemoStaff() {
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
   const [roleFilter, setRoleFilter] = useState("all");
   const [query, setQuery] = useState("");
+  const [isEntryDialogOpen, setIsEntryDialogOpen] = useState(false);
 
   const membersQuery = useQuery(orpc.staff.listMembers.queryOptions());
   const invitationsQuery = useQuery(orpc.staff.listInvitations.queryOptions());
@@ -66,8 +82,14 @@ export function ErpDemoStaff() {
   };
   const inviteMutation = useMutation(
     orpc.staff.invite.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (result) => {
+        const onboarding = (result as StaffInviteResult).onboarding ?? null;
+        setCredentialPreview(onboarding);
+        setName("");
         setEmail("");
+        if (!onboarding?.temporaryCredentials) {
+          setIsEntryDialogOpen(false);
+        }
         await invalidateStaffData();
       },
     })
@@ -132,6 +154,7 @@ export function ErpDemoStaff() {
 
     inviteMutation.mutate({
       email,
+      name,
       role,
     });
   };
@@ -241,6 +264,14 @@ export function ErpDemoStaff() {
           >
             <Filter size={14} />
             Advanced Filters
+          </button>
+          <button
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-black text-white shadow-sm transition hover:scale-[0.99]"
+            onClick={() => setIsEntryDialogOpen(true)}
+            type="button"
+          >
+            <UserPlus size={14} />
+            New Entry
           </button>
         </div>
       </section>
@@ -365,66 +396,6 @@ export function ErpDemoStaff() {
         </div>
 
         <aside className="space-y-5">
-          <form
-            className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm"
-            onSubmit={handleInvite}
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-white">
-                <UserPlus size={18} />
-              </div>
-              <div>
-                <h3 className="font-headline text-lg font-black text-on-surface">
-                  Onboard New Staff
-                </h3>
-                <p className="text-xs font-medium text-on-surface-variant">
-                  Creates a pending backend organization invitation.
-                </p>
-              </div>
-            </div>
-
-            <label className="mt-5 block text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
-              Email
-              <input
-                className="mt-2 w-full rounded-lg border border-outline-variant/25 bg-surface px-3 py-2.5 text-sm font-semibold normal-case tracking-normal text-on-surface outline-none transition focus:border-primary"
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="staff@organization.com"
-                type="email"
-                value={email}
-              />
-            </label>
-
-            <label className="mt-4 block text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
-              Role
-              <select
-                className="mt-2 w-full rounded-lg border border-outline-variant/25 bg-surface px-3 py-2.5 text-sm font-semibold normal-case tracking-normal text-on-surface outline-none transition focus:border-primary"
-                onChange={(event) => setRole(event.target.value as StaffRole)}
-                value={role}
-              >
-                {roleOptions.map((roleOption) => (
-                  <option key={roleOption} value={roleOption}>
-                    {roleLabels[roleOption]}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            {inviteMutation.isError ? (
-              <p className="mt-4 rounded-lg bg-error-container/30 px-3 py-2 text-sm font-semibold text-error">
-                {inviteMutation.error.message || "Unable to invite staff."}
-              </p>
-            ) : null}
-
-            <button
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-black text-white shadow-md transition hover:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={inviteMutation.isPending}
-              type="submit"
-            >
-              <Mail size={16} />
-              {inviteMutation.isPending ? "Inviting..." : "Send Invitation"}
-            </button>
-          </form>
-
           {selectedStaff ? (
             <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
               <h3 className="font-headline text-lg font-black text-on-surface">
@@ -567,6 +538,107 @@ export function ErpDemoStaff() {
           </div>
         </aside>
       </section>
+
+      {isEntryDialogOpen ? (
+        <div className="erp-dialog-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            aria-modal="true"
+            className="w-full max-w-lg rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-2xl"
+            role="dialog"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-white">
+                  <UserPlus size={20} />
+                </div>
+                <div>
+                  <h3 className="font-headline text-xl font-black text-on-surface">
+                    Add Staff Entry
+                  </h3>
+                  <p className="mt-1 text-sm font-medium text-on-surface-variant">
+                    Invite a person and assign their organization role.
+                  </p>
+                </div>
+              </div>
+              <button
+                aria-label="Close staff entry dialog"
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant transition hover:bg-surface-container-high"
+                onClick={() => setIsEntryDialogOpen(false)}
+                type="button"
+              >
+                <X size={17} />
+              </button>
+            </div>
+
+            <form className="mt-6 space-y-4" onSubmit={handleInvite}>
+              <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+                Staff Name
+                <input
+                  autoFocus
+                  className="mt-2 w-full rounded-lg border border-outline-variant/25 bg-surface px-3 py-3 text-sm font-semibold normal-case tracking-normal text-on-surface outline-none transition focus:border-primary"
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="staff name"
+                  type="text"
+                  value={name}
+                />
+              </label>
+            </form>
+
+            <form className="mt-6 space-y-4" onSubmit={handleInvite}>
+              <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+                Staff Email
+                <input
+                  autoFocus
+                  className="mt-2 w-full rounded-lg border border-outline-variant/25 bg-surface px-3 py-3 text-sm font-semibold normal-case tracking-normal text-on-surface outline-none transition focus:border-primary"
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="staff@organization.com"
+                  type="email"
+                  value={email}
+                />
+              </label>
+
+              <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+                Assign Role
+                <select
+                  className="mt-2 w-full rounded-lg border border-outline-variant/25 bg-surface px-3 py-3 text-sm font-semibold normal-case tracking-normal text-on-surface outline-none transition focus:border-primary"
+                  onChange={(event) => setRole(event.target.value as StaffRole)}
+                  value={role}
+                >
+                  {roleOptions.map((roleOption) => (
+                    <option key={roleOption} value={roleOption}>
+                      {roleLabels[roleOption]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {inviteMutation.isError ? (
+                <p className="rounded-lg bg-error-container/30 px-3 py-2 text-sm font-semibold text-error">
+                  {inviteMutation.error.message || "Unable to invite staff."}
+                </p>
+              ) : null}
+
+              <div className="grid gap-3 pt-2 sm:grid-cols-2">
+                <button
+                  className="rounded-lg border border-outline-variant/25 px-4 py-3 text-sm font-black text-on-surface transition hover:bg-surface-container-low"
+                  onClick={() => setIsEntryDialogOpen(false)}
+                  type="button"
+                >
+                  Cancel
+                </button>
+                <button
+                  className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-black text-white shadow-md transition hover:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={inviteMutation.isPending || !email.trim()}
+                  type="submit"
+                >
+                  <Mail size={16} />
+                  {inviteMutation.isPending ? "Adding..." : "Add Person"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

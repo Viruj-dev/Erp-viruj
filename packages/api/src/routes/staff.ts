@@ -1,20 +1,22 @@
-import { organizationRoleOptions } from "@erp_virujhealth/auth";
+import { auth, organizationRoleOptions } from "@erp_virujhealth/auth";
 import { db } from "@erp_virujhealth/db";
-import {
-  invitation,
-  member,
-  user,
-} from "@erp_virujhealth/db/schema/auth";
+import { invitation, member, organization, user } from "@erp_virujhealth/db/schema/auth";
 import { ORPCError } from "@orpc/server";
 import { and, desc, eq, gt } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import z from "zod";
 
 import { recordAuditLog } from "../lib/audit";
+import {
+  buildStaffLoginUrl,
+  generateTemporaryPassword,
+  sendStaffCredentialEmail,
+} from "../lib/staff-onboarding";
 import { permissionedErpProcedure, requireErpActor } from "../middleware/auth";
 
 const inviteStaffInputSchema = z.object({
   email: z.string().trim().email(),
+  name: z.string().trim().min(1).optional(),
   role: z.enum(organizationRoleOptions),
 });
 
@@ -83,9 +85,10 @@ export const staffRouter = {
     .handler(async ({ context, input }) => {
       const actor = requireErpActor(context);
       const email = input.email.toLowerCase();
+      const displayName = input.name?.trim() || email.split("@")[0] || "Staff";
 
       const [existingUser] = await db
-        .select({ id: user.id })
+        .select({ id: user.id, name: user.name })
         .from(user)
         .where(eq(user.email, email))
         .limit(1);
@@ -132,6 +135,33 @@ export const staffRouter = {
         return existingInvitation;
       }
 
+      const [actorOrganization] = await db
+        .select({
+          id: organization.id,
+          name: organization.name,
+          organizationType: organization.organizationType,
+        })
+        .from(organization)
+        .where(eq(organization.id, actor.organizationId))
+        .limit(1);
+
+      if (!actorOrganization) {
+        throw new ORPCError("NOT_FOUND", {
+          message: "Active organization was not found.",
+        });
+      }
+
+      const temporaryPassword = existingUser
+        ? null
+        : generateTemporaryPassword();
+      const staffUser =
+        existingUser ??
+        (await createStaffAuthUser({
+          email,
+          name: displayName,
+          password: temporaryPassword!,
+        }));
+
       return db.transaction(async (tx) => {
         const expiresAt = new Date(Date.now() + invitationTtlMs);
         const [createdInvitation] = await tx
@@ -143,7 +173,7 @@ export const staffRouter = {
             inviterId: actor.userId,
             organizationId: actor.organizationId,
             role: input.role,
-            status: "pending",
+            status: "accepted",
           })
           .returning({
             email: invitation.email,
@@ -159,6 +189,25 @@ export const staffRouter = {
           });
         }
 
+        const [createdMember] = await tx
+          .insert(member)
+          .values({
+            id: randomUUID(),
+            organizationId: actor.organizationId,
+            role: input.role,
+            userId: staffUser.id,
+          })
+          .onConflictDoNothing()
+          .returning({
+            id: member.id,
+          });
+
+        if (!createdMember) {
+          throw new ORPCError("CONFLICT", {
+            message: "This user is already a staff member.",
+          });
+        }
+
         await recordAuditLog({
           action: "STAFF_INVITED",
           actor,
@@ -171,7 +220,34 @@ export const staffRouter = {
           },
         });
 
-        return createdInvitation;
+        const loginUrl = buildStaffLoginUrl(
+          actorOrganization.organizationType,
+          input.role
+        );
+        const credentialEmail = temporaryPassword
+          ? await sendStaffCredentialEmail({
+              email,
+              loginUrl,
+              name: displayName,
+              organizationName: actorOrganization.name,
+              password: temporaryPassword,
+              role: input.role,
+            })
+          : null;
+
+        return {
+          ...createdInvitation,
+          onboarding: {
+            emailSent: Boolean(credentialEmail),
+            loginUrl,
+            temporaryCredentials: temporaryPassword
+              ? {
+                  email,
+                  password: temporaryPassword,
+                }
+              : null,
+          },
+        };
       });
     }),
 
@@ -379,3 +455,42 @@ export const staffRouter = {
       });
     }),
 };
+
+async function createStaffAuthUser({
+  email,
+  name,
+  password,
+}: {
+  email: string;
+  name: string;
+  password: string;
+}) {
+  const result = (await auth.api.signUpEmail({
+    body: {
+      email,
+      name,
+      password,
+      rememberMe: false,
+    },
+  })) as {
+    user?: {
+      id: string;
+    };
+  };
+
+  if (!result.user?.id) {
+    throw new ORPCError("INTERNAL_SERVER_ERROR", {
+      message: "Unable to create staff login account.",
+    });
+  }
+
+  await db
+    .update(user)
+    .set({ emailVerified: true })
+    .where(eq(user.id, result.user.id));
+
+  return {
+    id: result.user.id,
+    name,
+  };
+}

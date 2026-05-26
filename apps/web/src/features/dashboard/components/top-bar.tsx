@@ -4,6 +4,7 @@ import { Bell, ChevronDown, Grid, Search } from "lucide-react";
 
 const titles: Record<string, string> = {
   dashboard: "Clinical Dashboard",
+  finance: "Finance Command Center",
   appointments: "Appointment Scheduling",
   patients: "Patient Directory",
   staff: "Staff Directory",
@@ -15,6 +16,12 @@ const titles: Record<string, string> = {
   "settings-storage": "Storage Usage",
   "settings-data-export": "Data Export",
   analytics: "Performance Analytics",
+  doctors: "Doctors Workspace",
+  radiology: "Radiology Operations",
+  pathology: "Pathology Lab",
+  pharmacy: "Pharmacy Management",
+  notifications: "Notifications Center",
+  reports: "Reports & Exports",
 };
 
 export function ErpDemoTopBar({
