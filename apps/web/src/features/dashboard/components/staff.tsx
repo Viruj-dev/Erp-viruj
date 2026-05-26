@@ -1,6 +1,7 @@
 "use client";
 
 import { orpc } from "@/lib/orpc";
+import { authClient } from "@/lib/auth-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
@@ -32,13 +33,14 @@ const roleOptions = [
 const roleLabels: Record<(typeof roleOptions)[number], string> = {
   APPOINTMENT_HANDLER: "Appointment Handler",
   COMMUNITY_MANAGER: "Community Manager",
-  FINANCE_MANAGER: "Finance Manager",
+  FINANCE_MANAGER: "Finance Handler",
   ORG_ADMIN: "Organization Admin",
 };
 
 type StaffRole = (typeof roleOptions)[number];
 type StaffInviteResult = {
   onboarding?: {
+    confirmationUrl?: string;
     emailSent?: boolean;
     loginUrl?: string;
     temporaryCredentials?: {
@@ -53,8 +55,9 @@ export function ErpDemoStaff() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [credentialPreview, setCredentialPreview] =
-    useState<StaffInviteResult["onboarding"]>(null);
+  const [credentialPreview, setCredentialPreview] = useState<
+    StaffInviteResult["onboarding"] | null
+  >(null);
   const [role, setRole] = useState<StaffRole>("APPOINTMENT_HANDLER");
   const [selectedRole, setSelectedRole] = useState<StaffRole>(
     "APPOINTMENT_HANDLER"
@@ -116,6 +119,18 @@ export function ErpDemoStaff() {
   const members = membersQuery.data ?? [];
   const invitations = invitationsQuery.data ?? [];
   const auditLogs = auditQuery.data ?? [];
+
+  const [editingStaff, setEditingStaff] = useState<
+    (typeof members)[number] | null
+  >(null);
+  const [deletingStaff, setDeletingStaff] = useState<
+    (typeof members)[number] | null
+  >(null);
+  const [editRole, setEditRole] = useState<StaffRole>("APPOINTMENT_HANDLER");
+
+  const { data: session } = authClient.useSession();
+  const currentUserId = session?.user?.id;
+
   const pendingInvitations = invitations.filter(
     (invitation) => invitation.status === "pending"
   );
@@ -267,7 +282,10 @@ export function ErpDemoStaff() {
           </button>
           <button
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-black text-white shadow-sm transition hover:scale-[0.99]"
-            onClick={() => setIsEntryDialogOpen(true)}
+            onClick={() => {
+              setCredentialPreview(null);
+              setIsEntryDialogOpen(true);
+            }}
             type="button"
           >
             <UserPlus size={14} />
@@ -278,76 +296,7 @@ export function ErpDemoStaff() {
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-5">
-          {membersQuery.isPending ? (
-            <EmptyState text="Loading staff accounts..." />
-          ) : membersQuery.isError ? (
-            <EmptyState text="Unable to load staff accounts." tone="error" />
-          ) : filteredMembers.length === 0 ? (
-            <EmptyState text="No staff accounts match the current filters." />
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {filteredMembers.map((member) => (
-                <button
-                  className={`rounded-xl border bg-surface-container-lowest p-5 text-left shadow-sm transition ${
-                    selectedStaff?.id === member.id
-                      ? "border-primary ring-2 ring-primary/15"
-                      : "border-outline-variant/20 hover:border-primary/35 hover:shadow-md"
-                  }`}
-                  key={member.id}
-                  onClick={() => setSelectedStaffId(member.id)}
-                  type="button"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <StaffAvatar email={member.email} name={member.name} />
-                      <div className="min-w-0">
-                        <h3 className="truncate font-headline text-base font-black text-on-surface">
-                          {member.name || "Unnamed staff"}
-                        </h3>
-                        <p className="truncate text-xs font-medium text-on-surface-variant">
-                          {member.email}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-outline">
-                      <Edit3 size={14} />
-                      <MoreVertical size={14} />
-                    </div>
-                  </div>
-
-                  <div className="mt-5 grid grid-cols-2 gap-3">
-                    <InfoBox label="Role" value={formatRole(member.role)} />
-                    <InfoBox
-                      label="Status"
-                      value={member.emailVerified ? "On Duty" : "Pending"}
-                      valueTone={member.emailVerified ? "good" : "muted"}
-                    />
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap justify-between gap-2 border-t border-outline-variant/12 pt-4">
-                    <SmallAction label="Audit Access" />
-                    <SmallAction
-                      label={member.emailVerified ? "View Logins" : "Verify"}
-                    />
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-
           <section className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-              <h3 className="font-headline text-lg font-black text-on-surface">
-                Longitudinal Staff Record
-              </h3>
-              <button
-                className="inline-flex items-center gap-2 text-xs font-black text-primary"
-                type="button"
-              >
-                Export Full Roster
-                <Download size={13} />
-              </button>
-            </div>
             <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_auto] gap-4 border-t border-outline-variant/15 bg-surface-container-low px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
               <span>Name & Identifier</span>
               <span>Department</span>
@@ -396,70 +345,6 @@ export function ErpDemoStaff() {
         </div>
 
         <aside className="space-y-5">
-          {selectedStaff ? (
-            <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
-              <h3 className="font-headline text-lg font-black text-on-surface">
-                Selected Account
-              </h3>
-              <div className="mt-4 space-y-3 text-sm">
-                <Detail label="Name" value={selectedStaff.name || "Unnamed"} />
-                <Detail label="Email" value={selectedStaff.email} />
-                <Detail label="Role" value={formatRole(selectedStaff.role)} />
-                <Detail
-                  label="Status"
-                  value={
-                    selectedStaff.emailVerified ? "Verified" : "Unverified"
-                  }
-                />
-                <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
-                  Change Role
-                  <select
-                    className="mt-2 w-full rounded-lg border border-outline-variant/25 bg-surface px-3 py-2.5 text-sm font-semibold normal-case tracking-normal text-on-surface outline-none transition focus:border-primary"
-                    onChange={(event) =>
-                      setSelectedRole(event.target.value as StaffRole)
-                    }
-                    value={selectedRole}
-                  >
-                    {roleOptions.map((roleOption) => (
-                      <option key={roleOption} value={roleOption}>
-                        {roleLabels[roleOption]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {updateRoleMutation.isError || removeStaffMutation.isError ? (
-                  <p className="rounded-lg bg-error-container/30 px-3 py-2 text-sm font-semibold text-error">
-                    {updateRoleMutation.error?.message ||
-                      removeStaffMutation.error?.message ||
-                      "Unable to update staff access."}
-                  </p>
-                ) : null}
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    className="rounded-lg bg-primary px-4 py-3 text-sm font-black text-white transition hover:scale-[0.99] disabled:opacity-60"
-                    disabled={
-                      updateRoleMutation.isPending ||
-                      selectedRole === selectedStaff.role
-                    }
-                    onClick={handleUpdateRole}
-                    type="button"
-                  >
-                    Save Role
-                  </button>
-                  <button
-                    className="flex items-center justify-center gap-2 rounded-lg border border-error/20 px-4 py-3 text-sm font-black text-error transition hover:bg-error-container/20 disabled:opacity-60"
-                    disabled={removeStaffMutation.isPending}
-                    onClick={handleRemoveStaff}
-                    type="button"
-                  >
-                    <Trash2 size={15} />
-                    Remove
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
           <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
             <div className="flex items-center gap-2">
               <Clock size={16} />
@@ -563,7 +448,10 @@ export function ErpDemoStaff() {
               <button
                 aria-label="Close staff entry dialog"
                 className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant transition hover:bg-surface-container-high"
-                onClick={() => setIsEntryDialogOpen(false)}
+                onClick={() => {
+                  setCredentialPreview(null);
+                  setIsEntryDialogOpen(false);
+                }}
                 type="button"
               >
                 <X size={17} />
@@ -582,13 +470,10 @@ export function ErpDemoStaff() {
                   value={name}
                 />
               </label>
-            </form>
 
-            <form className="mt-6 space-y-4" onSubmit={handleInvite}>
               <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
                 Staff Email
                 <input
-                  autoFocus
                   className="mt-2 w-full rounded-lg border border-outline-variant/25 bg-surface px-3 py-3 text-sm font-semibold normal-case tracking-normal text-on-surface outline-none transition focus:border-primary"
                   onChange={(event) => setEmail(event.target.value)}
                   placeholder="staff@organization.com"
@@ -612,6 +497,28 @@ export function ErpDemoStaff() {
                 </select>
               </label>
 
+              {credentialPreview?.temporaryCredentials ? (
+                <div className="rounded-xl border border-secondary/20 bg-secondary/10 p-4 text-sm">
+                  <p className="font-headline text-base font-black text-on-surface">
+                    Staff login credentials generated
+                  </p>
+                  <p className="mt-1 font-medium text-on-surface-variant">
+                    The invite email now asks the staff member to confirm access
+                    first. After confirmation, their status changes from pending
+                    to on duty.
+                  </p>
+                  <div className="mt-3 space-y-2 rounded-lg bg-white/70 p-3 font-mono text-xs font-bold text-on-surface">
+                    <p>Email: {credentialPreview.temporaryCredentials.email}</p>
+                    <p>
+                      Password:{" "}
+                      {credentialPreview.temporaryCredentials.password}
+                    </p>
+                    <p>Confirm: {credentialPreview.confirmationUrl}</p>
+                    <p>Login: {credentialPreview.loginUrl}</p>
+                  </div>
+                </div>
+              ) : null}
+
               {inviteMutation.isError ? (
                 <p className="rounded-lg bg-error-container/30 px-3 py-2 text-sm font-semibold text-error">
                   {inviteMutation.error.message || "Unable to invite staff."}
@@ -621,14 +528,21 @@ export function ErpDemoStaff() {
               <div className="grid gap-3 pt-2 sm:grid-cols-2">
                 <button
                   className="rounded-lg border border-outline-variant/25 px-4 py-3 text-sm font-black text-on-surface transition hover:bg-surface-container-low"
-                  onClick={() => setIsEntryDialogOpen(false)}
+                  onClick={() => {
+                    setCredentialPreview(null);
+                    setIsEntryDialogOpen(false);
+                  }}
                   type="button"
                 >
-                  Cancel
+                  {credentialPreview?.temporaryCredentials ? "Done" : "Cancel"}
                 </button>
                 <button
                   className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-black text-white shadow-md transition hover:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={inviteMutation.isPending || !email.trim()}
+                  disabled={
+                    inviteMutation.isPending ||
+                    !email.trim() ||
+                    Boolean(credentialPreview?.temporaryCredentials)
+                  }
                   type="submit"
                 >
                   <Mail size={16} />
@@ -636,6 +550,213 @@ export function ErpDemoStaff() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Edit Staff Dialog */}
+      {editingStaff ? (
+        <div className="erp-dialog-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            aria-modal="true"
+            className="w-full max-w-lg rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+            role="dialog"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-white">
+                  <Edit3 size={20} />
+                </div>
+                <div>
+                  <h3 className="font-headline text-xl font-black text-on-surface">
+                    Edit Staff Role
+                  </h3>
+                  <p className="mt-1 text-sm font-medium text-on-surface-variant">
+                    Change access privileges and role assignment for this user.
+                  </p>
+                </div>
+              </div>
+              <button
+                aria-label="Close edit staff dialog"
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant transition hover:bg-surface-container-high"
+                onClick={() => setEditingStaff(null)}
+                type="button"
+              >
+                <X size={17} />
+              </button>
+            </div>
+
+            <div className="mt-6 rounded-xl bg-surface-container-low p-4">
+              <div className="flex items-center gap-3">
+                <StaffAvatar
+                  email={editingStaff.email}
+                  name={editingStaff.name || ""}
+                  small
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-black text-on-surface">
+                    {editingStaff.name || "Unnamed staff"}
+                  </p>
+                  <p className="truncate text-xs text-on-surface-variant">
+                    {editingStaff.email}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <form
+              className="mt-6 space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (updateRoleMutation.isPending) return;
+                updateRoleMutation.mutate(
+                  {
+                    memberId: editingStaff.id,
+                    role: editRole,
+                  },
+                  {
+                    onSuccess: () => {
+                      setEditingStaff(null);
+                    },
+                  }
+                );
+              }}
+            >
+              <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+                Select New Role
+                <select
+                  className="mt-2 w-full rounded-lg border border-outline-variant/25 bg-surface px-3 py-3 text-sm font-semibold normal-case tracking-normal text-on-surface outline-none transition focus:border-primary"
+                  onChange={(event) =>
+                    setEditRole(event.target.value as StaffRole)
+                  }
+                  value={editRole}
+                >
+                  {roleOptions.map((roleOption) => (
+                    <option key={roleOption} value={roleOption}>
+                      {roleLabels[roleOption]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {updateRoleMutation.isError ? (
+                <p className="rounded-lg bg-error-container/30 px-3 py-2 text-sm font-semibold text-error">
+                  {updateRoleMutation.error.message ||
+                    "Unable to update staff role."}
+                </p>
+              ) : null}
+
+              <div className="grid gap-3 pt-2 sm:grid-cols-2">
+                <button
+                  className="rounded-lg border border-outline-variant/25 px-4 py-3 text-sm font-black text-on-surface transition hover:bg-surface-container-low"
+                  onClick={() => setEditingStaff(null)}
+                  type="button"
+                >
+                  Cancel
+                </button>
+                <button
+                  className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-black text-white shadow-md transition hover:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={updateRoleMutation.isPending}
+                  type="submit"
+                >
+                  {updateRoleMutation.isPending
+                    ? "Updating..."
+                    : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Delete Staff Dialog */}
+      {deletingStaff ? (
+        <div className="erp-dialog-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            aria-modal="true"
+            className="w-full max-w-lg rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+            role="dialog"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-error/10 text-error">
+                  <Trash2 size={20} />
+                </div>
+                <div>
+                  <h3 className="font-headline text-xl font-black text-error">
+                    Remove Staff Member
+                  </h3>
+                  <p className="mt-1 text-sm font-medium text-on-surface-variant">
+                    This action is irreversible. All clinical access will be
+                    revoked.
+                  </p>
+                </div>
+              </div>
+              <button
+                aria-label="Close delete staff dialog"
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-container-low text-on-surface-variant transition hover:bg-surface-container-high"
+                onClick={() => setDeletingStaff(null)}
+                type="button"
+              >
+                <X size={17} />
+              </button>
+            </div>
+
+            <div className="mt-6 rounded-xl border border-error/15 bg-error-container/5 p-4">
+              <p className="text-sm font-semibold text-on-surface">
+                Are you sure you want to permanently remove this staff member?
+              </p>
+              <div className="mt-3 flex items-center gap-3 rounded-lg bg-white/50 p-3">
+                <StaffAvatar
+                  email={deletingStaff.email}
+                  name={deletingStaff.name || ""}
+                  small
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-black text-on-surface">
+                    {deletingStaff.name || "Unnamed staff"}
+                  </p>
+                  <p className="truncate text-xs text-on-surface-variant">
+                    {deletingStaff.email}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {removeStaffMutation.isError ? (
+              <p className="mt-4 rounded-lg bg-error-container/30 px-3 py-2 text-sm font-semibold text-error">
+                {removeStaffMutation.error.message || "Unable to remove staff."}
+              </p>
+            ) : null}
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <button
+                className="rounded-lg border border-outline-variant/25 px-4 py-3 text-sm font-black text-on-surface transition hover:bg-surface-container-low"
+                onClick={() => setDeletingStaff(null)}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className="flex items-center justify-center gap-2 rounded-lg bg-error px-4 py-3 text-sm font-black text-white shadow-md transition hover:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={removeStaffMutation.isPending}
+                onClick={() => {
+                  removeStaffMutation.mutate(
+                    {
+                      memberId: deletingStaff.id,
+                    },
+                    {
+                      onSuccess: () => {
+                        setDeletingStaff(null);
+                      },
+                    }
+                  );
+                }}
+                type="button"
+              >
+                {removeStaffMutation.isPending ? "Removing..." : "Delete Staff"}
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

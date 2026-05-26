@@ -63,7 +63,10 @@ export function ErpDemoSidebar({
   const [isSettingsOpen, setIsSettingsOpen] = useState(
     currentPage.startsWith("settings")
   );
-  const canAccessSettings = allowedPages.includes("settings");
+  const visibleSettingsOptions = settingsOptions.filter((option) =>
+    allowedPages.includes(option.id)
+  );
+  const canAccessSettings = visibleSettingsOptions.length > 0;
 
   return (
     <aside
@@ -174,7 +177,7 @@ export function ErpDemoSidebar({
 
             {!isCollapsed && isSettingsOpen ? (
               <div className="ml-7 mt-1 space-y-1 border-l border-slate-200 pl-3">
-                {settingsOptions.map((option) => (
+                {visibleSettingsOptions.map((option) => (
                   <button
                     className={cn(
                       "block w-full rounded-md px-3 py-2 text-left text-[12px] font-semibold transition hover:bg-white hover:text-blue-700",

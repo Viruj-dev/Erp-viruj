@@ -8,7 +8,13 @@ export const env = createEnv({
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.url(),
     CORS_ORIGIN: z.url(),
-    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+    ERP_FROM_EMAIL: z
+      .string()
+      .default("Viruj Health ERP <noreply@virujhealth.com>"),
+    RESEND_API_KEY: z.string().optional(),
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

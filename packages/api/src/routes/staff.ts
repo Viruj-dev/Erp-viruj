@@ -1,6 +1,13 @@
 import { auth, organizationRoleOptions } from "@erp_virujhealth/auth";
 import { db } from "@erp_virujhealth/db";
-import { invitation, member, organization, user } from "@erp_virujhealth/db/schema/auth";
+import {
+  account,
+  invitation,
+  member,
+  organization,
+  user,
+} from "@erp_virujhealth/db/schema/auth";
+import { hashPassword } from "better-auth/crypto";
 import { ORPCError } from "@orpc/server";
 import { and, desc, eq, gt } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
@@ -8,11 +15,16 @@ import z from "zod";
 
 import { recordAuditLog } from "../lib/audit";
 import {
+  buildStaffConfirmationUrl,
   buildStaffLoginUrl,
   generateTemporaryPassword,
   sendStaffCredentialEmail,
 } from "../lib/staff-onboarding";
-import { permissionedErpProcedure, requireErpActor } from "../middleware/auth";
+import {
+  permissionedErpProcedure,
+  publicProcedure,
+  requireErpActor,
+} from "../middleware/auth";
 
 const inviteStaffInputSchema = z.object({
   email: z.string().trim().email(),
@@ -93,8 +105,10 @@ export const staffRouter = {
         .where(eq(user.email, email))
         .limit(1);
 
+      let existingMember: { id: string } | undefined;
+
       if (existingUser) {
-        const [existingMember] = await db
+        [existingMember] = await db
           .select({ id: member.id })
           .from(member)
           .where(
@@ -104,12 +118,22 @@ export const staffRouter = {
             )
           )
           .limit(1);
+      }
 
-        if (existingMember) {
-          throw new ORPCError("CONFLICT", {
-            message: "This user is already a staff member.",
-          });
-        }
+      const [actorOrganization] = await db
+        .select({
+          id: organization.id,
+          name: organization.name,
+          organizationType: organization.organizationType,
+        })
+        .from(organization)
+        .where(eq(organization.id, actor.organizationId))
+        .limit(1);
+
+      if (!actorOrganization) {
+        throw new ORPCError("NOT_FOUND", {
+          message: "Active organization was not found.",
+        });
       }
 
       const [existingInvitation] = await db
@@ -132,28 +156,69 @@ export const staffRouter = {
         .limit(1);
 
       if (existingInvitation) {
-        return existingInvitation;
-      }
+        const temporaryPassword = generateTemporaryPassword();
+        const staffUser =
+          existingUser ??
+          (await createStaffAuthUser({
+            email,
+            name: displayName,
+            password: temporaryPassword,
+          }));
 
-      const [actorOrganization] = await db
-        .select({
-          id: organization.id,
-          name: organization.name,
-          organizationType: organization.organizationType,
-        })
-        .from(organization)
-        .where(eq(organization.id, actor.organizationId))
-        .limit(1);
+        await setStaffTemporaryPassword(staffUser.id, temporaryPassword);
+        await db
+          .update(user)
+          .set({ emailVerified: false })
+          .where(eq(user.id, staffUser.id));
 
-      if (!actorOrganization) {
-        throw new ORPCError("NOT_FOUND", {
-          message: "Active organization was not found.",
+        await db
+          .update(invitation)
+          .set({
+            expiresAt: new Date(Date.now() + invitationTtlMs),
+            role: input.role,
+          })
+          .where(eq(invitation.id, existingInvitation.id));
+
+        if (existingMember) {
+          await db
+            .update(member)
+            .set({ role: input.role })
+            .where(eq(member.id, existingMember.id));
+        }
+
+        const loginUrl = buildStaffLoginUrl(
+          actorOrganization.organizationType,
+          input.role
+        );
+        const confirmationUrl = buildStaffConfirmationUrl(
+          existingInvitation.id
+        );
+        const credentialEmail = await sendStaffCredentialEmail({
+          confirmationUrl,
+          email,
+          loginUrl,
+          name: displayName,
+          organizationName: actorOrganization.name,
+          password: temporaryPassword,
+          role: input.role,
         });
+
+        return {
+          ...existingInvitation,
+          role: input.role,
+          onboarding: {
+            confirmationUrl,
+            emailSent: Boolean(credentialEmail),
+            loginUrl,
+            temporaryCredentials: {
+              email,
+              password: temporaryPassword,
+            },
+          },
+        };
       }
 
-      const temporaryPassword = existingUser
-        ? null
-        : generateTemporaryPassword();
+      const temporaryPassword = generateTemporaryPassword();
       const staffUser =
         existingUser ??
         (await createStaffAuthUser({
@@ -161,6 +226,14 @@ export const staffRouter = {
           name: displayName,
           password: temporaryPassword!,
         }));
+
+      if (existingUser) {
+        await setStaffTemporaryPassword(existingUser.id, temporaryPassword);
+        await db
+          .update(user)
+          .set({ emailVerified: false })
+          .where(eq(user.id, existingUser.id));
+      }
 
       return db.transaction(async (tx) => {
         const expiresAt = new Date(Date.now() + invitationTtlMs);
@@ -173,7 +246,7 @@ export const staffRouter = {
             inviterId: actor.userId,
             organizationId: actor.organizationId,
             role: input.role,
-            status: "accepted",
+            status: "pending",
           })
           .returning({
             email: invitation.email,
@@ -189,23 +262,30 @@ export const staffRouter = {
           });
         }
 
-        const [createdMember] = await tx
-          .insert(member)
-          .values({
-            id: randomUUID(),
-            organizationId: actor.organizationId,
-            role: input.role,
-            userId: staffUser.id,
-          })
-          .onConflictDoNothing()
-          .returning({
-            id: member.id,
-          });
+        if (existingMember) {
+          await tx
+            .update(member)
+            .set({ role: input.role })
+            .where(eq(member.id, existingMember.id));
+        } else {
+          const [createdMember] = await tx
+            .insert(member)
+            .values({
+              id: randomUUID(),
+              organizationId: actor.organizationId,
+              role: input.role,
+              userId: staffUser.id,
+            })
+            .onConflictDoNothing()
+            .returning({
+              id: member.id,
+            });
 
-        if (!createdMember) {
-          throw new ORPCError("CONFLICT", {
-            message: "This user is already a staff member.",
-          });
+          if (!createdMember) {
+            throw new ORPCError("CONFLICT", {
+              message: "This user is already a staff member.",
+            });
+          }
         }
 
         await recordAuditLog({
@@ -224,29 +304,113 @@ export const staffRouter = {
           actorOrganization.organizationType,
           input.role
         );
-        const credentialEmail = temporaryPassword
-          ? await sendStaffCredentialEmail({
-              email,
-              loginUrl,
-              name: displayName,
-              organizationName: actorOrganization.name,
-              password: temporaryPassword,
-              role: input.role,
-            })
-          : null;
+        const confirmationUrl = buildStaffConfirmationUrl(createdInvitation.id);
+        const credentialEmail = await sendStaffCredentialEmail({
+          confirmationUrl,
+          email,
+          loginUrl,
+          name: displayName,
+          organizationName: actorOrganization.name,
+          password: temporaryPassword,
+          role: input.role,
+        });
 
         return {
           ...createdInvitation,
           onboarding: {
+            confirmationUrl,
             emailSent: Boolean(credentialEmail),
             loginUrl,
-            temporaryCredentials: temporaryPassword
-              ? {
-                  email,
-                  password: temporaryPassword,
-                }
-              : null,
+            temporaryCredentials: {
+              email,
+              password: temporaryPassword,
+            },
           },
+        };
+      });
+    }),
+
+  confirmInvitation: publicProcedure
+    .input(invitationIdInputSchema)
+    .handler(async ({ input }) => {
+      return db.transaction(async (tx) => {
+        const [targetInvitation] = await tx
+          .select({
+            email: invitation.email,
+            expiresAt: invitation.expiresAt,
+            id: invitation.id,
+            organizationId: invitation.organizationId,
+            organizationType: organization.organizationType,
+            role: invitation.role,
+            status: invitation.status,
+          })
+          .from(invitation)
+          .innerJoin(organization, eq(invitation.organizationId, organization.id))
+          .where(eq(invitation.id, input.invitationId))
+          .limit(1);
+
+        if (!targetInvitation) {
+          throw new ORPCError("NOT_FOUND", {
+            message: "This staff confirmation link is invalid.",
+          });
+        }
+
+        const loginUrl = buildStaffLoginUrl(
+          targetInvitation.organizationType,
+          targetInvitation.role
+        );
+
+        if (targetInvitation.status === "accepted") {
+          return {
+            email: targetInvitation.email,
+            loginUrl,
+            role: targetInvitation.role,
+            status: "accepted",
+          };
+        }
+
+        if (targetInvitation.status !== "pending") {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "This staff confirmation link is no longer active.",
+          });
+        }
+
+        if (
+          targetInvitation.expiresAt &&
+          targetInvitation.expiresAt.getTime() < Date.now()
+        ) {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "This staff confirmation link has expired.",
+          });
+        }
+
+        const [staffUser] = await tx
+          .select({ id: user.id })
+          .from(user)
+          .where(eq(user.email, targetInvitation.email))
+          .limit(1);
+
+        if (!staffUser) {
+          throw new ORPCError("NOT_FOUND", {
+            message: "The staff login account was not found.",
+          });
+        }
+
+        await tx
+          .update(invitation)
+          .set({ status: "accepted" })
+          .where(eq(invitation.id, targetInvitation.id));
+
+        await tx
+          .update(user)
+          .set({ emailVerified: true })
+          .where(eq(user.id, staffUser.id));
+
+        return {
+          email: targetInvitation.email,
+          loginUrl,
+          role: targetInvitation.role,
+          status: "accepted",
         };
       });
     }),
@@ -484,13 +648,33 @@ async function createStaffAuthUser({
     });
   }
 
-  await db
-    .update(user)
-    .set({ emailVerified: true })
-    .where(eq(user.id, result.user.id));
-
   return {
     id: result.user.id,
     name,
   };
+}
+
+async function setStaffTemporaryPassword(userId: string, password: string) {
+  const hashedPassword = await hashPassword(password);
+  const [updatedAccount] = await db
+    .update(account)
+    .set({ password: hashedPassword })
+    .where(
+      and(eq(account.userId, userId), eq(account.providerId, "credential"))
+    )
+    .returning({
+      id: account.id,
+    });
+
+  if (updatedAccount) {
+    return;
+  }
+
+  await db.insert(account).values({
+    accountId: userId,
+    id: randomUUID(),
+    password: hashedPassword,
+    providerId: "credential",
+    userId,
+  });
 }

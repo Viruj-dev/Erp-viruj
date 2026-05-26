@@ -94,8 +94,11 @@ export function ErpAuthScreen() {
   return (
     <ErpDemoLogin
       onAuthenticated={async () => {
-        await sessionState.refetch();
-        router.replace("/dashboard");
+        await Promise.all([
+          sessionState.refetch(),
+          activeOrganizationState.refetch(),
+          activeMemberState.refetch(),
+        ]);
       }}
     />
   );

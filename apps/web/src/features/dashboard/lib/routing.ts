@@ -67,7 +67,7 @@ export const allowedDashboardPagesByRole: Record<
 > = {
   APPOINTMENT_HANDLER: ["dashboard", "appointments", "patients"],
   COMMUNITY_MANAGER: ["dashboard", "community"],
-  FINANCE_MANAGER: ["dashboard", "finance", "billing", "reports"],
+  FINANCE_MANAGER: ["dashboard", "finance", "billing", "reports", "settings"],
   ORG_ADMIN: [
     "dashboard",
     "finance",
@@ -110,7 +110,7 @@ export const allowedDashboardPagesByRole: Record<
     "notifications",
     "reports",
   ],
-  billing: ["dashboard", "finance", "billing", "reports"],
+  billing: ["dashboard", "finance", "billing", "reports", "settings"],
   doctor: ["dashboard", "doctors", "appointments", "patients", "reports"],
   lab_tech: ["dashboard", "pathology", "patients", "reports"],
   manager: [
