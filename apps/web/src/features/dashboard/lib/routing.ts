@@ -15,6 +15,10 @@ export const dashboardPageOptions = [
   "dashboard",
   "finance",
   "appointments",
+  "appointments-dashboard",
+  "appointments-review",
+  "appointments-patients",
+  "appointments-settings",
   "patients",
   "staff",
   "community",
@@ -48,7 +52,7 @@ export const defaultDashboardPageByRole: Record<
   OrganizationMemberRole,
   DashboardPage
 > = {
-  APPOINTMENT_HANDLER: "appointments",
+  APPOINTMENT_HANDLER: "appointments-dashboard",
   COMMUNITY_MANAGER: "community",
   FINANCE_MANAGER: "finance",
   ORG_ADMIN: "dashboard",
@@ -58,20 +62,32 @@ export const defaultDashboardPageByRole: Record<
   lab_tech: "pathology",
   manager: "staff",
   owner: "dashboard",
-  receptionist: "appointments",
+  receptionist: "appointments-dashboard",
 };
 
 export const allowedDashboardPagesByRole: Record<
   OrganizationMemberRole,
   DashboardPage[]
 > = {
-  APPOINTMENT_HANDLER: ["dashboard", "appointments", "patients"],
+  APPOINTMENT_HANDLER: [
+    "dashboard",
+    "appointments",
+    "appointments-dashboard",
+    "appointments-review",
+    "appointments-patients",
+    "appointments-settings",
+    "patients",
+  ],
   COMMUNITY_MANAGER: ["dashboard", "community"],
   FINANCE_MANAGER: ["dashboard", "finance", "billing", "reports", "settings"],
   ORG_ADMIN: [
     "dashboard",
     "finance",
     "appointments",
+    "appointments-dashboard",
+    "appointments-review",
+    "appointments-patients",
+    "appointments-settings",
     "patients",
     "staff",
     "community",
@@ -93,6 +109,10 @@ export const allowedDashboardPagesByRole: Record<
     "dashboard",
     "finance",
     "appointments",
+    "appointments-dashboard",
+    "appointments-review",
+    "appointments-patients",
+    "appointments-settings",
     "patients",
     "staff",
     "community",
@@ -111,12 +131,26 @@ export const allowedDashboardPagesByRole: Record<
     "reports",
   ],
   billing: ["dashboard", "finance", "billing", "reports", "settings"],
-  doctor: ["dashboard", "doctors", "appointments", "patients", "reports"],
+  doctor: [
+    "dashboard",
+    "doctors",
+    "appointments",
+    "appointments-dashboard",
+    "appointments-review",
+    "appointments-patients",
+    "appointments-settings",
+    "patients",
+    "reports",
+  ],
   lab_tech: ["dashboard", "pathology", "patients", "reports"],
   manager: [
     "dashboard",
     "finance",
     "appointments",
+    "appointments-dashboard",
+    "appointments-review",
+    "appointments-patients",
+    "appointments-settings",
     "patients",
     "staff",
     "community",
@@ -138,6 +172,10 @@ export const allowedDashboardPagesByRole: Record<
     "dashboard",
     "finance",
     "appointments",
+    "appointments-dashboard",
+    "appointments-review",
+    "appointments-patients",
+    "appointments-settings",
     "patients",
     "staff",
     "community",
@@ -155,7 +193,16 @@ export const allowedDashboardPagesByRole: Record<
     "notifications",
     "reports",
   ],
-  receptionist: ["dashboard", "appointments", "patients", "notifications"],
+  receptionist: [
+    "dashboard",
+    "appointments",
+    "appointments-dashboard",
+    "appointments-review",
+    "appointments-patients",
+    "appointments-settings",
+    "patients",
+    "notifications",
+  ],
 };
 
 export function isDashboardOrganizationType(
@@ -176,7 +223,19 @@ export function normalizeDashboardModule(value: string): DashboardPage {
       return "finance";
     case "appointments":
     case "appointment":
-      return "appointments";
+      return "appointments-dashboard";
+    case "appointments-dashboard":
+    case "appointment-dashboard":
+      return "appointments-dashboard";
+    case "appointments-review":
+    case "appointment-review":
+      return "appointments-review";
+    case "appointments-patients":
+    case "appointment-patients":
+      return "appointments-patients";
+    case "appointments-settings":
+    case "appointment-settings":
+      return "appointments-settings";
     case "community":
       return "community";
     case "analytics":
@@ -231,9 +290,32 @@ export function buildDashboardPath(
   organizationType: DashboardOrganizationType,
   page: DashboardPage = "dashboard"
 ) {
+  const appointmentRoute = getAppointmentRouteSegment(page);
+
+  if (appointmentRoute) {
+    return `/${organizationType}/appointments/${appointmentRoute}`;
+  }
+
   return page === "dashboard"
     ? `/${organizationType}`
     : `/${organizationType}/${page}`;
+}
+
+export function buildTenantDashboardPath(
+  organizationType: DashboardOrganizationType,
+  organizationSlug: string,
+  page: DashboardPage = "dashboard"
+) {
+  const slug = organizationSlug.trim() || "workspace";
+  const appointmentRoute = getAppointmentRouteSegment(page);
+
+  if (appointmentRoute) {
+    return `/${organizationType}/${slug}/appointments/${appointmentRoute}`;
+  }
+
+  return page === "dashboard"
+    ? `/${organizationType}/${slug}/dashboard`
+    : `/${organizationType}/${slug}/${page}/dashboard`;
 }
 
 export function resolveAccessibleDashboardPage(
@@ -245,4 +327,20 @@ export function resolveAccessibleDashboardPage(
   return allowedPages.includes(requestedPage)
     ? requestedPage
     : getDefaultDashboardPage(role);
+}
+
+function getAppointmentRouteSegment(page: DashboardPage) {
+  switch (page) {
+    case "appointments":
+    case "appointments-dashboard":
+      return "dashboard";
+    case "appointments-review":
+      return "review";
+    case "appointments-patients":
+      return "patients";
+    case "appointments-settings":
+      return "settings";
+    default:
+      return null;
+  }
 }

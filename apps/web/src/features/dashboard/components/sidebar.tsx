@@ -20,6 +20,9 @@ import {
   Stethoscope,
   Pill,
   Bell,
+  ClipboardCheck,
+  FileText,
+  Gauge,
   ScanLine,
   Users,
 } from "lucide-react";
@@ -43,6 +46,13 @@ const settingsOptions = [
   { id: "settings-data-export", label: "Data Export" },
 ] as const;
 
+const appointmentOptions = [
+  { id: "appointments-dashboard", label: "Dashboard", icon: Gauge },
+  { id: "appointments-review", label: "Review", icon: ClipboardCheck },
+  { id: "appointments-patients", label: "Patient Details", icon: FileText },
+  { id: "appointments-settings", label: "Settings", icon: Settings },
+] as const;
+
 export function ErpDemoSidebar({
   allowedPages,
   currentPage,
@@ -62,6 +72,9 @@ export function ErpDemoSidebar({
 }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(
     currentPage.startsWith("settings")
+  );
+  const [isAppointmentsOpen, setIsAppointmentsOpen] = useState(
+    currentPage.startsWith("appointments")
   );
   const visibleSettingsOptions = settingsOptions.filter((option) =>
     allowedPages.includes(option.id)
@@ -111,29 +124,81 @@ export function ErpDemoSidebar({
           .filter((item) => allowedPages.includes(item.id))
           .map((item) => {
             const Icon = item.icon;
-            const isActive = currentPage === item.id;
+            const isAppointmentItem = item.id === "appointments";
+            const isActive = isAppointmentItem
+              ? currentPage.startsWith("appointments")
+              : currentPage === item.id;
 
             return (
-              <button
-                key={item.id}
-                className={cn(
-                  "flex w-full items-center rounded-lg transition-all duration-200",
-                  isCollapsed ? "justify-center p-2" : "gap-3 px-4 py-2",
-                  isActive
-                    ? "bg-white text-blue-700 shadow-sm"
-                    : "text-slate-600 hover:bg-slate-200 hover:translate-x-1"
-                )}
-                onClick={() => onPageChange(item.id)}
-                title={isCollapsed ? item.label : undefined}
-                type="button"
-              >
-                <Icon size={18} />
-                {!isCollapsed ? (
-                  <span className="whitespace-nowrap text-[13px] font-medium">
-                    {item.label}
-                  </span>
+              <div key={item.id}>
+                <button
+                  className={cn(
+                    "flex w-full items-center rounded-lg transition-all duration-200",
+                    isCollapsed ? "justify-center p-2" : "gap-3 px-4 py-2",
+                    isActive
+                      ? "bg-white text-blue-700 shadow-sm"
+                      : "text-slate-600 hover:bg-slate-200 hover:translate-x-1"
+                  )}
+                  onClick={() => {
+                    if (isAppointmentItem) {
+                      if (isCollapsed) {
+                        onPageChange("appointments-dashboard");
+                        return;
+                      }
+
+                      setIsAppointmentsOpen((value) => !value);
+                      return;
+                    }
+
+                    onPageChange(item.id);
+                  }}
+                  title={isCollapsed ? item.label : undefined}
+                  type="button"
+                >
+                  <Icon size={18} />
+                  {!isCollapsed ? (
+                    <>
+                      <span className="flex-1 whitespace-nowrap text-left text-[13px] font-medium">
+                        {item.label}
+                      </span>
+                      {isAppointmentItem ? (
+                        <ChevronDown
+                          className={cn(
+                            "transition-transform",
+                            isAppointmentsOpen && "rotate-180"
+                          )}
+                          size={14}
+                        />
+                      ) : null}
+                    </>
+                  ) : null}
+                </button>
+
+                {isAppointmentItem && !isCollapsed && isAppointmentsOpen ? (
+                  <div className="ml-7 mt-1 space-y-1 border-l border-slate-200 pl-3">
+                    {appointmentOptions.map((option) => {
+                      const OptionIcon = option.icon;
+
+                      return (
+                        <button
+                          className={cn(
+                            "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[12px] font-semibold transition hover:bg-white hover:text-blue-700",
+                            currentPage === option.id
+                              ? "bg-white text-blue-700"
+                              : "text-slate-500"
+                          )}
+                          key={option.id}
+                          onClick={() => onPageChange(option.id)}
+                          type="button"
+                        >
+                          <OptionIcon size={14} />
+                          {option.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 ) : null}
-              </button>
+              </div>
             );
           })}
 

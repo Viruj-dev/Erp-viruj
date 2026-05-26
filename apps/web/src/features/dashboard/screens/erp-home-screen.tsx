@@ -15,6 +15,7 @@ import { ErpDemoTopBar } from "@/features/dashboard/components/top-bar";
 import type { ErpDemoPage } from "@/features/dashboard/components/types";
 import {
   buildDashboardPath,
+  buildTenantDashboardPath,
   type DashboardOrganizationType,
   getAllowedDashboardPages,
   isDashboardOrganizationType,
@@ -216,6 +217,7 @@ export function ErpHomeScreen({
     activeMemberRole
   );
   const organizationLabel = organizationTypeLabels[activeOrganizationType];
+  const activeOrganizationSlug = getOrganizationSlug(activeOrganization);
   const roleLabel = activeMemberRole
     ? activeMemberRole.replace(/_/g, " ")
     : "member";
@@ -241,10 +243,13 @@ export function ErpHomeScreen({
       return;
     }
 
-    const expectedPath = buildDashboardPath(
-      activeOrganizationType,
-      resolvedPage
-    );
+    const expectedPath = activeOrganizationSlug
+      ? buildTenantDashboardPath(
+          activeOrganizationType,
+          activeOrganizationSlug,
+          resolvedPage
+        )
+      : buildDashboardPath(activeOrganizationType, resolvedPage);
 
     const routeMatchesOrganization =
       routeDashboardOrganizationType === activeOrganizationType;
@@ -344,7 +349,15 @@ export function ErpHomeScreen({
           }
         }}
         onPageChange={(page) => {
-          router.push(buildDashboardPath(activeOrganizationType, page));
+          router.push(
+            activeOrganizationSlug
+              ? buildTenantDashboardPath(
+                  activeOrganizationType,
+                  activeOrganizationSlug,
+                  page
+                )
+              : buildDashboardPath(activeOrganizationType, page)
+          );
         }}
         onToggle={() => setIsSidebarCollapsed((value) => !value)}
         organizationLabel={organizationLabel}
@@ -399,7 +412,14 @@ function PageContent({
     case "finance":
       return <ErpDemoBilling />;
     case "appointments":
-      return <ErpDemoAppointments />;
+    case "appointments-dashboard":
+      return <ErpDemoAppointments section="dashboard" />;
+    case "appointments-review":
+      return <ErpDemoAppointments section="review" />;
+    case "appointments-patients":
+      return <ErpDemoAppointments section="patients" />;
+    case "appointments-settings":
+      return <ErpDemoAppointments section="settings" />;
     case "patients":
       return <ErpDemoPatients />;
     case "staff":
@@ -472,4 +492,17 @@ function buildAutoOrganizationSlug(identifier?: string | null) {
   const suffix = Math.random().toString(36).slice(2, 8);
 
   return `${normalized}-${suffix}`;
+}
+
+function getOrganizationSlug(organization: unknown) {
+  if (
+    organization &&
+    typeof organization === "object" &&
+    "slug" in organization &&
+    typeof organization.slug === "string"
+  ) {
+    return organization.slug;
+  }
+
+  return null;
 }
