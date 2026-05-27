@@ -54,7 +54,6 @@ export const defaultDashboardPageByRole: Record<
 > = {
   APPOINTMENT_HANDLER: "appointments-dashboard",
   COMMUNITY_MANAGER: "community",
-  FINANCE_MANAGER: "finance",
   ORG_ADMIN: "dashboard",
   admin: "dashboard",
   billing: "finance",
@@ -79,7 +78,6 @@ export const allowedDashboardPagesByRole: Record<
     "patients",
   ],
   COMMUNITY_MANAGER: ["dashboard", "community"],
-  FINANCE_MANAGER: ["dashboard", "finance", "billing", "reports", "settings"],
   ORG_ADMIN: [
     "dashboard",
     "finance",

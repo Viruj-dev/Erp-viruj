@@ -26,14 +26,12 @@ import { useEffect, useMemo, useState } from "react";
 const roleOptions = [
   "APPOINTMENT_HANDLER",
   "COMMUNITY_MANAGER",
-  "FINANCE_MANAGER",
   "ORG_ADMIN",
 ] as const;
 
 const roleLabels: Record<(typeof roleOptions)[number], string> = {
   APPOINTMENT_HANDLER: "Appointment Handler",
   COMMUNITY_MANAGER: "Community Manager",
-  FINANCE_MANAGER: "Finance Handler",
   ORG_ADMIN: "Organization Admin",
 };
 
@@ -938,10 +936,6 @@ function departmentFromRole(role: string) {
 
   if (role === "COMMUNITY_MANAGER") {
     return "Community";
-  }
-
-  if (role === "FINANCE_MANAGER") {
-    return "Finance";
   }
 
   return "Administration";

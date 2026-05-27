@@ -71,7 +71,6 @@ export type VirujModuleSummary = {
 export type VirujStaffRole =
   | "APPOINTMENT_HANDLER"
   | "COMMUNITY_MANAGER"
-  | "FINANCE_MANAGER"
   | "ORG_ADMIN";
 
 export type VirujStaffMember = {

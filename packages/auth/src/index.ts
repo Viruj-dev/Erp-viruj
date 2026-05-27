@@ -68,11 +68,6 @@ export const organizationRoles = {
     organization: ["read"],
     project: ["read"],
   }),
-  FINANCE_MANAGER: accessControl.newRole({
-    billing: ["read", "manage"],
-    organization: ["read"],
-    project: ["read"],
-  }),
   admin: accessControl.newRole({
     audit: ["read"],
     appointment: ["read", "update", "manage"],

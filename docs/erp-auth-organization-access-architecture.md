@@ -68,7 +68,7 @@ const normalizeOrganizationType = (value: string): OrganizationType => {
 };
 ```
 
-Important: organization type is not a role. A `HOSPITAL` can have `FINANCE_MANAGER` staff. A `PATHOLOGY` lab can have `ORG_ADMIN` staff.
+Important: organization type is not a role. A `HOSPITAL` can have `APPOINTMENT_HANDLER` staff. A `PATHOLOGY` lab can have `ORG_ADMIN` staff.
 
 Core organization fields:
 
@@ -112,7 +112,6 @@ enum OrganizationRole {
   ORG_ADMIN
   APPOINTMENT_HANDLER
   COMMUNITY_MANAGER
-  FINANCE_MANAGER
 }
 ```
 
@@ -123,7 +122,6 @@ Role responsibilities:
 | `ORG_ADMIN` | Full organization access, staff management, appointments, billing, community, schedules |
 | `APPOINTMENT_HANDLER` | Appointment approval/rejection, lifecycle management, schedules, patient booking info |
 | `COMMUNITY_MANAGER` | Community posts, organization public profile, engagement |
-| `FINANCE_MANAGER` | Invoices, payments, billing operations |
 
 Use simple module/action permissions in application code:
 
@@ -132,7 +130,6 @@ const rolePermissions = {
   ORG_ADMIN: ["staff.manage", "appointments.manage", "patients.read", "billing.manage", "community.manage", "schedules.manage"],
   APPOINTMENT_HANDLER: ["appointments.manage", "patients.read", "schedules.manage"],
   COMMUNITY_MANAGER: ["community.manage", "profile.manage"],
-  FINANCE_MANAGER: ["billing.manage", "payments.manage"],
 } as const;
 ```
 
@@ -168,7 +165,6 @@ enum OrganizationRole {
   ORG_ADMIN
   APPOINTMENT_HANDLER
   COMMUNITY_MANAGER
-  FINANCE_MANAGER
 }
 
 enum OrganizationUserStatus {
@@ -587,7 +583,7 @@ Navigation:
 | Dashboard | All roles |
 | Appointments | `ORG_ADMIN`, `APPOINTMENT_HANDLER` |
 | Patients | `ORG_ADMIN`, `APPOINTMENT_HANDLER` |
-| Billing | `ORG_ADMIN`, `FINANCE_MANAGER` |
+| Billing | `ORG_ADMIN` |
 | Community | `ORG_ADMIN`, `COMMUNITY_MANAGER` |
 | Schedules | `ORG_ADMIN`, `APPOINTMENT_HANDLER` |
 | Staff | `ORG_ADMIN` |
@@ -933,7 +929,7 @@ The current codebase already has:
 
 Recommended next implementation steps:
 
-1. Rename current generic roles to the MVP ERP roles: `ORG_ADMIN`, `APPOINTMENT_HANDLER`, `COMMUNITY_MANAGER`, `FINANCE_MANAGER`.
+1. Rename current generic roles to the MVP ERP roles: `ORG_ADMIN`, `APPOINTMENT_HANDLER`, `COMMUNITY_MANAGER`.
 2. Add `DOCTOR` to organization types if individual doctors are first-class organizations.
 3. Make appointment, billing, community, patient, and schedule queries tenant-scoped by `activeOrganization.id`.
 4. Replace bootstrap organization behavior with Viruj-admin onboarding for production.

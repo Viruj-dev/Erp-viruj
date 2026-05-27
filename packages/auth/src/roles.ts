@@ -4,7 +4,6 @@ export const organizationRoleOptions = [
   "ORG_ADMIN",
   "APPOINTMENT_HANDLER",
   "COMMUNITY_MANAGER",
-  "FINANCE_MANAGER",
 ] as const;
 
 export const legacyOrganizationRoleOptions = [
@@ -45,9 +44,6 @@ export const normalizeOrganizationMemberRole = (
       return "APPOINTMENT_HANDLER";
     case "COMMUNITY_MANAGER":
       return "COMMUNITY_MANAGER";
-    case "FINANCE_MANAGER":
-    case "billing":
-      return "FINANCE_MANAGER";
     default:
       return null;
   }

@@ -13,7 +13,6 @@ type StaffConfirmationScreenProps = {
 const roleLabels: Record<string, string> = {
   APPOINTMENT_HANDLER: "Appointment Handler",
   COMMUNITY_MANAGER: "Community Manager",
-  FINANCE_MANAGER: "Finance Handler",
   ORG_ADMIN: "Organization Admin",
 };
 

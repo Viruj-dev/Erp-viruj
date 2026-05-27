@@ -21,7 +21,6 @@ import {
 const roleModuleAccess: Record<string, string[]> = {
   APPOINTMENT_HANDLER: ["Appointments", "Patients", "Schedules"],
   COMMUNITY_MANAGER: ["Community", "Public profile"],
-  FINANCE_MANAGER: ["Billing", "Payments", "Patient billing view"],
   ORG_ADMIN: [
     "Staff",
     "Appointments",
@@ -147,7 +146,7 @@ export function ErpDemoDashboard({
             />
             <ActivityRow
               badge="2"
-              detail="Open Staff, invite APPOINTMENT_HANDLER or FINANCE_MANAGER."
+              detail="Open Staff, invite APPOINTMENT_HANDLER or COMMUNITY_MANAGER."
               title="Copy the invitation ID from Pending Invitations"
             />
             <ActivityRow
