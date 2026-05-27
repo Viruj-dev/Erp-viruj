@@ -3,7 +3,6 @@
 import { virujBackend } from "@/lib/viruj-backend";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { appointmentTabs } from "./constants";
 import { AppointmentDashboard } from "./options/dashboard";
 import { PatientDecisionHistory } from "./options/patients";
 import { ReviewQueue } from "./options/review";
@@ -108,30 +107,6 @@ export function ErpDemoAppointments({
 
   return (
     <div className="space-y-6 p-5 lg:p-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.24em] text-primary">
-            Appointment Handler
-          </p>
-          <h1 className="font-headline text-3xl font-black tracking-tight text-on-surface">
-            {appointmentTabs.find((tab) => tab.id === section)?.label ??
-              "Appointment Operations"}
-          </h1>
-          <p className="mt-1 max-w-3xl text-sm font-medium text-on-surface-variant">
-            Review incoming appointment requests, confirm or reject visits,
-            inspect patient appointment history and tune scheduling rules.
-          </p>
-        </div>
-        <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest px-4 py-3 text-right shadow-sm">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
-            Tenant Route
-          </p>
-          <p className="mt-1 text-xs font-black text-primary">
-            /hospital/apollo-delhi/appointments/dashboard
-          </p>
-        </div>
-      </div>
-
       {section === "dashboard" ? (
         <AppointmentDashboard
           approvalRate={approvalRate}
