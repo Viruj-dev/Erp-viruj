@@ -28,7 +28,9 @@ async function request<T>(path: string, options: RequestOptions = {}) {
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
     throw new Error(
-      payload?.message || payload?.error || `Viruj backend request failed (${response.status})`
+      payload?.message ||
+        payload?.error ||
+        `Viruj backend request failed (${response.status})`
     );
   }
 
@@ -51,6 +53,7 @@ export type VirujAppointment = {
   departmentName?: string | null;
   doctorName: string;
   id: string;
+  patientEmail: string;
   patientAge?: number | null;
   patientGender?: string | null;
   patientName: string;
@@ -140,27 +143,36 @@ export const virujBackend = {
       }),
   },
   modules: {
-    key: (module: string) => ["viruj-backend", "erp", "modules", module] as const,
+    key: (module: string) =>
+      ["viruj-backend", "erp", "modules", module] as const,
     summary: (module: string) =>
       request<VirujModuleSummary>(`/modules/${module}/summary`),
   },
   staff: {
     cancelInvitation: (input: { invitationId: string }) =>
-      request<VirujStaffInvitation>(`/staff/invitations/${input.invitationId}/cancel`, {
+      request<VirujStaffInvitation>(
+        `/staff/invitations/${input.invitationId}/cancel`,
+        {
+          method: "POST",
+        }
+      ),
+    confirmInvitation: (input: { invitationId: string }) =>
+      request<{
+        email: string;
+        loginUrl: string;
+        role: string;
+        status: string;
+      }>(`/staff/invitations/${input.invitationId}/confirm`, {
         method: "POST",
       }),
-    confirmInvitation: (input: { invitationId: string }) =>
-      request<{ email: string; loginUrl: string; role: string; status: string }>(
-        `/staff/invitations/${input.invitationId}/confirm`,
-        { method: "POST" }
-      ),
     invitationsKey: ["viruj-backend", "erp", "staff", "invitations"] as const,
     invite: (input: { email: string; name?: string; role: VirujStaffRole }) =>
       request<VirujStaffInviteResult>("/staff/invitations", {
         body: input,
         method: "POST",
       }),
-    listInvitations: () => request<VirujStaffInvitation[]>("/staff/invitations"),
+    listInvitations: () =>
+      request<VirujStaffInvitation[]>("/staff/invitations"),
     listMembers: () => request<VirujStaffMember[]>("/staff/members"),
     membersKey: ["viruj-backend", "erp", "staff", "members"] as const,
     remove: (input: { memberId: string }) =>

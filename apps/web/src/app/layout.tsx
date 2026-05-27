@@ -1,18 +1,16 @@
 import type { Metadata } from "next";
-import { Manrope, Public_Sans } from "next/font/google";
+import { Manrope, Public_Sans, Geist } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/store/app-context";
 import { Providers } from "@/lib/providers";
+import { cn } from "@/lib/utils";
 
 const manrope = Manrope({
   subsets: ["latin"],
   variable: "--font-headline",
 });
 
-const publicSans = Public_Sans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: "Viruj Health Clinical ERP",
@@ -26,8 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${manrope.variable} ${publicSans.variable} font-sans`}>
+    <html lang="en" className={cn("font-sans", geist.variable)}>
+      <body className={`${manrope.variable} ${geist.variable} font-sans`}>
         <AppProvider>
           <Providers>{children}</Providers>
         </AppProvider>
