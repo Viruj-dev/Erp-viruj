@@ -14,9 +14,7 @@ import {
   departmentSplit,
   weeklyBookings,
 } from "@/features/dashboard/components/data";
-import {
-  MiniBarChart,
-} from "@/features/dashboard/components/chart-primitives";
+import { MiniBarChart } from "@/features/dashboard/components/chart-primitives";
 
 const roleModuleAccess: Record<string, string[]> = {
   APPOINTMENT_HANDLER: ["Appointments", "Patients", "Schedules"],
@@ -41,7 +39,8 @@ export function ErpDemoDashboard({
   userName: string;
 }) {
   const normalizedRole = roleLabel.toUpperCase().replace(/\s+/g, "_");
-  const modules = roleModuleAccess[normalizedRole] ?? roleModuleAccess.ORG_ADMIN;
+  const modules =
+    roleModuleAccess[normalizedRole] ?? roleModuleAccess.ORG_ADMIN;
 
   return (
     <div className="space-y-8 p-6 lg:p-10">
@@ -51,7 +50,8 @@ export function ErpDemoDashboard({
             Clinical command center
           </p>
           <h1 className="mt-4 max-w-xl font-headline text-4xl font-black leading-tight lg:text-5xl">
-            {userName || "ERP Admin"}, your {organizationLabel.toLowerCase()} workspace is ready.
+            {userName || "ERP Admin"}, your {organizationLabel.toLowerCase()}{" "}
+            workspace is ready.
           </h1>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-white/78">
             You are signed in as {formatRole(roleLabel)}. Use Staff to invite
@@ -246,6 +246,7 @@ export function ErpDemoDashboard({
               <p className="text-xs font-black uppercase tracking-[0.3em] text-white/65">
                 Maintenance notice
               </p>
+              <h1>Scheduled database window at 02:00 AM</h1>
               <h3 className="mt-3 font-headline text-2xl font-black">
                 Scheduled database window at 02:00 AM
               </h3>
@@ -266,9 +267,10 @@ export function ErpDemoDashboard({
 }
 
 function formatRole(role: string) {
-  return role.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (letter) =>
-    letter.toUpperCase()
-  );
+  return role
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function Panel({
