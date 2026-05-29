@@ -376,7 +376,7 @@ function ActivityRow({
         <p className="font-semibold text-on-surface">{title}</p>
         <p className="mt-1 text-sm text-on-surface-variant">{detail}</p>
       </div>
-      <span className="rounded-full bg-secondary-container/45 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-secondary">
+      <span className="rounded-full  bg-secondary-container/45 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-secondary">
         {badge}
       </span>
     </div>
