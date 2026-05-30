@@ -83,7 +83,7 @@ export function ErpDemoBilling() {
       <main className="space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="font-headline text-3xl font-black tracking-tight text-on-surface">
+            <h1 className="font-headline text-3xl font-semi-bold tracking-tight text-on-surface">
               Billing & Invoices
             </h1>
             <p className="mt-1 text-sm font-medium text-on-surface-variant">
@@ -91,7 +91,7 @@ export function ErpDemoBilling() {
             </p>
           </div>
           <button
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-primary-container"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semi-bold text-white shadow-sm transition hover:bg-primary-container"
             type="button"
           >
             <PlusCircle size={17} />
@@ -130,7 +130,7 @@ export function ErpDemoBilling() {
         </section>
 
         <section className="flex flex-wrap items-center gap-3 rounded-xl bg-surface-container-low px-4 py-3">
-          <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+          <span className="inline-flex items-center gap-2 text-[10px] font-semi-bold uppercase tracking-[0.18em] text-on-surface-variant">
             <RefreshCw size={13} />
             Quick Filters:
           </span>
@@ -140,7 +140,7 @@ export function ErpDemoBilling() {
         </section>
 
         <section className="overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container-lowest shadow-sm">
-          <div className="grid grid-cols-[0.85fr_1.3fr_0.75fr_0.9fr_0.8fr_0.75fr] gap-4 border-b border-outline-variant/15 bg-surface-container-low px-6 py-4 text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+          <div className="grid grid-cols-[0.85fr_1.3fr_0.75fr_0.9fr_0.8fr_0.75fr] gap-4 border-b border-outline-variant/15 bg-surface-container-low px-6 py-4 text-[10px] font-semi-bold uppercase tracking-[0.18em] text-on-surface-variant">
             <span>Invoice ID</span>
             <span>Patient Name</span>
             <span>Date</span>
@@ -154,7 +154,9 @@ export function ErpDemoBilling() {
                 className="grid grid-cols-[0.85fr_1.3fr_0.75fr_0.9fr_0.8fr_0.75fr] items-center gap-4 px-6 py-4 text-sm transition hover:bg-surface-container-low"
                 key={invoice.id}
               >
-                <span className="font-black text-primary">{invoice.id}</span>
+                <span className="font-semi-bold text-primary">
+                  {invoice.id}
+                </span>
                 <div className="flex min-w-0 items-center gap-3">
                   <PatientInitials
                     initials={invoice.patient.initials}
@@ -167,10 +169,10 @@ export function ErpDemoBilling() {
                 <span className="text-xs font-semibold text-on-surface">
                   {formatDate(invoice.date)}
                 </span>
-                <span className="w-fit rounded-md bg-surface-container-low px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-on-surface-variant">
+                <span className="w-fit rounded-md bg-surface-container-low px-2 py-1 text-[10px] font-semi-bold uppercase tracking-[0.12em] text-on-surface-variant">
                   {invoice.serviceType}
                 </span>
-                <span className="font-black text-on-surface">
+                <span className="font-semi-bold text-on-surface">
                   {invoice.amount}
                 </span>
                 <StatusBadge status={invoice.status} />
@@ -186,7 +188,7 @@ export function ErpDemoBilling() {
               >
                 <ChevronLeft size={14} />
               </button>
-              <button className="font-black text-primary" type="button">
+              <button className="font-semi-bold text-primary" type="button">
                 1
               </button>
               <button type="button">2</button>
@@ -206,10 +208,10 @@ export function ErpDemoBilling() {
         <section className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="font-headline text-lg font-black text-on-surface">
+              <h2 className="font-headline text-lg font-semi-bold text-on-surface">
                 Revenue Overview
               </h2>
-              <p className="mt-1 text-xs font-black text-secondary">
+              <p className="mt-1 text-xs font-semi-bold text-secondary">
                 30D TREND
               </p>
             </div>
@@ -239,7 +241,7 @@ export function ErpDemoBilling() {
         </section>
 
         <section className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
-          <h2 className="font-headline text-lg font-black uppercase tracking-[0.08em] text-primary">
+          <h2 className="font-headline text-lg font-semi-bold uppercase tracking-[0.08em] text-primary">
             Quick Actions
           </h2>
           <div className="mt-5 space-y-3">
@@ -265,7 +267,7 @@ export function ErpDemoBilling() {
               <AlertTriangle size={17} />
             </span>
             <div>
-              <h2 className="font-headline text-base font-black text-on-surface">
+              <h2 className="font-headline text-base font-semi-bold text-on-surface">
                 Audit Required
               </h2>
               <p className="mt-2 text-sm font-medium leading-6 text-on-surface-variant">
@@ -273,7 +275,7 @@ export function ErpDemoBilling() {
                 the provider.
               </p>
               <button
-                className="mt-3 inline-flex items-center gap-2 text-xs font-black text-primary"
+                className="mt-3 inline-flex items-center gap-2 text-xs font-semi-bold text-primary"
                 type="button"
               >
                 View Audit Queue
@@ -316,16 +318,16 @@ function SummaryCard({
         <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10">
           {icon}
         </span>
-        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">
+        <p className="text-[10px] font-semi-bold uppercase tracking-[0.16em] text-on-surface-variant">
           {label}
         </p>
       </div>
       <div className="mt-6 flex flex-wrap items-end gap-2">
-        <p className="font-headline text-3xl font-black text-on-surface">
+        <p className="font-headline text-3xl font-semi-bold text-on-surface">
           {value}
         </p>
         <span
-          className={`pb-1 text-xs font-black ${
+          className={`pb-1 text-xs font-semi-bold ${
             tone === "error" ? "text-error" : "text-secondary"
           }`}
         >
@@ -363,7 +365,7 @@ function PatientInitials({
 
   return (
     <span
-      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${className}`}
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-semi-bold ${className}`}
     >
       {initials}
     </span>
@@ -392,7 +394,7 @@ function StatusBadge({ status }: { status: InvoiceStatus }) {
 
   return (
     <span
-      className={`w-fit rounded-md px-2 py-1 text-[10px] font-black uppercase tracking-[0.1em] ${statusMap[status].className}`}
+      className={`w-fit rounded-md px-2 py-1 text-[10px] font-semi-bold uppercase tracking-[0.1em] ${statusMap[status].className}`}
     >
       {statusMap[status].label}
     </span>
@@ -403,7 +405,7 @@ function RevenueLine({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4">
       <span className="text-on-surface-variant">{label}</span>
-      <span className="font-black text-on-surface">{value}</span>
+      <span className="font-semi-bold text-on-surface">{value}</span>
     </div>
   );
 }
@@ -417,7 +419,7 @@ function QuickAction({
 }) {
   return (
     <button
-      className="flex w-full items-center gap-3 rounded-lg border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-left text-xs font-black text-on-surface transition hover:border-primary/35 hover:text-primary"
+      className="flex w-full items-center gap-3 rounded-lg border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-left text-xs font-semi-bold text-on-surface transition hover:border-primary/35 hover:text-primary"
       type="button"
     >
       <span className="text-primary">{icon}</span>

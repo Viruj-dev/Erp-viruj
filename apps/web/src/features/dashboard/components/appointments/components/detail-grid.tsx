@@ -13,7 +13,10 @@ export function DetailGrid({
         label="Department"
         value={appointment.departmentName || "General"}
       />
-      <DetailItem label="Date" value={formatDate(appointment.appointmentDate)} />
+      <DetailItem
+        label="Date"
+        value={formatDate(appointment.appointmentDate)}
+      />
       <DetailItem label="Time" value={appointment.appointmentTime} />
       <DetailItem label="Mode" value={appointment.appointmentMode} />
       <DetailItem label="Status" value={getStatusLabel(appointment.status)} />
@@ -24,10 +27,10 @@ export function DetailGrid({
 function DetailItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-surface-container-low p-3">
-      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">
+      <p className="text-[10px] font-semi-bold uppercase tracking-[0.16em] text-on-surface-variant">
         {label}
       </p>
-      <p className="mt-1 text-sm font-black text-on-surface">{value}</p>
+      <p className="mt-1 text-sm font-semi-bold text-on-surface">{value}</p>
     </div>
   );
 }

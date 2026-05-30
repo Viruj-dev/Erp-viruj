@@ -30,10 +30,10 @@ export function OrganizationAccessScreen({
       <div className="relative w-full max-w-3xl rounded-[2.5rem] border border-white/10 bg-white/80 p-8 shadow-2xl backdrop-blur-xl md:p-12">
         <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.35em] text-primary">
+            <p className="text-xs font-semi-bold uppercase tracking-[0.35em] text-primary">
               Organization Access
             </p>
-            <h1 className="mt-4 font-headline text-4xl font-black text-on-surface">
+            <h1 className="mt-4 font-headline text-4xl font-semi-bold text-on-surface">
               Choose the workspace you want to run.
             </h1>
             <p className="mt-4 max-w-xl text-sm leading-relaxed text-on-surface-variant">
@@ -61,7 +61,7 @@ export function OrganizationAccessScreen({
               type="button"
             >
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.28em] text-primary">
+                <p className="text-xs font-semi-bold uppercase tracking-[0.28em] text-primary">
                   {organization.organizationType ?? "organization"}
                 </p>
                 <h2 className="mt-2 font-headline text-2xl font-bold text-on-surface">

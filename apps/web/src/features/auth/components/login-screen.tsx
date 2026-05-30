@@ -215,7 +215,7 @@ export function ErpDemoLogin({
             animate={{ opacity: 1, y: 0 }}
             initial={{ opacity: 0, y: -20 }}
           >
-            <span className="font-headline text-3xl font-black tracking-tight text-white">
+            <span className="font-headline text-3xl font-semi-bold tracking-tight text-white">
               Viruj Health
             </span>
             <div className="mt-2 h-1 w-12 bg-secondary" />
@@ -270,7 +270,8 @@ export function ErpDemoLogin({
                     Welcome back
                   </h2>
                   <p className="mt-2 text-on-surface-variant">
-                    Access the organization workspace that manages Viruj app demand
+                    Access the organization workspace that manages Viruj app
+                    demand
                   </p>
                 </header>
 
@@ -397,8 +398,8 @@ export function ErpDemoLogin({
                   <Info className="mt-1 text-primary" size={18} />
                   <p className="text-xs leading-relaxed text-on-primary-fixed">
                     This creates an ERP admin account, provisions the
-                    organization, and activates an ORG_ADMIN session for
-                    testing staff and audit flows.
+                    organization, and activates an ORG_ADMIN session for testing
+                    staff and audit flows.
                   </p>
                 </div>
 
@@ -471,7 +472,7 @@ export function ErpDemoLogin({
                         password: value,
                       }))
                     }
-                      placeholder="Minimum secure admin password"
+                    placeholder="Minimum secure admin password"
                     required
                     type="password"
                     value={onboardingForm.password}
@@ -550,7 +551,7 @@ export function ErpDemoLogin({
                           email: value,
                         }))
                       }
-                    placeholder="staff@apollo.test"
+                      placeholder="staff@apollo.test"
                       required
                       type="email"
                       value={invitationForm.email}
@@ -602,7 +603,7 @@ export function ErpDemoLogin({
                   }}
                   type="button"
                 >
-                    Back to organization creation
+                  Back to organization creation
                 </button>
               </motion.div>
             ) : null}
@@ -704,13 +705,13 @@ function RoleCard({
 function TestGuide() {
   return (
     <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low p-4">
-      <p className="text-[11px] font-black uppercase tracking-[0.24em] text-primary">
+      <p className="text-[11px] font-semi-bold uppercase tracking-[0.24em] text-primary">
         Test path
       </p>
       <ol className="mt-3 space-y-2 text-sm text-on-surface-variant">
         <li>
-          <strong className="text-on-surface">1.</strong> Create an
-          organization admin.
+          <strong className="text-on-surface">1.</strong> Create an organization
+          admin.
         </li>
         <li>
           <strong className="text-on-surface">2.</strong> Open Staff and invite

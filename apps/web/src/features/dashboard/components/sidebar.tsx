@@ -132,12 +132,15 @@ export function ErpDemoSidebar({
         >
           <div className="relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-[#181b1f] dark:ring-white/[0.10]">
             <span className="absolute inset-1 rounded-full bg-[conic-gradient(from_150deg,#7cf4ff,#315bff,#c2a3ff,#7cf4ff)] blur-[1px]" />
-            <Stethoscope className="relative text-slate-950 dark:text-white" size={18} />
+            <Stethoscope
+              className="relative text-slate-950 dark:text-white"
+              size={18}
+            />
           </div>
 
           {!isCollapsed ? (
             <div className="min-w-0 flex-1">
-              <h1 className="truncate font-headline text-base font-black leading-tight text-slate-950 dark:text-white">
+              <h1 className="truncate font-headline text-base font-semi-bold leading-tight text-slate-950 dark:text-white">
                 Viruj ERP
               </h1>
               <p className="truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -327,7 +330,7 @@ export function ErpDemoSidebar({
               isCollapsed ? "justify-center p-2" : "gap-3 p-2"
             )}
           >
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#d7e3ff] text-xs font-black text-[#09203c]">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#d7e3ff] text-xs font-semi-bold text-[#09203c]">
               {getInitials(userName)}
             </div>
             {!isCollapsed ? (

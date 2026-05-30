@@ -46,10 +46,10 @@ export function ErpDemoDashboard({
     <div className="space-y-8 p-6 lg:p-10">
       <section className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
         <div className="overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary to-primary-container p-8 text-white shadow-[0_24px_80px_rgba(0,71,141,0.28)]">
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-white/70">
+          <p className="text-xs font-semi-bold uppercase tracking-[0.3em] text-white/70">
             Clinical command center
           </p>
-          <h1 className="mt-4 max-w-xl font-headline text-4xl font-black leading-tight lg:text-5xl">
+          <h1 className="mt-4 max-w-xl font-headline text-4xl font-semi-bold leading-tight lg:text-5xl">
             {userName || "ERP Admin"}, your {organizationLabel.toLowerCase()}{" "}
             workspace is ready.
           </h1>
@@ -67,20 +67,20 @@ export function ErpDemoDashboard({
         <div className="rounded-[2rem] border border-outline-variant/30 bg-surface-container-lowest p-6 shadow-sm dark:border-white/[0.08] dark:bg-[#14171b] dark:shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.25em] text-on-surface-variant dark:text-slate-500">
+              <p className="text-xs font-semi-bold uppercase tracking-[0.25em] text-on-surface-variant dark:text-slate-500">
                 Acceptance rate
               </p>
-              <h2 className="mt-2 font-headline text-2xl font-black text-on-surface dark:text-slate-100">
+              <h2 className="mt-2 font-headline text-2xl font-semi-bold text-on-surface dark:text-slate-100">
                 Request efficiency
               </h2>
             </div>
             <ShieldCheck className="text-secondary" size={22} />
           </div>
           <div className="mt-6 rounded-2xl border border-primary/10 bg-primary-container/10 p-4 dark:border-white/[0.08] dark:bg-white/[0.06]">
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary dark:text-blue-300">
+            <p className="text-[11px] font-semi-bold uppercase tracking-[0.22em] text-primary dark:text-blue-300">
               Current actor
             </p>
-            <p className="mt-3 font-headline text-2xl font-black text-on-surface dark:text-slate-100">
+            <p className="mt-3 font-headline text-2xl font-semi-bold text-on-surface dark:text-slate-100">
               {formatRole(roleLabel)}
             </p>
             <p className="mt-1 text-sm text-on-surface-variant dark:text-slate-400">
@@ -243,11 +243,11 @@ export function ErpDemoDashboard({
 
           <div className="relative overflow-hidden rounded-[2rem] bg-secondary p-6 text-white shadow-[0_18px_50px_rgba(0,106,106,0.28)]">
             <div className="relative z-10">
-              <p className="text-xs font-black uppercase tracking-[0.3em] text-white/65">
+              <p className="text-xs font-semi-bold uppercase tracking-[0.3em] text-white/65">
                 Maintenance notice
               </p>
               <h1>Scheduled database window at 02:00 AM</h1>
-              <h3 className="mt-3 font-headline text-2xl font-black">
+              <h3 className="mt-3 font-headline text-2xl font-semi-bold">
                 Scheduled database window at 02:00 AM
               </h3>
               <p className="mt-3 text-sm leading-7 text-white/80">
@@ -286,10 +286,10 @@ function Panel({
 }) {
   return (
     <div className="rounded-[2rem] border border-outline-variant/25 bg-surface-container-lowest p-6 shadow-sm dark:border-white/[0.08] dark:bg-[#14171b] dark:shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
-      <p className="text-[11px] font-black uppercase tracking-[0.26em] text-on-surface-variant dark:text-slate-500">
+      <p className="text-[11px] font-semi-bold uppercase tracking-[0.26em] text-on-surface-variant dark:text-slate-500">
         {eyebrow}
       </p>
-      <h3 className="mt-3 font-headline text-2xl font-black text-on-surface dark:text-slate-100">
+      <h3 className="mt-3 font-headline text-2xl font-semi-bold text-on-surface dark:text-slate-100">
         {title}
       </h3>
       <p className="mt-2 text-sm text-on-surface-variant dark:text-slate-400">
@@ -318,10 +318,10 @@ function StatCard({
       <div className="flex items-start justify-between">
         <div className={`rounded-2xl p-3 ${accent}`}>{icon}</div>
       </div>
-      <p className="mt-5 text-[11px] font-black uppercase tracking-[0.22em] text-on-surface-variant dark:text-slate-500">
+      <p className="mt-5 text-[11px] font-semi-bold uppercase tracking-[0.22em] text-on-surface-variant dark:text-slate-500">
         {label}
       </p>
-      <p className="mt-2 font-headline text-4xl font-black text-on-surface dark:text-slate-100">
+      <p className="mt-2 font-headline text-4xl font-semi-bold text-on-surface dark:text-slate-100">
         {value}
       </p>
       <p className="mt-2 text-sm text-on-surface-variant dark:text-slate-400">
@@ -334,10 +334,10 @@ function StatCard({
 function MetricChip({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-md">
-      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-white/65">
+      <p className="text-[11px] font-semi-bold uppercase tracking-[0.22em] text-white/65">
         {label}
       </p>
-      <p className="mt-2 font-headline text-2xl font-black">{value}</p>
+      <p className="mt-2 font-headline text-2xl font-semi-bold">{value}</p>
     </div>
   );
 }
@@ -362,7 +362,7 @@ function LegendRow({
           {label}
         </span>
       </div>
-      <span className="font-black text-on-surface dark:text-slate-100">
+      <span className="font-semi-bold text-on-surface dark:text-slate-100">
         {value}
       </span>
     </div>
@@ -388,7 +388,7 @@ function ActivityRow({
           {detail}
         </p>
       </div>
-      <span className="rounded-full bg-secondary-container/45 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-secondary dark:bg-cyan-400/10 dark:text-cyan-200">
+      <span className="rounded-full bg-secondary-container/45 px-3 py-1 text-[10px] font-semi-bold uppercase tracking-[0.22em] text-secondary dark:bg-cyan-400/10 dark:text-cyan-200">
         {badge}
       </span>
     </div>

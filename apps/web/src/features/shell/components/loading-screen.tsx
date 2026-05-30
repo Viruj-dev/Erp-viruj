@@ -15,7 +15,7 @@ export function LoadingScreen() {
         <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-white shadow-lg">
           <Building2 size={24} />
         </div>
-        <h1 className="font-headline text-3xl font-black text-on-surface">
+        <h1 className="font-headline text-3xl font-semi-bold text-on-surface">
           Restoring secure session
         </h1>
         <p className="mt-3 text-sm text-on-surface-variant">

@@ -62,7 +62,7 @@ export function ErpDemoSettings({
 
       {section === "alerts" ? (
         <section className="max-w-2xl rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-sm">
-          <h1 className="flex items-center gap-3 font-headline text-2xl font-black text-on-surface">
+          <h1 className="flex items-center gap-3 font-headline text-2xl font-semi-bold text-on-surface">
             <BellRing className="text-secondary" size={22} />
             Alert Rules
           </h1>
@@ -107,7 +107,7 @@ export function ErpDemoSettings({
         <section className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
           <StoragePanel />
           <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-sm">
-            <h1 className="font-headline text-2xl font-black text-on-surface">
+            <h1 className="font-headline text-2xl font-semi-bold text-on-surface">
               Storage Governance
             </h1>
             <p className="mt-2 max-w-2xl text-sm font-medium text-on-surface-variant">
@@ -133,7 +133,7 @@ function OrganizationProfile() {
     <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-headline text-2xl font-black text-primary">
+          <h1 className="font-headline text-2xl font-semi-bold text-primary">
             Organization Profile
           </h1>
           <p className="mt-2 text-sm font-medium text-on-surface-variant">
@@ -141,7 +141,7 @@ function OrganizationProfile() {
           </p>
         </div>
         <button
-          className="rounded-lg bg-surface-container-low px-5 py-2.5 text-xs font-black text-primary transition hover:bg-primary/10"
+          className="rounded-lg bg-surface-container-low px-5 py-2.5 text-xs font-semi-bold text-primary transition hover:bg-primary/10"
           type="button"
         >
           Update Profile
@@ -154,7 +154,7 @@ function OrganizationProfile() {
           <span className="mt-2 text-xs font-semibold">Logo</span>
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="font-headline text-lg font-black text-on-surface">
+          <h2 className="font-headline text-lg font-semi-bold text-on-surface">
             Official Branding
           </h2>
           <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-on-surface-variant">
@@ -187,25 +187,25 @@ function PlanCard() {
       <ShieldCheck className="text-secondary-container" size={22} />
       <div className="mt-6 flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-headline text-2xl font-black">
+          <h2 className="font-headline text-2xl font-semi-bold">
             Elite Care Access
           </h2>
           <p className="mt-1 text-sm font-medium text-white/62">
             Your subscription is active until Dec 2024.
           </p>
         </div>
-        <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white/70">
+        <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-semi-bold uppercase tracking-[0.14em] text-white/70">
           Pro Plan
         </span>
       </div>
-      <p className="mt-8 font-headline text-4xl font-black">
+      <p className="mt-8 font-headline text-4xl font-semi-bold">
         $1,499{" "}
         <span className="font-sans text-sm font-medium text-white/55">
           /month
         </span>
       </p>
       <button
-        className="mt-7 w-full rounded-lg bg-white/75 px-4 py-3 text-xs font-black uppercase tracking-[0.08em] text-primary transition hover:bg-white"
+        className="mt-7 w-full rounded-lg bg-white/75 px-4 py-3 text-xs font-semi-bold uppercase tracking-[0.08em] text-primary transition hover:bg-white"
         type="button"
       >
         Manage Billing
@@ -217,7 +217,7 @@ function PlanCard() {
 function StoragePanel() {
   return (
     <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-sm">
-      <h1 className="font-headline text-lg font-black uppercase tracking-[0.12em] text-on-surface-variant">
+      <h1 className="font-headline text-lg font-semi-bold uppercase tracking-[0.12em] text-on-surface-variant">
         Storage Usage
       </h1>
       <StorageBar label="Patient Records" value={82} />
@@ -230,20 +230,20 @@ function AuditLogPanel() {
   return (
     <section className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="flex items-center gap-3 font-headline text-2xl font-black text-on-surface">
+        <h1 className="flex items-center gap-3 font-headline text-2xl font-semi-bold text-on-surface">
           <SlidersHorizontal className="text-primary" size={22} />
           Clinical Audit Logs
         </h1>
         <div className="flex gap-2">
           <button
-            className="inline-flex items-center gap-2 rounded-lg bg-surface-container-low px-4 py-2.5 text-xs font-black uppercase tracking-[0.08em] text-on-surface-variant"
+            className="inline-flex items-center gap-2 rounded-lg bg-surface-container-low px-4 py-2.5 text-xs font-semi-bold uppercase tracking-[0.08em] text-on-surface-variant"
             type="button"
           >
             <Filter size={13} />
             Filter
           </button>
           <button
-            className="inline-flex items-center gap-2 rounded-lg bg-primary/10 px-4 py-2.5 text-xs font-black uppercase tracking-[0.08em] text-primary"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary/10 px-4 py-2.5 text-xs font-semi-bold uppercase tracking-[0.08em] text-primary"
             type="button"
           >
             <Download size={13} />
@@ -253,7 +253,7 @@ function AuditLogPanel() {
       </div>
 
       <div className="mt-8 overflow-hidden">
-        <div className="grid grid-cols-[1.15fr_1fr_1fr_1fr_0.75fr] gap-4 border-b border-outline-variant/15 pb-4 text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+        <div className="grid grid-cols-[1.15fr_1fr_1fr_1fr_0.75fr] gap-4 border-b border-outline-variant/15 pb-4 text-[10px] font-semi-bold uppercase tracking-[0.18em] text-on-surface-variant">
           <span>Timestamp</span>
           <span>Entity / User</span>
           <span>Action Type</span>
@@ -269,9 +269,9 @@ function AuditLogPanel() {
               <span className="font-medium text-on-surface-variant">
                 {timestamp}
               </span>
-              <span className="font-black text-on-surface">{entity}</span>
+              <span className="font-semi-bold text-on-surface">{entity}</span>
               <span
-                className={`w-fit rounded-md px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${
+                className={`w-fit rounded-md px-2 py-1 text-[10px] font-semi-bold uppercase tracking-[0.12em] ${
                   status === "Warning"
                     ? "bg-error-container text-error"
                     : action === "PT_UPDATE"
@@ -285,7 +285,7 @@ function AuditLogPanel() {
                 {resource}
               </span>
               <span
-                className={`font-black ${
+                className={`font-semi-bold ${
                   status === "Warning" ? "text-error" : "text-on-surface"
                 }`}
               >
@@ -308,7 +308,7 @@ function DataExportPanel() {
             <Database size={20} />
           </span>
           <div>
-            <h1 className="font-headline text-lg font-black text-on-surface">
+            <h1 className="font-headline text-lg font-semi-bold text-on-surface">
               Export All Organization Data
             </h1>
             <p className="mt-1 max-w-3xl text-sm font-medium text-on-surface-variant">
@@ -318,7 +318,7 @@ function DataExportPanel() {
           </div>
         </div>
         <button
-          className="rounded-lg border border-error px-7 py-3 text-xs font-black uppercase tracking-[0.12em] text-error transition hover:bg-error-container/30"
+          className="rounded-lg border border-error px-7 py-3 text-xs font-semi-bold uppercase tracking-[0.12em] text-error transition hover:bg-error-container/30"
           type="button"
         >
           Request Export
@@ -331,7 +331,7 @@ function DataExportPanel() {
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <label className="block">
-      <span className="text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+      <span className="text-[10px] font-semi-bold uppercase tracking-[0.18em] text-on-surface-variant">
         {label}
       </span>
       <input
@@ -345,7 +345,7 @@ function Field({ label, value }: { label: string; value: string }) {
 
 function FormatBadge({ label }: { label: string }) {
   return (
-    <span className="rounded-md bg-primary/10 px-2 py-1 text-[10px] font-black text-primary">
+    <span className="rounded-md bg-primary/10 px-2 py-1 text-[10px] font-semi-bold text-primary">
       {label}
     </span>
   );
@@ -354,10 +354,10 @@ function FormatBadge({ label }: { label: string }) {
 function StorageMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-surface-container-low p-5">
-      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">
+      <p className="text-[10px] font-semi-bold uppercase tracking-[0.16em] text-on-surface-variant">
         {label}
       </p>
-      <p className="mt-3 font-headline text-3xl font-black text-on-surface">
+      <p className="mt-3 font-headline text-3xl font-semi-bold text-on-surface">
         {value}
       </p>
     </div>
@@ -375,7 +375,7 @@ function StorageBar({
 }) {
   return (
     <div className="mt-6">
-      <div className="flex items-center justify-between text-xs font-black">
+      <div className="flex items-center justify-between text-xs font-semi-bold">
         <span className="uppercase tracking-[0.12em] text-on-surface">
           {label}
         </span>
@@ -407,7 +407,7 @@ function AlertToggle({
   return (
     <div className="flex items-center justify-between gap-4">
       <div>
-        <p className="font-black text-on-surface">{label}</p>
+        <p className="font-semi-bold text-on-surface">{label}</p>
         <p className="mt-1 text-xs font-medium text-on-surface-variant">
           {description}
         </p>

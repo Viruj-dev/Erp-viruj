@@ -27,7 +27,7 @@ export function ErpDemoAnalytics() {
     <div className="space-y-6 p-6 lg:p-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="font-headline text-4xl font-black text-on-surface">
+          <h2 className="font-headline text-4xl font-semi-bold text-on-surface">
             Clinical analytics
           </h2>
           <p className="mt-2 text-sm text-on-surface-variant">
@@ -37,7 +37,7 @@ export function ErpDemoAnalytics() {
         <div className="flex flex-wrap items-center gap-3">
           <Chip icon={<CalendarDays size={16} />} label="Last 6 Months" />
           <button
-            className="flex items-center gap-2 rounded-xl bg-on-surface px-4 py-3 text-sm font-black text-surface shadow-md"
+            className="flex items-center gap-2 rounded-xl bg-on-surface px-4 py-3 text-sm font-semi-bold text-surface shadow-md"
             type="button"
           >
             <Download size={16} />
@@ -115,7 +115,7 @@ export function ErpDemoAnalytics() {
                     {item.name}
                   </span>
                 </div>
-                <span className="font-black text-on-surface-variant">
+                <span className="font-semi-bold text-on-surface-variant">
                   {item.value}%
                 </span>
               </div>
@@ -158,7 +158,7 @@ export function ErpDemoAnalytics() {
             />
           </div>
           <button
-            className="mt-6 w-full rounded-xl bg-primary px-4 py-3 text-sm font-black text-white shadow-md"
+            className="mt-6 w-full rounded-xl bg-primary px-4 py-3 text-sm font-semi-bold text-white shadow-md"
             type="button"
           >
             Generate Full Audit
@@ -186,10 +186,10 @@ function Panel({
     <div
       className={`rounded-[2rem] border border-outline-variant/20 bg-surface-container-low p-6 ${className}`}
     >
-      <p className="text-[11px] font-black uppercase tracking-[0.24em] text-on-surface-variant">
+      <p className="text-[11px] font-semi-bold uppercase tracking-[0.24em] text-on-surface-variant">
         {eyebrow}
       </p>
-      <h3 className="mt-3 font-headline text-2xl font-black text-on-surface">
+      <h3 className="mt-3 font-headline text-2xl font-semi-bold text-on-surface">
         {title}
       </h3>
       <p className="mt-2 text-sm text-on-surface-variant">{description}</p>
@@ -200,7 +200,7 @@ function Panel({
 
 function Chip({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm font-black text-on-surface">
+    <div className="flex items-center gap-2 rounded-xl border border-outline-variant/20 bg-surface-container-low px-4 py-3 text-sm font-semi-bold text-on-surface">
       {icon}
       {label}
     </div>
@@ -234,7 +234,7 @@ function KpiCard({
       <div className="flex items-start justify-between">
         <span className={`rounded-2xl p-3 ${toneClass}`}>{icon}</span>
         <span
-          className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-black ${
+          className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semi-bold ${
             trendPositive
               ? "bg-secondary-container/45 text-secondary"
               : "bg-error-container text-error"
@@ -248,10 +248,10 @@ function KpiCard({
           {trend}
         </span>
       </div>
-      <p className="mt-5 text-[11px] font-black uppercase tracking-[0.22em] text-on-surface-variant">
+      <p className="mt-5 text-[11px] font-semi-bold uppercase tracking-[0.22em] text-on-surface-variant">
         {label}
       </p>
-      <p className="mt-2 font-headline text-4xl font-black text-on-surface">
+      <p className="mt-2 font-headline text-4xl font-semi-bold text-on-surface">
         {value}
       </p>
     </div>

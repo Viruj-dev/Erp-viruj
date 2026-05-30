@@ -30,7 +30,7 @@ export function getStatusLabel(status: string) {
 
 export function statusClassName(status: string) {
   const base =
-    "inline-flex w-fit items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em]";
+    "inline-flex w-fit items-center rounded-full px-3 py-1 text-[10px] font-semi-bold uppercase tracking-[0.14em]";
 
   if (status === "approved" || status === "completed") {
     return `${base} bg-secondary-container/45 text-secondary`;

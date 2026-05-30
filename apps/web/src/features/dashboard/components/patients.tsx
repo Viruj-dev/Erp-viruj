@@ -1,389 +1,417 @@
 "use client";
 
-import { patients } from "@/features/dashboard/components/data";
-import type { PatientRecord } from "@/features/dashboard/components/types";
 import {
-  ArrowLeft,
-  ArrowRight,
-  Clock,
   Download,
-  Filter,
-  TrendingUp,
+  MoreHorizontal,
+  Search,
+  SlidersHorizontal,
   UserRoundPlus,
-  UsersRound,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
-type PatientDirectoryRecord = PatientRecord & {
-  condition: string;
-  mrn: string;
-  visitContext: string;
+type PatientStatus =
+  | "Checked-in"
+  | "Scheduled"
+  | "Discharged"
+  | "Critical"
+  | "Follow-up";
+
+type DirectoryPatient = {
+  age: number;
+  doctor: string;
+  doctorInitials: string;
+  gender: "F" | "M";
+  id: string;
+  initials: string;
+  lastVisit: string;
+  name: string;
+  status: PatientStatus;
+  tone: "blue" | "indigo" | "slate" | "rose" | "teal";
 };
 
-const supplementalPatients: PatientDirectoryRecord[] = [
+const directoryPatients: DirectoryPatient[] = [
   {
     age: 34,
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&h=120&fit=crop",
-    bloodGroup: "A Positive",
-    condition: "Type 1 Diabetic",
-    conditions: [],
-    email: "aria.sterling@example.com",
-    gender: "Female",
-    id: "MRN-2024-8891",
-    insurance: {
-      policyNumber: "VH-8891",
-      provider: "Viruj Care",
-      status: "Active",
-    },
-    lastVisit: "2023-10-12",
-    mrn: "MRN-2024-8891",
-    name: "Aria Sterling",
-    phone: "+1 (555) 821-4981",
-    status: "Stable",
-    timeline: [],
-    visitContext: "Routine Follow-up",
-    vitals: { bp: "118/76", bpm: 72, spo2: 99 },
+    doctor: "Dr. Aris Thorne",
+    doctorInitials: "AT",
+    gender: "F",
+    id: "#VH-9021",
+    initials: "EM",
+    lastVisit: "24 Oct, 2023",
+    name: "Elena Mitchell",
+    status: "Checked-in",
+    tone: "blue",
   },
   {
-    age: 68,
-    avatar:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop",
-    bloodGroup: "B Positive",
-    condition: "Hypertension",
-    conditions: [],
-    email: "julian.vane@example.com",
-    gender: "Male",
-    id: "MRN-2024-1204",
-    insurance: {
-      policyNumber: "VH-1204",
-      provider: "Viruj Care",
-      status: "Active",
-    },
-    lastVisit: "2023-10-24",
-    mrn: "MRN-2024-1204",
-    name: "Julian Vane",
-    phone: "+1 (555) 662-1204",
+    age: 52,
+    doctor: "Dr. Sarah Chen",
+    doctorInitials: "SC",
+    gender: "M",
+    id: "#VH-8842",
+    initials: "JK",
+    lastVisit: "Today, 09:15 AM",
+    name: "Julian Kloss",
+    status: "Scheduled",
+    tone: "indigo",
+  },
+  {
+    age: 28,
+    doctor: "Dr. Aris Thorne",
+    doctorInitials: "AT",
+    gender: "F",
+    id: "#VH-1109",
+    initials: "RW",
+    lastVisit: "19 Oct, 2023",
+    name: "Rebecca Wells",
+    status: "Discharged",
+    tone: "slate",
+  },
+  {
+    age: 67,
+    doctor: "Dr. Aris Thorne",
+    doctorInitials: "AT",
+    gender: "M",
+    id: "#VH-5044",
+    initials: "MB",
+    lastVisit: "Today, 10:45 AM",
+    name: "Marcus Bennett",
     status: "Critical",
-    timeline: [],
-    visitContext: "Critical Escalation",
-    vitals: { bp: "148/92", bpm: 84, spo2: 96 },
+    tone: "rose",
+  },
+  {
+    age: 19,
+    doctor: "Dr. Sarah Chen",
+    doctorInitials: "SC",
+    gender: "F",
+    id: "#VH-7721",
+    initials: "SP",
+    lastVisit: "Yesterday",
+    name: "Sofia Perez",
+    status: "Follow-up",
+    tone: "teal",
+  },
+  {
+    name: "David Vasquez",
+    age: 41,
+    doctor: "Dr. Sarah Chen",
+    doctorInitials: "SC",
+    gender: "M",
+    id: "#VH-3401",
+    initials: "DV",
+    lastVisit: "22 Oct, 2023",
+    status: "Checked-in",
+    tone: "blue",
+  },
+  {
+    name: "Clara Oswald",
+    age: 29,
+    doctor: "Dr. Aris Thorne",
+    doctorInitials: "AT",
+    gender: "F",
+    id: "#VH-6789",
+    initials: "CO",
+    lastVisit: "Today, 11:30 AM",
+    status: "Scheduled",
+    tone: "indigo",
+  },
+  {
+    name: "Thomas Miller",
+    age: 48,
+    doctor: "Dr. Sarah Chen",
+    doctorInitials: "SC",
+    gender: "M",
+    id: "#VH-4521",
+    initials: "TM",
+    lastVisit: "15 Oct, 2023",
+    status: "Discharged",
+    tone: "slate",
+  },
+  {
+    name: "Amelia Pond",
+    age: 31,
+    doctor: "Dr. Aris Thorne",
+    doctorInitials: "AT",
+    gender: "F",
+    id: "#VH-8890",
+    initials: "AP",
+    lastVisit: "Yesterday",
+    status: "Follow-up",
+    tone: "teal",
+  },
+  {
+    name: "Arthur Williams",
+    age: 72,
+    doctor: "Dr. Sarah Chen",
+    doctorInitials: "SC",
+    gender: "M",
+    id: "#VH-2311",
+    initials: "AW",
+    lastVisit: "Today, 08:00 AM",
+    status: "Critical",
+    tone: "rose",
+  },
+  {
+    name: "Lucas Scott",
+    age: 25,
+    doctor: "Dr. Aris Thorne",
+    doctorInitials: "AT",
+    gender: "M",
+    id: "#VH-1092",
+    initials: "LS",
+    lastVisit: "20 Oct, 2023",
+    status: "Checked-in",
+    tone: "blue",
+  },
+  {
+    name: "Brooke Davis",
+    age: 33,
+    doctor: "Dr. Sarah Chen",
+    doctorInitials: "SC",
+    gender: "F",
+    id: "#VH-8902",
+    initials: "BD",
+    lastVisit: "Today, 02:45 PM",
+    status: "Scheduled",
+    tone: "indigo",
+  },
+  {
+    name: "Nathan Scott",
+    age: 27,
+    doctor: "Dr. Aris Thorne",
+    doctorInitials: "AT",
+    gender: "M",
+    id: "#VH-4432",
+    initials: "NS",
+    lastVisit: "18 Oct, 2023",
+    status: "Discharged",
+    tone: "slate",
+  },
+  {
+    name: "Peyton Sawyer",
+    age: 30,
+    doctor: "Dr. Sarah Chen",
+    doctorInitials: "SC",
+    gender: "F",
+    id: "#VH-5543",
+    initials: "PS",
+    lastVisit: "Yesterday",
+    status: "Follow-up",
+    tone: "teal",
+  },
+  {
+    name: "Haley James",
+    age: 32,
+    doctor: "Dr. Aris Thorne",
+    doctorInitials: "AT",
+    gender: "F",
+    id: "#VH-6654",
+    initials: "HJ",
+    lastVisit: "Today, 12:00 PM",
+    status: "Checked-in",
+    tone: "blue",
   },
 ];
 
-const directoryPatients: PatientDirectoryRecord[] = [
-  ...supplementalPatients,
-  ...patients.map((patient, index) => ({
-    ...patient,
-    condition:
-      patient.conditions[0]?.name ??
-      ["Post-Op Recovery", "Asthma Management", "Osteoarthritis"][index] ??
-      "General Review",
-    mrn: patient.id.replace("VH-", "MRN-"),
-    visitContext:
-      patient.status === "Critical"
-        ? "Critical Escalation"
-        : ([
-            "In-patient Observation",
-            "Tele-consult Scheduled",
-            "Physiotherapy Review",
-          ][index] ?? "Routine Follow-up"),
-  })),
-].slice(0, 5);
+const scheduleFilters = ["Past", "Present", "Upcoming"] as const;
 
 export function ErpDemoPatients() {
   return (
-    <div className="space-y-7 p-5 lg:p-8">
-      <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_220px_220px]">
-        <div className="rounded-xl bg-[#003463] p-7 text-white shadow-sm">
-          <div className="flex items-start justify-between gap-5">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">
-                Total Longitudinal Records
-              </p>
-              <p className="mt-2 font-headline text-4xl font-black leading-none">
-                12,842
-              </p>
-            </div>
-            <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-white/10 text-white/70">
-              <UsersRound size={20} />
-            </span>
-          </div>
-          <span className="mt-7 inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-2 text-xs font-black text-white/72">
-            <TrendingUp size={13} />
-            8.4% increase from last quarter
-          </span>
-        </div>
-
-        <MetricCard
-          icon={<UserRoundPlus className="text-secondary" size={18} />}
-          label="New patients (month)"
-          note="+12.5% vs last month"
-          value="342"
-        />
-        <MetricCard
-          icon={<Clock className="text-error" size={18} />}
-          label="Avg. triage wait"
-          note="Steady clinic flow"
-          noteTone="error"
-          value="14m"
-        />
-      </section>
-
-      <section className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex gap-2">
-            <ToolButton icon={<Filter size={14} />} label="Filter" />
-            <ToolButton icon={<Download size={14} />} label="Export" />
-          </div>
-          <div className="flex items-center gap-3 text-xs font-semibold text-on-surface-variant">
-            <span>Showing 1-10 of 12,842 patients</span>
-            <button
-              className="rounded-lg p-2 text-outline transition hover:bg-surface-container-low"
-              type="button"
-            >
-              <ArrowLeft size={14} />
-            </button>
-            <button
-              className="rounded-lg bg-surface-container-low p-2 text-primary transition hover:bg-primary/10"
-              type="button"
-            >
-              <ArrowRight size={14} />
-            </button>
-          </div>
-        </div>
-
-        <div className="overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container-lowest shadow-sm">
-          <div className="grid grid-cols-[1.45fr_0.75fr_0.9fr_0.9fr_0.65fr] gap-4 border-b border-outline-variant/15 bg-surface-container-low px-6 py-4 text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
-            <span>Patient Name</span>
-            <span>MRN / ID</span>
-            <span>Last Visit</span>
-            <span>Condition / Triage</span>
-            <span className="text-right">Actions</span>
-          </div>
-
-          <div className="divide-y divide-outline-variant/12">
-            {directoryPatients.map((patient) => (
-              <div
-                className="grid grid-cols-[1.45fr_0.75fr_0.9fr_0.9fr_0.65fr] items-center gap-4 px-6 py-4 text-sm transition hover:bg-surface-container-low"
-                key={patient.id}
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  {patient.avatar ? (
-                    <img
-                      alt={patient.name}
-                      className="h-11 w-11 shrink-0 rounded-lg object-cover"
-                      src={patient.avatar}
-                    />
-                  ) : (
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 font-headline text-sm font-black text-primary">
-                      {getInitials(patient.name)}
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="truncate font-headline text-base font-black text-on-surface">
-                      {patient.name}
-                    </p>
-                    <p className="truncate text-xs font-medium text-on-surface-variant">
-                      {patient.gender.charAt(0)} - {patient.age} yrs -{" "}
-                      {patient.condition}
-                    </p>
-                  </div>
-                </div>
-
-                <span className="font-mono text-xs font-semibold text-on-surface-variant">
-                  {patient.mrn}
-                </span>
-
-                <div>
-                  <p className="font-black text-on-surface">
-                    {formatDate(patient.lastVisit)}
-                  </p>
-                  <p
-                    className={`text-xs font-black ${
-                      patient.status === "Critical"
-                        ? "text-error"
-                        : "text-secondary"
-                    }`}
-                  >
-                    {patient.visitContext}
-                  </p>
-                </div>
-
-                <TriageBadge status={patient.status} />
-
-                <button
-                  className="text-right text-xs font-black text-primary transition hover:text-primary-container"
-                  type="button"
-                >
-                  Open Chart
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/15 px-6 py-5">
-            <button
-              className="inline-flex items-center gap-2 text-sm font-black text-on-surface-variant transition hover:text-primary"
-              type="button"
-            >
-              <ArrowLeft size={14} />
-              Previous
-            </button>
-            <div className="flex items-center gap-3 text-sm font-black text-on-surface">
+    <div className="space-y-7 p-6 lg:p-4">
+      <section className="grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4 shadow-sm dark:border-white/[0.08] dark:bg-[#14171b]">
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-600">
+            Filter Schedule
+          </p>
+          <div className="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1 dark:bg-white/[0.06]">
+            {scheduleFilters.map((filter) => (
               <button
-                className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white"
+                className={
+                  filter === "Present"
+                    ? "h-10 rounded-lg bg-white text-xs font-semibold text-primary shadow-sm dark:bg-white/[0.12] dark:text-blue-200"
+                    : "h-10 rounded-lg text-xs font-semibold text-slate-500 transition hover:bg-white/70 hover:text-slate-900 dark:text-slate-500 dark:hover:bg-white/[0.08] dark:hover:text-slate-200"
+                }
+                key={filter}
                 type="button"
               >
-                1
+                {filter}
               </button>
-              <button className="h-9 w-9" type="button">
-                2
-              </button>
-              <button className="h-9 w-9" type="button">
-                3
-              </button>
-              <span>...</span>
-              <button className="h-9 w-9" type="button">
-                128
-              </button>
-            </div>
-            <button
-              className="inline-flex items-center gap-2 text-sm font-black text-primary transition hover:text-primary-container"
-              type="button"
-            >
-              Next
-              <ArrowRight size={14} />
-            </button>
+            ))}
           </div>
         </div>
-      </section>
 
-      <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_330px]">
-        <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-sm">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-on-surface-variant">
-                Longitudinal Data Integrity
-              </p>
-              <p className="mt-5 text-sm font-black text-on-surface">
-                Profile Completion Rate
-              </p>
-            </div>
-            <span className="text-sm font-black text-secondary">94%</span>
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-4 shadow-sm dark:border-white/[0.08] dark:bg-[#14171b]">
+          <div className="relative min-w-0 flex-1">
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600"
+              size={18}
+            />
+            <input
+              className="h-11 w-full rounded-xl border-none bg-slate-100 pl-12 pr-4 text-sm font-semibold text-slate-800 outline-none transition placeholder:text-slate-500 focus:ring-2 focus:ring-primary/20 dark:bg-white/[0.06] dark:text-slate-100 dark:placeholder:text-slate-500"
+              placeholder="Quick search by Name, Patient ID, or Phone..."
+              type="text"
+            />
           </div>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-container-high">
-            <div className="h-full w-[94%] rounded-full bg-secondary" />
-          </div>
-          <p className="mt-5 text-sm font-medium italic text-on-surface-variant">
-            Clinicians are reminded to update family medical history for 42
-            pending patient profiles.
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-6 text-center shadow-sm">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <UsersRound size={22} />
-          </span>
-          <h3 className="mt-5 font-headline text-lg font-black text-on-surface">
-            Demographic Shift
-          </h3>
-          <p className="mx-auto mt-2 max-w-52 text-sm font-medium text-on-surface-variant">
-            Geriatric intake has increased by 4% since last quarter.
-          </p>
           <button
-            className="mt-5 text-xs font-black text-primary transition hover:text-primary-container"
+            aria-label="Open patient filters"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:bg-white/[0.06] dark:text-slate-300 dark:hover:bg-white/[0.1]"
             type="button"
           >
-            View Analytics Report
+            <SlidersHorizontal size={18} />
           </button>
         </div>
       </section>
+
+      <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/85 shadow-sm dark:border-white/[0.08] dark:bg-[#14171b]">
+        <div className="grid grid-cols-[minmax(220px,1.5fr)_0.75fr_0.95fr_1.15fr_0.75fr_80px] gap-5 border-b border-slate-200/80 bg-slate-50/80 px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-white/[0.08] dark:bg-white/[0.035] dark:text-slate-500">
+          <span>Patient Name</span>
+          <span>Patient ID</span>
+          <span>Last Visit</span>
+          <span>Primary Doctor</span>
+          <span>Status</span>
+          <span className="text-right">Actions</span>
+        </div>
+
+        <div className="divide-y divide-slate-200/70 dark:divide-white/[0.07]">
+          {directoryPatients.map((patient) => (
+            <div
+              className="grid grid-cols-[minmax(220px,1.5fr)_0.75fr_0.95fr_1.15fr_0.75fr_80px] items-center gap-5 px-6 py-4 text-sm transition hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+              key={patient.id}
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <Avatar initials={patient.initials} tone={patient.tone} />
+                <div className="min-w-0">
+                  <p className="truncate font-headline text-[15px] font-semibold text-slate-950 dark:text-slate-100">
+                    {patient.name}
+                  </p>
+                  <p className="truncate text-xs font-semibold text-slate-500 dark:text-slate-500">
+                    {patient.gender}, {patient.age} yrs
+                  </p>
+                </div>
+              </div>
+
+              <span className="font-semibold text-slate-800 dark:text-slate-300">
+                {patient.id}
+              </span>
+              <span className="font-semibold text-slate-700 dark:text-slate-400">
+                {patient.lastVisit}
+              </span>
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[9px] font-semibold text-white ring-2 ring-white dark:bg-slate-700 dark:ring-[#14171b]">
+                  {patient.doctorInitials}
+                </span>
+                <span className="truncate font-semibold text-slate-800 dark:text-slate-300">
+                  {patient.doctor}
+                </span>
+              </div>
+              <StatusBadge status={patient.status} />
+              <button
+                aria-label={`More actions for ${patient.name}`}
+                className="ml-auto flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-white/[0.08] dark:hover:text-slate-100"
+                type="button"
+              >
+                <MoreHorizontal size={18} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200/80 px-6 py-4 dark:border-white/[0.08]">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-500">
+            Showing 1 to 15 of 142 patients
+          </p>
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-400">
+            <button
+              aria-label="Previous page"
+              className="flex size-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-white/[0.08] dark:hover:text-slate-100"
+              type="button"
+            >
+              <ChevronLeft size={17} />
+            </button>
+            <button
+              className="flex size-9 items-center justify-center rounded-lg bg-primary text-white dark:bg-blue-500"
+              type="button"
+            >
+              1
+            </button>
+            <button
+              className="flex size-9 items-center justify-center rounded-lg transition hover:bg-slate-100 dark:hover:bg-white/[0.08]"
+              type="button"
+            >
+              2
+            </button>
+            <button
+              className="flex size-9 items-center justify-center rounded-lg transition hover:bg-slate-100 dark:hover:bg-white/[0.08]"
+              type="button"
+            >
+              3
+            </button>
+            <span className="px-2">...</span>
+            <button
+              className="flex size-9 items-center justify-center rounded-lg transition hover:bg-slate-100 dark:hover:bg-white/[0.08]"
+              type="button"
+            >
+              24
+            </button>
+            <button
+              aria-label="Next page"
+              className="flex size-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-white/[0.08] dark:hover:text-slate-100"
+              type="button"
+            >
+              <ChevronRight size={17} />
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
 
-function MetricCard({
-  icon,
-  label,
-  note,
-  noteTone = "secondary",
-  value,
+function Avatar({
+  initials,
+  tone,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  note: string;
-  noteTone?: "secondary" | "error";
-  value: string;
+  initials: string;
+  tone: DirectoryPatient["tone"];
 }) {
-  return (
-    <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">
-          {label}
-        </p>
-        {icon}
-      </div>
-      <p className="mt-7 font-headline text-3xl font-black text-on-surface">
-        {value}
-      </p>
-      <p
-        className={`mt-5 text-xs font-black ${
-          noteTone === "error" ? "text-error" : "text-secondary"
-        }`}
-      >
-        {note}
-      </p>
-    </div>
-  );
-}
-
-function ToolButton({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <button
-      className="inline-flex items-center gap-2 rounded-lg border border-outline-variant/20 bg-surface-container-lowest px-4 py-2.5 text-xs font-black text-on-surface shadow-sm transition hover:bg-surface-container-low"
-      type="button"
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
-
-function TriageBadge({ status }: { status: PatientRecord["status"] }) {
-  const className =
-    status === "Critical"
-      ? "bg-error-container/70 text-error"
-      : status === "Recovered"
-        ? "bg-surface-container-high text-on-surface-variant"
-        : "bg-secondary-container/55 text-secondary";
-  const label =
-    status === "Critical"
-      ? "Urgent"
-      : status === "Recovered"
-        ? "Monitoring"
-        : "Stable";
+  const toneClass = {
+    blue: "bg-blue-100 text-blue-800 dark:bg-blue-400/18 dark:text-blue-200",
+    indigo:
+      "bg-indigo-100 text-indigo-800 dark:bg-indigo-400/18 dark:text-indigo-200",
+    rose: "bg-rose-100 text-rose-800 dark:bg-rose-400/18 dark:text-rose-200",
+    slate:
+      "bg-slate-200 text-slate-700 dark:bg-slate-600/30 dark:text-slate-200",
+    teal: "bg-teal-100 text-teal-800 dark:bg-teal-400/18 dark:text-teal-200",
+  }[tone];
 
   return (
     <span
-      className={`w-fit rounded-full px-3 py-1 text-xs font-black ${className}`}
+      className={`flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${toneClass}`}
     >
-      {label}
+      {initials}
     </span>
   );
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
-}
+function StatusBadge({ status }: { status: PatientStatus }) {
+  const statusClass = {
+    "Checked-in":
+      "bg-teal-100 text-teal-800 dark:bg-teal-400/14 dark:text-teal-200",
+    Critical:
+      "bg-rose-100 text-rose-800 dark:bg-rose-400/14 dark:text-rose-200",
+    Discharged:
+      "bg-slate-200 text-slate-700 dark:bg-slate-500/18 dark:text-slate-300",
+    "Follow-up":
+      "bg-cyan-100 text-cyan-800 dark:bg-cyan-400/14 dark:text-cyan-200",
+    Scheduled:
+      "bg-blue-100 text-blue-800 dark:bg-blue-400/14 dark:text-blue-200",
+  }[status];
 
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2);
+  return (
+    <span
+      className={`w-fit rounded-full px-3 py-1 text-[11px] font-medium ${statusClass}`}
+    >
+      {status}
+    </span>
+  );
 }

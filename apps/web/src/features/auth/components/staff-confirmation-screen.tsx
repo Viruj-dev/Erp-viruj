@@ -25,18 +25,16 @@ export function StaffConfirmationScreen({
     role: string;
   } | null>(null);
 
-  const confirmMutation = useMutation(
-    {
-      mutationFn: virujBackend.staff.confirmInvitation,
-      onSuccess: (result) => {
-        setConfirmedAccess({
-          email: result.email,
-          loginUrl: result.loginUrl,
-          role: result.role,
-        });
-      },
-    }
-  );
+  const confirmMutation = useMutation({
+    mutationFn: virujBackend.staff.confirmInvitation,
+    onSuccess: (result) => {
+      setConfirmedAccess({
+        email: result.email,
+        loginUrl: result.loginUrl,
+        role: result.role,
+      });
+    },
+  });
 
   const isConfirming = confirmMutation.isPending;
   const roleLabel = confirmedAccess
@@ -60,7 +58,7 @@ export function StaffConfirmationScreen({
             <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-[#9fd7ff]">
               Viruj Health ERP
             </p>
-            <h1 className="headline mt-3 max-w-xl text-3xl font-black leading-tight sm:text-4xl">
+            <h1 className="headline mt-3 max-w-xl text-3xl font-semi-bold leading-tight sm:text-4xl">
               {confirmedAccess
                 ? "Your staff access is confirmed"
                 : "Confirm your staff access before login"}
@@ -78,7 +76,7 @@ export function StaffConfirmationScreen({
                 </div>
 
                 <Link
-                  className="mt-7 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#00478d] px-5 text-sm font-black text-white shadow-[0_14px_28px_rgba(0,71,141,0.24)] transition hover:bg-[#003b73]"
+                  className="mt-7 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#00478d] px-5 text-sm font-semi-bold text-white shadow-[0_14px_28px_rgba(0,71,141,0.24)] transition hover:bg-[#003b73]"
                   href={confirmedAccess.loginUrl}
                 >
                   Continue to Login
@@ -102,7 +100,7 @@ export function StaffConfirmationScreen({
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <button
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#00478d] px-5 text-sm font-black text-white shadow-[0_14px_28px_rgba(0,71,141,0.24)] transition hover:bg-[#003b73] disabled:cursor-not-allowed disabled:opacity-70"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#00478d] px-5 text-sm font-semi-bold text-white shadow-[0_14px_28px_rgba(0,71,141,0.24)] transition hover:bg-[#003b73] disabled:cursor-not-allowed disabled:opacity-70"
                     disabled={isConfirming}
                     onClick={() =>
                       confirmMutation.mutate({
@@ -119,7 +117,7 @@ export function StaffConfirmationScreen({
                     Confirm Access
                   </button>
                   <Link
-                    className="inline-flex h-12 items-center justify-center rounded-xl border border-[#c2c6d4] px-5 text-sm font-black text-[#172033] transition hover:bg-[#f2f6fb]"
+                    className="inline-flex h-12 items-center justify-center rounded-xl border border-[#c2c6d4] px-5 text-sm font-semi-bold text-[#172033] transition hover:bg-[#f2f6fb]"
                     href="/auth"
                   >
                     Back to Login

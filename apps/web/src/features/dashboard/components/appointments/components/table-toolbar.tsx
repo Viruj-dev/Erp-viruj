@@ -18,7 +18,7 @@ export function TableToolbar({
   return (
     <div className="grid gap-3 p-5 lg:grid-cols-[1fr_220px_220px]">
       <div>
-        <h2 className="font-headline text-xl font-black text-on-surface">
+        <h2 className="font-headline text-xl font-semi-bold text-on-surface">
           {title}
         </h2>
         <p className="text-sm font-medium text-on-surface-variant">
@@ -43,7 +43,7 @@ export function TableToolbar({
           size={15}
         />
         <select
-          className="h-11 w-full appearance-none rounded-xl border border-outline-variant/20 bg-surface-container-low py-2 pl-9 pr-3 text-sm font-black text-on-surface outline-none focus:border-primary"
+          className="h-11 w-full appearance-none rounded-xl border border-outline-variant/20 bg-surface-container-low py-2 pl-9 pr-3 text-sm font-semi-bold text-on-surface outline-none focus:border-primary"
           onChange={(event) => onDepartmentFilter(event.target.value)}
           value={departmentFilter}
         >

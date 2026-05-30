@@ -210,18 +210,18 @@ export function ErpDemoCommunity() {
           <div className="absolute bottom-8 right-16 text-white/8">
             <HeartPulse size={112} strokeWidth={1.6} />
           </div>
-          <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-white/55">
+          <p className="flex items-center gap-2 text-[10px] font-semi-bold uppercase tracking-[0.22em] text-white/55">
             <BadgeCheck size={13} />
             New Announcement
           </p>
-          <h1 className="mt-5 max-w-2xl font-headline text-4xl font-black leading-tight">
+          <h1 className="mt-5 max-w-2xl font-headline text-4xl font-semi-bold leading-tight">
             {communityFeed.announcement.title}
           </h1>
           <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-white/70">
             {communityFeed.announcement.body}
           </p>
           <button
-            className="mt-6 rounded-lg bg-white px-5 py-3 text-xs font-black text-primary shadow-sm transition hover:bg-primary-fixed"
+            className="mt-6 rounded-lg bg-white px-5 py-3 text-xs font-semi-bold text-primary shadow-sm transition hover:bg-primary-fixed"
             type="button"
           >
             {communityFeed.announcement.cta}
@@ -248,7 +248,7 @@ export function ErpDemoCommunity() {
                   <IconButton icon={<Link size={16} />} label="Reference" />
                 </div>
                 <button
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-xs font-black text-white shadow-sm disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-xs font-semi-bold text-white shadow-sm disabled:opacity-50"
                   disabled={!composerText.trim()}
                   type="button"
                 >
@@ -263,7 +263,7 @@ export function ErpDemoCommunity() {
         <section className="flex flex-wrap gap-4 border-b border-outline-variant/20">
           {tabs.map((tab) => (
             <button
-              className={`border-b-2 px-1 pb-3 text-xs font-black transition ${
+              className={`border-b-2 px-1 pb-3 text-xs font-semi-bold transition ${
                 activeTab === tab.id
                   ? "border-primary text-primary"
                   : "border-transparent text-on-surface-variant hover:text-primary"
@@ -294,7 +294,7 @@ export function ErpDemoCommunity() {
 
       <aside className="space-y-6">
         <section className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
-          <h2 className="font-headline text-lg font-black text-on-surface">
+          <h2 className="font-headline text-lg font-semi-bold text-on-surface">
             Engagement Overview
           </h2>
           <p className="mt-1 text-xs font-semibold text-on-surface-variant">
@@ -311,7 +311,7 @@ export function ErpDemoCommunity() {
             width="52%"
           />
           <button
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-surface-container-low px-4 py-3 text-xs font-black text-primary transition hover:bg-primary/10"
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-surface-container-low px-4 py-3 text-xs font-semi-bold text-primary transition hover:bg-primary/10"
             type="button"
           >
             <BarChart3 size={14} />
@@ -326,7 +326,7 @@ export function ErpDemoCommunity() {
         </section>
 
         <section className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
-          <h2 className="flex items-center gap-2 font-headline text-lg font-black text-on-surface">
+          <h2 className="flex items-center gap-2 font-headline text-lg font-semi-bold text-on-surface">
             <ShieldCheck className="text-secondary" size={18} />
             Verified Contributors
           </h2>
@@ -339,7 +339,7 @@ export function ErpDemoCommunity() {
                 <div className="flex min-w-0 items-center gap-3">
                   <Avatar alt={contributor.name} src={contributor.avatar} />
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-black text-on-surface">
+                    <p className="truncate text-sm font-semi-bold text-on-surface">
                       {contributor.name}
                     </p>
                     <p className="truncate text-xs font-medium text-on-surface-variant">
@@ -348,7 +348,7 @@ export function ErpDemoCommunity() {
                   </div>
                 </div>
                 <button
-                  className="rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-black text-primary"
+                  className="rounded-full bg-primary/10 px-3 py-1.5 text-[10px] font-semi-bold text-primary"
                   type="button"
                 >
                   Profile
@@ -359,16 +359,16 @@ export function ErpDemoCommunity() {
         </section>
 
         <section className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
-          <h2 className="font-headline text-lg font-black text-on-surface">
+          <h2 className="font-headline text-lg font-semi-bold text-on-surface">
             Trending in Health
           </h2>
           <div className="mt-4 space-y-4">
             {communityFeed.trends.map((trend) => (
               <div key={trend.label}>
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+                <p className="text-[10px] font-semi-bold uppercase tracking-[0.18em] text-primary">
                   {trend.type}
                 </p>
-                <p className="mt-1 text-sm font-black text-on-surface">
+                <p className="mt-1 text-sm font-semi-bold text-on-surface">
                   {trend.label}
                 </p>
                 <p className="mt-1 text-xs font-medium text-on-surface-variant">
@@ -381,7 +381,7 @@ export function ErpDemoCommunity() {
 
         <section className="overflow-hidden rounded-xl bg-[#006a5e] p-5 text-white shadow-sm">
           <Award size={24} />
-          <h2 className="mt-4 font-headline text-lg font-black">
+          <h2 className="mt-4 font-headline text-lg font-semi-bold">
             Get Verified
           </h2>
           <p className="mt-2 text-sm font-medium leading-6 text-white/72">
@@ -389,7 +389,7 @@ export function ErpDemoCommunity() {
             authorized healthcare providers.
           </p>
           <button
-            className="mt-5 w-full rounded-lg bg-white/75 px-4 py-3 text-xs font-black text-[#004c45] transition hover:bg-white"
+            className="mt-5 w-full rounded-lg bg-white/75 px-4 py-3 text-xs font-semi-bold text-[#004c45] transition hover:bg-white"
             type="button"
           >
             Submit Credentials
@@ -408,7 +408,7 @@ function CommunityPostCard({ post }: { post: CommunityPost }) {
           <Avatar alt={post.author.name} src={post.author.avatar} />
           <div className="min-w-0">
             <div className="flex items-center gap-1">
-              <p className="truncate text-sm font-black text-on-surface">
+              <p className="truncate text-sm font-semi-bold text-on-surface">
                 {post.author.name}
               </p>
               {post.author.verified ? (
@@ -451,14 +451,14 @@ function QuestionCard({ question }: { question: CommunityQuestion }) {
   return (
     <article className="rounded-xl border border-secondary/35 bg-surface-container-lowest p-5 shadow-sm">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-md bg-secondary/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-secondary">
+        <span className="rounded-md bg-secondary/10 px-2 py-1 text-[10px] font-semi-bold uppercase tracking-[0.16em] text-secondary">
           Patient Q&A
         </span>
-        <span className="text-xs font-black text-on-surface-variant">
+        <span className="text-xs font-semi-bold text-on-surface-variant">
           Question from {question.askedBy}
         </span>
       </div>
-      <h3 className="mt-4 font-headline text-xl font-black text-on-surface">
+      <h3 className="mt-4 font-headline text-xl font-semi-bold text-on-surface">
         {question.question}
       </h3>
       <p className="mt-2 text-sm font-medium leading-6 text-on-surface-variant">
@@ -470,7 +470,7 @@ function QuestionCard({ question }: { question: CommunityQuestion }) {
             <FileQuestion size={16} />
           </div>
           <div>
-            <p className="text-sm font-black text-on-surface">
+            <p className="text-sm font-semi-bold text-on-surface">
               {question.answer.author}
             </p>
             <p className="text-xs font-medium text-on-surface-variant">
@@ -497,7 +497,7 @@ function MetricBar({
 }) {
   return (
     <div className="mt-5">
-      <div className="flex items-center justify-between text-xs font-black">
+      <div className="flex items-center justify-between text-xs font-semi-bold">
         <span className="text-on-surface">{label}</span>
         <span className="text-primary">
           {value.toString().padStart(2, "0")}
@@ -535,7 +535,7 @@ function IconButton({ icon, label }: { icon: React.ReactNode; label: string }) {
 function ActionText({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
     <button
-      className="inline-flex items-center gap-2 text-xs font-black text-on-surface-variant transition hover:text-primary"
+      className="inline-flex items-center gap-2 text-xs font-semi-bold text-on-surface-variant transition hover:text-primary"
       type="button"
     >
       {icon}

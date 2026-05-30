@@ -229,11 +229,11 @@ export function ErpEnterpriseModule({
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/12 ring-1 ring-white/20">
                 {content.icon}
               </span>
-              <p className="text-xs font-black uppercase tracking-[0.28em] text-white/60">
+              <p className="text-xs font-semi-bold uppercase tracking-[0.28em] text-white/60">
                 {content.primary}
               </p>
             </div>
-            <h1 className="mt-5 font-headline text-4xl font-black leading-tight lg:text-5xl">
+            <h1 className="mt-5 font-headline text-4xl font-semi-bold leading-tight lg:text-5xl">
               {content.title}
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-white/72">
@@ -241,10 +241,10 @@ export function ErpEnterpriseModule({
             </p>
           </div>
           <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/55">
+            <p className="text-[10px] font-semi-bold uppercase tracking-[0.2em] text-white/55">
               Active role
             </p>
-            <p className="mt-2 font-headline text-xl font-black">
+            <p className="mt-2 font-headline text-xl font-semi-bold">
               {formatRole(roleLabel)}
             </p>
             <p className="mt-1 text-xs text-white/65">
@@ -258,10 +258,10 @@ export function ErpEnterpriseModule({
               className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur"
               key={kpi.label}
             >
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/55">
+              <p className="text-[10px] font-semi-bold uppercase tracking-[0.18em] text-white/55">
                 {kpi.label}
               </p>
-              <p className="mt-2 font-headline text-3xl font-black">
+              <p className="mt-2 font-headline text-3xl font-semi-bold">
                 {kpi.value}
               </p>
               <p className="mt-1 text-xs text-white/62">{kpi.note}</p>
@@ -274,10 +274,10 @@ export function ErpEnterpriseModule({
         <div className="rounded-2xl border border-outline-variant/20 bg-white/80 p-5 shadow-sm backdrop-blur">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+              <p className="text-[10px] font-semi-bold uppercase tracking-[0.2em] text-primary">
                 Live Work Queue
               </p>
-              <h2 className="mt-1 font-headline text-2xl font-black text-on-surface">
+              <h2 className="mt-1 font-headline text-2xl font-semi-bold text-on-surface">
                 Operational stream
               </h2>
             </div>
@@ -290,14 +290,14 @@ export function ErpEnterpriseModule({
                 key={item.label}
               >
                 <div>
-                  <p className="font-headline text-lg font-black text-on-surface">
+                  <p className="font-headline text-lg font-semi-bold text-on-surface">
                     {item.label}
                   </p>
                   <p className="text-sm font-medium text-on-surface-variant">
                     {item.meta}
                   </p>
                 </div>
-                <span className="w-fit rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
+                <span className="w-fit rounded-full bg-primary/10 px-3 py-1 text-[10px] font-semi-bold uppercase tracking-[0.14em] text-primary">
                   {item.status}
                 </span>
               </div>
@@ -309,7 +309,7 @@ export function ErpEnterpriseModule({
           <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <BrainCircuit className="text-primary" size={22} />
-              <h3 className="font-headline text-xl font-black text-on-surface">
+              <h3 className="font-headline text-xl font-semi-bold text-on-surface">
                 AI Operations Insight
               </h3>
             </div>
@@ -322,7 +322,7 @@ export function ErpEnterpriseModule({
           <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <ShieldCheck className="text-secondary" size={22} />
-              <h3 className="font-headline text-xl font-black text-on-surface">
+              <h3 className="font-headline text-xl font-semi-bold text-on-surface">
                 RBAC Workflows
               </h3>
             </div>
@@ -376,7 +376,7 @@ function SignalCard({
       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
         {icon}
       </div>
-      <p className="mt-4 font-headline text-lg font-black text-on-surface">
+      <p className="mt-4 font-headline text-lg font-semi-bold text-on-surface">
         {label}
       </p>
       <p className="mt-2 text-sm font-medium leading-6 text-on-surface-variant">

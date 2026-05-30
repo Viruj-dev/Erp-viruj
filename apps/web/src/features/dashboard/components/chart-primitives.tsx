@@ -53,7 +53,7 @@ export function DonutStat({
         }}
       >
         <div className="flex h-28 w-28 flex-col items-center justify-center rounded-full bg-white">
-          <span className="font-headline text-3xl font-black text-on-surface">
+          <span className="font-headline text-3xl font-semi-bold text-on-surface">
             {percent}%
           </span>
           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-outline">
