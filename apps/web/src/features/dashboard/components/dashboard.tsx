@@ -17,8 +17,18 @@ import {
 import { MiniBarChart } from "@/features/dashboard/components/chart-primitives";
 
 const roleModuleAccess: Record<string, string[]> = {
+  ADMIN: [
+    "Staff",
+    "Appointments",
+    "Patients",
+    "Billing",
+    "Community",
+    "Schedules",
+  ],
   APPOINTMENT_HANDLER: ["Appointments", "Patients", "Schedules"],
   COMMUNITY_MANAGER: ["Community", "Public profile"],
+  DOCTOR: ["Appointments", "Patients", "Consultations", "Prescriptions"],
+  MANAGER: ["Staff", "Appointments", "Patients", "Community", "Schedules"],
   ORG_ADMIN: [
     "Staff",
     "Appointments",
@@ -27,6 +37,17 @@ const roleModuleAccess: Record<string, string[]> = {
     "Community",
     "Schedules",
   ],
+  OWNER: [
+    "Staff",
+    "Appointments",
+    "Patients",
+    "Billing",
+    "Community",
+    "Schedules",
+  ],
+  RECEPTIONIST: ["Appointments", "Patients", "Schedules"],
+  STAFF: ["Appointments", "Patients"],
+  TECHNICIAN: ["Diagnostics", "Patients", "Reports"],
 };
 
 export function ErpDemoDashboard({
@@ -40,7 +61,7 @@ export function ErpDemoDashboard({
 }) {
   const normalizedRole = roleLabel.toUpperCase().replace(/\s+/g, "_");
   const modules =
-    roleModuleAccess[normalizedRole] ?? roleModuleAccess.ORG_ADMIN;
+    roleModuleAccess[normalizedRole] ?? roleModuleAccess.OWNER;
 
   return (
     <div className="space-y-8 p-6 lg:p-10">
@@ -136,17 +157,17 @@ export function ErpDemoDashboard({
         <Panel
           eyebrow="Testing workflow"
           title="Auth and access checks"
-          description="Use this sequence after creating an ORG_ADMIN account."
+          description="Use this sequence after creating an OWNER account."
         >
           <div className="space-y-3">
             <ActivityRow
               badge="1"
               detail="Create an organization from the auth page."
-              title="Confirm admin lands here as ORG_ADMIN"
+              title="Confirm owner lands in the selected workspace"
             />
             <ActivityRow
               badge="2"
-              detail="Open Staff, invite APPOINTMENT_HANDLER or COMMUNITY_MANAGER."
+              detail="Open Staff, invite ADMIN, DOCTOR, RECEPTIONIST, or TECHNICIAN."
               title="Copy the invitation ID from Pending Invitations"
             />
             <ActivityRow

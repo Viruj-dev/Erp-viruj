@@ -11,9 +11,16 @@ type StaffConfirmationScreenProps = {
 };
 
 const roleLabels: Record<string, string> = {
+  ADMIN: "Admin",
   APPOINTMENT_HANDLER: "Appointment Handler",
   COMMUNITY_MANAGER: "Community Manager",
+  DOCTOR: "Doctor",
+  MANAGER: "Manager",
   ORG_ADMIN: "Organization Admin",
+  OWNER: "Owner",
+  RECEPTIONIST: "Receptionist",
+  STAFF: "Staff",
+  TECHNICIAN: "Technician",
 };
 
 export function StaffConfirmationScreen({

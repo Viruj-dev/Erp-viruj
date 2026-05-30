@@ -1,7 +1,6 @@
 "use client";
 
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
-import { readPreferredProviderType } from "@/features/auth/lib/provider-type-preference";
 import { ErpDemoAnalytics } from "@/features/dashboard/components/analytics";
 import { ErpDemoAppointments } from "@/features/dashboard/components/appointments";
 import { ErpDemoBilling } from "@/features/dashboard/components/billing";
@@ -31,9 +30,6 @@ import {
 import { LoadingScreen } from "@/features/shell/components/loading-screen";
 import {
   authClient,
-  bootstrapOrganization,
-  getAuthActionData,
-  getAuthActionError,
   setActiveOrganization,
 } from "@/lib/auth-client";
 import { AnimatePresence, motion } from "framer-motion";
@@ -51,8 +47,6 @@ export function ErpHomeScreen({
 }) {
   const router = useRouter();
   const [isActivatingOnlyOrganization, setIsActivatingOnlyOrganization] =
-    useState(false);
-  const [isProvisioningOrganization, setIsProvisioningOrganization] =
     useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -107,103 +101,6 @@ export function ErpHomeScreen({
     sessionState,
   ]);
 
-  useEffect(() => {
-    const organizations = organizationsState.data ?? [];
-    const user = sessionState.data?.user;
-    const preferredOrganizationType = readPreferredProviderType();
-    const hasPreferredOrganization = organizations.some(
-      (organization) =>
-        organization.organizationType === preferredOrganizationType
-    );
-
-    if (
-      !isHydrated ||
-      isAuthPending ||
-      !user ||
-      activeOrganizationState.data?.id ||
-      hasPreferredOrganization ||
-      isProvisioningOrganization ||
-      !setActiveOrganization
-    ) {
-      return;
-    }
-
-    const activateWorkspace = setActiveOrganization;
-
-    setIsProvisioningOrganization(true);
-
-    void bootstrapOrganization({
-      name: buildAutoOrganizationName(
-        user.name || user.email,
-        preferredOrganizationType
-      ),
-      organizationType: preferredOrganizationType,
-      slug: buildAutoOrganizationSlug(user.email || user.id),
-    })
-      .then(async (organizationResult) => {
-        const organizationError = getAuthActionError(organizationResult);
-
-        if (organizationError) {
-          throw new Error(organizationError);
-        }
-
-        const organization = getAuthActionData<{
-          id?: string;
-          organizationType?: string;
-        }>(organizationResult);
-        const organizationId = organization?.id;
-
-        if (!organizationId) {
-          throw new Error(
-            "Bootstrapped organization did not return an organization ID."
-          );
-        }
-
-        const activeResult = await activateWorkspace({
-          organizationId,
-        });
-        const activeError = getAuthActionError(activeResult);
-
-        if (activeError) {
-          throw new Error(activeError);
-        }
-
-        await Promise.all([
-          organizationsState.refetch(),
-          sessionState.refetch(),
-          activeOrganizationState.refetch(),
-          activeMemberState.refetch(),
-        ]);
-
-        const organizationType: DashboardOrganizationType =
-          organization?.organizationType &&
-          isDashboardOrganizationType(organization.organizationType)
-            ? organization.organizationType
-            : preferredOrganizationType;
-
-        router.replace(buildDashboardPath(organizationType));
-      })
-      .catch((error) => {
-        console.error(
-          "[Auth] Failed to provision default organization:",
-          error
-        );
-      })
-      .finally(() => setIsProvisioningOrganization(false));
-  }, [
-    activeMemberState,
-    activeOrganizationState,
-    activeOrganizationState.data?.id,
-    isAuthPending,
-    isHydrated,
-    isProvisioningOrganization,
-    organizationsState,
-    organizationsState.data,
-    router,
-    sessionState,
-    sessionState.data?.user,
-  ]);
-
   const currentPage = isErpDemoPage(requestedPage)
     ? requestedPage
     : fallbackPage;
@@ -222,40 +119,20 @@ export function ErpHomeScreen({
     activeOrganization?.organizationType &&
     isDashboardOrganizationType(activeOrganization.organizationType)
       ? activeOrganization.organizationType
-      : (routeDashboardOrganizationType ?? "hospital");
+      : null;
   const activeMemberRole = activeMember?.role;
   const allowedPages = getAllowedDashboardPages(activeMemberRole);
   const resolvedPage = resolveAccessibleDashboardPage(
     currentPage,
     activeMemberRole
   );
-  const organizationLabel = organizationTypeLabels[activeOrganizationType];
+  const organizationLabel = activeOrganizationType
+    ? organizationTypeLabels[activeOrganizationType]
+    : "Organization";
   const activeOrganizationSlug = getOrganizationSlug(activeOrganization);
   const roleLabel = activeMemberRole
     ? activeMemberRole.replace(/_/g, " ")
     : "member";
-
-  useEffect(() => {
-    if (
-      !isHydrated ||
-      isAuthPending ||
-      !activeOrganization ||
-      activeMemberRole !== "doctor"
-    ) {
-      return;
-    }
-
-    if (activeOrganizationType !== "doctor") {
-      router.replace(buildDashboardPath("doctor"));
-    }
-  }, [
-    activeMemberRole,
-    activeOrganization,
-    activeOrganizationType,
-    isAuthPending,
-    isHydrated,
-    router,
-  ]);
 
   useEffect(() => {
     if (!isHydrated || isAuthPending) {
@@ -306,7 +183,7 @@ export function ErpHomeScreen({
     router,
   ]);
 
-  if (!isHydrated || isAuthPending || isProvisioningOrganization) {
+  if (!isHydrated || isAuthPending) {
     return <LoadingScreen />;
   }
 
@@ -534,35 +411,6 @@ function PageContent({
 
 function isErpDemoPage(page: string): page is ErpDemoPage {
   return isDashboardPage(page);
-}
-
-function buildAutoOrganizationName(
-  identifier?: string | null,
-  organizationType: DashboardOrganizationType = "hospital"
-) {
-  const organizationLabel = organizationTypeLabels[organizationType];
-
-  if (!identifier) {
-    return `Viruj ${organizationLabel} Workspace`;
-  }
-
-  const localName = identifier.split("@")[0]?.trim();
-  return localName
-    ? `${localName}'s Viruj ${organizationLabel}`
-    : `Viruj ${organizationLabel} Workspace`;
-}
-
-function buildAutoOrganizationSlug(identifier?: string | null) {
-  const normalized =
-    identifier
-      ?.trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 36) || "viruj-workspace";
-  const suffix = Math.random().toString(36).slice(2, 8);
-
-  return `${normalized}-${suffix}`;
 }
 
 function getOrganizationSlug(organization: unknown) {

@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
         source: "/auth/:path*",
         destination: `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002"}/auth/:path*`,
       },
+      {
+        source: "/erp/:path*",
+        destination: `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002"}/erp/:path*`,
+      },
     ];
   },
 };

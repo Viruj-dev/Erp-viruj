@@ -11,7 +11,7 @@ import type { ErpDemoPage } from "@/features/dashboard/components/types";
 import {
   buildDashboardPath,
   buildTenantDashboardPath,
-  type DashboardOrganizationType,
+  isDashboardOrganizationType,
   isDashboardPage,
   organizationTypeLabels,
   resolveAccessibleDashboardPage,
@@ -19,9 +19,6 @@ import {
 import { LoadingScreen } from "@/features/shell/components/loading-screen";
 import {
   authClient,
-  bootstrapOrganization,
-  getAuthActionData,
-  getAuthActionError,
   setActiveOrganization,
 } from "@/lib/auth-client";
 import { AnimatePresence, motion } from "framer-motion";
@@ -57,8 +54,6 @@ export function DoctorHomeScreen({
   const router = useRouter();
   const [isActivatingOnlyOrganization, setIsActivatingOnlyOrganization] =
     useState(false);
-  const [isProvisioningOrganization, setIsProvisioningOrganization] =
-    useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const isHydrated = useSyncExternalStore(
@@ -79,14 +74,11 @@ export function DoctorHomeScreen({
   useEffect(() => {
     const activeOrganizationId = activeOrganizationState.data?.id;
     const organizations = organizationsState.data ?? [];
-    const doctorOrganization = organizations.find(
-      (organization) => organization.organizationType === "doctor"
-    );
 
     if (
       !sessionState.data?.user ||
       activeOrganizationId ||
-      !doctorOrganization ||
+      organizations.length !== 1 ||
       isActivatingOnlyOrganization ||
       !setActiveOrganization
     ) {
@@ -95,7 +87,7 @@ export function DoctorHomeScreen({
 
     setIsActivatingOnlyOrganization(true);
     void setActiveOrganization({
-      organizationId: doctorOrganization.id,
+      organizationId: organizations[0].id,
     })
       .then(() =>
         Promise.all([
@@ -115,169 +107,16 @@ export function DoctorHomeScreen({
     sessionState,
   ]);
 
-  useEffect(() => {
-    const organizations = organizationsState.data ?? [];
-    const user = sessionState.data?.user;
-    const hasDoctorOrganization = organizations.some(
-      (organization) => organization.organizationType === "doctor"
-    );
-
-    if (
-      !isHydrated ||
-      isAuthPending ||
-      !user ||
-      activeOrganizationState.data?.id ||
-      hasDoctorOrganization ||
-      isProvisioningOrganization ||
-      !setActiveOrganization
-    ) {
-      return;
-    }
-
-    const activateWorkspace = setActiveOrganization;
-
-    setIsProvisioningOrganization(true);
-
-    void bootstrapOrganization({
-      name: buildDoctorOrganizationName(user.name || user.email),
-      organizationType: "doctor",
-      slug: buildDoctorOrganizationSlug(user.email || user.id),
-    })
-      .then(async (organizationResult) => {
-        const organizationError = getAuthActionError(organizationResult);
-
-        if (organizationError) {
-          throw new Error(organizationError);
-        }
-
-        const organization = getAuthActionData<{
-          id?: string;
-          organizationType?: string;
-        }>(organizationResult);
-        const organizationId = organization?.id;
-
-        if (!organizationId) {
-          throw new Error("Doctor workspace did not return an organization ID.");
-        }
-
-        const activeResult = await activateWorkspace({ organizationId });
-        const activeError = getAuthActionError(activeResult);
-
-        if (activeError) {
-          throw new Error(activeError);
-        }
-
-        await Promise.all([
-          organizationsState.refetch(),
-          sessionState.refetch(),
-          activeOrganizationState.refetch(),
-          activeMemberState.refetch(),
-        ]);
-
-        router.replace(buildDashboardPath("doctor"));
-      })
-      .catch((error) => {
-        console.error("[Auth] Failed to provision doctor workspace:", error);
-      })
-      .finally(() => setIsProvisioningOrganization(false));
-  }, [
-    activeMemberState,
-    activeOrganizationState,
-    activeOrganizationState.data?.id,
-    isAuthPending,
-    isHydrated,
-    isProvisioningOrganization,
-    organizationsState,
-    organizationsState.data,
-    router,
-    sessionState,
-    sessionState.data?.user,
-  ]);
-
-  useEffect(() => {
-    const user = sessionState.data?.user;
-
-    if (
-      !isHydrated ||
-      isAuthPending ||
-      !user ||
-      !activeOrganizationState.data?.id ||
-      activeOrganizationState.data.organizationType === "doctor" ||
-      isProvisioningOrganization ||
-      !setActiveOrganization
-    ) {
-      return;
-    }
-
-    const doctorOrganization = (organizationsState.data ?? []).find(
-      (organization) => organization.organizationType === "doctor"
-    );
-    const activateWorkspace = setActiveOrganization;
-
-    setIsProvisioningOrganization(true);
-
-    void Promise.resolve(
-      doctorOrganization?.id ??
-        bootstrapOrganization({
-          name: buildDoctorOrganizationName(user.name || user.email),
-          organizationType: "doctor",
-          slug: buildDoctorOrganizationSlug(user.email || user.id),
-        }).then((organizationResult) => {
-          const organizationError = getAuthActionError(organizationResult);
-
-          if (organizationError) {
-            throw new Error(organizationError);
-          }
-
-          const organization = getAuthActionData<{
-            id?: string;
-          }>(organizationResult);
-
-          if (!organization?.id) {
-            throw new Error("Doctor workspace did not return an organization ID.");
-          }
-
-          return organization.id;
-        })
-    )
-      .then(async (organizationId) => {
-        const activeResult = await activateWorkspace({ organizationId });
-        const activeError = getAuthActionError(activeResult);
-
-        if (activeError) {
-          throw new Error(activeError);
-        }
-
-        await Promise.all([
-          organizationsState.refetch(),
-          sessionState.refetch(),
-          activeOrganizationState.refetch(),
-          activeMemberState.refetch(),
-        ]);
-      })
-      .catch((error) => {
-        console.error("[Auth] Failed to switch to doctor workspace:", error);
-      })
-      .finally(() => setIsProvisioningOrganization(false));
-  }, [
-    activeMemberState,
-    activeOrganizationState,
-    activeOrganizationState.data?.id,
-    activeOrganizationState.data?.organizationType,
-    isAuthPending,
-    isHydrated,
-    isProvisioningOrganization,
-    organizationsState,
-    organizationsState.data,
-    sessionState,
-    sessionState.data?.user,
-  ]);
-
   const currentPage = isErpDemoPage(requestedPage)
     ? requestedPage
     : "dashboard";
   const activeMember = activeMemberState.data;
   const activeOrganization = activeOrganizationState.data;
+  const activeOrganizationType =
+    activeOrganization?.organizationType &&
+    isDashboardOrganizationType(activeOrganization.organizationType)
+      ? activeOrganization.organizationType
+      : null;
   const activeOrganizationSlug = getOrganizationSlug(activeOrganization);
   const resolvedPage = resolveDoctorPage(
     resolveAccessibleDashboardPage(currentPage, activeMember?.role)
@@ -306,6 +145,11 @@ export function DoctorHomeScreen({
       return;
     }
 
+    if (activeOrganizationType && activeOrganizationType !== "doctor") {
+      router.replace(buildDashboardPath(activeOrganizationType));
+      return;
+    }
+
     const expectedPath = activeOrganizationSlug
       ? buildTenantDashboardPath("doctor", activeOrganizationSlug, resolvedPage)
       : buildDashboardPath("doctor", resolvedPage);
@@ -317,6 +161,7 @@ export function DoctorHomeScreen({
     activeMember,
     activeOrganization,
     activeOrganizationSlug,
+    activeOrganizationType,
     isAuthPending,
     isHydrated,
     requestedPage,
@@ -324,11 +169,15 @@ export function DoctorHomeScreen({
     router,
   ]);
 
-  if (!isHydrated || isAuthPending || isProvisioningOrganization) {
+  if (!isHydrated || isAuthPending) {
     return <LoadingScreen />;
   }
 
   if (!sessionState.data?.user) {
+    return <LoadingScreen />;
+  }
+
+  if (activeOrganizationType && activeOrganizationType !== "doctor") {
     return <LoadingScreen />;
   }
 
@@ -347,11 +196,23 @@ export function DoctorHomeScreen({
             return;
           }
 
+          const selectedOrganization = organizationsState.data?.find(
+            (organization) => organization.id === organizationId
+          );
+
           await setActiveOrganization({ organizationId });
           await sessionState.refetch();
           await activeOrganizationState.refetch();
           await activeMemberState.refetch();
-          router.replace(buildDashboardPath("doctor"));
+
+          if (
+            selectedOrganization?.organizationType &&
+            isDashboardOrganizationType(selectedOrganization.organizationType)
+          ) {
+            router.replace(
+              buildDashboardPath(selectedOrganization.organizationType)
+            );
+          }
         }}
         onSignOut={async () => {
           setIsSigningOut(true);
@@ -364,9 +225,7 @@ export function DoctorHomeScreen({
             setIsSigningOut(false);
           }
         }}
-        organizations={(organizationsState.data ?? []).filter(
-          (organization) => organization.organizationType === "doctor"
-        )}
+        organizations={organizationsState.data ?? []}
         signingOut={isSigningOut}
         userEmail={sessionState.data.user?.email ?? ""}
       />
@@ -610,28 +469,6 @@ function resolveDoctorPage(page: ErpDemoPage): ErpDemoPage {
 
 function isErpDemoPage(page: string): page is ErpDemoPage {
   return isDashboardPage(page);
-}
-
-function buildDoctorOrganizationName(identifier?: string | null) {
-  if (!identifier) {
-    return "Independent Doctor Workspace";
-  }
-
-  const localName = identifier.split("@")[0]?.trim();
-  return localName ? `${localName}'s Doctor Practice` : "Independent Doctor Workspace";
-}
-
-function buildDoctorOrganizationSlug(identifier?: string | null) {
-  const normalized =
-    identifier
-      ?.trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 36) || "doctor-workspace";
-  const suffix = Math.random().toString(36).slice(2, 8);
-
-  return `${normalized}-doctor-${suffix}`;
 }
 
 function getOrganizationSlug(organization: unknown) {

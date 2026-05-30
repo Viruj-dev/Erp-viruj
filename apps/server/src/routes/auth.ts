@@ -82,7 +82,7 @@ export function registerAuthRoutes(app: Hono) {
           .values({
             id: randomUUID(),
             organizationId: selectedOrganization.organizationId,
-            role: "ORG_ADMIN",
+            role: "OWNER",
             userId: authSession.user.id,
           })
           .onConflictDoNothing();

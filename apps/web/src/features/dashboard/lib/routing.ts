@@ -55,12 +55,19 @@ export const defaultDashboardPageByRole: Record<
   OrganizationMemberRole,
   DashboardPage
 > = {
+  ADMIN: "dashboard",
   APPOINTMENT_HANDLER: "appointments-dashboard",
   COMMUNITY_MANAGER: "community",
+  DOCTOR: "dashboard",
+  MANAGER: "dashboard",
   ORG_ADMIN: "dashboard",
+  OWNER: "dashboard",
+  RECEPTIONIST: "appointments-dashboard",
+  STAFF: "dashboard",
+  TECHNICIAN: "pathology",
   admin: "dashboard",
   billing: "finance",
-  doctor: "doctors",
+  doctor: "dashboard",
   lab_tech: "pathology",
   manager: "staff",
   owner: "dashboard",
@@ -71,6 +78,106 @@ export const allowedDashboardPagesByRole: Record<
   OrganizationMemberRole,
   DashboardPage[]
 > = {
+  OWNER: [
+    "dashboard",
+    "finance",
+    "appointments",
+    "appointments-dashboard",
+    "appointments-review",
+    "appointments-patients",
+    "appointments-settings",
+    "patients",
+    "staff",
+    "community",
+    "billing",
+    "pricing",
+    "settings",
+    "settings-alert-rules",
+    "settings-audit-logs",
+    "settings-storage",
+    "settings-data-export",
+    "analytics",
+    "doctors",
+    "hospital-profile",
+    "radiology",
+    "pathology",
+    "pharmacy",
+    "notifications",
+    "reports",
+    "profile",
+  ],
+  ADMIN: [
+    "dashboard",
+    "finance",
+    "appointments",
+    "appointments-dashboard",
+    "appointments-review",
+    "appointments-patients",
+    "appointments-settings",
+    "patients",
+    "staff",
+    "community",
+    "billing",
+    "pricing",
+    "settings",
+    "settings-alert-rules",
+    "settings-audit-logs",
+    "settings-storage",
+    "settings-data-export",
+    "analytics",
+    "doctors",
+    "hospital-profile",
+    "radiology",
+    "pathology",
+    "pharmacy",
+    "notifications",
+    "reports",
+    "profile",
+  ],
+  MANAGER: [
+    "dashboard",
+    "finance",
+    "appointments",
+    "appointments-dashboard",
+    "appointments-review",
+    "appointments-patients",
+    "appointments-settings",
+    "patients",
+    "staff",
+    "community",
+    "billing",
+    "pricing",
+    "settings",
+    "analytics",
+    "doctors",
+    "hospital-profile",
+    "radiology",
+    "pathology",
+    "reports",
+    "profile",
+  ],
+  DOCTOR: [
+    "dashboard",
+    "appointments",
+    "appointments-dashboard",
+    "appointments-review",
+    "appointments-patients",
+    "patients",
+    "reports",
+    "profile",
+  ],
+  STAFF: ["dashboard", "appointments", "patients", "reports", "profile"],
+  RECEPTIONIST: [
+    "dashboard",
+    "appointments",
+    "appointments-dashboard",
+    "appointments-review",
+    "appointments-patients",
+    "patients",
+    "notifications",
+    "profile",
+  ],
+  TECHNICIAN: ["dashboard", "pathology", "radiology", "patients", "reports", "profile"],
   APPOINTMENT_HANDLER: [
     "dashboard",
     "appointments",
@@ -149,7 +256,6 @@ export const allowedDashboardPagesByRole: Record<
   ],
   doctor: [
     "dashboard",
-    "doctors",
     "appointments",
     "appointments-dashboard",
     "appointments-review",
@@ -296,7 +402,7 @@ export function normalizeDashboardModule(value: string): DashboardPage {
 export function getAllowedDashboardPages(
   role?: string | null
 ): DashboardPage[] {
-  const fallbackRole: OrganizationMemberRole = "ORG_ADMIN";
+  const fallbackRole: OrganizationMemberRole = "OWNER";
 
   return (
     allowedDashboardPagesByRole[
@@ -306,7 +412,7 @@ export function getAllowedDashboardPages(
 }
 
 export function getDefaultDashboardPage(role?: string | null): DashboardPage {
-  const fallbackRole: OrganizationMemberRole = "ORG_ADMIN";
+  const fallbackRole: OrganizationMemberRole = "OWNER";
 
   return (
     defaultDashboardPageByRole[

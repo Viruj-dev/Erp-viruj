@@ -91,6 +91,12 @@ export function ErpDemoSidebar({
   const activeMemberState = authClient.useActiveMember();
   const sessionState = authClient.useSession();
   const activeMemberRole = activeMemberState.data?.role;
+  const isOwnerOrAdmin =
+    activeMemberRole === "OWNER" ||
+    activeMemberRole === "ADMIN" ||
+    activeMemberRole === "ORG_ADMIN" ||
+    activeMemberRole === "owner" ||
+    activeMemberRole === "admin";
   const visibleSettingsOptions = settingsOptions.filter((option) =>
     allowedPages.includes(option.id)
   );
@@ -191,12 +197,10 @@ export function ErpDemoSidebar({
               setIsAppointmentsOpen((value) => !value);
             }}
             onPageChange={onPageChange}
-            showAppointmentDropdown={activeMemberRole !== "ORG_ADMIN"}
+            showAppointmentDropdown={!isOwnerOrAdmin}
           />
 
-          {activeMemberRole !== "ORG_ADMIN" &&
-          !isCollapsed &&
-          isAppointmentsOpen ? (
+          {!isOwnerOrAdmin && !isCollapsed && isAppointmentsOpen ? (
             <div className="-mt-4 ml-5 space-y-1 border-l border-slate-200/80 pl-3 dark:border-white/[0.08]">
               {appointmentOptions.map((option) => {
                 const OptionIcon = option.icon;

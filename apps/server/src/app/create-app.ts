@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { handleServerError } from "../middleware/error-handler";
 import { registerHttpMiddleware } from "../middleware/http";
 import { registerAuthRoutes } from "../routes/auth";
+import { registerDoctorRoutes } from "../routes/doctors";
 import { registerHealthRoutes } from "../routes/health";
 
 export function createApp() {
@@ -12,6 +13,7 @@ export function createApp() {
 
   registerHttpMiddleware(app);
   registerAuthRoutes(app);
+  registerDoctorRoutes(app);
   registerHealthRoutes(app);
 
   return app;

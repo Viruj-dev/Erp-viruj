@@ -3,11 +3,10 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
-  Building2,
+  Eye,
+  EyeOff,
   Info,
-  Microscope,
   ShieldCheck,
-  Stethoscope,
   X,
   Zap,
 } from "lucide-react";
@@ -18,7 +17,6 @@ import {
   bootstrapOrganization,
   getAuthActionError,
 } from "@/lib/auth-client";
-import { writePreferredProviderType } from "@/features/auth/lib/provider-type-preference";
 import type { DashboardOrganizationType } from "@/features/dashboard/lib/routing";
 
 type Step = "login" | "onboarding" | "invitation";
@@ -41,29 +39,15 @@ const organizationTypeOptions: Array<{
   { label: "Radiology Center", value: "radiology" },
 ];
 
-const providerTypeCards: Array<{
-  icon: React.ReactNode;
-  label: string;
-  value: OrganizationType;
-}> = [
-  { icon: <Building2 size={20} />, label: "Hospital", value: "hospital" },
-  { icon: <Stethoscope size={20} />, label: "Doctor", value: "doctor" },
-  { icon: <Building2 size={20} />, label: "Clinic", value: "clinic" },
-  { icon: <Microscope size={20} />, label: "Pathology", value: "pathology" },
-  { icon: <Microscope size={20} />, label: "Radiology", value: "radiology" },
-];
-
 export function ErpDemoLogin({
   onAuthenticated,
 }: {
-  onAuthenticated: (preferredOrganizationType: OrganizationType) => Promise<void> | void;
+  onAuthenticated: () => Promise<void> | void;
 }) {
   const [step, setStep] = useState<Step>("login");
   const [isPending, setIsPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [selectedOrganizationType, setSelectedOrganizationType] =
-    useState<OrganizationType>("hospital");
   const [loginForm, setLoginForm] = useState({
     email: "",
     password: "",
@@ -87,21 +71,11 @@ export function ErpDemoLogin({
     setSuccessMessage(null);
   };
 
-  const selectOrganizationType = (organizationType: OrganizationType) => {
-    setSelectedOrganizationType(organizationType);
-    writePreferredProviderType(organizationType);
-    setOnboardingForm((current) => ({
-      ...current,
-      organizationType,
-    }));
-  };
-
   const handleLogin = async () => {
     clearMessages();
     setIsPending(true);
 
     try {
-      writePreferredProviderType(selectedOrganizationType);
       const result = await authClient.signIn.email({
         email: loginForm.email,
         password: loginForm.password,
@@ -115,7 +89,7 @@ export function ErpDemoLogin({
       }
 
       setSuccessMessage("Secure session authorized.");
-      await onAuthenticated(selectedOrganizationType);
+      await onAuthenticated();
     } finally {
       setIsPending(false);
     }
@@ -126,7 +100,6 @@ export function ErpDemoLogin({
     setIsPending(true);
 
     try {
-      writePreferredProviderType(onboardingForm.organizationType);
       const signUpResult = await authClient.signUp.email({
         email: onboardingForm.email,
         name: onboardingForm.name,
@@ -171,8 +144,8 @@ export function ErpDemoLogin({
         return;
       }
 
-      setSuccessMessage("Organization ready and ORG_ADMIN session activated.");
-      await onAuthenticated(onboardingForm.organizationType);
+      setSuccessMessage("Organization ready and OWNER session activated.");
+      await onAuthenticated();
     } finally {
       setIsPending(false);
     }
@@ -183,7 +156,6 @@ export function ErpDemoLogin({
     setIsPending(true);
 
     try {
-      writePreferredProviderType(selectedOrganizationType);
       const signInResult = await authClient.signIn.email({
         email: invitationForm.email,
         password: invitationForm.password,
@@ -227,7 +199,7 @@ export function ErpDemoLogin({
       setSuccessMessage(
         "Invitation accepted. Preparing your organization access."
       );
-      await onAuthenticated(selectedOrganizationType);
+      await onAuthenticated();
     } finally {
       setIsPending(false);
     }
@@ -307,18 +279,6 @@ export function ErpDemoLogin({
                     demand
                   </p>
                 </header>
-
-                <div className="grid grid-cols-2 gap-2 rounded-lg bg-surface-container-low p-1 sm:grid-cols-5">
-                  {providerTypeCards.map((option) => (
-                    <RoleCard
-                      active={selectedOrganizationType === option.value}
-                      icon={option.icon}
-                      key={option.value}
-                      label={option.label}
-                      onSelect={() => selectOrganizationType(option.value)}
-                    />
-                  ))}
-                </div>
 
                 <TestGuide />
 
@@ -433,7 +393,7 @@ export function ErpDemoLogin({
                   <Info className="mt-1 text-primary" size={18} />
                   <p className="text-xs leading-relaxed text-on-primary-fixed">
                     This creates an ERP admin account, provisions the
-                    organization, and activates an ORG_ADMIN session for testing
+                    organization, and activates an OWNER session for testing
                     staff and audit flows.
                   </p>
                 </div>
@@ -466,7 +426,10 @@ export function ErpDemoLogin({
                     <SelectField
                       label="Type"
                       onChange={(value) =>
-                        selectOrganizationType(value as OrganizationType)
+                        setOnboardingForm((current) => ({
+                          ...current,
+                          organizationType: value as OrganizationType,
+                        }))
                       }
                       options={organizationTypeOptions}
                       value={onboardingForm.organizationType}
@@ -533,7 +496,7 @@ export function ErpDemoLogin({
                       disabled={isPending}
                       type="submit"
                     >
-                      {isPending ? "Creating..." : "Create ORG_ADMIN"}
+                      {isPending ? "Creating..." : "Create Owner"}
                     </button>
                   </div>
                 </form>
@@ -689,55 +652,38 @@ function FormField({
   type: string;
   value: string;
 }) {
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const isPasswordField = type === "password";
+  const inputType = isPasswordField && isPasswordVisible ? "text" : type;
+
   return (
     <div className="space-y-1">
       <label className="px-1 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
         {label}
       </label>
-      <input
-        className="w-full rounded-lg border-none bg-surface-container-highest px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-primary/20"
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        required={required}
-        type={type}
-        value={value}
-      />
+      <div className="relative">
+        <input
+          className={`w-full rounded-lg border-none bg-surface-container-highest px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-primary/20 ${
+            isPasswordField ? "pr-12" : ""
+          }`}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          required={required}
+          type={inputType}
+          value={value}
+        />
+        {isPasswordField ? (
+          <button
+            aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+            className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
+            onClick={() => setIsPasswordVisible((visible) => !visible)}
+            type="button"
+          >
+            {isPasswordVisible ? <EyeOff size={17} /> : <Eye size={17} />}
+          </button>
+        ) : null}
+      </div>
     </div>
-  );
-}
-
-function RoleCard({
-  active = false,
-  icon,
-  label,
-  onSelect,
-}: {
-  active?: boolean;
-  icon: React.ReactNode;
-  label: string;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      className={
-        active
-          ? "flex flex-col items-center justify-center rounded-lg border border-outline-variant/20 bg-surface-container-lowest py-3 shadow-sm"
-          : "flex flex-col items-center justify-center rounded-lg py-3 text-on-surface-variant transition-colors hover:bg-surface-container-high"
-      }
-      onClick={onSelect}
-      type="button"
-    >
-      <span className={active ? "mb-1 text-primary" : "mb-1"}>{icon}</span>
-      <span
-        className={
-          active
-            ? "text-[11px] font-bold uppercase tracking-wider text-primary"
-            : "text-[11px] font-bold uppercase tracking-wider"
-        }
-      >
-        {label}
-      </span>
-    </button>
   );
 }
 

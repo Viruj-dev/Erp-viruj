@@ -9,7 +9,7 @@ export function registerHttpMiddleware(app: Hono) {
     "/*",
     cors({
       origin: env.CORS_ORIGIN,
-      allowMethods: ["GET", "POST", "OPTIONS"],
+      allowMethods: ["DELETE", "GET", "PATCH", "POST", "OPTIONS"],
       allowHeaders: ["Content-Type", "Authorization", "Cookie"],
       credentials: true,
     })

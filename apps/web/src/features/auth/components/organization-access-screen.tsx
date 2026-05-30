@@ -85,7 +85,7 @@ export function OrganizationAccessScreen({
             </h2>
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-on-surface-variant">
               Create a new organization from the onboarding flow or ask an
-              ORG_ADMIN to send you an invitation ID from the Staff page.
+              OWNER or ADMIN to send you an invitation ID from the Staff page.
             </p>
             <button
               className="mt-6 rounded-full bg-primary px-5 py-3 text-sm font-bold text-white shadow-md transition-opacity hover:opacity-90"

@@ -201,6 +201,8 @@ function SignalCard({
 }
 
 function MetricPanel({ panel }: { panel: (typeof metricPanels)[number] }) {
+  const delta = "delta" in panel ? panel.delta : null;
+
   return (
     <article className="min-h-[270px] border-b border-r border-slate-200 p-7 last:border-r-0 dark:border-white/[0.08]">
       <p className="font-headline text-3xl font-semi-bold text-slate-950 dark:text-slate-100">
@@ -209,10 +211,10 @@ function MetricPanel({ panel }: { panel: (typeof metricPanels)[number] }) {
       <p className="mt-2 text-[11px] font-semi-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-500">
         {panel.label}
       </p>
-      {panel.delta ? (
+      {delta ? (
         <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-xs font-semi-bold text-rose-700 dark:bg-rose-400/10 dark:text-rose-200">
           <TrendingDown size={12} />
-          {panel.delta}
+          {delta}
         </p>
       ) : null}
       <div className="mt-8 h-32">

@@ -4,6 +4,10 @@ const backendUrl =
   process.env.NEXT_PUBLIC_VIRUJ_BACKEND_URL || "http://localhost:4000";
 const erpApiUrl = `${backendUrl.replace(/\/$/, "")}/api/erp`;
 const erpToken = process.env.NEXT_PUBLIC_VIRUJ_BACKEND_ERP_TOKEN;
+const erpServerUrl =
+  typeof window !== "undefined"
+    ? `${window.location.origin}/erp`
+    : `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002"}/erp`;
 
 type RequestOptions = {
   body?: unknown;
@@ -31,6 +35,28 @@ async function request<T>(path: string, options: RequestOptions = {}) {
       payload?.message ||
         payload?.error ||
         `Viruj backend request failed (${response.status})`
+    );
+  }
+
+  return response.json() as Promise<T>;
+}
+
+async function erpServerRequest<T>(path: string, options: RequestOptions = {}) {
+  const response = await fetch(`${erpServerUrl}${path}`, {
+    body: options.body ? JSON.stringify(options.body) : undefined,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: options.method ?? "GET",
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+    throw new Error(
+      payload?.message ||
+        payload?.error ||
+        `ERP server request failed (${response.status})`
     );
   }
 
@@ -72,9 +98,12 @@ export type VirujModuleSummary = {
 };
 
 export type VirujStaffRole =
-  | "APPOINTMENT_HANDLER"
-  | "COMMUNITY_MANAGER"
-  | "ORG_ADMIN";
+  | "ADMIN"
+  | "DOCTOR"
+  | "MANAGER"
+  | "RECEPTIONIST"
+  | "STAFF"
+  | "TECHNICIAN";
 
 export type VirujStaffMember = {
   createdAt: string | Date;
@@ -165,22 +194,22 @@ export const virujBackend = {
   },
   doctors: {
     create: (input: VirujDoctorInput) =>
-      request<VirujDoctor>("/doctors", {
+      erpServerRequest<VirujDoctor>("/doctors", {
         body: input,
         method: "POST",
       }),
     delete: (input: { id: string }) =>
-      request<{ success: true }>(`/doctors/${input.id}`, {
+      erpServerRequest<{ success: true }>(`/doctors/${input.id}`, {
         method: "DELETE",
       }),
     key: ["viruj-backend", "erp", "doctors"] as const,
-    list: () => request<VirujDoctor[]>("/doctors"),
+    list: () => erpServerRequest<VirujDoctor[]>("/doctors"),
     publish: (input: { id: string }) =>
-      request<VirujDoctor>(`/doctors/${input.id}/publish`, {
+      erpServerRequest<VirujDoctor>(`/doctors/${input.id}/publish`, {
         method: "POST",
       }),
     publishAll: () =>
-      request<{
+      erpServerRequest<{
         count: number;
         doctors: VirujDoctor[];
         message: string;
@@ -188,7 +217,7 @@ export const virujBackend = {
         method: "POST",
       }),
     update: (input: { doctor: VirujDoctorInput; id: string }) =>
-      request<VirujDoctor>(`/doctors/${input.id}`, {
+      erpServerRequest<VirujDoctor>(`/doctors/${input.id}`, {
         body: input.doctor,
         method: "PATCH",
       }),

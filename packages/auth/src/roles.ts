@@ -1,12 +1,19 @@
 import { z } from "zod";
 
 export const organizationRoleOptions = [
-  "ORG_ADMIN",
-  "APPOINTMENT_HANDLER",
-  "COMMUNITY_MANAGER",
+  "OWNER",
+  "ADMIN",
+  "MANAGER",
+  "DOCTOR",
+  "STAFF",
+  "RECEPTIONIST",
+  "TECHNICIAN",
 ] as const;
 
 export const legacyOrganizationRoleOptions = [
+  "ORG_ADMIN",
+  "APPOINTMENT_HANDLER",
+  "COMMUNITY_MANAGER",
   "owner",
   "admin",
   "manager",
@@ -32,18 +39,30 @@ export const normalizeOrganizationMemberRole = (
   role: string
 ): ErpOrganizationRole | null => {
   switch (role) {
-    case "ORG_ADMIN":
     case "owner":
+    case "OWNER":
+      return "OWNER";
+    case "ORG_ADMIN":
     case "admin":
+    case "ADMIN":
+      return "ADMIN";
     case "manager":
-      return "ORG_ADMIN";
+    case "MANAGER":
+      return "MANAGER";
     case "APPOINTMENT_HANDLER":
     case "doctor":
+    case "DOCTOR":
+      return "DOCTOR";
     case "receptionist":
+    case "RECEPTIONIST":
+      return "RECEPTIONIST";
+    case "STAFF":
+      return "STAFF";
     case "lab_tech":
-      return "APPOINTMENT_HANDLER";
+    case "TECHNICIAN":
+      return "TECHNICIAN";
     case "COMMUNITY_MANAGER":
-      return "COMMUNITY_MANAGER";
+      return "MANAGER";
     default:
       return null;
   }

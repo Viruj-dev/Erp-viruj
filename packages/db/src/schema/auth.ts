@@ -185,6 +185,7 @@ export const invitation = pgTable(
 );
 
 export const organizationRelations = relations(organization, ({ many }) => ({
+  doctors: many(doctor),
   invitations: many(invitation),
   members: many(member),
   sessions: many(session),
@@ -252,3 +253,43 @@ export const devtoolsUser = pgTable(
       .notNull(),
   }
 );
+
+export const doctor = pgTable(
+  "doctors",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    specialty: text("specialty").notNull(),
+    department: text("department").notNull().default("General OPD"),
+    qualification: text("qualification").notNull().default(""),
+    experience: text("experience").notNull().default(""),
+    fee: text("fee").notNull().default(""),
+    phone: text("phone").notNull().default(""),
+    availability: text("availability").notNull().default(""),
+    appVisibility: text("app_visibility").notNull().default("hidden"),
+    published: boolean("published").default(false).notNull(),
+    publishedAt: timestamp("published_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("doctors_organization_id_idx").on(table.organizationId),
+    index("doctors_organization_published_idx").on(
+      table.organizationId,
+      table.published
+    ),
+  ]
+);
+
+export const doctorRelations = relations(doctor, ({ one }) => ({
+  organization: one(organization, {
+    fields: [doctor.organizationId],
+    references: [organization.id],
+  }),
+}));

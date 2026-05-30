@@ -24,15 +24,25 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 const roleOptions = [
-  "APPOINTMENT_HANDLER",
-  "COMMUNITY_MANAGER",
-  "ORG_ADMIN",
+  "ADMIN",
+  "MANAGER",
+  "DOCTOR",
+  "STAFF",
+  "RECEPTIONIST",
+  "TECHNICIAN",
 ] as const;
 
-const roleLabels: Record<(typeof roleOptions)[number], string> = {
+const roleLabels: Record<string, string> = {
+  ADMIN: "Admin",
   APPOINTMENT_HANDLER: "Appointment Handler",
   COMMUNITY_MANAGER: "Community Manager",
+  DOCTOR: "Doctor",
+  MANAGER: "Manager",
   ORG_ADMIN: "Organization Admin",
+  OWNER: "Owner",
+  RECEPTIONIST: "Receptionist",
+  STAFF: "Staff",
+  TECHNICIAN: "Technician",
 };
 
 type StaffRole = (typeof roleOptions)[number];
@@ -56,10 +66,8 @@ export function ErpDemoStaff() {
   const [credentialPreview, setCredentialPreview] = useState<
     StaffInviteResult["onboarding"] | null
   >(null);
-  const [role, setRole] = useState<StaffRole>("APPOINTMENT_HANDLER");
-  const [selectedRole, setSelectedRole] = useState<StaffRole>(
-    "APPOINTMENT_HANDLER"
-  );
+  const [role, setRole] = useState<StaffRole>("DOCTOR");
+  const [selectedRole, setSelectedRole] = useState<StaffRole>("DOCTOR");
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
   const [roleFilter, setRoleFilter] = useState("all");
   const [query, setQuery] = useState("");
@@ -129,7 +137,7 @@ export function ErpDemoStaff() {
   const [deletingStaff, setDeletingStaff] = useState<
     (typeof members)[number] | null
   >(null);
-  const [editRole, setEditRole] = useState<StaffRole>("APPOINTMENT_HANDLER");
+  const [editRole, setEditRole] = useState<StaffRole>("DOCTOR");
 
   const { data: session } = authClient.useSession();
   const currentUserId = session?.user?.id;
@@ -350,7 +358,7 @@ export function ErpDemoStaff() {
                             setEditRole(
                               isStaffRole(member.role)
                                 ? member.role
-                                : "APPOINTMENT_HANDLER"
+                                : "DOCTOR"
                             );
                           }}
                           type="button"
@@ -922,12 +930,20 @@ function formatDate(value: string | Date) {
 }
 
 function departmentFromRole(role: string) {
-  if (role === "APPOINTMENT_HANDLER") {
+  if (role === "APPOINTMENT_HANDLER" || role === "RECEPTIONIST") {
     return "Appointments";
   }
 
-  if (role === "COMMUNITY_MANAGER") {
+  if (role === "COMMUNITY_MANAGER" || role === "MANAGER") {
     return "Community";
+  }
+
+  if (role === "DOCTOR") {
+    return "Clinical";
+  }
+
+  if (role === "TECHNICIAN" || role === "lab_tech") {
+    return "Diagnostics";
   }
 
   return "Administration";
