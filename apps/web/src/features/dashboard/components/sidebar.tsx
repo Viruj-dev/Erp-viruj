@@ -9,18 +9,17 @@ import {
   BadgeIndianRupee,
   Bell,
   Bot,
+  Building2,
   Calendar,
   ChevronDown,
   ChevronLeft,
   ClipboardCheck,
-  FileBarChart,
   FileText,
   Gauge,
   Keyboard,
   LayoutDashboard,
   LogOut,
   MessagesSquare,
-  ReceiptText,
   Search,
   Settings,
   Stethoscope,
@@ -34,6 +33,7 @@ const mainNavItems = [
   { id: "appointments", label: "Appointments", icon: Calendar, badge: "4" },
   { id: "patients", label: "Patients", icon: Users },
   { id: "staff", label: "Staff", icon: BadgeCheck },
+  { id: "doctors", label: "Doctors", icon: Stethoscope },
   { id: "community", label: "Community", icon: MessagesSquare },
   { id: "analytics", label: "Analytics", icon: BarChart3, pulse: true },
 ] as const;
@@ -45,7 +45,7 @@ const operationsItems = [
 ] as const;
 
 const settingsOptions = [
-  { id: "settings", label: "Organization Profile" },
+  { id: "settings", label: "Hospital-profile" },
   { id: "settings-alert-rules", label: "Alert Rules" },
   { id: "settings-audit-logs", label: "Clinical Audit Logs" },
   { id: "settings-storage", label: "Storage Usage" },
@@ -106,7 +106,7 @@ export function ErpDemoSidebar({
       className={cn(
         "fixed bottom-4 left-4 top-4 z-40 flex flex-col rounded-[22px] border border-slate-200/80 bg-[#f3f4f4] text-slate-700 shadow-[0_24px_80px_rgba(30,41,59,0.14)] transition-all duration-300 ease-in-out dark:border-white/[0.10] dark:bg-[#141618] dark:text-slate-200 dark:shadow-[0_24px_80px_rgba(0,0,0,0.32)]",
         "before:pointer-events-none before:absolute before:inset-0 before:bg-white/[0.42] dark:before:bg-white/[0.03]",
-        isCollapsed ? "w-20 overflow-visible" : "w-72 overflow-hidden"
+        isCollapsed ? "w-20 overflow-visible" : "w-60 overflow-hidden"
       )}
     >
       <div className="relative z-10 flex min-h-0 flex-1 flex-col p-4">

@@ -25,7 +25,8 @@ const titles: Record<string, string> = {
   "settings-storage": "Storage Usage",
   "settings-data-export": "Data Export",
   analytics: "Performance Analytics",
-  doctors: "Doctors Workspace",
+  doctors: "Doctor Directory",
+  "hospital-profile": "Hospital Profile",
   radiology: "Radiology Operations",
   pathology: "Pathology Lab",
   pharmacy: "Pharmacy Management",
@@ -55,10 +56,11 @@ export function ErpDemoTopBar({
   const userImage = sessionState.data?.user?.image;
 
   return (
-    <header className="sticky top-0 z-30 flex w-full items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-5 transition-colors dark:border-white/[0.08] dark:bg-[#101214] lg:px-10">
+    <header className="sticky top-0 z-30 flex w-full items-center justify-between border-b border-slate-200 px-6 py-5 transition-colors dark:border-white/[0.08]  lg:px-10">
       <div className="flex items-center gap-8">
         <h2 className="font-headline text-2xl font-bold tracking-tight text-on-surface dark:text-slate-100">
-          {titles[currentPage]?.replace("{}", `${organizationLabel}'s`) ?? `${organizationLabel}'s Dashboard`}
+          {titles[currentPage]?.replace("{}", `${organizationLabel}'s`) ??
+            `${organizationLabel}'s Dashboard`}
         </h2>
         <div className="relative hidden lg:block">
           <Search

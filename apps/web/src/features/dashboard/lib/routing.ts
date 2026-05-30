@@ -31,6 +31,7 @@ export const dashboardPageOptions = [
   "settings-data-export",
   "analytics",
   "doctors",
+  "hospital-profile",
   "radiology",
   "pathology",
   "pharmacy",
@@ -101,6 +102,7 @@ export const allowedDashboardPagesByRole: Record<
     "settings-data-export",
     "analytics",
     "doctors",
+    "hospital-profile",
     "radiology",
     "pathology",
     "pharmacy",
@@ -128,6 +130,7 @@ export const allowedDashboardPagesByRole: Record<
     "settings-data-export",
     "analytics",
     "doctors",
+    "hospital-profile",
     "radiology",
     "pathology",
     "pharmacy",
@@ -177,6 +180,7 @@ export const allowedDashboardPagesByRole: Record<
     "settings-data-export",
     "analytics",
     "doctors",
+    "hospital-profile",
     "radiology",
     "pathology",
     "pharmacy",
@@ -204,6 +208,7 @@ export const allowedDashboardPagesByRole: Record<
     "settings-data-export",
     "analytics",
     "doctors",
+    "hospital-profile",
     "radiology",
     "pathology",
     "pharmacy",
@@ -262,6 +267,9 @@ export function normalizeDashboardModule(value: string): DashboardPage {
     case "doctors":
     case "doctor":
       return "doctors";
+    case "hospital-profile":
+    case "hospital":
+      return "hospital-profile";
     case "radiology":
       return "radiology";
     case "pathology":

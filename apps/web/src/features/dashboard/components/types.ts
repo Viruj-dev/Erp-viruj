@@ -18,6 +18,7 @@ export type ErpDemoPage =
   | "settings-data-export"
   | "analytics"
   | "doctors"
+  | "hospital-profile"
   | "radiology"
   | "pathology"
   | "pharmacy"

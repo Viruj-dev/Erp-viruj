@@ -6,7 +6,9 @@ import { ErpDemoAppointments } from "@/features/dashboard/components/appointment
 import { ErpDemoBilling } from "@/features/dashboard/components/billing";
 import { ErpDemoCommunity } from "@/features/dashboard/components/community";
 import { ErpDemoDashboard } from "@/features/dashboard/components/dashboard";
+import { DoctorsManagementPage } from "@/features/dashboard/components/doctors-management";
 import { ErpEnterpriseModule } from "@/features/dashboard/components/enterprise-module";
+import { HospitalProfilePage } from "@/features/dashboard/components/hospital-profile";
 import { ErpDemoPatients } from "@/features/dashboard/components/patients";
 import PricingPage from "@/features/dashboard/components/pricing";
 import { ErpDemoSettings } from "@/features/dashboard/components/settings";
@@ -468,7 +470,9 @@ function PageContent({
     case "analytics":
       return <ErpDemoAnalytics />;
     case "doctors":
-      return <ErpEnterpriseModule module="doctors" roleLabel={roleLabel} />;
+      return <DoctorsManagementPage organizationLabel={organizationLabel} />;
+    case "hospital-profile":
+      return <HospitalProfilePage organizationLabel={organizationLabel} />;
     case "radiology":
       return <ErpEnterpriseModule module="radiology" roleLabel={roleLabel} />;
     case "pathology":
