@@ -1,6 +1,7 @@
 "use client";
 
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
+import { readPreferredProviderType } from "@/features/auth/lib/provider-type-preference";
 import { ErpDemoAnalytics } from "@/features/dashboard/components/analytics";
 import { ErpDemoAppointments } from "@/features/dashboard/components/appointments";
 import { ErpDemoBilling } from "@/features/dashboard/components/billing";
@@ -109,13 +110,18 @@ export function ErpHomeScreen({
   useEffect(() => {
     const organizations = organizationsState.data ?? [];
     const user = sessionState.data?.user;
+    const preferredOrganizationType = readPreferredProviderType();
+    const hasPreferredOrganization = organizations.some(
+      (organization) =>
+        organization.organizationType === preferredOrganizationType
+    );
 
     if (
       !isHydrated ||
       isAuthPending ||
       !user ||
       activeOrganizationState.data?.id ||
-      organizations.length > 0 ||
+      hasPreferredOrganization ||
       isProvisioningOrganization ||
       !setActiveOrganization
     ) {
@@ -127,8 +133,11 @@ export function ErpHomeScreen({
     setIsProvisioningOrganization(true);
 
     void bootstrapOrganization({
-      name: buildAutoOrganizationName(user.name || user.email),
-      organizationType: "hospital",
+      name: buildAutoOrganizationName(
+        user.name || user.email,
+        preferredOrganizationType
+      ),
+      organizationType: preferredOrganizationType,
       slug: buildAutoOrganizationSlug(user.email || user.id),
     })
       .then(async (organizationResult) => {
@@ -170,7 +179,7 @@ export function ErpHomeScreen({
           organization?.organizationType &&
           isDashboardOrganizationType(organization.organizationType)
             ? organization.organizationType
-            : "hospital";
+            : preferredOrganizationType;
 
         router.replace(buildDashboardPath(organizationType));
       })
@@ -225,6 +234,28 @@ export function ErpHomeScreen({
   const roleLabel = activeMemberRole
     ? activeMemberRole.replace(/_/g, " ")
     : "member";
+
+  useEffect(() => {
+    if (
+      !isHydrated ||
+      isAuthPending ||
+      !activeOrganization ||
+      activeMemberRole !== "doctor"
+    ) {
+      return;
+    }
+
+    if (activeOrganizationType !== "doctor") {
+      router.replace(buildDashboardPath("doctor"));
+    }
+  }, [
+    activeMemberRole,
+    activeOrganization,
+    activeOrganizationType,
+    isAuthPending,
+    isHydrated,
+    router,
+  ]);
 
   useEffect(() => {
     if (!isHydrated || isAuthPending) {
@@ -505,15 +536,20 @@ function isErpDemoPage(page: string): page is ErpDemoPage {
   return isDashboardPage(page);
 }
 
-function buildAutoOrganizationName(identifier?: string | null) {
+function buildAutoOrganizationName(
+  identifier?: string | null,
+  organizationType: DashboardOrganizationType = "hospital"
+) {
+  const organizationLabel = organizationTypeLabels[organizationType];
+
   if (!identifier) {
-    return "Viruj Health Workspace";
+    return `Viruj ${organizationLabel} Workspace`;
   }
 
   const localName = identifier.split("@")[0]?.trim();
   return localName
-    ? `${localName}'s Viruj Workspace`
-    : "Viruj Health Workspace";
+    ? `${localName}'s Viruj ${organizationLabel}`
+    : `Viruj ${organizationLabel} Workspace`;
 }
 
 function buildAutoOrganizationSlug(identifier?: string | null) {

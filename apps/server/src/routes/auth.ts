@@ -42,7 +42,10 @@ export function registerAuthRoutes(app: Hono) {
           ? body.slug.trim()
           : `viruj-workspace-${randomUUID().slice(0, 8)}`;
 
-      const existingMembership = await findMembership(authSession.user.id);
+      const existingMembership = await findMembership(
+        authSession.user.id,
+        organizationType
+      );
       let selectedOrganization = existingMembership;
 
       if (!selectedOrganization) {
@@ -85,7 +88,8 @@ export function registerAuthRoutes(app: Hono) {
           .onConflictDoNothing();
 
         selectedOrganization =
-          (await findMembership(authSession.user.id)) ?? selectedOrganization;
+          (await findMembership(authSession.user.id, organizationType)) ??
+          selectedOrganization;
       }
 
       const sessionToken = (
@@ -139,7 +143,10 @@ export function registerAuthRoutes(app: Hono) {
   app.on(["POST", "GET"], "/auth/*", (context) => auth.handler(context.req.raw));
 }
 
-function findMembership(userId: string) {
+function findMembership(
+  userId: string,
+  organizationType?: (typeof organizationTypes)[number]
+) {
   return db
     .select({
       organizationId: member.organizationId,
@@ -147,7 +154,14 @@ function findMembership(userId: string) {
     })
     .from(member)
     .innerJoin(organization, eq(member.organizationId, organization.id))
-    .where(eq(member.userId, userId))
+    .where(
+      organizationType
+        ? and(
+            eq(member.userId, userId),
+            eq(organization.organizationType, organizationType)
+          )
+        : eq(member.userId, userId)
+    )
     .limit(1)
     .then((memberships) => memberships[0] ?? null);
 }

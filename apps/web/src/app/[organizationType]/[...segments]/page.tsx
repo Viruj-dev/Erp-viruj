@@ -2,6 +2,7 @@ import {
   isDashboardPage,
   normalizeDashboardModule,
 } from "@/features/dashboard/lib/routing";
+import { DoctorHomeScreen } from "@/features/dashboard/screens/doctor-home-screen";
 import { ErpHomeScreen } from "@/features/dashboard/screens/erp-home-screen";
 
 export default async function OrganizationTenantRoutePage({
@@ -13,10 +14,20 @@ export default async function OrganizationTenantRoutePage({
   }>;
 }) {
   const { organizationType, segments } = await params;
+  const currentPage = resolveRoutePage(segments);
+
+  if (organizationType === "doctor") {
+    return (
+      <DoctorHomeScreen
+        currentPage={currentPage}
+        routeOrganizationType={organizationType}
+      />
+    );
+  }
 
   return (
     <ErpHomeScreen
-      currentPage={resolveRoutePage(segments)}
+      currentPage={currentPage}
       routeOrganizationType={organizationType}
     />
   );

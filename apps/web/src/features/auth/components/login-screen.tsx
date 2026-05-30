@@ -18,14 +18,11 @@ import {
   bootstrapOrganization,
   getAuthActionError,
 } from "@/lib/auth-client";
+import { writePreferredProviderType } from "@/features/auth/lib/provider-type-preference";
+import type { DashboardOrganizationType } from "@/features/dashboard/lib/routing";
 
 type Step = "login" | "onboarding" | "invitation";
-type OrganizationType =
-  | "clinic"
-  | "doctor"
-  | "hospital"
-  | "pathology"
-  | "radiology";
+type OrganizationType = DashboardOrganizationType;
 
 type BetterAuthResult = {
   error?: {
@@ -44,15 +41,29 @@ const organizationTypeOptions: Array<{
   { label: "Radiology Center", value: "radiology" },
 ];
 
+const providerTypeCards: Array<{
+  icon: React.ReactNode;
+  label: string;
+  value: OrganizationType;
+}> = [
+  { icon: <Building2 size={20} />, label: "Hospital", value: "hospital" },
+  { icon: <Stethoscope size={20} />, label: "Doctor", value: "doctor" },
+  { icon: <Building2 size={20} />, label: "Clinic", value: "clinic" },
+  { icon: <Microscope size={20} />, label: "Pathology", value: "pathology" },
+  { icon: <Microscope size={20} />, label: "Radiology", value: "radiology" },
+];
+
 export function ErpDemoLogin({
   onAuthenticated,
 }: {
-  onAuthenticated: () => Promise<void> | void;
+  onAuthenticated: (preferredOrganizationType: OrganizationType) => Promise<void> | void;
 }) {
   const [step, setStep] = useState<Step>("login");
   const [isPending, setIsPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [selectedOrganizationType, setSelectedOrganizationType] =
+    useState<OrganizationType>("hospital");
   const [loginForm, setLoginForm] = useState({
     email: "",
     password: "",
@@ -76,11 +87,21 @@ export function ErpDemoLogin({
     setSuccessMessage(null);
   };
 
+  const selectOrganizationType = (organizationType: OrganizationType) => {
+    setSelectedOrganizationType(organizationType);
+    writePreferredProviderType(organizationType);
+    setOnboardingForm((current) => ({
+      ...current,
+      organizationType,
+    }));
+  };
+
   const handleLogin = async () => {
     clearMessages();
     setIsPending(true);
 
     try {
+      writePreferredProviderType(selectedOrganizationType);
       const result = await authClient.signIn.email({
         email: loginForm.email,
         password: loginForm.password,
@@ -94,7 +115,7 @@ export function ErpDemoLogin({
       }
 
       setSuccessMessage("Secure session authorized.");
-      await onAuthenticated();
+      await onAuthenticated(selectedOrganizationType);
     } finally {
       setIsPending(false);
     }
@@ -105,6 +126,7 @@ export function ErpDemoLogin({
     setIsPending(true);
 
     try {
+      writePreferredProviderType(onboardingForm.organizationType);
       const signUpResult = await authClient.signUp.email({
         email: onboardingForm.email,
         name: onboardingForm.name,
@@ -128,9 +150,19 @@ export function ErpDemoLogin({
       }
 
       const bootstrapResult = await bootstrapOrganization({
-        name: onboardingForm.organizationName,
+        name: buildBootstrapOrganizationName(
+          onboardingForm.organizationName,
+          onboardingForm.name,
+          onboardingForm.email,
+          onboardingForm.organizationType
+        ),
         organizationType: onboardingForm.organizationType,
-        slug: buildOrganizationSlug(onboardingForm.organizationName),
+        slug: buildOrganizationSlug(
+          onboardingForm.organizationName ||
+            onboardingForm.name ||
+            onboardingForm.email,
+          onboardingForm.organizationType
+        ),
       });
       const bootstrapError = getAuthActionError(bootstrapResult);
 
@@ -140,7 +172,7 @@ export function ErpDemoLogin({
       }
 
       setSuccessMessage("Organization ready and ORG_ADMIN session activated.");
-      await onAuthenticated();
+      await onAuthenticated(onboardingForm.organizationType);
     } finally {
       setIsPending(false);
     }
@@ -151,6 +183,7 @@ export function ErpDemoLogin({
     setIsPending(true);
 
     try {
+      writePreferredProviderType(selectedOrganizationType);
       const signInResult = await authClient.signIn.email({
         email: invitationForm.email,
         password: invitationForm.password,
@@ -194,7 +227,7 @@ export function ErpDemoLogin({
       setSuccessMessage(
         "Invitation accepted. Preparing your organization access."
       );
-      await onAuthenticated();
+      await onAuthenticated(selectedOrganizationType);
     } finally {
       setIsPending(false);
     }
@@ -275,14 +308,16 @@ export function ErpDemoLogin({
                   </p>
                 </header>
 
-                <div className="grid grid-cols-3 gap-2 rounded-lg bg-surface-container-low p-1">
-                  <RoleCard
-                    active
-                    icon={<Building2 size={20} />}
-                    label="Hospital"
-                  />
-                  <RoleCard icon={<Stethoscope size={20} />} label="Doctor" />
-                  <RoleCard icon={<Microscope size={20} />} label="Lab" />
+                <div className="grid grid-cols-2 gap-2 rounded-lg bg-surface-container-low p-1 sm:grid-cols-5">
+                  {providerTypeCards.map((option) => (
+                    <RoleCard
+                      active={selectedOrganizationType === option.value}
+                      icon={option.icon}
+                      key={option.value}
+                      label={option.label}
+                      onSelect={() => selectOrganizationType(option.value)}
+                    />
+                  ))}
                 </div>
 
                 <TestGuide />
@@ -419,18 +454,19 @@ export function ErpDemoLogin({
                           organizationName: value,
                         }))
                       }
-                      placeholder="St. Mary's General"
-                      required
+                      placeholder={
+                        onboardingForm.organizationType === "doctor"
+                          ? "Optional practice name"
+                          : "St. Mary's General"
+                      }
+                      required={onboardingForm.organizationType !== "doctor"}
                       type="text"
                       value={onboardingForm.organizationName}
                     />
                     <SelectField
                       label="Type"
                       onChange={(value) =>
-                        setOnboardingForm((current) => ({
-                          ...current,
-                          organizationType: value as OrganizationType,
-                        }))
+                        selectOrganizationType(value as OrganizationType)
                       }
                       options={organizationTypeOptions}
                       value={onboardingForm.organizationType}
@@ -674,10 +710,12 @@ function RoleCard({
   active = false,
   icon,
   label,
+  onSelect,
 }: {
   active?: boolean;
   icon: React.ReactNode;
   label: string;
+  onSelect: () => void;
 }) {
   return (
     <button
@@ -686,6 +724,7 @@ function RoleCard({
           ? "flex flex-col items-center justify-center rounded-lg border border-outline-variant/20 bg-surface-container-lowest py-3 shadow-sm"
           : "flex flex-col items-center justify-center rounded-lg py-3 text-on-surface-variant transition-colors hover:bg-surface-container-high"
       }
+      onClick={onSelect}
       type="button"
     >
       <span className={active ? "mb-1 text-primary" : "mb-1"}>{icon}</span>
@@ -784,7 +823,27 @@ function StatusBlock({
   );
 }
 
-function buildOrganizationSlug(name: string) {
+function buildBootstrapOrganizationName(
+  organizationName: string,
+  ownerName: string,
+  email: string,
+  organizationType: OrganizationType
+) {
+  const trimmedOrganizationName = organizationName.trim();
+
+  if (trimmedOrganizationName) {
+    return trimmedOrganizationName;
+  }
+
+  if (organizationType === "doctor") {
+    const owner = ownerName.trim() || email.split("@")[0]?.trim();
+    return owner ? `${owner}'s Doctor Practice` : "Independent Doctor Workspace";
+  }
+
+  return "Viruj Health Workspace";
+}
+
+function buildOrganizationSlug(name: string, organizationType: OrganizationType) {
   const normalized = name
     .trim()
     .toLowerCase()
@@ -793,7 +852,9 @@ function buildOrganizationSlug(name: string) {
     .slice(0, 42);
 
   const suffix = Math.random().toString(36).slice(2, 7);
-  return normalized ? `${normalized}-${suffix}` : `viruj-org-${suffix}`;
+  const fallbackPrefix =
+    organizationType === "doctor" ? "doctor-workspace" : "viruj-org";
+  return normalized ? `${normalized}-${suffix}` : `${fallbackPrefix}-${suffix}`;
 }
 
 function hasError(result: unknown): result is BetterAuthResult & {
