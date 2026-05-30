@@ -6,26 +6,23 @@ import { cn } from "@/lib/utils";
 import {
   BarChart3,
   BadgeCheck,
+  BadgeIndianRupee,
   Bell,
   Bot,
   Calendar,
   ChevronDown,
   ChevronLeft,
   ClipboardCheck,
-  ExternalLink,
   FileBarChart,
   FileText,
   Gauge,
-  HelpCircle,
   Keyboard,
   LayoutDashboard,
   LogOut,
   MessagesSquare,
-  PlusCircle,
   ReceiptText,
   Search,
   Settings,
-  ShieldCheck,
   Stethoscope,
   Users,
 } from "lucide-react";
@@ -42,6 +39,7 @@ const mainNavItems = [
 ] as const;
 
 const operationsItems = [
+  { id: "pricing", label: "Pricing", icon: BadgeIndianRupee },
   { id: "notifications", label: "Notifications", icon: Bell, badge: "2" },
   { id: "reports", label: "Reports", icon: FileText },
 ] as const;
@@ -485,24 +483,6 @@ function NavButton({
       {active && isCollapsed ? (
         <span className="absolute right-2 size-1.5 rounded-full bg-[#766cff] shadow-[0_0_10px_2px_rgba(118,108,255,0.72)]" />
       ) : null}
-    </button>
-  );
-}
-
-function BottomAction({
-  icon: Icon,
-  label,
-}: {
-  icon: ComponentType<{ size?: number; className?: string }>;
-  label: string;
-}) {
-  return (
-    <button
-      className="flex h-8 items-center justify-center gap-1.5 rounded-lg text-[11px] font-semibold text-slate-500 transition hover:bg-white hover:text-slate-900 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
-      type="button"
-    >
-      <Icon size={13} />
-      {label}
     </button>
   );
 }

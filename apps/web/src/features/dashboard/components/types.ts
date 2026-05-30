@@ -10,6 +10,7 @@ export type ErpDemoPage =
   | "staff"
   | "community"
   | "billing"
+  | "pricing"
   | "settings"
   | "settings-alert-rules"
   | "settings-audit-logs"

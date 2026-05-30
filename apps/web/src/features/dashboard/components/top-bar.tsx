@@ -1,7 +1,6 @@
 "use client";
 
 import { ProfileDropdown } from "@/features/dashboard/components/profile-dropdown";
-import type { ErpDemoPage } from "@/features/dashboard/components/types";
 import { authClient } from "@/lib/auth-client";
 import { useTheme } from "@/lib/theme-provider";
 import { Bell, ChevronDown, Grid, Moon, Search, Sun } from "lucide-react";
@@ -19,6 +18,7 @@ const titles: Record<string, string> = {
   staff: "Staff Directory",
   community: "Community",
   billing: "Billing & Invoices",
+  pricing: "Pricing & Plans",
   settings: "Organization Settings",
   "settings-alert-rules": "Alert Rules",
   "settings-audit-logs": "Clinical Audit Logs",

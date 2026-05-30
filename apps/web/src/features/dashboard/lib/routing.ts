@@ -23,6 +23,7 @@ export const dashboardPageOptions = [
   "staff",
   "community",
   "billing",
+  "pricing",
   "settings",
   "settings-alert-rules",
   "settings-audit-logs",
@@ -92,6 +93,7 @@ export const allowedDashboardPagesByRole: Record<
     "staff",
     "community",
     "billing",
+    "pricing",
     "settings",
     "settings-alert-rules",
     "settings-audit-logs",
@@ -118,6 +120,7 @@ export const allowedDashboardPagesByRole: Record<
     "staff",
     "community",
     "billing",
+    "pricing",
     "settings",
     "settings-alert-rules",
     "settings-audit-logs",
@@ -132,7 +135,15 @@ export const allowedDashboardPagesByRole: Record<
     "reports",
     "profile",
   ],
-  billing: ["dashboard", "finance", "billing", "reports", "settings", "profile"],
+  billing: [
+    "dashboard",
+    "finance",
+    "billing",
+    "pricing",
+    "reports",
+    "settings",
+    "profile",
+  ],
   doctor: [
     "dashboard",
     "doctors",
@@ -158,6 +169,7 @@ export const allowedDashboardPagesByRole: Record<
     "staff",
     "community",
     "billing",
+    "pricing",
     "settings",
     "settings-alert-rules",
     "settings-audit-logs",
@@ -184,6 +196,7 @@ export const allowedDashboardPagesByRole: Record<
     "staff",
     "community",
     "billing",
+    "pricing",
     "settings",
     "settings-alert-rules",
     "settings-audit-logs",
@@ -265,6 +278,8 @@ export function normalizeDashboardModule(value: string): DashboardPage {
       return "staff";
     case "billing":
       return "billing";
+    case "pricing":
+      return "pricing";
     default:
       return isDashboardPage(value) ? value : "dashboard";
   }

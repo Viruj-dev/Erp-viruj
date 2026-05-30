@@ -8,6 +8,7 @@ import { ErpDemoCommunity } from "@/features/dashboard/components/community";
 import { ErpDemoDashboard } from "@/features/dashboard/components/dashboard";
 import { ErpEnterpriseModule } from "@/features/dashboard/components/enterprise-module";
 import { ErpDemoPatients } from "@/features/dashboard/components/patients";
+import PricingPage from "@/features/dashboard/components/pricing";
 import { ErpDemoSettings } from "@/features/dashboard/components/settings";
 import { ErpUserProfilePage } from "@/features/dashboard/components/profile-page";
 import { ErpDemoSidebar } from "@/features/dashboard/components/sidebar";
@@ -452,6 +453,8 @@ function PageContent({
       return <ErpDemoCommunity />;
     case "billing":
       return <ErpDemoBilling />;
+    case "pricing":
+      return <PricingPage />;
     case "settings":
       return <ErpDemoSettings section="profile" />;
     case "settings-alert-rules":
