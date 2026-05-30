@@ -64,33 +64,33 @@ export function ErpDemoDashboard({
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-outline-variant/30 bg-surface-container-lowest p-6 shadow-sm">
+        <div className="rounded-[2rem] border border-outline-variant/30 bg-surface-container-lowest p-6 shadow-sm dark:border-white/[0.08] dark:bg-[#14171b] dark:shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.25em] text-on-surface-variant">
+              <p className="text-xs font-black uppercase tracking-[0.25em] text-on-surface-variant dark:text-slate-500">
                 Acceptance rate
               </p>
-              <h2 className="mt-2 font-headline text-2xl font-black text-on-surface">
+              <h2 className="mt-2 font-headline text-2xl font-black text-on-surface dark:text-slate-100">
                 Request efficiency
               </h2>
             </div>
             <ShieldCheck className="text-secondary" size={22} />
           </div>
-          <div className="mt-6 rounded-2xl border border-primary/10 bg-primary-container/10 p-4">
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">
+          <div className="mt-6 rounded-2xl border border-primary/10 bg-primary-container/10 p-4 dark:border-white/[0.08] dark:bg-white/[0.06]">
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary dark:text-blue-300">
               Current actor
             </p>
-            <p className="mt-3 font-headline text-2xl font-black text-on-surface">
+            <p className="mt-3 font-headline text-2xl font-black text-on-surface dark:text-slate-100">
               {formatRole(roleLabel)}
             </p>
-            <p className="mt-1 text-sm text-on-surface-variant">
+            <p className="mt-1 text-sm text-on-surface-variant dark:text-slate-400">
               Tenant: {organizationLabel}
             </p>
           </div>
           <div className="mt-5 space-y-2">
             {modules.map((module) => (
               <div
-                className="flex items-center gap-2 rounded-xl bg-surface-container-low px-3 py-2 text-sm font-semibold text-on-surface"
+                className="flex items-center gap-2 rounded-xl bg-surface-container-low px-3 py-2 text-sm font-semibold text-on-surface dark:bg-white/[0.06] dark:text-slate-200"
                 key={module}
               >
                 <LockKeyhole size={14} />
@@ -199,14 +199,14 @@ export function ErpDemoDashboard({
               {departmentSplit.map((item) => (
                 <div key={item.name}>
                   <div className="mb-2 flex items-center justify-between text-sm">
-                    <span className="font-semibold text-on-surface">
+                    <span className="font-semibold text-on-surface dark:text-slate-200">
                       {item.name}
                     </span>
-                    <span className="font-bold text-on-surface-variant">
+                    <span className="font-bold text-on-surface-variant dark:text-slate-400">
                       {item.value}%
                     </span>
                   </div>
-                  <div className="h-2 rounded-full bg-surface-container-high">
+                  <div className="h-2 rounded-full bg-surface-container-high dark:bg-white/[0.08]">
                     <div
                       className="h-2 rounded-full"
                       style={{
@@ -285,14 +285,16 @@ function Panel({
   title: string;
 }) {
   return (
-    <div className="rounded-[2rem] border border-outline-variant/25 bg-surface-container-lowest p-6 shadow-sm">
-      <p className="text-[11px] font-black uppercase tracking-[0.26em] text-on-surface-variant">
+    <div className="rounded-[2rem] border border-outline-variant/25 bg-surface-container-lowest p-6 shadow-sm dark:border-white/[0.08] dark:bg-[#14171b] dark:shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
+      <p className="text-[11px] font-black uppercase tracking-[0.26em] text-on-surface-variant dark:text-slate-500">
         {eyebrow}
       </p>
-      <h3 className="mt-3 font-headline text-2xl font-black text-on-surface">
+      <h3 className="mt-3 font-headline text-2xl font-black text-on-surface dark:text-slate-100">
         {title}
       </h3>
-      <p className="mt-2 text-sm text-on-surface-variant">{description}</p>
+      <p className="mt-2 text-sm text-on-surface-variant dark:text-slate-400">
+        {description}
+      </p>
       <div className="mt-8">{children}</div>
     </div>
   );
@@ -312,17 +314,19 @@ function StatCard({
   value: string;
 }) {
   return (
-    <div className="rounded-[1.5rem] border border-outline-variant/25 bg-surface-container-lowest p-5 shadow-sm">
+    <div className="rounded-[1.5rem] border border-outline-variant/25 bg-surface-container-lowest p-5 shadow-sm dark:border-white/[0.08] dark:bg-[#14171b] dark:shadow-[0_18px_48px_rgba(0,0,0,0.2)]">
       <div className="flex items-start justify-between">
         <div className={`rounded-2xl p-3 ${accent}`}>{icon}</div>
       </div>
-      <p className="mt-5 text-[11px] font-black uppercase tracking-[0.22em] text-on-surface-variant">
+      <p className="mt-5 text-[11px] font-black uppercase tracking-[0.22em] text-on-surface-variant dark:text-slate-500">
         {label}
       </p>
-      <p className="mt-2 font-headline text-4xl font-black text-on-surface">
+      <p className="mt-2 font-headline text-4xl font-black text-on-surface dark:text-slate-100">
         {value}
       </p>
-      <p className="mt-2 text-sm text-on-surface-variant">{note}</p>
+      <p className="mt-2 text-sm text-on-surface-variant dark:text-slate-400">
+        {note}
+      </p>
     </div>
   );
 }
@@ -354,9 +358,13 @@ function LegendRow({
           className="h-3 w-3 rounded-full"
           style={{ backgroundColor: color }}
         />
-        <span className="font-medium text-on-surface">{label}</span>
+        <span className="font-medium text-on-surface dark:text-slate-200">
+          {label}
+        </span>
       </div>
-      <span className="font-black text-on-surface">{value}</span>
+      <span className="font-black text-on-surface dark:text-slate-100">
+        {value}
+      </span>
     </div>
   );
 }
@@ -371,12 +379,16 @@ function ActivityRow({
   title: string;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-[1.25rem] bg-surface-container-low p-4">
+    <div className="flex items-start justify-between gap-4 rounded-[1.25rem] bg-surface-container-low p-4 dark:bg-white/[0.055]">
       <div>
-        <p className="font-semibold text-on-surface">{title}</p>
-        <p className="mt-1 text-sm text-on-surface-variant">{detail}</p>
+        <p className="font-semibold text-on-surface dark:text-slate-100">
+          {title}
+        </p>
+        <p className="mt-1 text-sm text-on-surface-variant dark:text-slate-400">
+          {detail}
+        </p>
       </div>
-      <span className="rounded-full  bg-secondary-container/45 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-secondary">
+      <span className="rounded-full bg-secondary-container/45 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-secondary dark:bg-cyan-400/10 dark:text-cyan-200">
         {badge}
       </span>
     </div>
@@ -392,10 +404,10 @@ function QuickAction({
 }) {
   return (
     <button
-      className="flex flex-col items-center justify-center gap-3 rounded-[1.25rem] bg-surface-container-low px-4 py-5 text-sm font-bold text-on-surface transition-transform hover:-translate-y-0.5 hover:bg-surface-container-high"
+      className="flex flex-col items-center justify-center gap-3 rounded-[1.25rem] bg-surface-container-low px-4 py-5 text-sm font-bold text-on-surface transition-transform hover:-translate-y-0.5 hover:bg-surface-container-high dark:bg-white/[0.055] dark:text-slate-100 dark:hover:bg-white/[0.09]"
       type="button"
     >
-      <span className="rounded-2xl bg-white p-3 text-primary shadow-sm">
+      <span className="rounded-2xl bg-white p-3 text-primary shadow-sm dark:bg-white/[0.09] dark:text-blue-300">
         {icon}
       </span>
       {label}

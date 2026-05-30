@@ -1,42 +1,61 @@
 "use client";
 
 import type { ErpDemoPage } from "@/features/dashboard/components/types";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import {
   BarChart3,
   BadgeCheck,
+  Bell,
+  Bot,
   Calendar,
   ChevronDown,
   ChevronLeft,
+  ClipboardCheck,
+  ExternalLink,
   FileBarChart,
-  FlaskConical,
+  FileText,
+  Gauge,
+  HelpCircle,
+  Keyboard,
   LayoutDashboard,
   LogOut,
   MessagesSquare,
   Microscope,
+  Pill,
   PlusCircle,
   ReceiptText,
-  Settings,
-  Stethoscope,
-  Pill,
-  Bell,
-  ClipboardCheck,
-  FileText,
-  Gauge,
   ScanLine,
+  Search,
+  Settings,
+  ShieldCheck,
+  Stethoscope,
   Users,
 } from "lucide-react";
+import type { ComponentType } from "react";
 import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
 
-const navItems = [
+const mainNavItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "finance", label: "Finance", icon: ReceiptText },
-  { id: "appointments", label: "Appointments", icon: Calendar },
+  { id: "appointments", label: "Appointments", icon: Calendar, badge: "4" },
   { id: "patients", label: "Patients", icon: Users },
   { id: "staff", label: "Staff", icon: BadgeCheck },
   { id: "community", label: "Community", icon: MessagesSquare },
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
+  { id: "analytics", label: "Analytics", icon: BarChart3, pulse: true },
+] as const;
+
+const operationsItems = [
+  { id: "billing", label: "Billing", icon: ReceiptText },
+  { id: "finance", label: "Finance", icon: FileBarChart },
+  { id: "notifications", label: "Notifications", icon: Bell, badge: "2" },
+  { id: "reports", label: "Reports", icon: FileText },
+] as const;
+
+const clinicalItems = [
+  { id: "doctors", label: "Doctors", icon: Stethoscope },
+  { id: "radiology", label: "Radiology", icon: ScanLine },
+  { id: "pathology", label: "Pathology", icon: Microscope },
+  { id: "pharmacy", label: "Pharmacy", icon: Pill },
 ] as const;
 
 const settingsOptions = [
@@ -52,6 +71,11 @@ const appointmentOptions = [
   { id: "appointments-review", label: "Review", icon: ClipboardCheck },
   { id: "appointments-patients", label: "Patient Details", icon: FileText },
   { id: "appointments-settings", label: "Settings", icon: Settings },
+] as const;
+
+const utilityItems = [
+  { label: "Search", icon: Search, shortcut: "K" },
+  { label: "Ask AI", icon: Bot, shortcut: "D" },
 ] as const;
 
 export function ErpDemoSidebar({
@@ -77,224 +101,456 @@ export function ErpDemoSidebar({
   const [isAppointmentsOpen, setIsAppointmentsOpen] = useState(
     currentPage.startsWith("appointments")
   );
+
+  const activeMemberState = authClient.useActiveMember();
+  const sessionState = authClient.useSession();
+  const activeMemberRole = activeMemberState.data?.role;
   const visibleSettingsOptions = settingsOptions.filter((option) =>
     allowedPages.includes(option.id)
   );
   const canAccessSettings = visibleSettingsOptions.length > 0;
-
-  const activeMemberState = authClient.useActiveMember();
+  const userName =
+    sessionState.data?.user?.name ||
+    sessionState.data?.user?.email?.split("@")[0] ||
+    "Viruj User";
+  const userEmail = sessionState.data?.user?.email ?? organizationLabel;
 
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 flex h-screen flex-col space-y-2 border-r border-slate-200 bg-slate-100 p-4 transition-all duration-300 ease-in-out",
-        isCollapsed ? "w-20" : "w-64"
+        "fixed bottom-4 left-4 top-4 z-40 flex flex-col overflow-hidden rounded-[22px] border border-slate-200/80 bg-[#f3f4f4] text-slate-700 shadow-[0_24px_80px_rgba(30,41,59,0.14)] transition-all duration-300 ease-in-out dark:border-white/[0.10] dark:bg-[#141618] dark:text-slate-200 dark:shadow-[0_24px_80px_rgba(0,0,0,0.32)]",
+        "before:pointer-events-none before:absolute before:inset-0 before:bg-white/[0.42] dark:before:bg-white/[0.03]",
+        isCollapsed ? "w-20" : "w-72"
       )}
     >
-      <div
-        className={cn(
-          "relative mb-8 flex items-center gap-3",
-          isCollapsed ? "justify-center px-0" : "px-4"
-        )}
-      >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-lg">
-          <Stethoscope size={24} />
-        </div>
-        {!isCollapsed ? (
-          <div className="overflow-hidden whitespace-nowrap">
-            <h1 className="font-headline text-lg font-black leading-tight text-blue-900">
-              Viruj Health
-            </h1>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-              {organizationLabel} ERP
-            </p>
-          </div>
-        ) : null}
-        <button
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col p-4">
+        <div
           className={cn(
-            "absolute -right-7 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm transition-all hover:text-primary",
-            isCollapsed && "rotate-180"
+            "mb-4 flex items-center gap-3",
+            isCollapsed && "justify-center items-center"
           )}
-          onClick={onToggle}
-          type="button"
         >
-          <ChevronLeft size={14} />
-        </button>
-      </div>
+          <div className="relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-[#181b1f] dark:ring-white/[0.10]">
+            <span className="absolute inset-1 rounded-full bg-[conic-gradient(from_150deg,#7cf4ff,#315bff,#c2a3ff,#7cf4ff)] blur-[1px]" />
+            <Stethoscope className="relative text-slate-950 dark:text-white" size={18} />
+          </div>
 
-      <nav className="flex-1 space-y-1">
-        {navItems
-          .filter((item) => allowedPages.includes(item.id))
-          .map((item) => {
+          {!isCollapsed ? (
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate font-headline text-base font-black leading-tight text-slate-950 dark:text-white">
+                Viruj ERP
+              </h1>
+              <p className="truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                {organizationLabel} Workspace
+              </p>
+            </div>
+          ) : null}
+
+          <button
+            aria-label="Toggle sidebar"
+            className={cn(
+              "flex size-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white hover:text-slate-950 dark:text-slate-500 dark:hover:bg-white/[0.08] dark:hover:text-white",
+              isCollapsed &&
+                "absolute -right-3 top-2 rotate-180 bg-white ring-1 ring-slate-200/80 dark:bg-[#17191b] dark:ring-white/[0.10]"
+            )}
+            onClick={onToggle}
+            type="button"
+          >
+            <ChevronLeft size={15} />
+          </button>
+        </div>
+
+        <div
+          className={cn(
+            "space-y-1 border-b border-slate-200/80 pb-3 dark:border-white/[0.07]",
+            isCollapsed && "hidden"
+          )}
+        >
+          {utilityItems.map((item) => {
             const Icon = item.icon;
-            const activeMemberRole = activeMemberState.data?.role;
-            const isAppointmentItem = item.id === "appointments";
-            const showAppointmentDropdown = isAppointmentItem && activeMemberRole !== "ORG_ADMIN";
-            const isActive = isAppointmentItem
-              ? currentPage.startsWith("appointments")
-              : currentPage === item.id;
 
             return (
-              <div key={item.id}>
-                <button
-                  className={cn(
-                    "flex w-full items-center rounded-lg transition-all duration-200",
-                    isCollapsed ? "justify-center p-2" : "gap-3 px-4 py-2",
-                    isActive
-                      ? "bg-white text-blue-700 shadow-sm"
-                      : "text-slate-600 hover:bg-slate-200 hover:translate-x-1"
-                  )}
-                  onClick={() => {
-                    if (showAppointmentDropdown) {
-                      if (isCollapsed) {
-                        onPageChange("appointments-dashboard");
-                        return;
-                      }
-
-                      setIsAppointmentsOpen((value) => !value);
-                      return;
-                    }
-
-                    onPageChange(item.id);
-                  }}
-                  title={isCollapsed ? item.label : undefined}
-                  type="button"
-                >
-                  <Icon size={18} />
-                  {!isCollapsed ? (
-                    <>
-                      <span className="flex-1 whitespace-nowrap text-left text-[13px] font-medium">
-                        {item.label}
-                      </span>
-                      {showAppointmentDropdown ? (
-                        <ChevronDown
-                          className={cn(
-                            "transition-transform",
-                            isAppointmentsOpen && "rotate-180"
-                          )}
-                          size={14}
-                        />
-                      ) : null}
-                    </>
-                  ) : null}
-                </button>
-
-                {showAppointmentDropdown && !isCollapsed && isAppointmentsOpen ? (
-                  <div className="ml-7 mt-1 space-y-1 border-l border-slate-200 pl-3">
-                    {appointmentOptions.map((option) => {
-                      const OptionIcon = option.icon;
-
-                      return (
-                        <button
-                          className={cn(
-                            "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[12px] font-semibold transition hover:bg-white hover:text-blue-700",
-                            currentPage === option.id
-                              ? "bg-white text-blue-700"
-                              : "text-slate-500"
-                          )}
-                          key={option.id}
-                          onClick={() => onPageChange(option.id)}
-                          type="button"
-                        >
-                          <OptionIcon size={14} />
-                          {option.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : null}
-              </div>
+              <button
+                className="flex h-9 w-full items-center gap-3 rounded-lg px-2.5 text-left text-[13px] font-medium text-slate-600 transition hover:bg-white hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-100"
+                key={item.label}
+                type="button"
+              >
+                <Icon size={16} />
+                <span className="flex-1">{item.label}</span>
+                <span className="inline-flex items-center gap-0.5 text-[10px] text-slate-400 dark:text-slate-600">
+                  <Keyboard size={11} />
+                  {item.shortcut}
+                </span>
+              </button>
             );
           })}
+        </div>
 
-        {canAccessSettings ? (
-          <div>
-            <button
-              className={cn(
-                "flex w-full items-center rounded-lg transition-all duration-200",
-                isCollapsed ? "justify-center p-2" : "gap-3 px-4 py-2",
-                currentPage.startsWith("settings")
-                  ? "bg-white text-blue-700 shadow-sm"
-                  : "text-slate-600 hover:bg-slate-200 hover:translate-x-1"
-              )}
-              onClick={() => {
-                if (isCollapsed) {
-                  onPageChange("settings");
-                  return;
-                }
+        <nav className="no-scrollbar mt-4 min-h-0 flex-1 space-y-5 overflow-y-auto pr-1">
+          <SidebarSection
+            allowedPages={allowedPages}
+            currentPage={currentPage}
+            isCollapsed={isCollapsed}
+            items={mainNavItems}
+            label="Main Menu"
+            onAppointmentToggle={() => {
+              if (isCollapsed) {
+                onPageChange("appointments-dashboard");
+                return;
+              }
 
-                setIsSettingsOpen((value) => !value);
-              }}
-              title={isCollapsed ? "Settings" : undefined}
-              type="button"
-            >
-              <Settings size={18} />
-              {!isCollapsed ? (
-                <>
-                  <span className="flex-1 whitespace-nowrap text-left text-[13px] font-medium">
-                    Settings
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      "transition-transform",
-                      isSettingsOpen && "rotate-180"
-                    )}
-                    size={14}
-                  />
-                </>
-              ) : null}
-            </button>
+              setIsAppointmentsOpen((value) => !value);
+            }}
+            onPageChange={onPageChange}
+            showAppointmentDropdown={activeMemberRole !== "ORG_ADMIN"}
+          />
 
-            {!isCollapsed && isSettingsOpen ? (
-              <div className="ml-7 mt-1 space-y-1 border-l border-slate-200 pl-3">
-                {visibleSettingsOptions.map((option) => (
+          {activeMemberRole !== "ORG_ADMIN" &&
+          !isCollapsed &&
+          isAppointmentsOpen ? (
+            <div className="-mt-4 ml-5 space-y-1 border-l border-slate-200/80 pl-3 dark:border-white/[0.08]">
+              {appointmentOptions.map((option) => {
+                const OptionIcon = option.icon;
+
+                return (
                   <button
                     className={cn(
-                      "block w-full rounded-md px-3 py-2 text-left text-[12px] font-semibold transition hover:bg-white hover:text-blue-700",
+                      "flex h-8 w-full items-center gap-2 rounded-lg px-2.5 text-left text-[12px] font-semibold transition",
                       currentPage === option.id
-                        ? "bg-white text-blue-700"
-                        : "text-slate-500"
+                        ? "bg-white text-blue-700 shadow-sm dark:bg-white/[0.08] dark:text-white"
+                        : "text-slate-500 hover:bg-white hover:text-slate-900 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
                     )}
                     key={option.id}
                     onClick={() => onPageChange(option.id)}
                     type="button"
                   >
+                    <OptionIcon size={14} />
                     {option.label}
                   </button>
-                ))}
-              </div>
+                );
+              })}
+            </div>
+          ) : null}
+
+          <SidebarSection
+            allowedPages={allowedPages}
+            currentPage={currentPage}
+            isCollapsed={isCollapsed}
+            items={operationsItems}
+            label="Operations"
+            onPageChange={onPageChange}
+          />
+
+          <SidebarSection
+            allowedPages={allowedPages}
+            currentPage={currentPage}
+            isCollapsed={isCollapsed}
+            items={clinicalItems}
+            label="Clinical"
+            onPageChange={onPageChange}
+          />
+
+          {canAccessSettings ? (
+            <div>
+              <p
+                className={cn(
+                  "mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-600",
+                  isCollapsed && "sr-only"
+                )}
+              >
+                System
+              </p>
+              <NavButton
+                active={currentPage.startsWith("settings")}
+                badge={visibleSettingsOptions.length.toString()}
+                icon={Settings}
+                isCollapsed={isCollapsed}
+                label="Settings"
+                onClick={() => {
+                  if (isCollapsed) {
+                    onPageChange("settings");
+                    return;
+                  }
+
+                  setIsSettingsOpen((value) => !value);
+                }}
+                showChevron={!isCollapsed}
+                isOpen={isSettingsOpen}
+              />
+
+              {!isCollapsed && isSettingsOpen ? (
+                <div className="ml-5 mt-1 space-y-1 border-l border-slate-200/80 pl-3 dark:border-white/[0.08]">
+                  {visibleSettingsOptions.map((option) => (
+                    <button
+                      className={cn(
+                        "block h-8 w-full rounded-lg px-2.5 text-left text-[12px] font-semibold transition",
+                        currentPage === option.id
+                          ? "bg-white text-blue-700 shadow-sm dark:bg-white/[0.08] dark:text-white"
+                          : "text-slate-500 hover:bg-white hover:text-slate-900 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+                      )}
+                      key={option.id}
+                      onClick={() => onPageChange(option.id)}
+                      type="button"
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </nav>
+
+        <div className="relative mt-4 space-y-2 border-t border-slate-200/80 pt-4 dark:border-white/[0.08]">
+          <button
+            className={cn(
+              "flex h-10 w-full items-center rounded-xl border border-slate-200 bg-white text-sm font-bold text-blue-700 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 dark:border-white/[0.08] dark:bg-white dark:text-[#101214] dark:shadow-[0_10px_24px_rgba(0,0,0,0.22)] dark:hover:bg-slate-100",
+              isCollapsed ? "justify-center" : "gap-2.5 px-3"
+            )}
+            type="button"
+          >
+            <PlusCircle size={17} />
+            {!isCollapsed ? <span>New Appointment</span> : null}
+          </button>
+
+          {!isCollapsed ? (
+            <div className="grid grid-cols-3 gap-1">
+              <BottomAction icon={HelpCircle} label="Help" />
+              <BottomAction icon={ExternalLink} label="Open" />
+              <BottomAction icon={ShieldCheck} label="Secure" />
+            </div>
+          ) : null}
+
+          <div
+            className={cn(
+              "flex items-center rounded-xl bg-white/80 ring-1 ring-slate-200/90 dark:bg-white/[0.055] dark:ring-white/[0.07]",
+              isCollapsed ? "justify-center p-2" : "gap-3 p-2"
+            )}
+          >
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#d7e3ff] text-xs font-black text-[#09203c]">
+              {getInitials(userName)}
+            </div>
+            {!isCollapsed ? (
+              <>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[12px] font-semibold text-slate-900 dark:text-white">
+                    {userName}
+                  </p>
+                  <p className="truncate text-[10px] text-slate-500">
+                    {userEmail}
+                  </p>
+                </div>
+                <button
+                  aria-label="Logout"
+                  className="flex size-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:text-slate-500 dark:hover:bg-red-500/[0.12] dark:hover:text-red-300"
+                  onClick={onLogout}
+                  type="button"
+                >
+                  <LogOut size={15} />
+                </button>
+              </>
             ) : null}
           </div>
-        ) : null}
-      </nav>
 
-      <div className="space-y-1 border-t border-slate-200 pt-4">
-        <button
-          className={cn(
-            "mb-4 flex w-full items-center rounded-lg bg-gradient-to-r from-primary to-primary-container text-sm font-semibold text-white shadow-md transition-transform hover:scale-[0.98]",
-            isCollapsed ? "justify-center p-2" : "gap-3 px-4 py-3"
-          )}
-          type="button"
-        >
-          <PlusCircle size={18} />
-          {!isCollapsed ? <span>New Appointment</span> : null}
-        </button>
-        <button
-          className={cn(
-            "flex w-full items-center rounded-lg text-error transition-all hover:bg-error-container/20",
-            isCollapsed ? "justify-center p-2" : "gap-3 px-4 py-2"
-          )}
-          onClick={onLogout}
-          type="button"
-        >
-          <LogOut size={18} />
-          {!isCollapsed ? (
-            <span className="whitespace-nowrap text-[13px] font-medium">
-              Logout
-            </span>
+          {isCollapsed ? (
+            <button
+              aria-label="Logout"
+              className="flex h-9 w-full items-center justify-center rounded-xl text-slate-500 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/[0.12] dark:hover:text-red-300"
+              onClick={onLogout}
+              type="button"
+            >
+              <LogOut size={17} />
+            </button>
           ) : null}
-        </button>
+        </div>
       </div>
     </aside>
   );
+}
+
+type NavItem = {
+  id: ErpDemoPage;
+  label: string;
+  icon: ComponentType<{ size?: number; className?: string }>;
+  badge?: string;
+  pulse?: boolean;
+};
+
+function SidebarSection({
+  allowedPages,
+  currentPage,
+  isCollapsed,
+  items,
+  label,
+  onAppointmentToggle,
+  onPageChange,
+  showAppointmentDropdown = false,
+}: {
+  allowedPages: ErpDemoPage[];
+  currentPage: string;
+  isCollapsed: boolean;
+  items: readonly NavItem[];
+  label: string;
+  onAppointmentToggle?: () => void;
+  onPageChange: (page: ErpDemoPage) => void;
+  showAppointmentDropdown?: boolean;
+}) {
+  const visibleItems = items.filter((item) => allowedPages.includes(item.id));
+
+  if (visibleItems.length === 0) {
+    return null;
+  }
+
+  return (
+    <div>
+      <p
+        className={cn(
+          "mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-600",
+          isCollapsed && "sr-only"
+        )}
+      >
+        {label}
+      </p>
+      <div className="space-y-1">
+        {visibleItems.map((item) => {
+          const isAppointmentItem = item.id === "appointments";
+          const isActive = isAppointmentItem
+            ? currentPage.startsWith("appointments")
+            : currentPage === item.id;
+
+          return (
+            <NavButton
+              active={isActive}
+              badge={item.badge}
+              icon={item.icon}
+              isCollapsed={isCollapsed}
+              key={item.id}
+              label={item.label}
+              onClick={() => {
+                if (isAppointmentItem && showAppointmentDropdown) {
+                  onAppointmentToggle?.();
+                  return;
+                }
+
+                onPageChange(item.id);
+              }}
+              pulse={item.pulse}
+              isOpen={
+                isAppointmentItem
+                  ? currentPage.startsWith("appointments")
+                  : undefined
+              }
+              showChevron={
+                isAppointmentItem && showAppointmentDropdown && !isCollapsed
+              }
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function NavButton({
+  active,
+  badge,
+  icon: Icon,
+  isCollapsed,
+  isOpen,
+  label,
+  onClick,
+  pulse,
+  showChevron,
+}: {
+  active: boolean;
+  badge?: string;
+  icon: ComponentType<{ size?: number; className?: string }>;
+  isCollapsed: boolean;
+  isOpen?: boolean;
+  label: string;
+  onClick: () => void;
+  pulse?: boolean;
+  showChevron?: boolean;
+}) {
+  return (
+    <button
+      className={cn(
+        "group relative flex h-9 w-full items-center rounded-lg text-[13px] font-semibold transition-all duration-200",
+        isCollapsed ? "justify-center px-0" : "gap-3 px-2.5",
+        active
+          ? "bg-white text-blue-700 shadow-sm dark:bg-white/[0.075] dark:text-white dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+          : "text-slate-600 hover:bg-white hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.055] dark:hover:text-slate-100"
+      )}
+      onClick={onClick}
+      title={isCollapsed ? label : undefined}
+      type="button"
+    >
+      <Icon
+        className={cn(
+          "shrink-0 transition",
+          active
+            ? "text-blue-700 dark:text-slate-100"
+            : "text-slate-400 group-hover:text-slate-700 dark:text-slate-500 dark:group-hover:text-slate-300"
+        )}
+        size={16}
+      />
+      {!isCollapsed ? (
+        <>
+          <span className="min-w-0 flex-1 truncate text-left">{label}</span>
+          {badge ? (
+            <span className="rounded-md border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] leading-none text-slate-500 dark:border-white/[0.10] dark:bg-transparent">
+              {badge}
+            </span>
+          ) : null}
+          {pulse ? (
+            <span className="size-1.5 rounded-full bg-[#766cff] shadow-[0_0_10px_2px_rgba(118,108,255,0.62)]" />
+          ) : null}
+          {showChevron ? (
+            <ChevronDown
+              className={cn(
+                "text-slate-400 transition dark:text-slate-600",
+                isOpen && "rotate-180"
+              )}
+              size={14}
+            />
+          ) : null}
+        </>
+      ) : null}
+      {active && isCollapsed ? (
+        <span className="absolute right-2 size-1.5 rounded-full bg-[#766cff] shadow-[0_0_10px_2px_rgba(118,108,255,0.72)]" />
+      ) : null}
+    </button>
+  );
+}
+
+function BottomAction({
+  icon: Icon,
+  label,
+}: {
+  icon: ComponentType<{ size?: number; className?: string }>;
+  label: string;
+}) {
+  return (
+    <button
+      className="flex h-8 items-center justify-center gap-1.5 rounded-lg text-[11px] font-semibold text-slate-500 transition hover:bg-white hover:text-slate-900 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+      type="button"
+    >
+      <Icon size={13} />
+      {label}
+    </button>
+  );
+}
+
+function getInitials(value: string) {
+  const parts = value.trim().split(/\s+/).filter(Boolean);
+
+  if (parts.length === 0) {
+    return "VH";
+  }
+
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
 }

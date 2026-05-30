@@ -1,6 +1,7 @@
 "use client";
 
-import { Bell, ChevronDown, Grid, Search } from "lucide-react";
+import { useTheme } from "@/lib/theme-provider";
+import { Bell, ChevronDown, Grid, Moon, Search, Sun } from "lucide-react";
 
 const titles: Record<string, string> = {
   dashboard: "Clinical Dashboard",
@@ -39,10 +40,12 @@ export function ErpDemoTopBar({
   roleLabel: string;
   userName: string;
 }) {
+  const { theme, toggleTheme } = useTheme();
+
   return (
-    <header className="sticky top-0 z-30 flex w-full items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-5 lg:px-10">
+    <header className="sticky top-0 z-30 flex w-full items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-5 transition-colors dark:border-white/[0.08] dark:bg-[#101214] lg:px-10">
       <div className="flex items-center gap-8">
-        <h2 className="font-headline text-2xl font-bold tracking-tight text-on-surface">
+        <h2 className="font-headline text-2xl font-bold tracking-tight text-on-surface dark:text-slate-100">
           {titles[currentPage] ?? "Viruj Health"}
         </h2>
         <div className="relative hidden lg:block">
@@ -51,7 +54,7 @@ export function ErpDemoTopBar({
             size={18}
           />
           <input
-            className="w-80 rounded-lg border-none bg-surface-container-low py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20"
+            className="w-80 rounded-lg border-none bg-surface-container-low py-2 pl-10 pr-4 text-sm text-slate-800 transition-colors placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 dark:bg-white/[0.07] dark:text-slate-100 dark:placeholder:text-slate-500"
             placeholder="Search patients, records, doctors..."
             type="text"
           />
@@ -60,25 +63,35 @@ export function ErpDemoTopBar({
 
       <div className="flex items-center gap-4">
         <button
-          className="relative rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-200/50"
+          aria-label={
+            theme === "dark" ? "Switch to light theme" : "Switch to dark theme"
+          }
+          className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-200/50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
+          onClick={toggleTheme}
+          type="button"
+        >
+          {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+        <button
+          className="relative rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-200/50 dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
           type="button"
         >
           <Bell size={20} />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full border-2 border-slate-50 bg-error" />
+          <span className="absolute right-2 top-2 h-2 w-2 rounded-full border-2 border-slate-50 bg-error dark:border-[#101214]" />
         </button>
         <button
-          className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-200/50"
+          className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-200/50 dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
           type="button"
         >
           <Grid size={20} />
         </button>
-        <div className="h-8 w-px bg-slate-200" />
-        <div className="flex cursor-pointer items-center gap-3 rounded-lg p-1.5 transition-colors hover:bg-slate-200/50">
+        <div className="h-8 w-px bg-slate-200 dark:bg-white/[0.08]" />
+        <div className="flex cursor-pointer items-center gap-3 rounded-lg p-1.5 transition-colors hover:bg-slate-200/50 dark:hover:bg-white/[0.08]">
           <div className="hidden text-right sm:block">
-            <p className="text-xs font-bold text-on-surface">
+            <p className="text-xs font-bold text-on-surface dark:text-slate-100">
               {userName || "Dr. Sarah Chen"}
             </p>
-            <p className="text-[10px] text-outline">
+            <p className="text-[10px] text-outline dark:text-slate-500">
               {formatRole(roleLabel)} | {organizationLabel}
             </p>
           </div>
@@ -87,7 +100,7 @@ export function ErpDemoTopBar({
             className="h-9 w-9 rounded-lg object-cover ring-2 ring-primary/10"
             src="https://images.unsplash.com/photo-1559839734-2b71f1536783?w=100&h=100&fit=crop"
           />
-          <ChevronDown className="text-slate-400" size={14} />
+          <ChevronDown className="text-slate-400 dark:text-slate-500" size={14} />
         </div>
       </div>
     </header>

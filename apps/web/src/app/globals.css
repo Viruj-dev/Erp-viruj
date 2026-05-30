@@ -89,6 +89,17 @@
     @apply bg-background text-foreground;
   }
 
+  .dark body {
+    background:
+      radial-gradient(
+        circle at top left,
+        rgba(0, 94, 184, 0.16),
+        transparent 24%
+      ),
+      linear-gradient(180deg, #0b0d10 0%, #111418 100%);
+    color: #e5e7eb;
+  }
+
   h1,
   h2,
   h3,
@@ -163,6 +174,25 @@
 }
 
 .dark {
+  --color-primary: #69a8ff;
+  --color-primary-container: #17395f;
+  --color-primary-fixed: #d7e3ff;
+  --color-on-primary-fixed: #dbeafe;
+  --color-secondary: #67e8f9;
+  --color-secondary-container: #164e63;
+  --color-tertiary: #8ea4ff;
+  --color-surface: #0b0d10;
+  --color-surface-container: #111418;
+  --color-surface-container-low: #171a1f;
+  --color-surface-container-high: #20242b;
+  --color-surface-container-highest: #2a3038;
+  --color-surface-container-lowest: #14171b;
+  --color-on-surface: #e5e7eb;
+  --color-on-surface-variant: #9ca3af;
+  --color-outline: #6b7280;
+  --color-outline-variant: #2f3742;
+  --color-error: #f87171;
+  --color-error-container: #4b1717;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);

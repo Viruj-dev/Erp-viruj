@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Manrope, Public_Sans, Geist } from "next/font/google";
+import { Geist, Manrope } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/store/app-context";
 import { Providers } from "@/lib/providers";
@@ -24,7 +24,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
+    <html
+      lang="en"
+      className={cn("font-sans", geist.variable)}
+      suppressHydrationWarning
+    >
       <body className={`${manrope.variable} ${geist.variable} font-sans`}>
         <AppProvider>
           <Providers>{children}</Providers>

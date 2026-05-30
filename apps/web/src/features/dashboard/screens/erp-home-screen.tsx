@@ -138,7 +138,7 @@ export function ErpHomeScreen({
           id?: string;
           organizationType?: string;
         }>(organizationResult);
-        let organizationId = organization?.id;
+        const organizationId = organization?.id;
 
         if (!organizationId) {
           throw new Error(
@@ -260,6 +260,7 @@ export function ErpHomeScreen({
   }, [
     activeMember,
     activeOrganization,
+    activeOrganizationSlug,
     activeOrganizationType,
     isAuthPending,
     isHydrated,
@@ -332,7 +333,7 @@ export function ErpHomeScreen({
   }
 
   return (
-    <div className="flex min-h-screen bg-surface text-on-surface selection:bg-primary/15 selection:text-primary">
+    <div className="flex min-h-screen bg-surface text-on-surface selection:bg-primary/15 selection:text-primary transition-colors dark:bg-[#0b0d10] dark:text-slate-100 dark:selection:bg-blue-400/20 dark:selection:text-blue-100">
       <ErpDemoSidebar
         allowedPages={allowedPages}
         currentPage={currentPage}
@@ -364,7 +365,7 @@ export function ErpHomeScreen({
       />
       <main
         className={`flex min-h-screen min-w-0 flex-1 flex-col overflow-hidden transition-all duration-300 ${
-          isSidebarCollapsed ? "lg:ml-20" : "lg:ml-64"
+          isSidebarCollapsed ? "lg:ml-28" : "lg:ml-80"
         }`}
       >
         <ErpDemoTopBar
