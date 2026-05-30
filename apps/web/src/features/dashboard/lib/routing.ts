@@ -35,6 +35,7 @@ export const dashboardPageOptions = [
   "pharmacy",
   "notifications",
   "reports",
+  "profile",
 ] as const;
 
 export type DashboardPage = (typeof dashboardPageOptions)[number];
@@ -76,8 +77,9 @@ export const allowedDashboardPagesByRole: Record<
     "appointments-patients",
     "appointments-settings",
     "patients",
+    "profile",
   ],
-  COMMUNITY_MANAGER: ["dashboard", "community"],
+  COMMUNITY_MANAGER: ["dashboard", "community", "profile"],
   ORG_ADMIN: [
     "dashboard",
     "finance",
@@ -102,6 +104,7 @@ export const allowedDashboardPagesByRole: Record<
     "pharmacy",
     "notifications",
     "reports",
+    "profile",
   ],
   admin: [
     "dashboard",
@@ -127,8 +130,9 @@ export const allowedDashboardPagesByRole: Record<
     "pharmacy",
     "notifications",
     "reports",
+    "profile",
   ],
-  billing: ["dashboard", "finance", "billing", "reports", "settings"],
+  billing: ["dashboard", "finance", "billing", "reports", "settings", "profile"],
   doctor: [
     "dashboard",
     "doctors",
@@ -139,8 +143,9 @@ export const allowedDashboardPagesByRole: Record<
     "appointments-settings",
     "patients",
     "reports",
+    "profile",
   ],
-  lab_tech: ["dashboard", "pathology", "patients", "reports"],
+  lab_tech: ["dashboard", "pathology", "patients", "reports", "profile"],
   manager: [
     "dashboard",
     "finance",
@@ -165,6 +170,7 @@ export const allowedDashboardPagesByRole: Record<
     "pharmacy",
     "notifications",
     "reports",
+    "profile",
   ],
   owner: [
     "dashboard",
@@ -190,6 +196,7 @@ export const allowedDashboardPagesByRole: Record<
     "pharmacy",
     "notifications",
     "reports",
+    "profile",
   ],
   receptionist: [
     "dashboard",
@@ -200,6 +207,7 @@ export const allowedDashboardPagesByRole: Record<
     "appointments-settings",
     "patients",
     "notifications",
+    "profile",
   ],
 };
 

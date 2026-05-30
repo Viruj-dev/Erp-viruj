@@ -21,7 +21,8 @@ export type ErpDemoPage =
   | "pathology"
   | "pharmacy"
   | "notifications"
-  | "reports";
+  | "reports"
+  | "profile";
 
 export interface PatientCondition {
   id: string;

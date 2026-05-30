@@ -21,11 +21,8 @@ import {
   LayoutDashboard,
   LogOut,
   MessagesSquare,
-  Microscope,
-  Pill,
   PlusCircle,
   ReceiptText,
-  ScanLine,
   Search,
   Settings,
   ShieldCheck,
@@ -45,17 +42,8 @@ const mainNavItems = [
 ] as const;
 
 const operationsItems = [
-  { id: "billing", label: "Billing", icon: ReceiptText },
-  { id: "finance", label: "Finance", icon: FileBarChart },
   { id: "notifications", label: "Notifications", icon: Bell, badge: "2" },
   { id: "reports", label: "Reports", icon: FileText },
-] as const;
-
-const clinicalItems = [
-  { id: "doctors", label: "Doctors", icon: Stethoscope },
-  { id: "radiology", label: "Radiology", icon: ScanLine },
-  { id: "pathology", label: "Pathology", icon: Microscope },
-  { id: "pharmacy", label: "Pharmacy", icon: Pill },
 ] as const;
 
 const settingsOptions = [
@@ -118,9 +106,9 @@ export function ErpDemoSidebar({
   return (
     <aside
       className={cn(
-        "fixed bottom-4 left-4 top-4 z-40 flex flex-col overflow-hidden rounded-[22px] border border-slate-200/80 bg-[#f3f4f4] text-slate-700 shadow-[0_24px_80px_rgba(30,41,59,0.14)] transition-all duration-300 ease-in-out dark:border-white/[0.10] dark:bg-[#141618] dark:text-slate-200 dark:shadow-[0_24px_80px_rgba(0,0,0,0.32)]",
+        "fixed bottom-4 left-4 top-4 z-40 flex flex-col rounded-[22px] border border-slate-200/80 bg-[#f3f4f4] text-slate-700 shadow-[0_24px_80px_rgba(30,41,59,0.14)] transition-all duration-300 ease-in-out dark:border-white/[0.10] dark:bg-[#141618] dark:text-slate-200 dark:shadow-[0_24px_80px_rgba(0,0,0,0.32)]",
         "before:pointer-events-none before:absolute before:inset-0 before:bg-white/[0.42] dark:before:bg-white/[0.03]",
-        isCollapsed ? "w-20" : "w-72"
+        isCollapsed ? "w-20 overflow-visible" : "w-72 overflow-hidden"
       )}
     >
       <div className="relative z-10 flex min-h-0 flex-1 flex-col p-4">
@@ -244,15 +232,6 @@ export function ErpDemoSidebar({
             onPageChange={onPageChange}
           />
 
-          <SidebarSection
-            allowedPages={allowedPages}
-            currentPage={currentPage}
-            isCollapsed={isCollapsed}
-            items={clinicalItems}
-            label="Clinical"
-            onPageChange={onPageChange}
-          />
-
           {canAccessSettings ? (
             <div>
               <p
@@ -305,30 +284,14 @@ export function ErpDemoSidebar({
         </nav>
 
         <div className="relative mt-4 space-y-2 border-t border-slate-200/80 pt-4 dark:border-white/[0.08]">
-          <button
-            className={cn(
-              "flex h-10 w-full items-center rounded-xl border border-slate-200 bg-white text-sm font-bold text-blue-700 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 dark:border-white/[0.08] dark:bg-white dark:text-[#101214] dark:shadow-[0_10px_24px_rgba(0,0,0,0.22)] dark:hover:bg-slate-100",
-              isCollapsed ? "justify-center" : "gap-2.5 px-3"
-            )}
-            type="button"
-          >
-            <PlusCircle size={17} />
-            {!isCollapsed ? <span>New Appointment</span> : null}
-          </button>
-
-          {!isCollapsed ? (
-            <div className="grid grid-cols-3 gap-1">
-              <BottomAction icon={HelpCircle} label="Help" />
-              <BottomAction icon={ExternalLink} label="Open" />
-              <BottomAction icon={ShieldCheck} label="Secure" />
-            </div>
-          ) : null}
-
           <div
             className={cn(
-              "flex items-center rounded-xl bg-white/80 ring-1 ring-slate-200/90 dark:bg-white/[0.055] dark:ring-white/[0.07]",
+              "flex items-center rounded-xl bg-white/80 ring-1 ring-slate-200/90 dark:bg-white/[0.055] dark:ring-white/[0.07] cursor-pointer transition hover:bg-white hover:ring-slate-300 dark:hover:bg-white/[0.08] dark:hover:ring-white/[0.12]",
               isCollapsed ? "justify-center p-2" : "gap-3 p-2"
             )}
+            onClick={() => onPageChange("profile")}
+            title="View profile"
+            role="button"
           >
             <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#d7e3ff] text-xs font-semi-bold text-[#09203c]">
               {getInitials(userName)}

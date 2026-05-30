@@ -9,6 +9,7 @@ import { ErpDemoDashboard } from "@/features/dashboard/components/dashboard";
 import { ErpEnterpriseModule } from "@/features/dashboard/components/enterprise-module";
 import { ErpDemoPatients } from "@/features/dashboard/components/patients";
 import { ErpDemoSettings } from "@/features/dashboard/components/settings";
+import { ErpUserProfilePage } from "@/features/dashboard/components/profile-page";
 import { ErpDemoSidebar } from "@/features/dashboard/components/sidebar";
 import { ErpDemoStaff } from "@/features/dashboard/components/staff";
 import { ErpDemoTopBar } from "@/features/dashboard/components/top-bar";
@@ -373,6 +374,28 @@ export function ErpHomeScreen({
           organizationLabel={organizationLabel}
           roleLabel={roleLabel}
           userName={userName}
+          onNavigateToProfile={() => {
+            router.push(
+              activeOrganizationSlug
+                ? buildTenantDashboardPath(
+                    activeOrganizationType,
+                    activeOrganizationSlug,
+                    "profile"
+                  )
+                : buildDashboardPath(activeOrganizationType, "profile")
+            );
+          }}
+          onLogout={async () => {
+            setIsSigningOut(true);
+            try {
+              await authClient.signOut();
+              await sessionState.refetch();
+              await activeOrganizationState.refetch();
+              await activeMemberState.refetch();
+            } finally {
+              setIsSigningOut(false);
+            }
+          }}
         />
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           <AnimatePresence mode="wait">
@@ -455,6 +478,8 @@ function PageContent({
       );
     case "reports":
       return <ErpEnterpriseModule module="reports" roleLabel={roleLabel} />;
+    case "profile":
+      return <ErpUserProfilePage />;
     case "dashboard":
     default:
       return (

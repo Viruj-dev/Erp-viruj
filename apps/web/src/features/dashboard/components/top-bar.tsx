@@ -1,10 +1,14 @@
 "use client";
 
+import { ProfileDropdown } from "@/features/dashboard/components/profile-dropdown";
+import type { ErpDemoPage } from "@/features/dashboard/components/types";
+import { authClient } from "@/lib/auth-client";
 import { useTheme } from "@/lib/theme-provider";
 import { Bell, ChevronDown, Grid, Moon, Search, Sun } from "lucide-react";
+import { useState } from "react";
 
 const titles: Record<string, string> = {
-  dashboard: "Clinical Dashboard",
+  dashboard: "{} Dashboard",
   finance: "Finance Command Center",
   appointments: "Appointment Scheduling",
   "appointments-dashboard": "Appointment Operations",
@@ -27,6 +31,7 @@ const titles: Record<string, string> = {
   pharmacy: "Pharmacy Management",
   notifications: "Notifications Center",
   reports: "Reports & Exports",
+  profile: "My Profile",
 };
 
 export function ErpDemoTopBar({
@@ -34,19 +39,26 @@ export function ErpDemoTopBar({
   organizationLabel,
   roleLabel,
   userName,
+  onNavigateToProfile,
+  onLogout,
 }: {
   currentPage: string;
   organizationLabel: string;
   roleLabel: string;
   userName: string;
+  onNavigateToProfile: () => void;
+  onLogout: () => void;
 }) {
   const { theme, toggleTheme } = useTheme();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const sessionState = authClient.useSession();
+  const userImage = sessionState.data?.user?.image;
 
   return (
     <header className="sticky top-0 z-30 flex w-full items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-5 transition-colors dark:border-white/[0.08] dark:bg-[#101214] lg:px-10">
       <div className="flex items-center gap-8">
         <h2 className="font-headline text-2xl font-bold tracking-tight text-on-surface dark:text-slate-100">
-          {titles[currentPage] ?? "Viruj Health"}
+          {titles[currentPage]?.replace("{}", `${organizationLabel}'s`) ?? `${organizationLabel}'s Dashboard`}
         </h2>
         <div className="relative hidden lg:block">
           <Search
@@ -86,25 +98,58 @@ export function ErpDemoTopBar({
           <Grid size={20} />
         </button>
         <div className="h-8 w-px bg-slate-200 dark:bg-white/[0.08]" />
-        <div className="flex cursor-pointer items-center gap-3 rounded-lg p-1.5 transition-colors hover:bg-slate-200/50 dark:hover:bg-white/[0.08]">
-          <div className="hidden text-right sm:block">
-            <p className="text-xs font-bold text-on-surface dark:text-slate-100">
-              {userName || "Dr. Sarah Chen"}
-            </p>
-            <p className="text-[10px] text-outline dark:text-slate-500">
-              {formatRole(roleLabel)} | {organizationLabel}
-            </p>
-          </div>
-          <img
-            alt="User profile"
-            className="h-9 w-9 rounded-lg object-cover ring-2 ring-primary/10"
-            src="https://images.unsplash.com/photo-1559839734-2b71f1536783?w=100&h=100&fit=crop"
-          />
-          <ChevronDown className="text-slate-400 dark:text-slate-500" size={14} />
+
+        {/* Profile button – opens dropdown */}
+        <div className="relative">
+          <button
+            id="top-bar-profile-button"
+            type="button"
+            onClick={() => setIsProfileOpen((v) => !v)}
+            className="flex cursor-pointer items-center gap-3 rounded-lg p-1.5 transition-colors hover:bg-slate-200/50 dark:hover:bg-white/[0.08]"
+          >
+            <div className="hidden text-right sm:block">
+              <p className="text-xs font-bold text-on-surface dark:text-slate-100">
+                {userName || "Dr. Sarah Chen"}
+              </p>
+              <p className="text-[10px] text-outline dark:text-slate-500">
+                {formatRole(roleLabel)} | {organizationLabel}
+              </p>
+            </div>
+            {userImage ? (
+              <img
+                alt="User profile"
+                className="h-9 w-9 rounded-lg object-cover ring-2 ring-primary/10"
+                src={userImage}
+              />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#d7e3ff] text-xs font-bold text-[#09203c] ring-2 ring-primary/10 dark:bg-blue-500/20 dark:text-blue-300">
+                {getInitials(userName || "Viruj User")}
+              </div>
+            )}
+            <ChevronDown
+              className={`text-slate-400 transition-transform dark:text-slate-500 ${isProfileOpen ? "rotate-180" : ""}`}
+              size={14}
+            />
+          </button>
+
+          {isProfileOpen && (
+            <ProfileDropdown
+              onClose={() => setIsProfileOpen(false)}
+              onNavigateToProfile={onNavigateToProfile}
+              onLogout={onLogout}
+            />
+          )}
         </div>
       </div>
     </header>
   );
+}
+
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "VH";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
 }
 
 function formatRole(role: string) {
