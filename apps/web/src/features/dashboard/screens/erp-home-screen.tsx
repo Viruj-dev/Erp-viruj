@@ -337,7 +337,7 @@ export function ErpHomeScreen({
   }
 
   return (
-    <div className="flex min-h-screen bg-surface text-on-surface selection:bg-primary/15 selection:text-primary transition-colors dark:bg-[#0b0d10] dark:text-slate-100 dark:selection:bg-blue-400/20 dark:selection:text-blue-100">
+    <div className="flex h-screen min-h-screen bg-surface text-on-surface selection:bg-primary/15 selection:text-primary transition-colors dark:bg-[#0b0d10] dark:text-slate-100 dark:selection:bg-blue-400/20 dark:selection:text-blue-100">
       <ErpDemoSidebar
         allowedPages={allowedPages}
         currentPage={currentPage}
@@ -368,7 +368,7 @@ export function ErpHomeScreen({
         organizationLabel={organizationLabel}
       />
       <main
-        className={`flex min-h-screen min-w-0 flex-1 flex-col overflow-hidden transition-all duration-300 ${
+        className={`flex h-screen min-w-0 flex-1 flex-col overflow-hidden transition-all duration-300 ${
           isSidebarCollapsed ? "lg:ml-28" : "lg:ml-80"
         }`}
       >
@@ -400,22 +400,24 @@ export function ErpHomeScreen({
             }
           }}
         />
-        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={resolvedPage}
               animate={{ opacity: 1, y: 0 }}
-              className="mx-auto w-full max-w-[1600px]"
+              className="mx-auto flex min-h-full w-full max-w-full p-5 lg:p-8"
               exit={{ opacity: 0, y: -12 }}
               initial={{ opacity: 0, y: 12 }}
               transition={{ duration: 0.2 }}
             >
-              <PageContent
-                currentPage={resolvedPage}
-                organizationLabel={organizationLabel}
-                roleLabel={roleLabel}
-                userName={userName}
-              />
+              <div className="flex min-h-full w-full flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/88 shadow-sm ring-1 ring-white/60 backdrop-blur dark:border-white/[0.08] dark:bg-[#111418] dark:ring-white/[0.03]">
+                <PageContent
+                  currentPage={resolvedPage}
+                  organizationLabel={organizationLabel}
+                  roleLabel={roleLabel}
+                  userName={userName}
+                />
+              </div>
             </motion.div>
           </AnimatePresence>
         </div>

@@ -191,7 +191,7 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
+    <div className="px-5 py-8 sm:px-6 lg:px-10">
       {/* Header */}
       <div className="max-w-4xl mx-auto text-center mb-12">
         <Badge className="mb-4 bg-accent/20 text-accent border-0">

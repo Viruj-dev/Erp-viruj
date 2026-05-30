@@ -121,6 +121,27 @@ export type VirujStaffInviteResult = VirujStaffInvitation & {
   };
 };
 
+export type VirujDoctorInput = {
+  availability: string;
+  department: string;
+  experience: string;
+  fee: string;
+  name: string;
+  phone: string;
+  qualification: string;
+  specialty: string;
+};
+
+export type VirujDoctor = VirujDoctorInput & {
+  appVisibility: "hidden" | "visible";
+  createdAt: string;
+  id: string;
+  organizationId: string;
+  published: boolean;
+  publishedAt: string | null;
+  updatedAt: string;
+};
+
 export const virujBackend = {
   audit: {
     key: ["viruj-backend", "erp", "audit", "recent"] as const,
@@ -139,6 +160,36 @@ export const virujBackend = {
           approvalNotes: input.approvalNotes,
           status: input.status,
         },
+        method: "PATCH",
+      }),
+  },
+  doctors: {
+    create: (input: VirujDoctorInput) =>
+      request<VirujDoctor>("/doctors", {
+        body: input,
+        method: "POST",
+      }),
+    delete: (input: { id: string }) =>
+      request<{ success: true }>(`/doctors/${input.id}`, {
+        method: "DELETE",
+      }),
+    key: ["viruj-backend", "erp", "doctors"] as const,
+    list: () => request<VirujDoctor[]>("/doctors"),
+    publish: (input: { id: string }) =>
+      request<VirujDoctor>(`/doctors/${input.id}/publish`, {
+        method: "POST",
+      }),
+    publishAll: () =>
+      request<{
+        count: number;
+        doctors: VirujDoctor[];
+        message: string;
+      }>("/doctors/publish", {
+        method: "POST",
+      }),
+    update: (input: { doctor: VirujDoctorInput; id: string }) =>
+      request<VirujDoctor>(`/doctors/${input.id}`, {
+        body: input.doctor,
         method: "PATCH",
       }),
   },
