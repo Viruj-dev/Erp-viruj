@@ -191,7 +191,7 @@ export function ErpHomeScreen({
     return <LoadingScreen />;
   }
 
-  if (!activeOrganization || !activeMember) {
+  if (!activeOrganization || !activeMember || !activeOrganizationType) {
     return (
       <OrganizationAccessScreen
         isLoading={organizationsState.isPending}
