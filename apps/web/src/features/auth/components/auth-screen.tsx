@@ -6,7 +6,7 @@ import {
   getDefaultDashboardPage,
   isDashboardOrganizationType,
 } from "@/features/dashboard/lib/routing";
-import { authClient, setActiveOrganization } from "@/lib/auth-client";
+import { activateOrganization, authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
@@ -23,22 +23,25 @@ export function ErpAuthScreen() {
   const activeMemberState = authClient.useActiveMember();
   const activeOrganizationState = authClient.useActiveOrganization();
   const organizationsState = authClient.useListOrganizations();
+  const sessionOrganization = getSessionOrganization(sessionState.data);
+  const sessionMember = getSessionMember(sessionState.data);
+  const activeOrganization = sessionOrganization ?? activeOrganizationState.data;
+  const activeMember = sessionMember ?? activeMemberState.data;
 
   useEffect(() => {
     const organizations = organizationsState.data ?? [];
 
     if (
       !sessionState.data?.user ||
-      activeOrganizationState.data?.id ||
+      activeOrganization?.id ||
       organizations.length !== 1 ||
-      isActivatingOnlyOrganization ||
-      !setActiveOrganization
+      isActivatingOnlyOrganization
     ) {
       return;
     }
 
     setIsActivatingOnlyOrganization(true);
-    void setActiveOrganization({
+    void activateOrganization({
       organizationId: organizations[0].id,
     })
       .then(() =>
@@ -51,7 +54,7 @@ export function ErpAuthScreen() {
       .finally(() => setIsActivatingOnlyOrganization(false));
   }, [
     activeMemberState,
-    activeOrganizationState.data?.id,
+    activeOrganization?.id,
     activeOrganizationState,
     isActivatingOnlyOrganization,
     organizationsState.data,
@@ -60,8 +63,7 @@ export function ErpAuthScreen() {
   ]);
 
   useEffect(() => {
-    const activeOrganizationType =
-      activeOrganizationState.data?.organizationType;
+    const activeOrganizationType = activeOrganization?.organizationType;
 
     if (
       !sessionState.data?.user ||
@@ -78,7 +80,7 @@ export function ErpAuthScreen() {
       router.replace(
         buildDashboardPath(
           activeOrganizationType,
-          getDefaultDashboardPage(activeMemberState.data?.role)
+          getDefaultDashboardPage(activeMember?.role)
         )
       );
       return;
@@ -86,9 +88,9 @@ export function ErpAuthScreen() {
 
     router.replace("/dashboard");
   }, [
-    activeMemberState.data?.role,
+    activeMember?.role,
     activeMemberState.isPending,
-    activeOrganizationState.data?.organizationType,
+    activeOrganization?.organizationType,
     activeOrganizationState.isPending,
     router,
     sessionState.data?.user,
@@ -105,4 +107,37 @@ export function ErpAuthScreen() {
       }}
     />
   );
+}
+
+function getSessionOrganization(session: unknown) {
+  if (
+    session &&
+    typeof session === "object" &&
+    "activeOrganization" in session &&
+    session.activeOrganization &&
+    typeof session.activeOrganization === "object"
+  ) {
+    return session.activeOrganization as {
+      id?: string;
+      organizationType?: string;
+    };
+  }
+
+  return null;
+}
+
+function getSessionMember(session: unknown) {
+  if (
+    session &&
+    typeof session === "object" &&
+    "activeMember" in session &&
+    session.activeMember &&
+    typeof session.activeMember === "object"
+  ) {
+    return session.activeMember as {
+      role?: string;
+    };
+  }
+
+  return null;
 }

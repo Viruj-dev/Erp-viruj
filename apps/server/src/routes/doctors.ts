@@ -2,7 +2,7 @@ import { auth } from "@erp_virujhealth/auth";
 import { db } from "@erp_virujhealth/db";
 import { doctor } from "@erp_virujhealth/db/schema/auth";
 import { and, desc, eq } from "drizzle-orm";
-import type { Hono } from "hono";
+import type { Context, Hono } from "hono";
 import { randomUUID } from "node:crypto";
 
 type DoctorInput = {
@@ -18,19 +18,28 @@ type DoctorInput = {
 
 export function registerDoctorRoutes(app: Hono) {
   app.get("/erp/doctors", async (context) => {
-    const organizationId = await requireActiveOrganizationId(context.req.raw.headers);
+    const access = await requireHospitalOrganizationId(context);
+
+    if ("response" in access) {
+      return access.response;
+    }
 
     const doctors = await db
       .select()
       .from(doctor)
-      .where(eq(doctor.organizationId, organizationId))
+      .where(eq(doctor.organizationId, access.organizationId))
       .orderBy(desc(doctor.createdAt));
 
     return context.json(doctors.map(mapDoctor));
   });
 
   app.post("/erp/doctors", async (context) => {
-    const organizationId = await requireActiveOrganizationId(context.req.raw.headers);
+    const access = await requireHospitalOrganizationId(context);
+
+    if ("response" in access) {
+      return access.response;
+    }
+
     const payload = (await context.req.json().catch(() => ({}))) as DoctorInput;
     const name = textValue(payload.name);
     const specialty = textValue(payload.specialty);
@@ -49,7 +58,7 @@ export function registerDoctorRoutes(app: Hono) {
       .insert(doctor)
       .values({
         id: randomUUID(),
-        organizationId,
+        organizationId: access.organizationId,
         name,
         specialty,
         availability: textValue(payload.availability),
@@ -69,7 +78,12 @@ export function registerDoctorRoutes(app: Hono) {
   });
 
   app.patch("/erp/doctors/:id", async (context) => {
-    const organizationId = await requireActiveOrganizationId(context.req.raw.headers);
+    const access = await requireHospitalOrganizationId(context);
+
+    if ("response" in access) {
+      return access.response;
+    }
+
     const payload = (await context.req.json().catch(() => ({}))) as DoctorInput;
     const name = textValue(payload.name);
     const specialty = textValue(payload.specialty);
@@ -100,7 +114,7 @@ export function registerDoctorRoutes(app: Hono) {
       .where(
         and(
           eq(doctor.id, context.req.param("id")),
-          eq(doctor.organizationId, organizationId)
+          eq(doctor.organizationId, access.organizationId)
         )
       )
       .returning();
@@ -113,14 +127,18 @@ export function registerDoctorRoutes(app: Hono) {
   });
 
   app.delete("/erp/doctors/:id", async (context) => {
-    const organizationId = await requireActiveOrganizationId(context.req.raw.headers);
+    const access = await requireHospitalOrganizationId(context);
+
+    if ("response" in access) {
+      return access.response;
+    }
 
     const [deleted] = await db
       .delete(doctor)
       .where(
         and(
           eq(doctor.id, context.req.param("id")),
-          eq(doctor.organizationId, organizationId)
+          eq(doctor.organizationId, access.organizationId)
         )
       )
       .returning({ id: doctor.id });
@@ -133,7 +151,12 @@ export function registerDoctorRoutes(app: Hono) {
   });
 
   app.post("/erp/doctors/:id/publish", async (context) => {
-    const organizationId = await requireActiveOrganizationId(context.req.raw.headers);
+    const access = await requireHospitalOrganizationId(context);
+
+    if ("response" in access) {
+      return access.response;
+    }
+
     const now = new Date();
 
     const [updated] = await db
@@ -147,7 +170,7 @@ export function registerDoctorRoutes(app: Hono) {
       .where(
         and(
           eq(doctor.id, context.req.param("id")),
-          eq(doctor.organizationId, organizationId)
+          eq(doctor.organizationId, access.organizationId)
         )
       )
       .returning();
@@ -160,7 +183,12 @@ export function registerDoctorRoutes(app: Hono) {
   });
 
   app.post("/erp/doctors/publish", async (context) => {
-    const organizationId = await requireActiveOrganizationId(context.req.raw.headers);
+    const access = await requireHospitalOrganizationId(context);
+
+    if ("response" in access) {
+      return access.response;
+    }
+
     const now = new Date();
 
     const doctors = await db
@@ -171,7 +199,7 @@ export function registerDoctorRoutes(app: Hono) {
         publishedAt: now,
         updatedAt: now,
       })
-      .where(eq(doctor.organizationId, organizationId))
+      .where(eq(doctor.organizationId, access.organizationId))
       .returning();
 
     return context.json({
@@ -182,24 +210,57 @@ export function registerDoctorRoutes(app: Hono) {
   });
 }
 
-async function requireActiveOrganizationId(headers: Headers) {
-  const session = await auth.api.getSession({ headers });
+async function requireHospitalOrganizationId(context: Context) {
+  const session = await auth.api.getSession({
+    headers: context.req.raw.headers,
+  });
   const activeOrganization = session?.activeOrganization as
     | {
         id?: string;
+        organizationType?: string;
       }
     | null
     | undefined;
 
   if (!session?.user) {
-    throw new Error("Not authenticated");
+    return {
+      response: context.json(
+        {
+          error: "not_authenticated",
+          message: "Sign in before managing hospital doctors.",
+        },
+        401
+      ),
+    };
   }
 
   if (!activeOrganization?.id) {
-    throw new Error("Active organization is required");
+    return {
+      response: context.json(
+        {
+          error: "active_organization_required",
+          message: "Choose a hospital workspace before managing doctors.",
+        },
+        401
+      ),
+    };
   }
 
-  return activeOrganization.id;
+  if (activeOrganization.organizationType !== "hospital") {
+    return {
+      response: context.json(
+        {
+          error: "hospital_workspace_required",
+          message: "Doctor directory management is only available in hospital workspaces.",
+        },
+        403
+      ),
+    };
+  }
+
+  return {
+    organizationId: activeOrganization.id,
+  };
 }
 
 function mapDoctor(record: typeof doctor.$inferSelect) {

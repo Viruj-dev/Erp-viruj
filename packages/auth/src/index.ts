@@ -14,6 +14,7 @@ import {
   type OrganizationMemberRole,
   normalizeOrganizationMemberRole,
 } from "./roles";
+import { networkInterfaces } from "node:os";
 import { z } from "zod";
 
 export {
@@ -239,6 +240,7 @@ export type ErpPermissionRequest = Partial<{
 }>;
 
 const organizationTypeSchema = z.enum(schema.organizationTypes);
+const trustedOrigins = buildTrustedOrigins();
 
 type SessionOrganizationMembership = Awaited<
   ReturnType<typeof resolveActiveOrganizationMembership>
@@ -346,7 +348,7 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
-  trustedOrigins: [env.CORS_ORIGIN],
+  trustedOrigins,
   emailAndPassword: {
     enabled: true,
   },
@@ -449,3 +451,22 @@ export const auth = betterAuth({
 });
 
 export type AuthSession = typeof auth.$Infer.Session;
+
+function buildTrustedOrigins() {
+  const origins = new Set([env.CORS_ORIGIN]);
+
+  if (env.NODE_ENV !== "production") {
+    origins.add("http://localhost:3001");
+    origins.add("http://127.0.0.1:3001");
+
+    for (const networkInterface of Object.values(networkInterfaces())) {
+      for (const address of networkInterface ?? []) {
+        if (address.family === "IPv4" && !address.internal) {
+          origins.add(`http://${address.address}:3001`);
+        }
+      }
+    }
+  }
+
+  return Array.from(origins);
+}

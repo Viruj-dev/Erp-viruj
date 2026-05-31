@@ -157,3 +157,36 @@ export async function bootstrapOrganization(input: {
     error: null,
   };
 }
+
+export async function activateOrganization(input: { organizationId: string }) {
+  const response = await fetch(`${authBaseUrl}/activate-organization`, {
+    body: JSON.stringify(input),
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  });
+
+  const payload = (await response.json().catch(() => null)) as
+    | {
+        error?: string;
+        id?: string;
+        organizationType?: string;
+      }
+    | null;
+
+  if (!response.ok) {
+    return {
+      data: null,
+      error: {
+        message: payload?.error ?? "Unable to activate organization.",
+      },
+    };
+  }
+
+  return {
+    data: payload,
+    error: null,
+  };
+}

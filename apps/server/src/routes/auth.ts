@@ -14,6 +14,70 @@ import { randomUUID } from "node:crypto";
 const defaultOrganizationType = "hospital";
 
 export function registerAuthRoutes(app: Hono) {
+  app.post("/auth/activate-organization", async (context) => {
+    try {
+      const authSession = await auth.api.getSession({
+        headers: context.req.raw.headers,
+      });
+
+      if (!authSession?.user) {
+        return context.json({ error: "Not authenticated" }, 401);
+      }
+
+      const body = await context.req.json().catch(() => ({}));
+      const organizationId =
+        typeof body.organizationId === "string" ? body.organizationId : "";
+
+      if (!organizationId) {
+        return context.json({ error: "Organization ID is required" }, 400);
+      }
+
+      const selectedMembership = await db
+        .select({
+          organizationId: member.organizationId,
+          organizationType: organization.organizationType,
+        })
+        .from(member)
+        .innerJoin(organization, eq(member.organizationId, organization.id))
+        .where(
+          and(
+            eq(member.organizationId, organizationId),
+            eq(member.userId, authSession.user.id)
+          )
+        )
+        .limit(1)
+        .then((memberships) => memberships[0] ?? null);
+
+      if (!selectedMembership) {
+        return context.json(
+          { error: "You do not belong to this organization" },
+          403
+        );
+      }
+
+      await setSessionActiveOrganization(
+        authSession,
+        selectedMembership.organizationId
+      );
+
+      return context.json({
+        id: selectedMembership.organizationId,
+        organizationType: selectedMembership.organizationType,
+      });
+    } catch (error) {
+      console.error("[Auth] Organization activation failed:", error);
+      return context.json(
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : "Unable to activate organization.",
+        },
+        500
+      );
+    }
+  });
+
   app.post("/auth/bootstrap-organization", async (context) => {
     try {
       const authSession = await auth.api.getSession({
@@ -92,35 +156,10 @@ export function registerAuthRoutes(app: Hono) {
           selectedOrganization;
       }
 
-      const sessionToken = (
-        authSession.session as {
-          id?: string;
-          token?: string;
-        }
-      ).token;
-      const sessionId = (
-        authSession.session as {
-          id?: string;
-          token?: string;
-        }
-      ).id;
-
-      if (sessionToken) {
-        await db
-          .update(session)
-          .set({ activeOrganizationId: selectedOrganization.organizationId })
-          .where(eq(session.token, sessionToken));
-      } else if (sessionId) {
-        await db
-          .update(session)
-          .set({ activeOrganizationId: selectedOrganization.organizationId })
-          .where(
-            and(
-              eq(session.id, sessionId),
-              eq(session.userId, authSession.user.id)
-            )
-          );
-      }
+      await setSessionActiveOrganization(
+        authSession,
+        selectedOrganization.organizationId
+      );
 
       return context.json({
         id: selectedOrganization.organizationId,
@@ -141,6 +180,41 @@ export function registerAuthRoutes(app: Hono) {
   });
 
   app.on(["POST", "GET"], "/auth/*", (context) => auth.handler(context.req.raw));
+}
+
+async function setSessionActiveOrganization(
+  authSession: NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>,
+  organizationId: string
+) {
+  const sessionToken = (
+    authSession.session as {
+      id?: string;
+      token?: string;
+    }
+  ).token;
+  const sessionId = (
+    authSession.session as {
+      id?: string;
+      token?: string;
+    }
+  ).id;
+
+  if (sessionToken) {
+    await db
+      .update(session)
+      .set({ activeOrganizationId: organizationId })
+      .where(eq(session.token, sessionToken));
+    return;
+  }
+
+  if (sessionId) {
+    await db
+      .update(session)
+      .set({ activeOrganizationId: organizationId })
+      .where(
+        and(eq(session.id, sessionId), eq(session.userId, authSession.user.id))
+      );
+  }
 }
 
 function findMembership(

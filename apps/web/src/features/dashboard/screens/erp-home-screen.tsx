@@ -29,8 +29,8 @@ import {
 } from "@/features/dashboard/lib/routing";
 import { LoadingScreen } from "@/features/shell/components/loading-screen";
 import {
+  activateOrganization,
   authClient,
-  setActiveOrganization,
 } from "@/lib/auth-client";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -59,28 +59,30 @@ export function ErpHomeScreen({
   const activeMemberState = authClient.useActiveMember();
   const activeOrganizationState = authClient.useActiveOrganization();
   const organizationsState = authClient.useListOrganizations();
+  const sessionOrganization = getSessionOrganization(sessionState.data);
+  const sessionMember = getSessionMember(sessionState.data);
+  const activeOrganization =
+    sessionOrganization ?? activeOrganizationState.data;
+  const activeMember = sessionMember ?? activeMemberState.data;
   const isAuthPending =
     sessionState.isPending ||
-    organizationsState.isPending ||
-    activeOrganizationState.isPending ||
-    activeMemberState.isPending;
+    organizationsState.isPending;
 
   useEffect(() => {
-    const activeOrganizationId = activeOrganizationState.data?.id;
+    const activeOrganizationId = activeOrganization?.id;
     const organizations = organizationsState.data ?? [];
 
     if (
       !sessionState.data?.user ||
       activeOrganizationId ||
       organizations.length !== 1 ||
-      isActivatingOnlyOrganization ||
-      !setActiveOrganization
+      isActivatingOnlyOrganization
     ) {
       return;
     }
 
     setIsActivatingOnlyOrganization(true);
-    void setActiveOrganization({
+    void activateOrganization({
       organizationId: organizations[0].id,
     })
       .then(() =>
@@ -93,7 +95,7 @@ export function ErpHomeScreen({
       .finally(() => setIsActivatingOnlyOrganization(false));
   }, [
     activeMemberState,
-    activeOrganizationState.data?.id,
+    activeOrganization?.id,
     activeOrganizationState,
     isActivatingOnlyOrganization,
     organizationsState.data,
@@ -108,8 +110,6 @@ export function ErpHomeScreen({
     sessionState.data?.user?.name ||
     sessionState.data?.user?.email ||
     "Clinical User";
-  const activeOrganization = activeOrganizationState.data;
-  const activeMember = activeMemberState.data;
   const routeDashboardOrganizationType = isDashboardOrganizationType(
     routeOrganizationType
   )
@@ -191,7 +191,7 @@ export function ErpHomeScreen({
     return <LoadingScreen />;
   }
 
-  if (!activeOrganizationState.data || !activeMemberState.data) {
+  if (!activeOrganization || !activeMember) {
     return (
       <OrganizationAccessScreen
         isLoading={organizationsState.isPending}
@@ -202,15 +202,11 @@ export function ErpHomeScreen({
           await activeMemberState.refetch();
         }}
         onSelectOrganization={async (organizationId) => {
-          if (!setActiveOrganization) {
-            return;
-          }
-
           const selectedOrganization = organizationsState.data?.find(
             (organization) => organization.id === organizationId
           );
 
-          await setActiveOrganization({
+          await activateOrganization({
             organizationId,
           });
           await sessionState.refetch();
@@ -421,6 +417,40 @@ function getOrganizationSlug(organization: unknown) {
     typeof organization.slug === "string"
   ) {
     return organization.slug;
+  }
+
+  return null;
+}
+
+function getSessionOrganization(session: unknown) {
+  if (
+    session &&
+    typeof session === "object" &&
+    "activeOrganization" in session &&
+    session.activeOrganization &&
+    typeof session.activeOrganization === "object"
+  ) {
+    return session.activeOrganization as {
+      id?: string;
+      organizationType?: string;
+      slug?: string;
+    };
+  }
+
+  return null;
+}
+
+function getSessionMember(session: unknown) {
+  if (
+    session &&
+    typeof session === "object" &&
+    "activeMember" in session &&
+    session.activeMember &&
+    typeof session.activeMember === "object"
+  ) {
+    return session.activeMember as {
+      role?: string;
+    };
   }
 
   return null;
