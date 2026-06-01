@@ -45,15 +45,17 @@ const doctorNavItems = [
   { id: "dashboard", label: "Overview", icon: LayoutDashboard },
   { id: "onboarding", label: "Onboarding", icon: Gauge },
   { id: "profile", label: "Profile", icon: Stethoscope },
-  { id: "verification", label: "Verification", icon: FileBadge },
-  { id: "documents", label: "Documents", icon: FileText },
   { id: "locations", label: "Locations", icon: MapPinned },
   { id: "availability", label: "Availability", icon: Timer },
-  { id: "leaves", label: "Leaves", icon: ClipboardCheck },
-  { id: "appointments", label: "Appointments", icon: Calendar, badge: "4" },
   { id: "patients", label: "Patients", icon: Users },
   { id: "consultations", label: "Consultations", icon: BriefcaseMedical },
   { id: "doctor-settings", label: "Settings", icon: Settings },
+] as const;
+
+const doctorProfileOptions = [
+  { id: "profile", label: "Profile Details", icon: Stethoscope },
+  { id: "verification", label: "Verification", icon: FileBadge },
+  { id: "documents", label: "Documents", icon: FileText },
 ] as const;
 
 const operationsItems = [
@@ -104,6 +106,11 @@ export function ErpDemoSidebar({
   );
   const [isAppointmentsOpen, setIsAppointmentsOpen] = useState(
     currentPage.startsWith("appointments")
+  );
+  const [isDoctorProfileOpen, setIsDoctorProfileOpen] = useState(
+    currentPage === "profile" ||
+      currentPage === "verification" ||
+      currentPage === "documents"
   );
 
   const activeMemberState = authClient.useActiveMember();
@@ -215,7 +222,18 @@ export function ErpDemoSidebar({
 
               setIsAppointmentsOpen((value) => !value);
             }}
+            onDoctorProfileToggle={() => {
+              if (isCollapsed) {
+                onPageChange("profile");
+                return;
+              }
+
+              setIsDoctorProfileOpen((value) => !value);
+            }}
             onPageChange={onPageChange}
+            profileOptions={doctorProfileOptions}
+            isDoctorProfileOpen={isDoctorProfileOpen}
+            showDoctorProfileDropdown={isDoctorWorkspace}
             showAppointmentDropdown={!isOwnerOrAdmin}
           />
 
@@ -370,7 +388,11 @@ function SidebarSection({
   items,
   label,
   onAppointmentToggle,
+  onDoctorProfileToggle,
   onPageChange,
+  profileOptions = [],
+  isDoctorProfileOpen = false,
+  showDoctorProfileDropdown = false,
   showAppointmentDropdown = false,
 }: {
   allowedPages: ErpDemoPage[];
@@ -379,7 +401,11 @@ function SidebarSection({
   items: readonly NavItem[];
   label: string;
   onAppointmentToggle?: () => void;
+  onDoctorProfileToggle?: () => void;
   onPageChange: (page: ErpDemoPage) => void;
+  profileOptions?: readonly NavItem[];
+  isDoctorProfileOpen?: boolean;
+  showDoctorProfileDropdown?: boolean;
   showAppointmentDropdown?: boolean;
 }) {
   const visibleItems = items.filter((item) => allowedPages.includes(item.id));
@@ -401,36 +427,77 @@ function SidebarSection({
       <div className="space-y-1">
         {visibleItems.map((item) => {
           const isAppointmentItem = item.id === "appointments";
+          const isDoctorProfileItem = item.id === "profile";
           const isActive = isAppointmentItem
             ? currentPage.startsWith("appointments")
+            : isDoctorProfileItem && showDoctorProfileDropdown
+            ? ["profile", "verification", "documents"].includes(currentPage)
             : currentPage === item.id;
 
           return (
-            <NavButton
-              active={isActive}
-              badge={item.badge}
-              icon={item.icon}
-              isCollapsed={isCollapsed}
-              key={item.id}
-              label={item.label}
-              onClick={() => {
-                if (isAppointmentItem && showAppointmentDropdown) {
-                  onAppointmentToggle?.();
-                  return;
-                }
+            <div key={item.id}>
+              <NavButton
+                active={isActive}
+                badge={item.badge}
+                icon={item.icon}
+                isCollapsed={isCollapsed}
+                label={item.label}
+                onClick={() => {
+                  if (isAppointmentItem && showAppointmentDropdown) {
+                    onAppointmentToggle?.();
+                    return;
+                  }
 
-                onPageChange(item.id);
-              }}
-              pulse={item.pulse}
-              isOpen={
-                isAppointmentItem
-                  ? currentPage.startsWith("appointments")
-                  : undefined
-              }
-              showChevron={
-                isAppointmentItem && showAppointmentDropdown && !isCollapsed
-              }
-            />
+                  if (isDoctorProfileItem && showDoctorProfileDropdown) {
+                    onDoctorProfileToggle?.();
+                    return;
+                  }
+
+                  onPageChange(item.id);
+                }}
+                pulse={item.pulse}
+                isOpen={
+                  isAppointmentItem
+                    ? currentPage.startsWith("appointments")
+                    : isDoctorProfileItem && showDoctorProfileDropdown
+                    ? ["profile", "verification", "documents"].includes(currentPage)
+                    : undefined
+                }
+                showChevron={
+                  ((isAppointmentItem && showAppointmentDropdown) ||
+                    (isDoctorProfileItem && showDoctorProfileDropdown)) &&
+                  !isCollapsed
+                }
+              />
+
+              {isDoctorProfileItem &&
+              showDoctorProfileDropdown &&
+              isDoctorProfileOpen &&
+              !isCollapsed ? (
+                <div className="ml-5 mt-1 space-y-1 border-l border-slate-200/80 pl-3 dark:border-white/[0.08]">
+                  {profileOptions.map((option) => {
+                    const OptionIcon = option.icon;
+
+                    return (
+                      <button
+                        className={cn(
+                          "flex h-8 w-full items-center gap-2 rounded-lg px-2.5 text-left text-[12px] font-semibold transition",
+                          currentPage === option.id
+                            ? "bg-white text-blue-700 shadow-sm dark:bg-white/[0.08] dark:text-white"
+                            : "text-slate-500 hover:bg-white hover:text-slate-900 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+                        )}
+                        key={option.id}
+                        onClick={() => onPageChange(option.id)}
+                        type="button"
+                      >
+                        <OptionIcon size={14} />
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
           );
         })}
       </div>
