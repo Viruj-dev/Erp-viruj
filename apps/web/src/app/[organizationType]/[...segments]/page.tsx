@@ -21,6 +21,7 @@ export default async function OrganizationTenantRoutePage({
       <DoctorHomeScreen
         currentPage={currentPage}
         routeOrganizationType={organizationType}
+        routeSegments={segments}
       />
     );
   }

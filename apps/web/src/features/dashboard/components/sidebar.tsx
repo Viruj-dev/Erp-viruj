@@ -9,20 +9,23 @@ import {
   BadgeIndianRupee,
   Bell,
   Bot,
-  Building2,
+  BriefcaseMedical,
   Calendar,
   ChevronDown,
   ChevronLeft,
   ClipboardCheck,
+  FileBadge,
   FileText,
   Gauge,
   Keyboard,
   LayoutDashboard,
   LogOut,
   MessagesSquare,
+  MapPinned,
   Search,
   Settings,
   Stethoscope,
+  Timer,
   Users,
 } from "lucide-react";
 import type { ComponentType } from "react";
@@ -36,6 +39,21 @@ const mainNavItems = [
   { id: "doctors", label: "Doctors", icon: Stethoscope },
   { id: "community", label: "Community", icon: MessagesSquare },
   { id: "analytics", label: "Analytics", icon: BarChart3, pulse: true },
+] as const;
+
+const doctorNavItems = [
+  { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+  { id: "onboarding", label: "Onboarding", icon: Gauge },
+  { id: "profile", label: "Profile", icon: Stethoscope },
+  { id: "verification", label: "Verification", icon: FileBadge },
+  { id: "documents", label: "Documents", icon: FileText },
+  { id: "locations", label: "Locations", icon: MapPinned },
+  { id: "availability", label: "Availability", icon: Timer },
+  { id: "leaves", label: "Leaves", icon: ClipboardCheck },
+  { id: "appointments", label: "Appointments", icon: Calendar, badge: "4" },
+  { id: "patients", label: "Patients", icon: Users },
+  { id: "consultations", label: "Consultations", icon: BriefcaseMedical },
+  { id: "doctor-settings", label: "Settings", icon: Settings },
 ] as const;
 
 const operationsItems = [
@@ -100,6 +118,7 @@ export function ErpDemoSidebar({
   const visibleSettingsOptions = settingsOptions.filter((option) =>
     allowedPages.includes(option.id)
   );
+  const isDoctorWorkspace = organizationLabel.toLowerCase() === "doctor";
   const canAccessSettings = visibleSettingsOptions.length > 0;
   const userName =
     sessionState.data?.user?.name ||
@@ -186,7 +205,7 @@ export function ErpDemoSidebar({
             allowedPages={allowedPages}
             currentPage={currentPage}
             isCollapsed={isCollapsed}
-            items={mainNavItems}
+            items={isDoctorWorkspace ? doctorNavItems : mainNavItems}
             label="Main Menu"
             onAppointmentToggle={() => {
               if (isCollapsed) {

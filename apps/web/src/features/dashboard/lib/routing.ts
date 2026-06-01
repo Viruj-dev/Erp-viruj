@@ -20,6 +20,14 @@ export const dashboardPageOptions = [
   "appointments-patients",
   "appointments-settings",
   "patients",
+  "onboarding",
+  "availability",
+  "documents",
+  "leaves",
+  "consultations",
+  "locations",
+  "verification",
+  "doctor-settings",
   "staff",
   "community",
   "billing",
@@ -163,6 +171,14 @@ export const allowedDashboardPagesByRole: Record<
     "appointments-review",
     "appointments-patients",
     "patients",
+    "onboarding",
+    "availability",
+    "documents",
+    "leaves",
+    "consultations",
+    "locations",
+    "verification",
+    "doctor-settings",
     "reports",
     "profile",
   ],
@@ -262,6 +278,14 @@ export const allowedDashboardPagesByRole: Record<
     "appointments-patients",
     "appointments-settings",
     "patients",
+    "onboarding",
+    "availability",
+    "documents",
+    "leaves",
+    "consultations",
+    "locations",
+    "verification",
+    "doctor-settings",
     "reports",
     "profile",
   ],
@@ -388,6 +412,28 @@ export function normalizeDashboardModule(value: string): DashboardPage {
       return "reports";
     case "patients":
       return "patients";
+    case "onboarding":
+      return "onboarding";
+    case "availability":
+    case "schedule":
+      return "availability";
+    case "documents":
+    case "files":
+      return "documents";
+    case "leaves":
+    case "leave-management":
+      return "leaves";
+    case "consultations":
+    case "consultation":
+      return "consultations";
+    case "locations":
+    case "practice-locations":
+      return "locations";
+    case "verification":
+    case "credentials":
+      return "verification";
+    case "doctor-settings":
+      return "doctor-settings";
     case "staff":
       return "staff";
     case "billing":
