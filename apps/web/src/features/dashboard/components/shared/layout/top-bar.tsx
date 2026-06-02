@@ -1,6 +1,6 @@
 "use client";
 
-import { ProfileDropdown } from "@/features/dashboard/components/profile-dropdown";
+import { ProfileDropdown } from "@/features/dashboard/components/shared/profile/profile-dropdown";
 import { authClient } from "@/lib/auth-client";
 import { useTheme } from "@/lib/theme-provider";
 import { Bell, ChevronDown, Grid, Moon, Search, Sun } from "lucide-react";

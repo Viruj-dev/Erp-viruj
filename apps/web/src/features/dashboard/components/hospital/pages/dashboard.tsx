@@ -13,8 +13,8 @@ import {
 import {
   departmentSplit,
   weeklyBookings,
-} from "@/features/dashboard/components/data";
-import { MiniBarChart } from "@/features/dashboard/components/chart-primitives";
+} from "@/features/dashboard/components/shared/data";
+import { MiniBarChart } from "@/features/dashboard/components/shared/charts/chart-primitives";
 
 const roleModuleAccess: Record<string, string[]> = {
   ADMIN: [

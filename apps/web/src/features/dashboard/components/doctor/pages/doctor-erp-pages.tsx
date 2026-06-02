@@ -33,8 +33,8 @@ import {
   XCircle,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { ErpDemoAppointments } from "./appointments";
-import { ErpDemoPatients } from "./patients";
+import { ErpDemoPatients } from "@/features/dashboard/components/hospital/pages/patients";
+import { ErpDemoAppointments } from "@/features/dashboard/components/shared/modules/appointments";
 
 const doctorPatients = [
   ["Margot Sterling", "#PA-2041", "Today, 09:15 AM", "12", "Checked-in", "MS", "blue"],

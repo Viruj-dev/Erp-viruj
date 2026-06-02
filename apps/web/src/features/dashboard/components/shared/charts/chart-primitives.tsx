@@ -17,7 +17,7 @@ export function MiniBarChart({ data }: { data: readonly BarDatum[] }) {
         >
           <div className="flex h-full w-full items-end rounded-2xl bg-surface-container-low px-2 pb-2">
             <div
-              className="w-full rounded-xl bg-gradient-to-t from-primary to-primary-container"
+              className="w-full rounded-xl bg-linear-to-t from-primary to-primary-container"  
               style={{ height: `${(item.value / max) * 100}%` }}
             />
           </div>

@@ -10,8 +10,8 @@ import {
   Headphones,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "./ui/card";
-import { Badge } from "./ui/badge";
+import { Badge } from "@/features/dashboard/components/ui/badge";
+import { Card } from "@/features/dashboard/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export default function PricingPage() {

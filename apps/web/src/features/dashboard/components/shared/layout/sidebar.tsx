@@ -1,6 +1,6 @@
 "use client";
 
-import type { ErpDemoPage } from "@/features/dashboard/components/types";
+import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import {
@@ -43,17 +43,18 @@ const mainNavItems = [
 
 const doctorNavItems = [
   { id: "dashboard", label: "Overview", icon: LayoutDashboard },
-  { id: "onboarding", label: "Onboarding", icon: Gauge },
-  { id: "profile", label: "Profile", icon: Stethoscope },
   { id: "locations", label: "Locations", icon: MapPinned },
   { id: "availability", label: "Availability", icon: Timer },
   { id: "patients", label: "Patients", icon: Users },
   { id: "consultations", label: "Consultations", icon: BriefcaseMedical },
+  { id: "profile", label: "Profile", icon: Stethoscope },
+
   { id: "doctor-settings", label: "Settings", icon: Settings },
 ] as const;
 
 const doctorProfileOptions = [
   { id: "profile", label: "Profile Details", icon: Stethoscope },
+  { id: "onboarding", label: "Onboarding", icon: Gauge },
   { id: "verification", label: "Verification", icon: FileBadge },
   { id: "documents", label: "Documents", icon: FileText },
 ] as const;
@@ -109,6 +110,7 @@ export function ErpDemoSidebar({
   );
   const [isDoctorProfileOpen, setIsDoctorProfileOpen] = useState(
     currentPage === "profile" ||
+      currentPage === "onboarding" ||
       currentPage === "verification" ||
       currentPage === "documents"
   );
@@ -431,7 +433,7 @@ function SidebarSection({
           const isActive = isAppointmentItem
             ? currentPage.startsWith("appointments")
             : isDoctorProfileItem && showDoctorProfileDropdown
-            ? ["profile", "verification", "documents"].includes(currentPage)
+            ? ["profile", "onboarding", "verification", "documents"].includes(currentPage)
             : currentPage === item.id;
 
           return (
@@ -460,7 +462,7 @@ function SidebarSection({
                   isAppointmentItem
                     ? currentPage.startsWith("appointments")
                     : isDoctorProfileItem && showDoctorProfileDropdown
-                    ? ["profile", "verification", "documents"].includes(currentPage)
+                    ? ["profile", "onboarding", "verification", "documents"].includes(currentPage)
                     : undefined
                 }
                 showChevron={

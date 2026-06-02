@@ -1,22 +1,22 @@
 "use client";
 
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
-import { ErpDemoAnalytics } from "@/features/dashboard/components/analytics";
-import { ErpDemoAppointments } from "@/features/dashboard/components/appointments";
-import { ErpDemoBilling } from "@/features/dashboard/components/billing";
-import { ErpDemoCommunity } from "@/features/dashboard/components/community";
-import { ErpDemoDashboard } from "@/features/dashboard/components/dashboard";
-import { DoctorsManagementPage } from "@/features/dashboard/components/doctors-management";
-import { ErpEnterpriseModule } from "@/features/dashboard/components/enterprise-module";
-import { HospitalProfilePage } from "@/features/dashboard/components/hospital-profile";
-import { ErpDemoPatients } from "@/features/dashboard/components/patients";
-import PricingPage from "@/features/dashboard/components/pricing";
-import { ErpDemoSettings } from "@/features/dashboard/components/settings";
-import { ErpUserProfilePage } from "@/features/dashboard/components/profile-page";
-import { ErpDemoSidebar } from "@/features/dashboard/components/sidebar";
-import { ErpDemoStaff } from "@/features/dashboard/components/staff";
-import { ErpDemoTopBar } from "@/features/dashboard/components/top-bar";
-import type { ErpDemoPage } from "@/features/dashboard/components/types";
+import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/layout";
+import { ErpDemoAppointments, ErpEnterpriseModule } from "@/features/dashboard/components/modules";
+import {
+  ErpDemoAnalytics,
+  ErpDemoBilling,
+  ErpDemoCommunity,
+  ErpDemoDashboard,
+  DoctorsManagementPage,
+  ErpDemoPatients,
+  ErpDemoSettings,
+  ErpDemoStaff,
+  HospitalProfilePage,
+  PricingPage,
+} from "@/features/dashboard/components/pages";
+import { ErpUserProfilePage } from "@/features/dashboard/components/profile";
+import type { ErpDemoPage } from "@/features/dashboard/components/shared";
 import {
   buildDashboardPath,
   buildTenantDashboardPath,

@@ -1,7 +1,7 @@
 import type {
   AppointmentRecord,
   PatientRecord,
-} from "@/features/dashboard/components/types";
+} from "@/features/dashboard/components/shared/types";
 
 export const weeklyBookings = [
   { name: "Mon", value: 60 },
