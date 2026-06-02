@@ -67,8 +67,6 @@ export function DoctorDashboardPage() {
         </div>
       </section>
 
-
-
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_360px]">
         <HospitalPanel title="Today's Appointments" subtitle="Live operational queue">
           <CompactAppointmentList />
