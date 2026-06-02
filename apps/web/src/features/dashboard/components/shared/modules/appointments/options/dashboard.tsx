@@ -12,7 +12,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../../../components/ui/card";
+} from "@/features/dashboard/components/ui/card";
 
 import {
   ResponsiveContainer,

@@ -1,8 +1,8 @@
 "use client";
 
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
-import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/layout";
-import { ErpDemoAppointments, ErpEnterpriseModule } from "@/features/dashboard/components/modules";
+import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
+import { ErpDemoAppointments, ErpEnterpriseModule } from "@/features/dashboard/components/shared/modules";
 import {
   ErpDemoAnalytics,
   ErpDemoBilling,
@@ -14,9 +14,9 @@ import {
   ErpDemoStaff,
   HospitalProfilePage,
   PricingPage,
-} from "@/features/dashboard/components/pages";
-import { ErpUserProfilePage } from "@/features/dashboard/components/profile";
-import type { ErpDemoPage } from "@/features/dashboard/components/shared";
+} from "@/features/dashboard/components/hospital/pages";
+import { ErpUserProfilePage } from "@/features/dashboard/components/shared/profile";
+import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
 import {
   buildDashboardPath,
   buildTenantDashboardPath,

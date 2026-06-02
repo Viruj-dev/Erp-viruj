@@ -1,7 +1,7 @@
 "use client";
 
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
-import { ErpDemoAppointments, ErpEnterpriseModule } from "@/features/dashboard/components/modules";
+import { ErpDemoAppointments, ErpEnterpriseModule } from "@/features/dashboard/components/shared/modules";
 import {
   DoctorAvailabilityPage,
   DoctorAppointmentDetailPage,
@@ -18,9 +18,9 @@ import {
   DoctorProfileManagementPage,
   DoctorSettingsPage,
   DoctorVerificationVaultPage,
-} from "@/features/dashboard/components/pages";
-import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/layout";
-import type { ErpDemoPage } from "@/features/dashboard/components/shared";
+} from "@/features/dashboard/components/doctor/pages";
+import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
+import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
 import {
   buildDashboardPath,
   buildTenantDashboardPath,

@@ -1,0 +1,10 @@
+export { ErpDemoAnalytics } from "@/features/dashboard/components/hospital/pages/analytics";
+export { ErpDemoBilling } from "@/features/dashboard/components/hospital/pages/billing";
+export { ErpDemoCommunity } from "@/features/dashboard/components/hospital/pages/community";
+export { ErpDemoDashboard } from "@/features/dashboard/components/hospital/pages/dashboard";
+export { DoctorsManagementPage } from "@/features/dashboard/components/hospital/pages/doctors-management";
+export { HospitalProfilePage } from "@/features/dashboard/components/hospital/pages/hospital-profile";
+export { ErpDemoPatients } from "@/features/dashboard/components/hospital/pages/patients";
+export { default as PricingPage } from "@/features/dashboard/components/hospital/pages/pricing";
+export { ErpDemoSettings } from "@/features/dashboard/components/hospital/pages/settings";
+export { ErpDemoStaff } from "@/features/dashboard/components/hospital/pages/staff";

@@ -7,12 +7,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../../../components/ui/card";
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
-import { Label } from "../../../components/ui/label";
-import { Switch } from "../../../components/ui/switch";
-import { Textarea } from "../../../components/ui/textarea";
+} from "@/features/dashboard/components/ui/card";
+import { Button } from "@/features/dashboard/components/ui/button";
+import { Input } from "@/features/dashboard/components/ui/input";
+import { Label } from "@/features/dashboard/components/ui/label";
+import { Switch } from "@/features/dashboard/components/ui/switch";
+import { Textarea } from "@/features/dashboard/components/ui/textarea";
 import {
   Bell,
   Clock,

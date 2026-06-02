@@ -11,16 +11,16 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 
-import { Card, CardContent } from "../../../components/ui/card";
-import { Badge } from "../../../components/ui/badge";
+import { Badge } from "@/features/dashboard/components/ui/badge";
+import { Card, CardContent } from "@/features/dashboard/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "../../../components/ui/input";
+import { Input } from "@/features/dashboard/components/ui/input";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "../../../components/ui/tabs";
+} from "@/features/dashboard/components/ui/tabs";
 
 import type { AppointmentRecord } from "../types";
 import { formatDate, getStatusLabel } from "../utils";
