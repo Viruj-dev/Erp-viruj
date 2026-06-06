@@ -29,6 +29,12 @@ export const dashboardPageOptions = [
   "verification",
   "doctor-settings",
   "staff",
+  "clinic-profile",
+  "working-hours",
+  "services",
+  "facilities",
+  "gallery",
+  "reviews",
   "community",
   "billing",
   "pricing",
@@ -67,7 +73,7 @@ export const defaultDashboardPageByRole: Record<
   APPOINTMENT_HANDLER: "appointments-dashboard",
   CLINIC_ADMIN: "dashboard",
   CLINIC_OWNER: "dashboard",
-  CLINIC_STAFF: "appointments-dashboard",
+  CLINIC_STAFF: "dashboard",
   COMMUNITY_MANAGER: "community",
   DOCTOR: "dashboard",
   MANAGER: "dashboard",
@@ -147,62 +153,41 @@ export const allowedDashboardPagesByRole: Record<
   ],
   CLINIC_ADMIN: [
     "dashboard",
-    "finance",
-    "appointments",
-    "appointments-dashboard",
-    "appointments-review",
-    "appointments-patients",
-    "appointments-settings",
-    "patients",
-    "staff",
-    "billing",
-    "pricing",
-    "settings",
-    "settings-alert-rules",
-    "settings-audit-logs",
-    "settings-storage",
-    "settings-data-export",
-    "analytics",
+    "clinic-profile",
+    "locations",
+    "working-hours",
     "doctors",
-    "hospital-profile",
-    "notifications",
-    "reports",
+    "services",
+    "facilities",
+    "gallery",
+    "reviews",
+    "settings",
+    "analytics",
     "profile",
   ],
   CLINIC_OWNER: [
     "dashboard",
-    "finance",
-    "appointments",
-    "appointments-dashboard",
-    "appointments-review",
-    "appointments-patients",
-    "appointments-settings",
-    "patients",
-    "staff",
-    "community",
-    "billing",
-    "pricing",
-    "settings",
-    "settings-alert-rules",
-    "settings-audit-logs",
-    "settings-storage",
-    "settings-data-export",
-    "analytics",
+    "clinic-profile",
+    "locations",
+    "working-hours",
     "doctors",
-    "hospital-profile",
-    "notifications",
-    "reports",
+    "services",
+    "facilities",
+    "gallery",
+    "reviews",
+    "settings",
+    "analytics",
     "profile",
   ],
   CLINIC_STAFF: [
     "dashboard",
-    "appointments",
-    "appointments-dashboard",
-    "appointments-review",
-    "appointments-patients",
-    "patients",
+    "clinic-profile",
     "doctors",
-    "reports",
+    "services",
+    "facilities",
+    "gallery",
+    "reviews",
+    "analytics",
     "profile",
   ],
   MANAGER: [
@@ -460,6 +445,24 @@ export function normalizeDashboardModule(value: string): DashboardPage {
     case "doctors":
     case "doctor":
       return "doctors";
+    case "clinic-profile":
+    case "clinic":
+      return "clinic-profile";
+    case "working-hours":
+    case "hours":
+      return "working-hours";
+    case "services":
+    case "service":
+      return "services";
+    case "facilities":
+    case "facility":
+      return "facilities";
+    case "gallery":
+    case "photos":
+      return "gallery";
+    case "reviews":
+    case "review":
+      return "reviews";
     case "hospital-profile":
     case "hospital":
       return "hospital-profile";

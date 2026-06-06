@@ -1,31 +1,31 @@
 "use client";
 
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
-import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
-import { ErpDemoAppointments, ErpEnterpriseModule } from "@/features/dashboard/components/shared/modules";
+import {
+  ClinicDashboardPage,
+  ClinicProfilePage,
+  ClinicStaffPage,
+} from "@/features/dashboard/components/clinic/pages";
 import {
   ErpDemoAnalytics,
   ErpDemoBilling,
   ErpDemoCommunity,
-  ErpDemoDashboard,
   DoctorsManagementPage,
   ErpDemoPatients,
   ErpDemoSettings,
-  ErpDemoStaff,
-  HospitalProfilePage,
   PricingPage,
 } from "@/features/dashboard/components/hospital/pages";
+import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
+import { ErpDemoAppointments, ErpEnterpriseModule } from "@/features/dashboard/components/shared/modules";
 import { ErpUserProfilePage } from "@/features/dashboard/components/shared/profile";
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
 import {
   buildDashboardPath,
   buildTenantDashboardPath,
-  type DashboardOrganizationType,
   getAllowedDashboardPages,
   isDashboardOrganizationType,
   isDashboardPage,
   organizationTypeLabels,
-  resolveAccessibleDashboardPage,
 } from "@/features/dashboard/lib/routing";
 import { LoadingScreen } from "@/features/shell/components/loading-screen";
 import {
@@ -34,16 +34,40 @@ import {
 } from "@/lib/auth-client";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 
-const fallbackPage: ErpDemoPage = "dashboard";
+const clinicSupportedPages: ErpDemoPage[] = [
+  "dashboard",
+  "finance",
+  "appointments",
+  "appointments-dashboard",
+  "appointments-review",
+  "appointments-patients",
+  "appointments-settings",
+  "patients",
+  "staff",
+  "community",
+  "billing",
+  "pricing",
+  "settings",
+  "settings-alert-rules",
+  "settings-audit-logs",
+  "settings-storage",
+  "settings-data-export",
+  "analytics",
+  "doctors",
+  "hospital-profile",
+  "notifications",
+  "reports",
+  "profile",
+];
 
-export function ErpHomeScreen({
+export function ClinicHomeScreen({
   currentPage: requestedPage,
-  routeOrganizationType,
 }: {
   currentPage: string;
-  routeOrganizationType: string;
+  routeOrganizationType?: string;
+  routeSegments?: string[];
 }) {
   const router = useRouter();
   const [isActivatingOnlyOrganization, setIsActivatingOnlyOrganization] =
@@ -105,34 +129,30 @@ export function ErpHomeScreen({
 
   const currentPage = isErpDemoPage(requestedPage)
     ? requestedPage
-    : fallbackPage;
-  const userName =
-    sessionState.data?.user?.name ||
-    sessionState.data?.user?.email ||
-    "Clinical User";
-  const routeDashboardOrganizationType = isDashboardOrganizationType(
-    routeOrganizationType
-  )
-    ? routeOrganizationType
-    : null;
+    : "dashboard";
   const activeOrganizationType =
     activeOrganization?.organizationType &&
     isDashboardOrganizationType(activeOrganization.organizationType)
       ? activeOrganization.organizationType
       : null;
-  const activeMemberRole = activeMember?.role;
-  const allowedPages = getAllowedDashboardPages(activeMemberRole);
-  const resolvedPage = resolveAccessibleDashboardPage(
-    currentPage,
-    activeMemberRole
-  );
-  const organizationLabel = activeOrganizationType
-    ? organizationTypeLabels[activeOrganizationType]
-    : "Organization";
   const activeOrganizationSlug = getOrganizationSlug(activeOrganization);
+  const activeMemberRole = activeMember?.role;
+  const allowedPages = useMemo(
+    () =>
+      getAllowedDashboardPages(activeMemberRole).filter((page) =>
+        clinicSupportedPages.includes(page)
+      ),
+    [activeMemberRole]
+  );
+  const resolvedPage = resolveClinicPage(currentPage, allowedPages);
+  const userName =
+    sessionState.data?.user?.name ||
+    sessionState.data?.user?.email ||
+    "Clinic User";
   const roleLabel = activeMemberRole
     ? activeMemberRole.replace(/_/g, " ")
-    : "member";
+    : "clinic member";
+  const organizationLabel = organizationTypeLabels.clinic;
 
   useEffect(() => {
     if (!isHydrated || isAuthPending) {
@@ -145,28 +165,20 @@ export function ErpHomeScreen({
   }, [isAuthPending, isHydrated, router, sessionState.data?.user]);
 
   useEffect(() => {
-    if (
-      !isHydrated ||
-      isAuthPending ||
-      !activeOrganization ||
-      !activeMember ||
-      !activeOrganizationType
-    ) {
+    if (!isHydrated || isAuthPending || !activeOrganization || !activeMember) {
+      return;
+    }
+
+    if (activeOrganizationType && activeOrganizationType !== "clinic") {
+      router.replace(buildDashboardPath(activeOrganizationType));
       return;
     }
 
     const expectedPath = activeOrganizationSlug
-      ? buildTenantDashboardPath(
-          activeOrganizationType,
-          activeOrganizationSlug,
-          resolvedPage
-        )
-      : buildDashboardPath(activeOrganizationType, resolvedPage);
+      ? buildTenantDashboardPath("clinic", activeOrganizationSlug, resolvedPage)
+      : buildDashboardPath("clinic", resolvedPage);
 
-    const routeMatchesOrganization =
-      routeDashboardOrganizationType === activeOrganizationType;
-
-    if (!routeMatchesOrganization || requestedPage !== resolvedPage) {
+    if (requestedPage !== resolvedPage) {
       router.replace(expectedPath);
     }
   }, [
@@ -178,8 +190,6 @@ export function ErpHomeScreen({
     isHydrated,
     requestedPage,
     resolvedPage,
-    routeDashboardOrganizationType,
-    routeOrganizationType,
     router,
   ]);
 
@@ -191,7 +201,11 @@ export function ErpHomeScreen({
     return <LoadingScreen />;
   }
 
-  if (!activeOrganization || !activeMember || !activeOrganizationType) {
+  if (activeOrganizationType && activeOrganizationType !== "clinic") {
+    return <LoadingScreen />;
+  }
+
+  if (!activeOrganization || !activeMember) {
     return (
       <OrganizationAccessScreen
         isLoading={organizationsState.isPending}
@@ -206,9 +220,7 @@ export function ErpHomeScreen({
             (organization) => organization.id === organizationId
           );
 
-          await activateOrganization({
-            organizationId,
-          });
+          await activateOrganization({ organizationId });
           await sessionState.refetch();
           await activeOrganizationState.refetch();
           await activeMemberState.refetch();
@@ -241,10 +253,10 @@ export function ErpHomeScreen({
   }
 
   return (
-    <div className="flex h-screen min-h-screen bg-surface text-on-surface selection:bg-primary/15 selection:text-primary transition-colors dark:bg-[#0b0d10] dark:text-slate-100 dark:selection:bg-blue-400/20 dark:selection:text-blue-100">
+    <div className="flex h-screen min-h-screen bg-surface text-on-surface selection:bg-violet-500/15 selection:text-violet-700 transition-colors dark:bg-[#0b0d10] dark:text-slate-100 dark:selection:bg-violet-400/20 dark:selection:text-violet-100">
       <ErpDemoSidebar
         allowedPages={allowedPages}
-        currentPage={currentPage}
+        currentPage={resolvedPage}
         isCollapsed={isSidebarCollapsed}
         onLogout={async () => {
           setIsSigningOut(true);
@@ -258,14 +270,11 @@ export function ErpHomeScreen({
           }
         }}
         onPageChange={(page) => {
+          const clinicPage = resolveClinicPage(page, allowedPages);
           router.push(
             activeOrganizationSlug
-              ? buildTenantDashboardPath(
-                  activeOrganizationType,
-                  activeOrganizationSlug,
-                  page
-                )
-              : buildDashboardPath(activeOrganizationType, page)
+              ? buildTenantDashboardPath("clinic", activeOrganizationSlug, clinicPage)
+              : buildDashboardPath("clinic", clinicPage)
           );
         }}
         onToggle={() => setIsSidebarCollapsed((value) => !value)}
@@ -284,12 +293,8 @@ export function ErpHomeScreen({
           onNavigateToProfile={() => {
             router.push(
               activeOrganizationSlug
-                ? buildTenantDashboardPath(
-                    activeOrganizationType,
-                    activeOrganizationSlug,
-                    "profile"
-                  )
-                : buildDashboardPath(activeOrganizationType, "profile")
+                ? buildTenantDashboardPath("clinic", activeOrganizationSlug, "profile")
+                : buildDashboardPath("clinic", "profile")
             );
           }}
           onLogout={async () => {
@@ -314,10 +319,9 @@ export function ErpHomeScreen({
               initial={{ opacity: 0, y: 12 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="flex min-h-full w-full flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/88 shadow-sm ring-1 ring-white/60 backdrop-blur dark:border-white/[0.08] dark:bg-[#111418] dark:ring-white/[0.03]">
-                <PageContent
+              <div className="flex min-h-full w-full flex-col overflow-hidden rounded-[2rem] border border-violet-100/90 bg-white/88 shadow-sm ring-1 ring-white/60 backdrop-blur dark:border-violet-400/[0.12] dark:bg-[#111418] dark:ring-white/[0.03]">
+                <ClinicPageContent
                   currentPage={resolvedPage}
-                  organizationLabel={organizationLabel}
                   roleLabel={roleLabel}
                   userName={userName}
                 />
@@ -330,14 +334,12 @@ export function ErpHomeScreen({
   );
 }
 
-function PageContent({
+function ClinicPageContent({
   currentPage,
-  organizationLabel,
   roleLabel,
   userName,
 }: {
   currentPage: ErpDemoPage;
-  organizationLabel: string;
   roleLabel: string;
   userName: string;
 }) {
@@ -356,7 +358,7 @@ function PageContent({
     case "patients":
       return <ErpDemoPatients />;
     case "staff":
-      return <ErpDemoStaff organizationLabel={organizationLabel} />;
+      return <ClinicStaffPage />;
     case "community":
       return <ErpDemoCommunity />;
     case "billing":
@@ -376,15 +378,9 @@ function PageContent({
     case "analytics":
       return <ErpDemoAnalytics />;
     case "doctors":
-      return <DoctorsManagementPage organizationLabel={organizationLabel} />;
+      return <DoctorsManagementPage organizationLabel="Clinic" />;
     case "hospital-profile":
-      return <HospitalProfilePage organizationLabel={organizationLabel} />;
-    case "radiology":
-      return <ErpEnterpriseModule module="radiology" roleLabel={roleLabel} />;
-    case "pathology":
-      return <ErpEnterpriseModule module="pathology" roleLabel={roleLabel} />;
-    case "pharmacy":
-      return <ErpEnterpriseModule module="pharmacy" roleLabel={roleLabel} />;
+      return <ClinicProfilePage />;
     case "notifications":
       return (
         <ErpEnterpriseModule module="notifications" roleLabel={roleLabel} />
@@ -395,14 +391,16 @@ function PageContent({
       return <ErpUserProfilePage />;
     case "dashboard":
     default:
-      return (
-        <ErpDemoDashboard
-          organizationLabel={organizationLabel}
-          roleLabel={roleLabel}
-          userName={userName}
-        />
-      );
+      return <ClinicDashboardPage roleLabel={roleLabel} userName={userName} />;
   }
+}
+
+function resolveClinicPage(page: ErpDemoPage, allowedPages: ErpDemoPage[]) {
+  if (allowedPages.includes(page)) {
+    return page;
+  }
+
+  return allowedPages.includes("dashboard") ? "dashboard" : allowedPages[0] ?? "dashboard";
 }
 
 function isErpDemoPage(page: string): page is ErpDemoPage {

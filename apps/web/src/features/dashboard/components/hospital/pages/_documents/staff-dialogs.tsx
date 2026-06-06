@@ -5,7 +5,6 @@ import type { FormEvent, ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
   roleLabels,
-  roleOptions,
   StaffAvatar,
   type StaffOnboarding,
   type StaffPerson,
@@ -26,6 +25,7 @@ type AddStaffEntryDialogProps = {
   onRoleChange: (value: StaffRole) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   role: StaffRole;
+  roleOptions: readonly StaffRole[];
 };
 
 export function AddStaffEntryDialog({
@@ -40,6 +40,7 @@ export function AddStaffEntryDialog({
   onRoleChange,
   onSubmit,
   role,
+  roleOptions,
 }: AddStaffEntryDialogProps) {
   const hasCredentials = Boolean(credentialPreview?.temporaryCredentials);
 
@@ -78,6 +79,7 @@ export function AddStaffEntryDialog({
             <RoleSelect
               label="Assign Role"
               onChange={onRoleChange}
+              roleOptions={roleOptions}
               value={role}
             />
 
@@ -139,6 +141,7 @@ type EditStaffRoleDialogProps = {
   onClose: () => void;
   onRoleChange: (value: StaffRole) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  roleOptions: readonly StaffRole[];
   staff: StaffPerson;
 };
 
@@ -149,6 +152,7 @@ export function EditStaffRoleDialog({
   onClose,
   onRoleChange,
   onSubmit,
+  roleOptions,
   staff,
 }: EditStaffRoleDialogProps) {
   return (
@@ -175,6 +179,7 @@ export function EditStaffRoleDialog({
             <RoleSelect
               label="Select New Role"
               onChange={onRoleChange}
+              roleOptions={roleOptions}
               value={editRole}
             />
 
@@ -367,10 +372,12 @@ function StaffInput({
 function RoleSelect({
   label,
   onChange,
+  roleOptions,
   value,
 }: {
   label: string;
   onChange: (value: StaffRole) => void;
+  roleOptions: readonly StaffRole[];
   value: StaffRole;
 }) {
   return (

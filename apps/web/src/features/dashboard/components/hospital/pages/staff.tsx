@@ -14,7 +14,7 @@ import {
   Trash2,
   UserPlus,
 } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   AddStaffEntryDialog,
   DeleteStaffDialog,
@@ -26,7 +26,6 @@ import {
   formatRole,
   HeroMetric,
   isStaffRole,
-  roleOptions,
   RolePill,
   StaffAvatar,
   type StaffInviteResult,
@@ -34,8 +33,13 @@ import {
   type StaffRole,
 } from "./_documents";
 
-export function ErpDemoStaff() {
+export function ErpDemoStaff({
+  organizationLabel,
+}: {
+  organizationLabel: string;
+}) {
   const queryClient = useQueryClient();
+  const theme = getStaffWorkspaceTheme(organizationLabel);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -45,29 +49,57 @@ export function ErpDemoStaff() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [isEntryDialogOpen, setIsEntryDialogOpen] = useState(false);
+  const activeOrganizationState = authClient.useActiveOrganization();
+  const { data: session } = authClient.useSession();
+  const activeOrganizationId =
+    getSessionOrganizationId(session) ?? activeOrganizationState.data?.id;
+  const activeOrganizationType =
+    getSessionOrganizationType(session) ??
+    activeOrganizationState.data?.organizationType;
+  const availableRoleOptions = useMemo(
+    () => getRoleOptionsForOrganization(activeOrganizationType),
+    [activeOrganizationType]
+  );
+
+  useEffect(() => {
+    if (!availableRoleOptions.includes(role)) {
+      setRole(availableRoleOptions[0] ?? "STAFF");
+    }
+
+    if (roleFilter !== "all" && !availableRoleOptions.includes(roleFilter as StaffRole)) {
+      setRoleFilter("all");
+    }
+  }, [availableRoleOptions, role, roleFilter]);
 
   const membersQuery = useQuery({
-    queryFn: virujBackend.staff.listMembers,
-    queryKey: virujBackend.staff.membersKey,
+    enabled: Boolean(activeOrganizationId),
+    queryFn: () =>
+      virujBackend.staff.listMembers({ organizationId: activeOrganizationId }),
+    queryKey: virujBackend.staff.membersKey(activeOrganizationId),
   });
   const invitationsQuery = useQuery({
-    queryFn: virujBackend.staff.listInvitations,
-    queryKey: virujBackend.staff.invitationsKey,
+    enabled: Boolean(activeOrganizationId),
+    queryFn: () =>
+      virujBackend.staff.listInvitations({
+        organizationId: activeOrganizationId,
+      }),
+    queryKey: virujBackend.staff.invitationsKey(activeOrganizationId),
   });
   const auditQuery = useQuery({
-    queryFn: virujBackend.audit.recent,
-    queryKey: virujBackend.audit.key,
+    enabled: Boolean(activeOrganizationId),
+    queryFn: () => virujBackend.audit.recent({ organizationId: activeOrganizationId }),
+    queryKey: virujBackend.audit.key(activeOrganizationId),
   });
   const invalidateStaffData = async () => {
     await Promise.all([
       queryClient.invalidateQueries({
-        queryKey: virujBackend.audit.key,
+        queryKey: virujBackend.audit.key(activeOrganizationId),
       }),
       queryClient.invalidateQueries({
-        queryKey: virujBackend.staff.invitationsKey,
+        queryKey: virujBackend.staff.invitationsKey(activeOrganizationId),
       }),
       queryClient.invalidateQueries({
-        queryKey: virujBackend.staff.membersKey,
+        queryKey: virujBackend.staff.membersKey(activeOrganizationId),
       }),
     ]);
   };
@@ -109,7 +141,6 @@ export function ErpDemoStaff() {
   >(null);
   const [editRole, setEditRole] = useState<StaffRole>("DOCTOR");
 
-  const { data: session } = authClient.useSession();
   const currentUserId = session?.user?.id;
 
   const pendingInvitations = invitations.filter(
@@ -134,13 +165,14 @@ export function ErpDemoStaff() {
   const handleInvite = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!email.trim() || inviteMutation.isPending) {
+    if (!email.trim() || !activeOrganizationId || inviteMutation.isPending) {
       return;
     }
 
     inviteMutation.mutate({
       email,
       name,
+      organizationId: activeOrganizationId,
       role,
     });
   };
@@ -148,13 +180,14 @@ export function ErpDemoStaff() {
   return (
     <div className="space-y-7 p-5 lg:p-8">
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_330px]">
-        <div className="overflow-hidden rounded-xl bg-[#002a52] p-7 text-white shadow-sm">
+        <div
+          className={`overflow-hidden rounded-xl ${theme.hero} p-7 text-white ${theme.shadow}`}
+        >
           <p className="font-headline text-2xl font-semibold">
-            Staff Workforce Overview
+            {theme.title}
           </p>
           <p className="mt-2 max-w-2xl text-sm font-medium text-white/65">
-            Real-time status of clinical and administrative personnel across all
-            active departments.
+            {theme.description}
           </p>
           <div className="mt-7 grid gap-5 sm:grid-cols-3">
             <HeroMetric label="Total active" value={members.length} />
@@ -195,7 +228,7 @@ export function ErpDemoStaff() {
 
       <section className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
-          {["all", ...roleOptions].map((option) => (
+          {["all", ...availableRoleOptions].map((option) => (
             <button
               className={`rounded-lg px-3 py-2 text-xs font-semi-bold transition ${
                 roleFilter === option
@@ -295,9 +328,10 @@ export function ErpDemoStaff() {
                           onClick={() => {
                             setEditingStaff(member);
                             setEditRole(
-                              isStaffRole(member.role)
+                              isStaffRole(member.role) &&
+                                availableRoleOptions.includes(member.role)
                                 ? member.role
-                                : "DOCTOR"
+                                : (availableRoleOptions[0] ?? "STAFF")
                             );
                           }}
                           type="button"
@@ -355,6 +389,7 @@ export function ErpDemoStaff() {
                       onClick={() =>
                         cancelInvitationMutation.mutate({
                           invitationId: invitation.id,
+                          organizationId: activeOrganizationId,
                         })
                       }
                       type="button"
@@ -417,6 +452,7 @@ export function ErpDemoStaff() {
           onRoleChange={setRole}
           onSubmit={handleInvite}
           role={role}
+          roleOptions={availableRoleOptions}
         />
       ) : null}
 
@@ -427,12 +463,14 @@ export function ErpDemoStaff() {
           isPending={updateRoleMutation.isPending}
           onClose={() => setEditingStaff(null)}
           onRoleChange={setEditRole}
+          roleOptions={availableRoleOptions}
           onSubmit={(event) => {
             event.preventDefault();
             if (updateRoleMutation.isPending) return;
             updateRoleMutation.mutate(
               {
                 memberId: editingStaff.id,
+                organizationId: activeOrganizationId,
                 role: editRole,
               },
               {
@@ -453,6 +491,7 @@ export function ErpDemoStaff() {
             removeStaffMutation.mutate(
               {
                 memberId: deletingStaff.id,
+                organizationId: activeOrganizationId,
               },
               {
                 onSuccess: () => setDeletingStaff(null),
@@ -464,4 +503,89 @@ export function ErpDemoStaff() {
       ) : null}
     </div>
   );
+}
+
+function getSessionOrganizationId(session: unknown) {
+  if (
+    session &&
+    typeof session === "object" &&
+    "activeOrganization" in session &&
+    session.activeOrganization &&
+    typeof session.activeOrganization === "object" &&
+    "id" in session.activeOrganization &&
+    typeof session.activeOrganization.id === "string"
+  ) {
+    return session.activeOrganization.id;
+  }
+
+  return undefined;
+}
+
+function getSessionOrganizationType(session: unknown) {
+  if (
+    session &&
+    typeof session === "object" &&
+    "activeOrganization" in session &&
+    session.activeOrganization &&
+    typeof session.activeOrganization === "object" &&
+    "organizationType" in session.activeOrganization &&
+    typeof session.activeOrganization.organizationType === "string"
+  ) {
+    return session.activeOrganization.organizationType;
+  }
+
+  return undefined;
+}
+
+function getRoleOptionsForOrganization(
+  organizationType: string | undefined
+): readonly StaffRole[] {
+  if (organizationType === "clinic") {
+    return [
+      "CLINIC_OWNER",
+      "CLINIC_ADMIN",
+      "CLINIC_STAFF",
+      "DOCTOR",
+      "RECEPTIONIST",
+    ];
+  }
+
+  if (organizationType === "doctor") {
+    return ["DOCTOR", "RECEPTIONIST", "STAFF"];
+  }
+
+  if (organizationType === "pathology" || organizationType === "radiology") {
+    return ["ADMIN", "MANAGER", "TECHNICIAN", "RECEPTIONIST", "STAFF"];
+  }
+
+  return [
+    "ADMIN",
+    "APPOINTMENT_HANDLER",
+    "COMMUNITY_MANAGER",
+    "MANAGER",
+    "DOCTOR",
+    "STAFF",
+    "RECEPTIONIST",
+    "TECHNICIAN",
+  ];
+}
+
+function getStaffWorkspaceTheme(organizationLabel: string) {
+  if (organizationLabel.toLowerCase() === "clinic") {
+    return {
+      description:
+        "Real-time status of clinic owners, admins, doctors, reception, and front-desk coverage.",
+      hero: "bg-gradient-to-br from-[#35206f] via-[#5b32b4] to-[#8b5cf6]",
+      shadow: "shadow-[0_20px_60px_rgba(91,50,180,0.22)]",
+      title: "Clinic Staff Overview",
+    };
+  }
+
+  return {
+    description:
+      "Real-time status of clinical and administrative personnel across all active departments.",
+    hero: "bg-[#002a52]",
+    shadow: "shadow-sm",
+    title: "Staff Workforce Overview",
+  };
 }

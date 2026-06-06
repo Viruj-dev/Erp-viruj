@@ -32,21 +32,27 @@ export function HospitalProfilePage({
 }: {
   organizationLabel: string;
 }) {
+  const isClinic = organizationLabel.toLowerCase() === "clinic";
+  const theme = isClinic
+    ? "from-[#35206f] via-[#5b32b4] to-[#8b5cf6]"
+    : "from-blue-950 via-blue-800 to-cyan-700";
+
   return (
     <div className="space-y-6 p-6 lg:p-10">
       <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#14171b]">
-        <div className="bg-gradient-to-br from-blue-950 via-blue-800 to-cyan-700 p-8 text-white">
+        <div className={`bg-gradient-to-br ${theme} p-8 text-white`}>
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="max-w-3xl">
               <p className="text-xs font-semi-bold uppercase tracking-[0.28em] text-white/60">
-                Public hospital profile
+                Public {isClinic ? "clinic" : "hospital"} profile
               </p>
               <h1 className="mt-4 font-headline text-4xl font-semi-bold leading-tight lg:text-5xl">
                 {organizationLabel} partner profile
               </h1>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-white/75">
-                This is the hospital-facing profile that powers patient app
-                discovery, hospital details, departments, and doctors.
+                This is the {isClinic ? "clinic" : "hospital"}-facing profile
+                that powers patient app discovery, details, services, and
+                doctors.
               </p>
             </div>
             <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
@@ -67,8 +73,8 @@ export function HospitalProfilePage({
           <div className="space-y-5">
             <InfoRow
               icon={<Building2 size={18} />}
-              label="Hospital name"
-              value="Viruj Multispeciality Hospital"
+              label={isClinic ? "Clinic name" : "Hospital name"}
+              value={isClinic ? "Viruj Family Clinic" : "Viruj Multispeciality Hospital"}
             />
             <InfoRow
               icon={<MapPin size={18} />}
@@ -106,7 +112,8 @@ export function HospitalProfilePage({
             </div>
             <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">
               Profile is ready for patient app discovery. Doctors marked as
-              published in the Doctors section will appear under this hospital.
+              published in the Doctors section will appear under this{" "}
+              {isClinic ? "clinic" : "hospital"}.
             </p>
             <div className="mt-5 grid grid-cols-2 gap-3">
               <Stat label="Published doctors" value="18" />

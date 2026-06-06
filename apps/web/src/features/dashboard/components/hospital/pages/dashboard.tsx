@@ -26,6 +26,25 @@ const roleModuleAccess: Record<string, string[]> = {
     "Schedules",
   ],
   APPOINTMENT_HANDLER: ["Appointments", "Patients", "Schedules"],
+  CLINIC_ADMIN: [
+    "Clinic Profile",
+    "Staff",
+    "Appointments",
+    "Doctors",
+    "Patients",
+    "Services",
+    "Billing",
+  ],
+  CLINIC_OWNER: [
+    "Clinic Profile",
+    "Staff",
+    "Appointments",
+    "Doctors",
+    "Patients",
+    "Services",
+    "Billing",
+  ],
+  CLINIC_STAFF: ["Appointments", "Doctors", "Patients", "Reports"],
   COMMUNITY_MANAGER: ["Community", "Public profile"],
   DOCTOR: ["Appointments", "Patients", "Consultations", "Prescriptions"],
   MANAGER: ["Staff", "Appointments", "Patients", "Community", "Schedules"],
@@ -62,13 +81,16 @@ export function ErpDemoDashboard({
   const normalizedRole = roleLabel.toUpperCase().replace(/\s+/g, "_");
   const modules =
     roleModuleAccess[normalizedRole] ?? roleModuleAccess.OWNER;
+  const theme = getWorkspaceTheme(organizationLabel);
 
   return (
     <div className="space-y-8 p-6 lg:p-10">
       <section className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <div className="overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary to-primary-container p-8 text-white shadow-[0_24px_80px_rgba(0,71,141,0.28)]">
+        <div
+          className={`overflow-hidden rounded-[2rem] bg-gradient-to-br ${theme.hero} p-8 text-white ${theme.shadow}`}
+        >
           <p className="text-xs font-semi-bold uppercase tracking-[0.3em] text-white/70">
-            Clinical command center
+            {theme.eyebrow}
           </p>
           <h1 className="mt-4 max-w-xl font-headline text-4xl font-semi-bold leading-tight lg:text-5xl">
             {userName || "ERP Admin"}, your {organizationLabel.toLowerCase()}{" "}
@@ -167,7 +189,7 @@ export function ErpDemoDashboard({
             />
             <ActivityRow
               badge="2"
-              detail="Open Staff, invite ADMIN, DOCTOR, RECEPTIONIST, or TECHNICIAN."
+              detail="Open Staff, invite CLINIC_ADMIN, CLINIC_STAFF, DOCTOR, RECEPTIONIST, or TECHNICIAN."
               title="Copy the invitation ID from Pending Invitations"
             />
             <ActivityRow
@@ -285,6 +307,22 @@ export function ErpDemoDashboard({
       </section>
     </div>
   );
+}
+
+function getWorkspaceTheme(organizationLabel: string) {
+  if (organizationLabel.toLowerCase() === "clinic") {
+    return {
+      eyebrow: "Clinic command center",
+      hero: "from-[#35206f] via-[#5b32b4] to-[#8b5cf6]",
+      shadow: "shadow-[0_24px_80px_rgba(91,50,180,0.26)]",
+    };
+  }
+
+  return {
+    eyebrow: "Clinical command center",
+    hero: "from-primary to-primary-container",
+    shadow: "shadow-[0_24px_80px_rgba(0,71,141,0.28)]",
+  };
 }
 
 function formatRole(role: string) {

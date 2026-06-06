@@ -144,7 +144,11 @@ export function ErpDemoLogin({
         return;
       }
 
-      setSuccessMessage("Organization ready and OWNER session activated.");
+      setSuccessMessage(
+        onboardingForm.organizationType === "clinic"
+          ? "Clinic workspace ready. Redirecting to the clinic dashboard."
+          : "Organization ready and OWNER session activated."
+      );
       await onAuthenticated();
     } finally {
       setIsPending(false);
@@ -799,7 +803,11 @@ function buildOrganizationSlug(name: string, organizationType: OrganizationType)
 
   const suffix = Math.random().toString(36).slice(2, 7);
   const fallbackPrefix =
-    organizationType === "doctor" ? "doctor-workspace" : "viruj-org";
+    organizationType === "doctor"
+      ? "doctor-workspace"
+      : organizationType === "clinic"
+        ? "clinic-workspace"
+        : "viruj-org";
   return normalized ? `${normalized}-${suffix}` : `${fallbackPrefix}-${suffix}`;
 }
 

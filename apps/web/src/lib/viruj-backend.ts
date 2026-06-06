@@ -12,6 +12,7 @@ const erpServerUrl =
 type RequestOptions = {
   body?: unknown;
   method?: "DELETE" | "GET" | "PATCH" | "POST";
+  organizationId?: string;
 };
 
 async function request<T>(path: string, options: RequestOptions = {}) {
@@ -21,6 +22,10 @@ async function request<T>(path: string, options: RequestOptions = {}) {
 
   if (erpToken) {
     headers.set("Authorization", `Bearer ${erpToken}`);
+  }
+
+  if (options.organizationId) {
+    headers.set("X-Erp-Organization-Id", options.organizationId);
   }
 
   const response = await fetch(`${erpApiUrl}${path}`, {
@@ -178,8 +183,12 @@ export type VirujDoctor = VirujDoctorInput & {
 
 export const virujBackend = {
   audit: {
-    key: ["viruj-backend", "erp", "audit", "recent"] as const,
-    recent: () => request<VirujAuditLog[]>("/audit/recent"),
+    key: (organizationId?: string) =>
+      ["viruj-backend", "erp", "audit", "recent", organizationId ?? "none"] as const,
+    recent: (input?: { organizationId?: string }) =>
+      request<VirujAuditLog[]>("/audit/recent", {
+        organizationId: input?.organizationId,
+      }),
   },
   appointments: {
     key: ["viruj-backend", "erp", "appointments"] as const,
@@ -234,11 +243,12 @@ export const virujBackend = {
       request<VirujModuleSummary>(`/modules/${module}/summary`),
   },
   staff: {
-    cancelInvitation: (input: { invitationId: string }) =>
+    cancelInvitation: (input: { invitationId: string; organizationId?: string }) =>
       request<VirujStaffInvitation>(
         `/staff/invitations/${input.invitationId}/cancel`,
         {
           method: "POST",
+          organizationId: input.organizationId,
         }
       ),
     confirmInvitation: (input: { invitationId: string }) =>
@@ -250,24 +260,34 @@ export const virujBackend = {
       }>(`/staff/invitations/${input.invitationId}/confirm`, {
         method: "POST",
       }),
-    invitationsKey: ["viruj-backend", "erp", "staff", "invitations"] as const,
-    invite: (input: { email: string; name?: string; role: VirujStaffRole }) =>
+    invitationsKey: (organizationId?: string) =>
+      ["viruj-backend", "erp", "staff", "invitations", organizationId ?? "none"] as const,
+    invite: (input: { email: string; name?: string; organizationId?: string; role: VirujStaffRole }) =>
       request<VirujStaffInviteResult>("/staff/invitations", {
         body: input,
         method: "POST",
+        organizationId: input.organizationId,
       }),
-    listInvitations: () =>
-      request<VirujStaffInvitation[]>("/staff/invitations"),
-    listMembers: () => request<VirujStaffMember[]>("/staff/members"),
-    membersKey: ["viruj-backend", "erp", "staff", "members"] as const,
-    remove: (input: { memberId: string }) =>
+    listInvitations: (input?: { organizationId?: string }) =>
+      request<VirujStaffInvitation[]>("/staff/invitations", {
+        organizationId: input?.organizationId,
+      }),
+    listMembers: (input?: { organizationId?: string }) =>
+      request<VirujStaffMember[]>("/staff/members", {
+        organizationId: input?.organizationId,
+      }),
+    membersKey: (organizationId?: string) =>
+      ["viruj-backend", "erp", "staff", "members", organizationId ?? "none"] as const,
+    remove: (input: { memberId: string; organizationId?: string }) =>
       request<{ success: true }>(`/staff/members/${input.memberId}`, {
         method: "DELETE",
+        organizationId: input.organizationId,
       }),
-    updateRole: (input: { memberId: string; role: VirujStaffRole }) =>
+    updateRole: (input: { memberId: string; organizationId?: string; role: VirujStaffRole }) =>
       request<VirujStaffMember>(`/staff/members/${input.memberId}/role`, {
         body: { role: input.role },
         method: "PATCH",
+        organizationId: input.organizationId,
       }),
   },
 };

@@ -1,3 +1,4 @@
+import { ClinicHomeScreen } from "@/features/dashboard/screens/clinic-home-screen";
 import { DoctorHomeScreen } from "@/features/dashboard/screens/doctor-home-screen";
 import { ErpHomeScreen } from "@/features/dashboard/screens/erp-home-screen";
 
@@ -13,6 +14,16 @@ export default async function OrganizationDashboardPage({
   if (organizationType === "doctor") {
     return (
       <DoctorHomeScreen
+        currentPage="dashboard"
+        routeOrganizationType={organizationType}
+        routeSegments={[]}
+      />
+    );
+  }
+
+  if (organizationType === "clinic") {
+    return (
+      <ClinicHomeScreen
         currentPage="dashboard"
         routeOrganizationType={organizationType}
         routeSegments={[]}
