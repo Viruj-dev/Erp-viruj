@@ -76,7 +76,7 @@ const doctorProfileOptions = [
 ] as const;
 
 const clinicProfileOptions = [
-  { id: "clinic-profile", label: "Clinic Profile", icon: Building2 },
+  { id: "clinic-profile", label: "Profile", icon: Building2 },
   { id: "locations", label: "Locations", icon: MapPin },
   { id: "working-hours", label: "Working Hours", icon: Timer },
   { id: "facilities", label: "Facilities", icon: Sparkles },
