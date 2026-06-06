@@ -2,6 +2,8 @@
 
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
+import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
+import { ClinicGalleryPage } from "@/features/dashboard/components/clinic/pages";
 import { ErpDemoAppointments, ErpEnterpriseModule } from "@/features/dashboard/components/shared/modules";
 import {
   ErpDemoAnalytics,
@@ -20,7 +22,6 @@ import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
 import {
   buildDashboardPath,
   buildTenantDashboardPath,
-  type DashboardOrganizationType,
   getAllowedDashboardPages,
   isDashboardOrganizationType,
   isDashboardPage,
@@ -133,6 +134,7 @@ export function ErpHomeScreen({
   const roleLabel = activeMemberRole
     ? activeMemberRole.replace(/_/g, " ")
     : "member";
+  const workspaceTheme = getWorkspaceTheme(organizationLabel);
 
   useEffect(() => {
     if (!isHydrated || isAuthPending) {
@@ -241,7 +243,9 @@ export function ErpHomeScreen({
   }
 
   return (
-    <div className="flex h-screen min-h-screen bg-surface text-on-surface selection:bg-primary/15 selection:text-primary transition-colors dark:bg-[#0b0d10] dark:text-slate-100 dark:selection:bg-blue-400/20 dark:selection:text-blue-100">
+    <div
+      className={`flex h-screen min-h-screen bg-surface text-on-surface transition-colors dark:bg-[#0b0d10] dark:text-slate-100 ${workspaceTheme.selection}`}
+    >
       <ErpDemoSidebar
         allowedPages={allowedPages}
         currentPage={currentPage}
@@ -314,7 +318,9 @@ export function ErpHomeScreen({
               initial={{ opacity: 0, y: 12 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="flex min-h-full w-full flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/88 shadow-sm ring-1 ring-white/60 backdrop-blur dark:border-white/[0.08] dark:bg-[#111418] dark:ring-white/[0.03]">
+              <div
+                className={`flex min-h-full w-full flex-col overflow-hidden rounded-[2rem] border shadow-sm ring-1 backdrop-blur ${workspaceTheme.contentFrame}`}
+              >
                 <PageContent
                   currentPage={resolvedPage}
                   organizationLabel={organizationLabel}
@@ -359,6 +365,8 @@ function PageContent({
       return <ErpDemoStaff organizationLabel={organizationLabel} />;
     case "community":
       return <ErpDemoCommunity />;
+    case "gallery":
+      return <ClinicGalleryPage />;
     case "billing":
       return <ErpDemoBilling />;
     case "pricing":

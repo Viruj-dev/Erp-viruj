@@ -1,6 +1,8 @@
 "use client";
 
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
+import type { WorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
+import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import {
@@ -43,6 +45,7 @@ const mainNavItems = [
   { id: "patients", label: "Patients", icon: Users },
   { id: "staff", label: "Staff", icon: BadgeCheck },
   { id: "doctors", label: "Doctors", icon: Stethoscope },
+  { id: "gallery", label: "Gallery", icon: Image },
   { id: "community", label: "Community", icon: MessagesSquare },
   { id: "analytics", label: "Analytics", icon: BarChart3, pulse: true },
 ] as const;
@@ -53,6 +56,7 @@ const clinicNavItems = [
   { id: "doctors", label: "Doctors", icon: Stethoscope },
   { id: "offerings", label: "Offerings", icon: PackageCheck },
   { id: "gallery", label: "Gallery", icon: Image },
+  { id: "community", label: "Community", icon: MessagesSquare },
   { id: "analytics", label: "Analytics", icon: BarChart3, pulse: true },
   { id: "clinic-profile", label: "Clinic Profile", icon: Building2 },
 
@@ -64,6 +68,8 @@ const doctorNavItems = [
   { id: "availability", label: "Availability", icon: Timer },
   { id: "patients", label: "Patients", icon: Users },
   { id: "consultations", label: "Consultations", icon: BriefcaseMedical },
+  { id: "gallery", label: "Gallery", icon: Image },
+  { id: "community", label: "Community", icon: MessagesSquare },
   { id: "profile", label: "Profile", icon: Stethoscope },
   { id: "doctor-settings", label: "Settings", icon: Settings },
 ] as const;
@@ -159,6 +165,7 @@ export function ErpDemoSidebar({
   const visibleSettingsOptions = settingsOptions.filter((option) =>
     allowedPages.includes(option.id)
   );
+  const workspaceTheme = getWorkspaceTheme(organizationLabel);
   const isDoctorWorkspace = organizationLabel.toLowerCase() === "doctor";
   const isClinicWorkspace = organizationLabel.toLowerCase() === "clinic";
   const navItems = isDoctorWorkspace
@@ -192,7 +199,12 @@ export function ErpDemoSidebar({
           )}
         >
           <div className="relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-[#181b1f] dark:ring-white/[0.10]">
-            <span className="absolute inset-1 rounded-full bg-[conic-gradient(from_150deg,#7cf4ff,#315bff,#c2a3ff,#7cf4ff)] blur-[1px]" />
+            <span
+              className={cn(
+                "absolute inset-1 rounded-full blur-[1px]",
+                workspaceTheme.logoAura
+              )}
+            />
             <Stethoscope
               className="relative text-slate-950 dark:text-white"
               size={18}
@@ -278,6 +290,7 @@ export function ErpDemoSidebar({
             isDoctorProfileOpen={isDoctorProfileOpen}
             showDoctorProfileDropdown={isDoctorWorkspace || isClinicWorkspace}
             showAppointmentDropdown={!isOwnerOrAdmin}
+            theme={workspaceTheme}
           />
 
           {!isOwnerOrAdmin && !isCollapsed && isAppointmentsOpen ? (
@@ -290,7 +303,7 @@ export function ErpDemoSidebar({
                     className={cn(
                       "flex h-8 w-full items-center gap-2 rounded-lg px-2.5 text-left text-[12px] font-semibold transition",
                       currentPage === option.id
-                        ? "bg-white text-blue-700 shadow-sm dark:bg-white/[0.08] dark:text-white"
+                        ? workspaceTheme.activeNav
                         : "text-slate-500 hover:bg-white hover:text-slate-900 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
                     )}
                     key={option.id}
@@ -312,6 +325,7 @@ export function ErpDemoSidebar({
             items={operationsItems}
             label="Operations"
             onPageChange={onPageChange}
+            theme={workspaceTheme}
           />
 
           {canAccessSettings ? (
@@ -344,6 +358,7 @@ export function ErpDemoSidebar({
                 }}
                 showChevron={!isCollapsed && visibleSettingsOptions.length > 1}
                 isOpen={isSettingsOpen}
+                theme={workspaceTheme}
               />
 
               {!isCollapsed &&
@@ -355,7 +370,7 @@ export function ErpDemoSidebar({
                       className={cn(
                         "block h-8 w-full rounded-lg px-2.5 text-left text-[12px] font-semibold transition",
                         currentPage === option.id
-                          ? "bg-white text-blue-700 shadow-sm dark:bg-white/[0.08] dark:text-white"
+                          ? workspaceTheme.activeNav
                           : "text-slate-500 hover:bg-white hover:text-slate-900 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
                       )}
                       key={option.id}
@@ -381,7 +396,12 @@ export function ErpDemoSidebar({
             title="View profile"
             role="button"
           >
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#d7e3ff] text-xs font-semi-bold text-[#09203c]">
+            <div
+              className={cn(
+                "flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-semi-bold",
+                workspaceTheme.avatar
+              )}
+            >
               {getInitials(userName)}
             </div>
             {!isCollapsed ? (
@@ -443,6 +463,7 @@ function SidebarSection({
   isDoctorProfileOpen = false,
   showDoctorProfileDropdown = false,
   showAppointmentDropdown = false,
+  theme,
 }: {
   allowedPages: ErpDemoPage[];
   currentPage: string;
@@ -456,6 +477,7 @@ function SidebarSection({
   isDoctorProfileOpen?: boolean;
   showDoctorProfileDropdown?: boolean;
   showAppointmentDropdown?: boolean;
+  theme: WorkspaceTheme;
 }) {
   const visibleItems = items.filter((item) => allowedPages.includes(item.id));
 
@@ -520,6 +542,7 @@ function SidebarSection({
                     (isDoctorProfileItem && showDoctorProfileDropdown)) &&
                   !isCollapsed
                 }
+                theme={theme}
               />
 
               {isDoctorProfileItem &&
@@ -535,7 +558,7 @@ function SidebarSection({
                         className={cn(
                           "flex h-8 w-full items-center gap-2 rounded-lg px-2.5 text-left text-[12px] font-semibold transition",
                           currentPage === option.id
-                            ? "bg-white text-blue-700 shadow-sm dark:bg-white/[0.08] dark:text-white"
+                            ? theme.activeNav
                             : "text-slate-500 hover:bg-white hover:text-slate-900 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
                         )}
                         key={option.id}
@@ -567,6 +590,7 @@ function NavButton({
   onClick,
   pulse,
   showChevron,
+  theme,
 }: {
   active: boolean;
   badge?: string;
@@ -577,6 +601,7 @@ function NavButton({
   onClick: () => void;
   pulse?: boolean;
   showChevron?: boolean;
+  theme: WorkspaceTheme;
 }) {
   return (
     <button
@@ -584,7 +609,7 @@ function NavButton({
         "group relative flex h-9 w-full items-center rounded-lg text-[13px] font-semibold transition-all duration-200",
         isCollapsed ? "justify-center px-0" : "gap-3 px-2.5",
         active
-          ? "bg-white text-blue-700 shadow-sm dark:bg-white/[0.075] dark:text-white dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+          ? theme.activeNav
           : "text-slate-600 hover:bg-white hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.055] dark:hover:text-slate-100"
       )}
       onClick={onClick}
@@ -595,7 +620,7 @@ function NavButton({
         className={cn(
           "shrink-0 transition",
           active
-            ? "text-blue-700 dark:text-slate-100"
+            ? theme.activeIcon
             : "text-slate-400 group-hover:text-slate-700 dark:text-slate-500 dark:group-hover:text-slate-300"
         )}
         size={16}
@@ -609,7 +634,7 @@ function NavButton({
             </span>
           ) : null}
           {pulse ? (
-            <span className="size-1.5 rounded-full bg-[#766cff] shadow-[0_0_10px_2px_rgba(118,108,255,0.62)]" />
+            <span className={cn("size-1.5 rounded-full", theme.activeDot)} />
           ) : null}
           {showChevron ? (
             <ChevronDown
@@ -623,7 +648,12 @@ function NavButton({
         </>
       ) : null}
       {active && isCollapsed ? (
-        <span className="absolute right-2 size-1.5 rounded-full bg-[#766cff] shadow-[0_0_10px_2px_rgba(118,108,255,0.72)]" />
+        <span
+          className={cn(
+            "absolute right-2 size-1.5 rounded-full",
+            theme.activeDot
+          )}
+        />
       ) : null}
     </button>
   );

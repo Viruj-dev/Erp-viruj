@@ -30,10 +30,10 @@ const doctors = [
 ] as const;
 
 const services = [
-  ["Full Body Checkup", "Preventive Care", "4 doctors", "₹1,499", "Visible", "642"],
-  ["Dental Cleaning", "Dental", "2 doctors", "₹799", "Visible", "388"],
-  ["Skin Consultation", "Skin Care", "1 doctor", "₹599", "Draft", "219"],
-  ["Fertility Counselling", "Fertility", "1 doctor", "₹999", "Visible", "174"],
+  ["Full Body Checkup", "Preventive Care", "4 doctors", "Rs 1,499", "Visible", "642"],
+  ["Dental Cleaning", "Dental", "2 doctors", "Rs 799", "Visible", "388"],
+  ["Skin Consultation", "Skin Care", "1 doctor", "Rs 599", "Draft", "219"],
+  ["Fertility Counselling", "Fertility", "1 doctor", "Rs 999", "Visible", "174"],
 ] as const;
 
 const offeringCategories = [
@@ -192,11 +192,11 @@ export function ClinicProfileManagementPage() {
                   Viruj Advanced Clinic
                 </h3>
                 <p className="mt-1 text-sm font-medium text-slate-500">
-                  Multispeciality Clinic · Mumbai
+                  Multispeciality Clinic - Mumbai
                 </p>
                 <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-amber-600">
                   <Star size={16} fill="currentColor" />
-                  4.8 · 1,284 reviews
+                  4.8 - 1,284 reviews
                 </div>
                 <button className="mt-5 h-11 w-full rounded-xl bg-[#6d28d9] text-sm font-semibold text-white" type="button">
                   Request Appointment
@@ -378,7 +378,7 @@ export function ClinicDoctorsPresencePage() {
                       {doctor[0]}
                     </p>
                     <p className="mt-0.5 text-xs font-semibold text-slate-500">
-                      {doctor[4]} views · {doctor[5]} requests · {doctor[6]} rating
+                      {doctor[4]} views - {doctor[5]} requests - {doctor[6]} rating
                     </p>
                   </div>
                 </div>
@@ -981,7 +981,7 @@ function DrawerPreview({ fields, title }: { fields: string[]; title: string }) {
 }
 
 function ChartPanel({ title }: { title: string }) {
-  return <Panel title={title} subtitle="Last 30 days"><div className="flex h-52 items-end gap-3">{[42, 68, 54, 82, 72, 96, 88, 110, 104, 128].map((height, index) => <div className="flex flex-1 items-end" key={index}><div className="w-full rounded-t-xl bg-[linear-gradient(180deg,#a855f7,#6d28d9)]" style={{ height }} /></div>)}</div></Panel>;
+  return <Panel title={title} subtitle="Last 30 days"><div className="flex h-52 items-end gap-3">{[42, 68, 54, 82, 72, 96, 88, 110, 104, 128].map((height, index) => <div className="flex flex-1 items-end" key={index}><div className="w-full rounded-t-xl bg-[linear-gradient(180deg,#d946ef,#6d28d9)]" style={{ height }} /></div>)}</div></Panel>;
 }
 
 function RankedList({ items }: { items: readonly (readonly [string, string])[] }) {
@@ -997,7 +997,7 @@ function OfferingCard({
 }) {
   return (
     <article className="group overflow-hidden rounded-3xl border border-violet-100 bg-white/90 shadow-sm transition hover:-translate-y-0.5 hover:shadow-[0_22px_60px_rgba(109,40,217,0.14)] dark:border-violet-400/[0.12] dark:bg-[#14171b]">
-      <div className="relative h-32 bg-[linear-gradient(135deg,#ede9fe,#fae8ff)] p-5 dark:bg-none dark:bg-violet-400/[0.10]">
+      <div className="relative h-32 bg-[linear-gradient(135deg,#fae8ff,#fae8ff)] p-5 dark:bg-none dark:bg-violet-400/[0.10]">
         <div className="flex items-start justify-between">
           <span className="flex size-12 items-center justify-center rounded-2xl bg-white text-[#6d28d9] shadow-sm dark:bg-white/[0.10] dark:text-violet-200">
             {index % 2 === 0 ? <Sparkles size={22} /> : <Stethoscope size={22} />}
@@ -1035,7 +1035,7 @@ function OfferingCard({
             <StatusPill value="Search" />
           </div>
           <p className="text-xs font-bold text-slate-500">
-            {offering.views} views · {offering.requests} requests
+            {offering.views} views - {offering.requests} requests
           </p>
         </div>
       </div>
@@ -1071,3 +1071,6 @@ function getInitials(value: string) {
 
   return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
 }
+
+
+

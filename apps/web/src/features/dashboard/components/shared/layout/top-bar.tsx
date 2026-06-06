@@ -1,7 +1,9 @@
 "use client";
 
 import { ProfileDropdown } from "@/features/dashboard/components/shared/profile/profile-dropdown";
+import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme-provider";
 import { Bell, ChevronDown, Grid, Moon, Search, Sun } from "lucide-react";
 import { useState } from "react";
@@ -62,6 +64,7 @@ export function ErpDemoTopBar({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const sessionState = authClient.useSession();
   const userImage = sessionState.data?.user?.image;
+  const workspaceTheme = getWorkspaceTheme(organizationLabel);
   const title =
     currentPage === "hospital-profile"
       ? `${organizationLabel} Profile`
@@ -123,7 +126,7 @@ export function ErpDemoTopBar({
             onClick={() => setIsProfileOpen((v) => !v)}
             className="flex cursor-pointer items-center gap-3 rounded-lg p-1.5 transition-colors hover:bg-slate-200/50 dark:hover:bg-white/[0.08]"
           >
-            <div className="hidden text-right sm:block">
+              <div className="hidden text-right sm:block">
               <p className="text-xs font-bold text-on-surface dark:text-slate-100">
                 {userName || "Dr. Sarah Chen"}
               </p>
@@ -134,11 +137,20 @@ export function ErpDemoTopBar({
             {userImage ? (
               <img
                 alt="User profile"
-                className="h-9 w-9 rounded-lg object-cover ring-2 ring-primary/10"
+                className={cn(
+                  "h-9 w-9 rounded-lg object-cover ring-2",
+                  workspaceTheme.profileRing
+                )}
                 src={userImage}
               />
             ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#d7e3ff] text-xs font-bold text-[#09203c] ring-2 ring-primary/10 dark:bg-blue-500/20 dark:text-blue-300">
+              <div
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-lg text-xs font-bold ring-2",
+                  workspaceTheme.avatar,
+                  workspaceTheme.profileRing
+                )}
+              >
                 {getInitials(userName || "Viruj User")}
               </div>
             )}

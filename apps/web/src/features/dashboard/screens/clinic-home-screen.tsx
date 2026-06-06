@@ -15,8 +15,12 @@ import {
   ClinicSettingsPage,
   ClinicWorkingHoursPage,
 } from "@/features/dashboard/components/clinic/pages";
-import { ErpDemoAnalytics } from "@/features/dashboard/components/hospital/pages";
+import {
+  ErpDemoAnalytics,
+  ErpDemoCommunity,
+} from "@/features/dashboard/components/hospital/pages";
 import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
+import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
 import { ErpUserProfilePage } from "@/features/dashboard/components/shared/profile";
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
 import {
@@ -47,6 +51,7 @@ const clinicSupportedPages: ErpDemoPage[] = [
   "services",
   "facilities",
   "gallery",
+  "community",
   "reviews",
   "settings",
   "analytics",
@@ -141,6 +146,7 @@ export function ClinicHomeScreen({
     ? activeMemberRole.replace(/_/g, " ")
     : "clinic member";
   const organizationLabel = organizationTypeLabels.clinic;
+  const workspaceTheme = getWorkspaceTheme(organizationLabel);
 
   useEffect(() => {
     if (!isHydrated || isAuthPending) {
@@ -241,7 +247,9 @@ export function ClinicHomeScreen({
   }
 
   return (
-    <div className="flex h-screen min-h-screen bg-surface text-on-surface selection:bg-violet-500/15 selection:text-violet-700 transition-colors dark:bg-[#0b0d10] dark:text-slate-100 dark:selection:bg-violet-400/20 dark:selection:text-violet-100">
+    <div
+      className={`flex h-screen min-h-screen bg-surface text-on-surface transition-colors dark:bg-[#0b0d10] dark:text-slate-100 ${workspaceTheme.selection}`}
+    >
       <ErpDemoSidebar
         allowedPages={allowedPages}
         currentPage={resolvedPage}
@@ -307,7 +315,9 @@ export function ClinicHomeScreen({
               initial={{ opacity: 0, y: 12 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="flex min-h-full w-full flex-col overflow-hidden rounded-[2rem] border border-violet-100/90 bg-white/88 shadow-sm ring-1 ring-white/60 backdrop-blur dark:border-violet-400/[0.12] dark:bg-[#111418] dark:ring-white/[0.03]">
+              <div
+                className={`flex min-h-full w-full flex-col overflow-hidden rounded-[2rem] border shadow-sm ring-1 backdrop-blur ${workspaceTheme.contentFrame}`}
+              >
                 <ClinicPageContent
                   currentPage={resolvedPage}
                   roleLabel={roleLabel}
@@ -350,6 +360,8 @@ function ClinicPageContent({
       return <ClinicFacilitiesPage />;
     case "gallery":
       return <ClinicGalleryPage />;
+    case "community":
+      return <ErpDemoCommunity />;
     case "reviews":
       return <ClinicReviewsPage />;
     case "analytics":

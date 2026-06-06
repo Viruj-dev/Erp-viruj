@@ -2,6 +2,7 @@
 
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import { ErpDemoAppointments, ErpEnterpriseModule } from "@/features/dashboard/components/shared/modules";
+import { ClinicGalleryPage } from "@/features/dashboard/components/clinic/pages";
 import {
   DoctorAvailabilityPage,
   DoctorAppointmentDetailPage,
@@ -19,7 +20,9 @@ import {
   DoctorSettingsPage,
   DoctorVerificationVaultPage,
 } from "@/features/dashboard/components/doctor/pages";
+import { ErpDemoCommunity } from "@/features/dashboard/components/hospital/pages";
 import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
+import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
 import {
   buildDashboardPath,
@@ -43,6 +46,8 @@ const doctorAllowedPages: ErpDemoPage[] = [
   "appointments-dashboard",
   "appointments-review",
   "patients",
+  "gallery",
+  "community",
   "onboarding",
   "availability",
   "documents",
@@ -144,6 +149,7 @@ export function DoctorHomeScreen({
     ? activeMember.role.replace(/_/g, " ")
     : "doctor";
   const organizationLabel = organizationTypeLabels.doctor;
+  const workspaceTheme = getWorkspaceTheme(organizationLabel);
 
   useEffect(() => {
     if (!isHydrated || isAuthPending) {
@@ -244,7 +250,9 @@ export function DoctorHomeScreen({
   }
 
   return (
-    <div className="flex h-screen min-h-screen bg-surface text-on-surface selection:bg-primary/15 selection:text-primary transition-colors dark:bg-[#0b0d10] dark:text-slate-100">
+    <div
+      className={`flex h-screen min-h-screen bg-surface text-on-surface transition-colors dark:bg-[#0b0d10] dark:text-slate-100 ${workspaceTheme.selection}`}
+    >
       <ErpDemoSidebar
         allowedPages={doctorAllowedPages}
         currentPage={resolvedPage}
@@ -310,7 +318,9 @@ export function DoctorHomeScreen({
               initial={{ opacity: 0, y: 12 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="flex min-h-full w-full flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/88 shadow-sm ring-1 ring-white/60 backdrop-blur dark:border-white/[0.08] dark:bg-[#111418] dark:ring-white/[0.03]">
+              <div
+                className={`flex min-h-full w-full flex-col overflow-hidden rounded-[2rem] border shadow-sm ring-1 backdrop-blur ${workspaceTheme.contentFrame}`}
+              >
                 <DoctorPageContent
                   currentPage={resolvedPage}
                   detailId={detailId}
@@ -342,6 +352,10 @@ function DoctorPageContent({
       return <ErpDemoAppointments section="review" />;
     case "patients":
       return detailId ? <DoctorPatientDetailPage id={detailId} /> : <DoctorPatientDirectoryPage />;
+    case "gallery":
+      return <ClinicGalleryPage />;
+    case "community":
+      return <ErpDemoCommunity />;
     case "onboarding":
       return <DoctorOnboardingCenterPage />;
     case "availability":
