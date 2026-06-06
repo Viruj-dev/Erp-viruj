@@ -1,6 +1,10 @@
 "use client";
 
 import {
+  ClinicGalleryBento,
+  defaultClinicGalleryItems,
+} from "@/features/dashboard/components/clinic/clinic-gallery-bento";
+import {
   BarChart3,
   Camera,
   Eye,
@@ -111,6 +115,22 @@ export function ClinicDashboardPage({
         <ChartPanel title="Appointment Request Trend" />
         <ChartPanel title="Review Rating Trend" />
       </section>
+
+      <Panel title="Public Gallery" subtitle="Bento preview of photos patients see on your listing">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            8 photos live · 72% gallery completeness
+          </p>
+          <button
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#6d28d9] px-4 text-sm font-semibold text-white transition hover:bg-[#5b21b6]"
+            type="button"
+          >
+            <ImagePlus size={16} />
+            Manage Gallery
+          </button>
+        </div>
+        <ClinicGalleryBento items={defaultClinicGalleryItems} />
+      </Panel>
 
       <section className="grid gap-5 xl:grid-cols-[1fr_1fr_360px]">
         <Panel title="Most Viewed Doctors" subtitle="Doctor marketplace performance">

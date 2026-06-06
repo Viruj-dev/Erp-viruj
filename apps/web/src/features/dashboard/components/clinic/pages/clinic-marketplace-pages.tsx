@@ -1,6 +1,10 @@
 "use client";
 
 import {
+  ClinicGalleryBento,
+  extendedClinicGalleryItems,
+} from "@/features/dashboard/components/clinic/clinic-gallery-bento";
+import {
   Camera,
   CheckCircle2,
   Clock,
@@ -753,20 +757,21 @@ export function ClinicFacilitiesPage() {
 }
 
 export function ClinicGalleryPage() {
+  const primaryItems = extendedClinicGalleryItems.slice(0, 5);
+  const extraItems = extendedClinicGalleryItems.slice(5);
+
   return (
     <ClinicPageShell eyebrow="Gallery" title="Media Manager" subtitle="Upload, reorder, delete, preview, and choose the cover image." actions={<PrimaryAction icon={<ImagePlus size={16} />} label="Upload Images" />}>
-      <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-4">
-        {Array.from({ length: 8 }).map((_, index) => (
-          <div className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#ede9fe,#f5d0fe)] ring-1 ring-violet-100 dark:ring-violet-400/[0.14]" key={index}>
-            <Camera className="absolute left-4 top-4 text-[#6d28d9]" size={22} />
-            {index === 0 ? <span className="absolute right-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-bold text-[#6d28d9]">Cover</span> : null}
-            <div className="absolute inset-x-3 bottom-3 flex gap-2 opacity-0 transition group-hover:opacity-100">
-              <SecondaryAction label="Preview" />
-              <SecondaryAction label="Delete" tone="danger" />
-            </div>
-          </div>
-        ))}
-      </div>
+      <ClinicGalleryBento
+        actionsForItem={() => (
+          <>
+            <SecondaryAction label="Preview" />
+            <SecondaryAction label="Delete" tone="danger" />
+          </>
+        )}
+        extraItems={extraItems}
+        items={primaryItems}
+      />
     </ClinicPageShell>
   );
 }
