@@ -72,6 +72,7 @@ export type VirujAppointmentStatus =
   | "pending_approval"
   | "approved"
   | "rejected"
+  | "rescheduled"
   | "completed"
   | "cancelled"
   | "no_show";
@@ -92,6 +93,16 @@ export type VirujAppointment = {
   patientUserId?: string | null;
   reason?: string | null;
   status: VirujAppointmentStatus;
+};
+
+export type VirujMobileAppointmentRequestInput = {
+  mobileUserId?: string;
+  patientAge?: number | null;
+  patientGender?: string | null;
+  patientName: string;
+  patientPhone?: string;
+  reason: string;
+  requestedAt?: string;
 };
 
 export type VirujModuleSummary = {
@@ -192,15 +203,24 @@ export const virujBackend = {
   },
   appointments: {
     key: ["viruj-backend", "erp", "appointments"] as const,
+    createMobileRequest: (input: VirujMobileAppointmentRequestInput) =>
+      request<VirujAppointment>("/appointments/mobile-request", {
+        body: input,
+        method: "POST",
+      }),
     list: () => request<VirujAppointment[]>("/appointments"),
     updateStatus: (input: {
       approvalNotes?: string | null;
+      endsAt?: string | null;
       id: string;
+      startsAt?: string | null;
       status: VirujAppointmentStatus;
     }) =>
       request<VirujAppointment>(`/appointments/${input.id}/status`, {
         body: {
           approvalNotes: input.approvalNotes,
+          endsAt: input.endsAt,
+          startsAt: input.startsAt,
           status: input.status,
         },
         method: "PATCH",
