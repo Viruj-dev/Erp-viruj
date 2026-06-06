@@ -31,6 +31,7 @@ export const dashboardPageOptions = [
   "staff",
   "clinic-profile",
   "working-hours",
+  "offerings",
   "services",
   "facilities",
   "gallery",
@@ -156,7 +157,9 @@ export const allowedDashboardPagesByRole: Record<
     "clinic-profile",
     "locations",
     "working-hours",
+    "patients",
     "doctors",
+    "offerings",
     "services",
     "facilities",
     "gallery",
@@ -170,7 +173,9 @@ export const allowedDashboardPagesByRole: Record<
     "clinic-profile",
     "locations",
     "working-hours",
+    "patients",
     "doctors",
+    "offerings",
     "services",
     "facilities",
     "gallery",
@@ -182,7 +187,9 @@ export const allowedDashboardPagesByRole: Record<
   CLINIC_STAFF: [
     "dashboard",
     "clinic-profile",
+    "patients",
     "doctors",
+    "offerings",
     "services",
     "facilities",
     "gallery",
@@ -451,6 +458,11 @@ export function normalizeDashboardModule(value: string): DashboardPage {
     case "working-hours":
     case "hours":
       return "working-hours";
+    case "offerings":
+    case "offering":
+    case "services-facilities":
+    case "services-and-facilities":
+      return "offerings";
     case "services":
     case "service":
       return "services";

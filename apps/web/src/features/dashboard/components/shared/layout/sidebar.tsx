@@ -10,6 +10,7 @@ import {
   Bell,
   Bot,
   BriefcaseMedical,
+  Building2,
   Calendar,
   ChevronDown,
   ChevronLeft,
@@ -17,13 +18,18 @@ import {
   FileBadge,
   FileText,
   Gauge,
+  Image,
   Keyboard,
   LayoutDashboard,
   LogOut,
+  MapPin,
   MessagesSquare,
   MapPinned,
+  PackageCheck,
   Search,
   Settings,
+  Sparkles,
+  Star,
   Stethoscope,
   Timer,
   Users,
@@ -45,9 +51,11 @@ const clinicNavItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "patients", label: "Patients", icon: Users },
   { id: "doctors", label: "Doctors", icon: Stethoscope },
-  { id: "staff", label: "Staff", icon: BadgeCheck },
-  { id: "hospital-profile", label: "Clinic Profile", icon: BriefcaseMedical },
+  { id: "offerings", label: "Offerings", icon: PackageCheck },
+  { id: "gallery", label: "Gallery", icon: Image },
   { id: "analytics", label: "Analytics", icon: BarChart3, pulse: true },
+  { id: "clinic-profile", label: "Clinic Profile", icon: Building2 },
+
 ] as const;
 
 const doctorNavItems = [
@@ -57,7 +65,6 @@ const doctorNavItems = [
   { id: "patients", label: "Patients", icon: Users },
   { id: "consultations", label: "Consultations", icon: BriefcaseMedical },
   { id: "profile", label: "Profile", icon: Stethoscope },
-
   { id: "doctor-settings", label: "Settings", icon: Settings },
 ] as const;
 
@@ -68,6 +75,13 @@ const doctorProfileOptions = [
   { id: "documents", label: "Documents", icon: FileText },
 ] as const;
 
+const clinicProfileOptions = [
+  { id: "locations", label: "Locations", icon: MapPin },
+  { id: "working-hours", label: "Working Hours", icon: Timer },
+  { id: "facilities", label: "Facilities", icon: Sparkles },
+  { id: "reviews", label: "Reviews", icon: Star },
+] as const;
+
 const operationsItems = [
   { id: "pricing", label: "Pricing", icon: BadgeIndianRupee },
   { id: "notifications", label: "Notifications", icon: Bell, badge: "2" },
@@ -75,7 +89,7 @@ const operationsItems = [
 ] as const;
 
 const settingsOptions = [
-  { id: "settings", label: "Hospital-profile" },
+  { id: "settings", label: "General" },
   { id: "settings-alert-rules", label: "Alert Rules" },
   { id: "settings-audit-logs", label: "Clinical Audit Logs" },
   { id: "settings-storage", label: "Storage Usage" },
@@ -119,6 +133,11 @@ export function ErpDemoSidebar({
   );
   const [isDoctorProfileOpen, setIsDoctorProfileOpen] = useState(
     currentPage === "profile" ||
+      currentPage === "clinic-profile" ||
+      currentPage === "locations" ||
+      currentPage === "working-hours" ||
+      currentPage === "facilities" ||
+      currentPage === "reviews" ||
       currentPage === "onboarding" ||
       currentPage === "verification" ||
       currentPage === "documents"
@@ -145,6 +164,9 @@ export function ErpDemoSidebar({
     : isClinicWorkspace
       ? clinicNavItems
       : mainNavItems;
+  const nestedProfileOptions = isClinicWorkspace
+    ? clinicProfileOptions
+    : doctorProfileOptions;
   const canAccessSettings = visibleSettingsOptions.length > 0;
   const userName =
     sessionState.data?.user?.name ||
@@ -250,9 +272,9 @@ export function ErpDemoSidebar({
               setIsDoctorProfileOpen((value) => !value);
             }}
             onPageChange={onPageChange}
-            profileOptions={doctorProfileOptions}
+            profileOptions={nestedProfileOptions}
             isDoctorProfileOpen={isDoctorProfileOpen}
-            showDoctorProfileDropdown={isDoctorWorkspace}
+            showDoctorProfileDropdown={isDoctorWorkspace || isClinicWorkspace}
             showAppointmentDropdown={!isOwnerOrAdmin}
           />
 
@@ -302,23 +324,29 @@ export function ErpDemoSidebar({
               </p>
               <NavButton
                 active={currentPage.startsWith("settings")}
-                badge={visibleSettingsOptions.length.toString()}
+                badge={
+                  visibleSettingsOptions.length > 1
+                    ? visibleSettingsOptions.length.toString()
+                    : undefined
+                }
                 icon={Settings}
                 isCollapsed={isCollapsed}
                 label="Settings"
                 onClick={() => {
-                  if (isCollapsed) {
+                  if (isCollapsed || visibleSettingsOptions.length === 1) {
                     onPageChange("settings");
                     return;
                   }
 
                   setIsSettingsOpen((value) => !value);
                 }}
-                showChevron={!isCollapsed}
+                showChevron={!isCollapsed && visibleSettingsOptions.length > 1}
                 isOpen={isSettingsOpen}
               />
 
-              {!isCollapsed && isSettingsOpen ? (
+              {!isCollapsed &&
+              isSettingsOpen &&
+              visibleSettingsOptions.length > 1 ? (
                 <div className="ml-5 mt-1 space-y-1 border-l border-slate-200/80 pl-3 dark:border-white/[0.08]">
                   {visibleSettingsOptions.map((option) => (
                     <button
@@ -446,11 +474,14 @@ function SidebarSection({
       <div className="space-y-1">
         {visibleItems.map((item) => {
           const isAppointmentItem = item.id === "appointments";
-          const isDoctorProfileItem = item.id === "profile";
+          const isDoctorProfileItem =
+            showDoctorProfileDropdown &&
+            profileOptions.some((option) => option.id === item.id);
+          const profileOptionIds = profileOptions.map((option) => option.id);
           const isActive = isAppointmentItem
             ? currentPage.startsWith("appointments")
             : isDoctorProfileItem && showDoctorProfileDropdown
-            ? ["profile", "onboarding", "verification", "documents"].includes(currentPage)
+            ? profileOptionIds.includes(currentPage as ErpDemoPage)
             : currentPage === item.id;
 
           return (
@@ -479,7 +510,7 @@ function SidebarSection({
                   isAppointmentItem
                     ? currentPage.startsWith("appointments")
                     : isDoctorProfileItem && showDoctorProfileDropdown
-                    ? ["profile", "onboarding", "verification", "documents"].includes(currentPage)
+                    ? profileOptionIds.includes(currentPage as ErpDemoPage)
                     : undefined
                 }
                 showChevron={

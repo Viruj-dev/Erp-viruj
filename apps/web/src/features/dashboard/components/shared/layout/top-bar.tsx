@@ -16,6 +16,14 @@ const titles: Record<string, string> = {
   "appointments-settings": "Appointment Settings",
   patients: "Patient Directory",
   staff: "Staff Directory",
+  "clinic-profile": "Clinic Profile",
+  locations: "Clinic Locations",
+  "working-hours": "Working Hours",
+  offerings: "Clinic Offerings",
+  services: "Services",
+  facilities: "Facilities",
+  gallery: "Gallery",
+  reviews: "Reviews",
   community: "Community",
   billing: "Billing & Invoices",
   pricing: "Pricing & Plans",
@@ -56,6 +64,8 @@ export function ErpDemoTopBar({
   const userImage = sessionState.data?.user?.image;
   const title =
     currentPage === "hospital-profile"
+      ? `${organizationLabel} Profile`
+      : currentPage === "clinic-profile"
       ? `${organizationLabel} Profile`
       : titles[currentPage]?.replace("{}", `${organizationLabel}'s`) ??
         `${organizationLabel}'s Dashboard`;

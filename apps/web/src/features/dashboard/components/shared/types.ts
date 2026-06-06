@@ -18,6 +18,7 @@ export type ErpDemoPage =
   | "staff"
   | "clinic-profile"
   | "working-hours"
+  | "offerings"
   | "services"
   | "facilities"
   | "gallery"

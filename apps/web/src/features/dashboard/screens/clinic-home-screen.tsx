@@ -3,20 +3,20 @@
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import {
   ClinicDashboardPage,
-  ClinicProfilePage,
-  ClinicStaffPage,
+  ClinicDoctorsPresencePage,
+  ClinicFacilitiesPage,
+  ClinicGalleryPage,
+  ClinicLocationsPage,
+  ClinicOfferingsPage,
+  ClinicPatientsPage,
+  ClinicProfileManagementPage,
+  ClinicReviewsPage,
+  ClinicServicesPage,
+  ClinicSettingsPage,
+  ClinicWorkingHoursPage,
 } from "@/features/dashboard/components/clinic/pages";
-import {
-  ErpDemoAnalytics,
-  ErpDemoBilling,
-  ErpDemoCommunity,
-  DoctorsManagementPage,
-  ErpDemoPatients,
-  ErpDemoSettings,
-  PricingPage,
-} from "@/features/dashboard/components/hospital/pages";
+import { ErpDemoAnalytics } from "@/features/dashboard/components/hospital/pages";
 import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
-import { ErpDemoAppointments, ErpEnterpriseModule } from "@/features/dashboard/components/shared/modules";
 import { ErpUserProfilePage } from "@/features/dashboard/components/shared/profile";
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
 import {
@@ -38,27 +38,18 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 
 const clinicSupportedPages: ErpDemoPage[] = [
   "dashboard",
-  "finance",
-  "appointments",
-  "appointments-dashboard",
-  "appointments-review",
-  "appointments-patients",
-  "appointments-settings",
+  "clinic-profile",
+  "locations",
+  "working-hours",
   "patients",
-  "staff",
-  "community",
-  "billing",
-  "pricing",
-  "settings",
-  "settings-alert-rules",
-  "settings-audit-logs",
-  "settings-storage",
-  "settings-data-export",
-  "analytics",
   "doctors",
-  "hospital-profile",
-  "notifications",
-  "reports",
+  "offerings",
+  "services",
+  "facilities",
+  "gallery",
+  "reviews",
+  "settings",
+  "analytics",
   "profile",
 ];
 
@@ -138,10 +129,7 @@ export function ClinicHomeScreen({
   const activeOrganizationSlug = getOrganizationSlug(activeOrganization);
   const activeMemberRole = activeMember?.role;
   const allowedPages = useMemo(
-    () =>
-      getAllowedDashboardPages(activeMemberRole).filter((page) =>
-        clinicSupportedPages.includes(page)
-      ),
+    () => getClinicAllowedPages(activeMemberRole),
     [activeMemberRole]
   );
   const resolvedPage = resolveClinicPage(currentPage, allowedPages);
@@ -344,49 +332,30 @@ function ClinicPageContent({
   userName: string;
 }) {
   switch (currentPage) {
-    case "finance":
-      return <ErpDemoBilling />;
-    case "appointments":
-    case "appointments-dashboard":
-      return <ErpDemoAppointments section="dashboard" />;
-    case "appointments-review":
-      return <ErpDemoAppointments section="review" />;
-    case "appointments-patients":
-      return <ErpDemoAppointments section="patients" />;
-    case "appointments-settings":
-      return <ErpDemoAppointments section="settings" />;
+    case "clinic-profile":
+      return <ClinicProfileManagementPage />;
+    case "locations":
+      return <ClinicLocationsPage />;
+    case "working-hours":
+      return <ClinicWorkingHoursPage />;
     case "patients":
-      return <ErpDemoPatients />;
-    case "staff":
-      return <ClinicStaffPage />;
-    case "community":
-      return <ErpDemoCommunity />;
-    case "billing":
-      return <ErpDemoBilling />;
-    case "pricing":
-      return <PricingPage />;
-    case "settings":
-      return <ErpDemoSettings section="profile" />;
-    case "settings-alert-rules":
-      return <ErpDemoSettings section="alerts" />;
-    case "settings-audit-logs":
-      return <ErpDemoSettings section="audit" />;
-    case "settings-storage":
-      return <ErpDemoSettings section="storage" />;
-    case "settings-data-export":
-      return <ErpDemoSettings section="export" />;
+      return <ClinicPatientsPage />;
+    case "doctors":
+      return <ClinicDoctorsPresencePage />;
+    case "offerings":
+      return <ClinicOfferingsPage />;
+    case "services":
+      return <ClinicServicesPage />;
+    case "facilities":
+      return <ClinicFacilitiesPage />;
+    case "gallery":
+      return <ClinicGalleryPage />;
+    case "reviews":
+      return <ClinicReviewsPage />;
     case "analytics":
       return <ErpDemoAnalytics />;
-    case "doctors":
-      return <DoctorsManagementPage organizationLabel="Clinic" />;
-    case "hospital-profile":
-      return <ClinicProfilePage />;
-    case "notifications":
-      return (
-        <ErpEnterpriseModule module="notifications" roleLabel={roleLabel} />
-      );
-    case "reports":
-      return <ErpEnterpriseModule module="reports" roleLabel={roleLabel} />;
+    case "settings":
+      return <ClinicSettingsPage />;
     case "profile":
       return <ErpUserProfilePage />;
     case "dashboard":
@@ -401,6 +370,30 @@ function resolveClinicPage(page: ErpDemoPage, allowedPages: ErpDemoPage[]) {
   }
 
   return allowedPages.includes("dashboard") ? "dashboard" : allowedPages[0] ?? "dashboard";
+}
+
+function getClinicAllowedPages(role?: string | null): ErpDemoPage[] {
+  const clinicAdminRoles = new Set([
+    "ADMIN",
+    "CLINIC_ADMIN",
+    "CLINIC_OWNER",
+    "ORG_ADMIN",
+    "OWNER",
+    "admin",
+    "owner",
+  ]);
+
+  if (!role || clinicAdminRoles.has(role)) {
+    return clinicSupportedPages;
+  }
+
+  const rolePages = getAllowedDashboardPages(role).filter((page) =>
+    clinicSupportedPages.includes(page)
+  );
+
+  return rolePages.includes("offerings")
+    ? rolePages
+    : [...rolePages, "offerings"];
 }
 
 function isErpDemoPage(page: string): page is ErpDemoPage {
