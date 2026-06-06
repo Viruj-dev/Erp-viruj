@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 const backendUrl =
   process.env.NEXT_PUBLIC_VIRUJ_BACKEND_URL || "http://localhost:4000";
@@ -99,6 +99,11 @@ export type VirujModuleSummary = {
 
 export type VirujStaffRole =
   | "ADMIN"
+  | "APPOINTMENT_HANDLER"
+  | "CLINIC_ADMIN"
+  | "CLINIC_OWNER"
+  | "CLINIC_STAFF"
+  | "COMMUNITY_MANAGER"
   | "DOCTOR"
   | "MANAGER"
   | "RECEPTIONIST"

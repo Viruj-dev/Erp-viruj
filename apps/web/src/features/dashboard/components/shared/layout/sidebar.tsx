@@ -41,6 +41,16 @@ const mainNavItems = [
   { id: "analytics", label: "Analytics", icon: BarChart3, pulse: true },
 ] as const;
 
+const clinicNavItems = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "appointments", label: "Appointments", icon: Calendar, badge: "4" },
+  { id: "patients", label: "Patients", icon: Users },
+  { id: "doctors", label: "Doctors", icon: Stethoscope },
+  { id: "staff", label: "Staff", icon: BadgeCheck },
+  { id: "hospital-profile", label: "Clinic Profile", icon: BriefcaseMedical },
+  { id: "analytics", label: "Analytics", icon: BarChart3, pulse: true },
+] as const;
+
 const doctorNavItems = [
   { id: "dashboard", label: "Overview", icon: LayoutDashboard },
   { id: "locations", label: "Locations", icon: MapPinned },
@@ -120,7 +130,9 @@ export function ErpDemoSidebar({
   const activeMemberRole = activeMemberState.data?.role;
   const isOwnerOrAdmin =
     activeMemberRole === "OWNER" ||
+    activeMemberRole === "CLINIC_OWNER" ||
     activeMemberRole === "ADMIN" ||
+    activeMemberRole === "CLINIC_ADMIN" ||
     activeMemberRole === "ORG_ADMIN" ||
     activeMemberRole === "owner" ||
     activeMemberRole === "admin";
@@ -128,6 +140,12 @@ export function ErpDemoSidebar({
     allowedPages.includes(option.id)
   );
   const isDoctorWorkspace = organizationLabel.toLowerCase() === "doctor";
+  const isClinicWorkspace = organizationLabel.toLowerCase() === "clinic";
+  const navItems = isDoctorWorkspace
+    ? doctorNavItems
+    : isClinicWorkspace
+      ? clinicNavItems
+      : mainNavItems;
   const canAccessSettings = visibleSettingsOptions.length > 0;
   const userName =
     sessionState.data?.user?.name ||
@@ -214,7 +232,7 @@ export function ErpDemoSidebar({
             allowedPages={allowedPages}
             currentPage={currentPage}
             isCollapsed={isCollapsed}
-            items={isDoctorWorkspace ? doctorNavItems : mainNavItems}
+            items={navItems}
             label="Main Menu"
             onAppointmentToggle={() => {
               if (isCollapsed) {

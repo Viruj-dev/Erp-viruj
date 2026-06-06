@@ -2,6 +2,7 @@
 
 import { Edit3, Mail, Trash2, UserPlus, X } from "lucide-react";
 import type { FormEvent, ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
   roleLabels,
   roleOptions,
@@ -43,89 +44,91 @@ export function AddStaffEntryDialog({
   const hasCredentials = Boolean(credentialPreview?.temporaryCredentials);
 
   return (
-    <div className="erp-dialog-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        aria-modal="true"
-        className="w-full max-w-lg rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-2xl"
-        role="dialog"
-      >
-        <DialogHeader
-          icon={<UserPlus size={20} />}
-          onClose={onClose}
-          title="Add Staff Entry"
-          description="Invite a person and assign their organization role."
-          closeLabel="Close staff entry dialog"
-        />
-
-        <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-          <StaffInput
-            autoFocus
-            label="Staff Name"
-            onChange={onNameChange}
-            placeholder="staff name"
-            type="text"
-            value={name}
-          />
-          <StaffInput
-            label="Staff Email"
-            onChange={onEmailChange}
-            placeholder="staff@organization.com"
-            type="email"
-            value={email}
-          />
-          <RoleSelect
-            label="Assign Role"
-            onChange={onRoleChange}
-            value={role}
+    <StaffDialogPortal>
+      <div className="erp-dialog-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div
+          aria-modal="true"
+          className="w-full max-w-lg rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-2xl"
+          role="dialog"
+        >
+          <DialogHeader
+            icon={<UserPlus size={20} />}
+            onClose={onClose}
+            title="Add Staff Entry"
+            description="Invite a person and assign their organization role."
+            closeLabel="Close staff entry dialog"
           />
 
-          {credentialPreview?.temporaryCredentials ? (
-            <div className="rounded-xl border border-secondary/20 bg-secondary/10 p-4 text-sm">
-              <p className="font-headline text-base font-semi-bold text-on-surface">
-                Staff login credentials generated
-              </p>
-              <p className="mt-1 font-medium text-on-surface-variant">
-                The invite email now asks the staff member to confirm access
-                first. After confirmation, their status changes from pending to
-                on duty.
-              </p>
-              <div className="mt-3 space-y-2 rounded-lg bg-white/70 p-3 font-mono text-xs font-bold text-on-surface">
-                <p>Email: {credentialPreview.temporaryCredentials.email}</p>
-                <p>
-                  Password: {credentialPreview.temporaryCredentials.password}
+          <form className="mt-6 space-y-4" onSubmit={onSubmit}>
+            <StaffInput
+              autoFocus
+              label="Staff Name"
+              onChange={onNameChange}
+              placeholder="staff name"
+              type="text"
+              value={name}
+            />
+            <StaffInput
+              label="Staff Email"
+              onChange={onEmailChange}
+              placeholder="staff@organization.com"
+              type="email"
+              value={email}
+            />
+            <RoleSelect
+              label="Assign Role"
+              onChange={onRoleChange}
+              value={role}
+            />
+
+            {credentialPreview?.temporaryCredentials ? (
+              <div className="rounded-xl border border-secondary/20 bg-secondary/10 p-4 text-sm">
+                <p className="font-headline text-base font-semi-bold text-on-surface">
+                  Staff login credentials generated
                 </p>
-                <p>Confirm: {credentialPreview.confirmationUrl}</p>
-                <p>Login: {credentialPreview.loginUrl}</p>
+                <p className="mt-1 font-medium text-on-surface-variant">
+                  The invite email now asks the staff member to confirm access
+                  first. After confirmation, their status changes from pending to
+                  on duty.
+                </p>
+                <div className="mt-3 space-y-2 rounded-lg bg-white/70 p-3 font-mono text-xs font-bold text-on-surface">
+                  <p>Email: {credentialPreview.temporaryCredentials.email}</p>
+                  <p>
+                    Password: {credentialPreview.temporaryCredentials.password}
+                  </p>
+                  <p>Confirm: {credentialPreview.confirmationUrl}</p>
+                  <p>Login: {credentialPreview.loginUrl}</p>
+                </div>
               </div>
+            ) : null}
+
+            {inviteError ? (
+              <p className="rounded-lg bg-error-container/30 px-3 py-2 text-sm font-semibold text-error">
+                {inviteError.message || "Unable to invite staff."}
+              </p>
+            ) : null}
+
+            <div className="grid gap-3 pt-2 sm:grid-cols-2">
+              <button
+                className="rounded-lg border border-outline-variant/25 px-4 py-3 text-sm font-semi-bold text-on-surface transition hover:bg-surface-container-low"
+                onClick={onClose}
+                type="button"
+              >
+                {hasCredentials ? "Done" : "Cancel"}
+              </button>
+              <button
+                className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semi-bold text-white shadow-md transition hover:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isInvitePending || !email.trim() || hasCredentials}
+                type="submit"
+              >
+                <Mail size={16} />
+                {isInvitePending ? "Adding..." : "Add Person"}
+              </button>
             </div>
-          ) : null}
-
-          {inviteError ? (
-            <p className="rounded-lg bg-error-container/30 px-3 py-2 text-sm font-semibold text-error">
-              {inviteError.message || "Unable to invite staff."}
-            </p>
-          ) : null}
-
-          <div className="grid gap-3 pt-2 sm:grid-cols-2">
-            <button
-              className="rounded-lg border border-outline-variant/25 px-4 py-3 text-sm font-semi-bold text-on-surface transition hover:bg-surface-container-low"
-              onClick={onClose}
-              type="button"
-            >
-              {hasCredentials ? "Done" : "Cancel"}
-            </button>
-            <button
-              className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semi-bold text-white shadow-md transition hover:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isInvitePending || !email.trim() || hasCredentials}
-              type="submit"
-            >
-              <Mail size={16} />
-              {isInvitePending ? "Adding..." : "Add Person"}
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
-    </div>
+    </StaffDialogPortal>
   );
 }
 
@@ -149,56 +152,58 @@ export function EditStaffRoleDialog({
   staff,
 }: EditStaffRoleDialogProps) {
   return (
-    <div className="erp-dialog-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        aria-modal="true"
-        className="w-full max-w-lg rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
-        role="dialog"
-      >
-        <DialogHeader
-          closeLabel="Close edit staff dialog"
-          description="Change access privileges and role assignment for this user."
-          icon={<Edit3 size={20} />}
-          onClose={onClose}
-          title="Edit Staff Role"
-        />
-
-        <div className="mt-6 rounded-xl bg-surface-container-low p-4">
-          <StaffIdentity staff={staff} />
-        </div>
-
-        <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-          <RoleSelect
-            label="Select New Role"
-            onChange={onRoleChange}
-            value={editRole}
+    <StaffDialogPortal>
+      <div className="erp-dialog-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div
+          aria-modal="true"
+          className="w-full max-w-lg rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+          role="dialog"
+        >
+          <DialogHeader
+            closeLabel="Close edit staff dialog"
+            description="Change access privileges and role assignment for this user."
+            icon={<Edit3 size={20} />}
+            onClose={onClose}
+            title="Edit Staff Role"
           />
 
-          {error ? (
-            <p className="rounded-lg bg-error-container/30 px-3 py-2 text-sm font-semibold text-error">
-              {error.message || "Unable to update staff role."}
-            </p>
-          ) : null}
-
-          <div className="grid gap-3 pt-2 sm:grid-cols-2">
-            <button
-              className="rounded-lg border border-outline-variant/25 px-4 py-3 text-sm font-semi-bold text-on-surface transition hover:bg-surface-container-low"
-              onClick={onClose}
-              type="button"
-            >
-              Cancel
-            </button>
-            <button
-              className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semi-bold text-white shadow-md transition hover:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isPending}
-              type="submit"
-            >
-              {isPending ? "Updating..." : "Save Changes"}
-            </button>
+          <div className="mt-6 rounded-xl bg-surface-container-low p-4">
+            <StaffIdentity staff={staff} />
           </div>
-        </form>
+
+          <form className="mt-6 space-y-4" onSubmit={onSubmit}>
+            <RoleSelect
+              label="Select New Role"
+              onChange={onRoleChange}
+              value={editRole}
+            />
+
+            {error ? (
+              <p className="rounded-lg bg-error-container/30 px-3 py-2 text-sm font-semibold text-error">
+                {error.message || "Unable to update staff role."}
+              </p>
+            ) : null}
+
+            <div className="grid gap-3 pt-2 sm:grid-cols-2">
+              <button
+                className="rounded-lg border border-outline-variant/25 px-4 py-3 text-sm font-semi-bold text-on-surface transition hover:bg-surface-container-low"
+                onClick={onClose}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semi-bold text-white shadow-md transition hover:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isPending}
+                type="submit"
+              >
+                {isPending ? "Updating..." : "Save Changes"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </StaffDialogPortal>
   );
 }
 
@@ -218,57 +223,67 @@ export function DeleteStaffDialog({
   staff,
 }: DeleteStaffDialogProps) {
   return (
-    <div className="erp-dialog-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        aria-modal="true"
-        className="w-full max-w-lg rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
-        role="dialog"
-      >
-        <DialogHeader
-          closeLabel="Close delete staff dialog"
-          description="This action is irreversible. All clinical access will be revoked."
-          icon={<Trash2 size={20} />}
-          iconClassName="bg-error/10 text-error"
-          onClose={onClose}
-          title="Remove Staff Member"
-          titleClassName="text-error"
-        />
+    <StaffDialogPortal>
+      <div className="erp-dialog-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div
+          aria-modal="true"
+          className="w-full max-w-lg rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+          role="dialog"
+        >
+          <DialogHeader
+            closeLabel="Close delete staff dialog"
+            description="This action is irreversible. All clinical access will be revoked."
+            icon={<Trash2 size={20} />}
+            iconClassName="bg-error/10 text-error"
+            onClose={onClose}
+            title="Remove Staff Member"
+            titleClassName="text-error"
+          />
 
-        <div className="mt-6 rounded-xl border border-error/15 bg-error-container/5 p-4">
-          <p className="text-sm font-semibold text-on-surface">
-            Are you sure you want to permanently remove this staff member?
-          </p>
-          <div className="mt-3 rounded-lg bg-white/50 p-3">
-            <StaffIdentity staff={staff} />
+          <div className="mt-6 rounded-xl border border-error/15 bg-error-container/5 p-4">
+            <p className="text-sm font-semibold text-on-surface">
+              Are you sure you want to permanently remove this staff member?
+            </p>
+            <div className="mt-3 rounded-lg bg-white/50 p-3">
+              <StaffIdentity staff={staff} />
+            </div>
+          </div>
+
+          {error ? (
+            <p className="mt-4 rounded-lg bg-error-container/30 px-3 py-2 text-sm font-semibold text-error">
+              {error.message || "Unable to remove staff."}
+            </p>
+          ) : null}
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <button
+              className="rounded-lg border border-outline-variant/25 px-4 py-3 text-sm font-semi-bold text-on-surface transition hover:bg-surface-container-low"
+              onClick={onClose}
+              type="button"
+            >
+              Cancel
+            </button>
+            <button
+              className="flex items-center justify-center gap-2 rounded-lg bg-error px-4 py-3 text-sm font-semi-bold text-white shadow-md transition hover:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isPending}
+              onClick={onDelete}
+              type="button"
+            >
+              {isPending ? "Removing..." : "Delete Staff"}
+            </button>
           </div>
         </div>
-
-        {error ? (
-          <p className="mt-4 rounded-lg bg-error-container/30 px-3 py-2 text-sm font-semibold text-error">
-            {error.message || "Unable to remove staff."}
-          </p>
-        ) : null}
-
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <button
-            className="rounded-lg border border-outline-variant/25 px-4 py-3 text-sm font-semi-bold text-on-surface transition hover:bg-surface-container-low"
-            onClick={onClose}
-            type="button"
-          >
-            Cancel
-          </button>
-          <button
-            className="flex items-center justify-center gap-2 rounded-lg bg-error px-4 py-3 text-sm font-semi-bold text-white shadow-md transition hover:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isPending}
-            onClick={onDelete}
-            type="button"
-          >
-            {isPending ? "Removing..." : "Delete Staff"}
-          </button>
-        </div>
       </div>
-    </div>
+    </StaffDialogPortal>
   );
+}
+
+function StaffDialogPortal({ children }: { children: ReactNode }) {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(children, document.body);
 }
 
 function DialogHeader({

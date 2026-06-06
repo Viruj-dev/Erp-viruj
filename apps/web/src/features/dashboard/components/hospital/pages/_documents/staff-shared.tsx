@@ -1,7 +1,12 @@
 "use client";
 
 export const roleOptions = [
+  "CLINIC_OWNER",
+  "CLINIC_ADMIN",
+  "CLINIC_STAFF",
   "ADMIN",
+  "APPOINTMENT_HANDLER",
+  "COMMUNITY_MANAGER",
   "MANAGER",
   "DOCTOR",
   "STAFF",
@@ -12,6 +17,9 @@ export const roleOptions = [
 export const roleLabels: Record<string, string> = {
   ADMIN: "Admin",
   APPOINTMENT_HANDLER: "Appointment Handler",
+  CLINIC_ADMIN: "Clinic Admin",
+  CLINIC_OWNER: "Clinic Owner",
+  CLINIC_STAFF: "Clinic Staff",
   COMMUNITY_MANAGER: "Community Manager",
   DOCTOR: "Doctor",
   MANAGER: "Manager",
@@ -131,6 +139,14 @@ export function formatDate(value: string | Date) {
 }
 
 export function departmentFromRole(role: string) {
+  if (
+    role === "CLINIC_OWNER" ||
+    role === "CLINIC_ADMIN" ||
+    role === "CLINIC_STAFF"
+  ) {
+    return "Clinic Operations";
+  }
+
   if (role === "APPOINTMENT_HANDLER" || role === "RECEPTIONIST") {
     return "Appointments";
   }

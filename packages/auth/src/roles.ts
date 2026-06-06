@@ -2,10 +2,13 @@ import { z } from "zod";
 
 export const organizationRoleOptions = [
   "OWNER",
+  "CLINIC_OWNER",
   "ADMIN",
+  "CLINIC_ADMIN",
   "MANAGER",
   "DOCTOR",
   "STAFF",
+  "CLINIC_STAFF",
   "RECEPTIONIST",
   "TECHNICIAN",
 ] as const;
@@ -41,10 +44,12 @@ export const normalizeOrganizationMemberRole = (
   switch (role) {
     case "owner":
     case "OWNER":
+    case "CLINIC_OWNER":
       return "OWNER";
     case "ORG_ADMIN":
     case "admin":
     case "ADMIN":
+    case "CLINIC_ADMIN":
       return "ADMIN";
     case "manager":
     case "MANAGER":
@@ -57,6 +62,7 @@ export const normalizeOrganizationMemberRole = (
     case "RECEPTIONIST":
       return "RECEPTIONIST";
     case "STAFF":
+    case "CLINIC_STAFF":
       return "STAFF";
     case "lab_tech":
     case "TECHNICIAN":
