@@ -82,6 +82,7 @@ export type VirujAppointment = {
   appointmentDate: string;
   appointmentMode: string;
   appointmentTime: string;
+  createdAt?: string | Date;
   departmentName?: string | null;
   doctorName: string;
   id: string;
@@ -207,6 +208,10 @@ export const virujBackend = {
       request<VirujAppointment>("/appointments/mobile-request", {
         body: input,
         method: "POST",
+      }),
+    deleteAll: () =>
+      request<{ deleted: number }>("/appointments", {
+        method: "DELETE",
       }),
     list: () => request<VirujAppointment[]>("/appointments"),
     updateStatus: (input: {
