@@ -96,19 +96,7 @@ function BentoCard({
           className="relative z-10 text-slate-700 dark:text-slate-300"
           size={slot === "hero" ? 28 : 22}
         />
-        <div className="relative z-10 mt-auto space-y-1">
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-            Public listing photo
-          </p>
-          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {item.subtitle}
-          </p>
-        </div>
-        {actions ? (
-          <div className="relative z-10 mt-3 flex gap-2 opacity-0 transition group-hover:opacity-100">
-            {actions}
-          </div>
-        ) : null}
+
       </div>
     </article>
   );
