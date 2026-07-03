@@ -66,7 +66,6 @@ export function PatientDataTable({
     onUpdateAppointment,
   });
   const table = useReactTable({
-    columnVisibility,
     columns,
     data: patients,
     getCoreRowModel: getCoreRowModel(),

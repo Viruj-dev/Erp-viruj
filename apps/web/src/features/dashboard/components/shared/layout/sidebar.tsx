@@ -41,7 +41,6 @@ import { useState } from "react";
 
 const mainNavItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "appointments", label: "Appointments", icon: Calendar, badge: "4" },
   { id: "patients", label: "Patients", icon: Users },
   { id: "staff", label: "Staff", icon: BadgeCheck },
   { id: "doctors", label: "Doctors", icon: Stethoscope },
