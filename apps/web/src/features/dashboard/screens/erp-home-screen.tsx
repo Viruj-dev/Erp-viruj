@@ -319,7 +319,11 @@ export function ErpHomeScreen({
               transition={{ duration: 0.2 }}
             >
               <div
-                className={`flex min-h-full w-full flex-col overflow-hidden rounded-[2rem] border shadow-sm ring-1 backdrop-blur ${workspaceTheme.contentFrame}`}
+                className={
+                  resolvedPage === "doctors"
+                    ? "flex min-h-full w-full flex-col"
+                    : `flex min-h-full w-full flex-col overflow-hidden rounded-[2rem] border shadow-sm ring-1 backdrop-blur ${workspaceTheme.contentFrame}`
+                }
               >
                 <PageContent
                   currentPage={resolvedPage}

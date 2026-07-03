@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   virujBackend,
   type VirujDoctor,
@@ -166,7 +167,7 @@ export function DoctorsManagementPage({
   }
 
   return (
-    <div className="flex min-h-full flex-col p-6 lg:p-10">
+    <div className="flex min-h-full flex-col p-2 lg:p-4">
       <section className="flex min-h-full flex-1 flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#111418]">
         <div className="grid gap-5 border-b border-slate-200 p-5 dark:border-white/[0.08] lg:grid-cols-[1fr_auto] lg:items-start">
           <div>
@@ -262,7 +263,8 @@ export function DoctorsManagementPage({
       </section>
 
       {isDialogOpen ? (
-        <div className="erp-dialog-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+        <DoctorDialogPortal>
+          <div className="erp-dialog-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4">
           <form
             className="w-full max-w-3xl overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-2xl dark:border-white/[0.1] dark:bg-[#111418]"
             onSubmit={handleCreateDoctor}
@@ -368,10 +370,12 @@ export function DoctorsManagementPage({
             </div>
           </form>
         </div>
+        </DoctorDialogPortal>
       ) : null}
 
       {deletingDoctor ? (
-        <div className="erp-dialog-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+        <DoctorDialogPortal>
+          <div className="erp-dialog-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div
             aria-modal="true"
             className="w-full max-w-md rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-2xl dark:border-white/[0.1] dark:bg-[#111418]"
@@ -418,9 +422,18 @@ export function DoctorsManagementPage({
             </div>
           </div>
         </div>
+        </DoctorDialogPortal>
       ) : null}
     </div>
   );
+}
+
+function DoctorDialogPortal({ children }: { children: React.ReactNode }) {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(children, document.body);
 }
 
 function DoctorRow({
