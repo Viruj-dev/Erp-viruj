@@ -24,6 +24,7 @@ import {
   Users,
 } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
   type VirujHospitalGalleryInput,
   virujBackend,
@@ -903,36 +904,39 @@ export function ClinicGalleryPage({
         onImageSelected={saveCardImage}
       />
 
-      {previewItem && previewUrl ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 p-6 backdrop-blur-xl backdrop-saturate-50">
-          <div className="max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-2xl border border-slate-900 bg-[#ececec] shadow-[6px_6px_0_0_#0f172a] dark:border-slate-200 dark:bg-[#1a1d22] dark:shadow-[6px_6px_0_0_#e2e8f0]">
-            <div className="flex items-center justify-between gap-3 border-b border-slate-900 px-4 py-3 dark:border-slate-200">
-              <div>
-                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-900 dark:text-slate-100">
-                  {previewItem.title}
-                </p>
-                <p className="mt-1 text-xs font-semibold text-slate-500">
-                  {previewItem.subtitle}
-                </p>
+      {previewItem && previewUrl && typeof document !== "undefined"
+        ? createPortal(
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/35 p-6 backdrop-blur-2xl backdrop-saturate-50">
+              <div className="max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-2xl border border-slate-900 bg-[#ececec] shadow-[6px_6px_0_0_#0f172a] dark:border-slate-200 dark:bg-[#1a1d22] dark:shadow-[6px_6px_0_0_#e2e8f0]">
+                <div className="flex items-center justify-between gap-3 border-b border-slate-900 px-4 py-3 dark:border-slate-200">
+                  <div>
+                    <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-900 dark:text-slate-100">
+                      {previewItem.title}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                      {previewItem.subtitle}
+                    </p>
+                  </div>
+                  <button
+                    className="rounded-sm border border-slate-900 bg-white px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-slate-900 transition hover:bg-slate-100 dark:border-slate-200 dark:bg-slate-900 dark:text-slate-100"
+                    onClick={() => setPreviewItem(null)}
+                    type="button"
+                  >
+                    Close
+                  </button>
+                </div>
+                <div className="max-h-[76vh] overflow-auto p-4">
+                  <img
+                    alt={`${previewItem.title} ${previewItem.subtitle}`}
+                    className="mx-auto max-h-[70vh] w-auto max-w-full border border-slate-900 object-contain dark:border-slate-200"
+                    src={previewUrl}
+                  />
+                </div>
               </div>
-              <button
-                className="rounded-sm border border-slate-900 bg-white px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-slate-900 transition hover:bg-slate-100 dark:border-slate-200 dark:bg-slate-900 dark:text-slate-100"
-                onClick={() => setPreviewItem(null)}
-                type="button"
-              >
-                Close
-              </button>
-            </div>
-            <div className="max-h-[76vh] overflow-auto p-4">
-              <img
-                alt={`${previewItem.title} ${previewItem.subtitle}`}
-                className="mx-auto max-h-[70vh] w-auto max-w-full border border-slate-900 object-contain dark:border-slate-200"
-                src={previewUrl}
-              />
-            </div>
-          </div>
-        </div>
-      ) : null}
+            </div>,
+            document.body
+          )
+        : null}
     </ClinicPageShell>
   );
 }
