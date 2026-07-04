@@ -220,6 +220,33 @@ export type VirujDoctor = VirujDoctorInput & {
   updatedAt: string;
 };
 
+export type VirujHospitalGalleryMediaType = "IMAGE" | "VIDEO";
+
+export type VirujHospitalGalleryInput = {
+  altText?: string;
+  caption?: string;
+  isPublished?: boolean;
+  mediaId?: string;
+  mediaType?: VirujHospitalGalleryMediaType;
+  sortOrder?: number;
+  url: string;
+};
+
+export type VirujHospitalGalleryItem = {
+  altText?: string;
+  caption?: string;
+  createdAt: string;
+  createdBy: string;
+  hospitalId: string;
+  id: string;
+  isPublished: boolean;
+  mediaId?: string;
+  mediaType: VirujHospitalGalleryMediaType;
+  sortOrder: number;
+  updatedAt: string;
+  url: string;
+};
+
 export type VirujAnalyticsDateRange =
   | "TODAY"
   | "YESTERDAY"
@@ -381,6 +408,41 @@ export const virujBackend = {
         },
         method: "PATCH",
       }),
+  },
+  hospitalGallery: {
+    create: (input: { gallery: VirujHospitalGalleryInput; organizationId?: string }) =>
+      request<VirujHospitalGalleryItem>("/hospital/profile/gallery", {
+        body: input.gallery,
+        method: "POST",
+        organizationId: input.organizationId,
+      }),
+    delete: (input: { id: string; organizationId?: string }) =>
+      request<{ deleted: true; id: string }>(
+        `/hospital/profile/gallery/${input.id}`,
+        {
+          method: "DELETE",
+          organizationId: input.organizationId,
+        }
+      ),
+    key: (organizationId?: string) =>
+      ["viruj-backend", "erp", "hospital", "gallery", organizationId ?? "none"] as const,
+    list: (input?: { organizationId?: string }) =>
+      request<VirujHospitalGalleryItem[]>("/hospital/profile/gallery", {
+        organizationId: input?.organizationId,
+      }),
+    update: (input: {
+      gallery: Partial<VirujHospitalGalleryInput>;
+      id: string;
+      organizationId?: string;
+    }) =>
+      request<VirujHospitalGalleryItem>(
+        `/hospital/profile/gallery/${input.id}`,
+        {
+          body: input.gallery,
+          method: "PATCH",
+          organizationId: input.organizationId,
+        }
+      ),
   },
   doctors: {
     create: (input: VirujDoctorInput) =>

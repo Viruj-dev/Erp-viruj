@@ -1,7 +1,9 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ClinicGalleryBento,
+  type ClinicGalleryBentoItem,
   extendedClinicGalleryItems,
 } from "@/features/dashboard/components/clinic/clinic-gallery-bento";
 import {
@@ -21,7 +23,11 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import {
+  type VirujHospitalGalleryInput,
+  virujBackend,
+} from "@/lib/viruj-backend";
 
 const doctors = [
   ["Dr. Aditi Rao", "Dermatology", "Live", "Skin Care, Hair Consults", "18.4k", "428", "4.8"],
@@ -756,26 +762,180 @@ export function ClinicFacilitiesPage() {
   );
 }
 
-export function ClinicGalleryPage() {
+export function ClinicGalleryPage({
+  organizationId,
+}: {
+  organizationId?: string;
+}) {
   const primaryItems = extendedClinicGalleryItems.slice(0, 5);
   const extraItems = extendedClinicGalleryItems.slice(5);
+  const queryClient = useQueryClient();
+  const queryKey = virujBackend.hospitalGallery.key(organizationId);
+  const [localImagesById, setLocalImagesById] = useState<Record<string, string>>({});
+  const [previewItem, setPreviewItem] = useState<ClinicGalleryBentoItem | null>(null);
+
+  const galleryQuery = useQuery({
+    enabled: Boolean(organizationId),
+    queryFn: () => virujBackend.hospitalGallery.list({ organizationId }),
+    queryKey,
+  });
+
+  const galleryItems = galleryQuery.data ?? [];
+  const galleryItemByCardId = useMemo(() => {
+    const records: Record<string, (typeof galleryItems)[number] | undefined> = {};
+
+    extendedClinicGalleryItems.forEach((item, index) => {
+      records[item.id] = galleryItems.find((galleryItem) => galleryItem.sortOrder === index);
+    });
+
+    return records;
+  }, [galleryItems]);
+  const imageUrlsById = useMemo(() => {
+    const urls: Record<string, string | undefined> = {};
+
+    extendedClinicGalleryItems.forEach((item) => {
+      urls[item.id] = galleryItemByCardId[item.id]?.url;
+    });
+
+    return { ...urls, ...localImagesById };
+  }, [galleryItemByCardId, localImagesById]);
+
+  const createGalleryMutation = useMutation({
+    mutationFn: (gallery: VirujHospitalGalleryInput) =>
+      virujBackend.hospitalGallery.create({ gallery, organizationId }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  const updateGalleryMutation = useMutation({
+    mutationFn: (input: {
+      gallery: Partial<VirujHospitalGalleryInput>;
+      id: string;
+    }) =>
+      virujBackend.hospitalGallery.update({
+        gallery: input.gallery,
+        id: input.id,
+        organizationId,
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  const deleteGalleryMutation = useMutation({
+    mutationFn: (id: string) => virujBackend.hospitalGallery.delete({ id, organizationId }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  function saveCardImage(item: ClinicGalleryBentoItem, file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return;
+
+      const url = reader.result;
+      const sortOrder = extendedClinicGalleryItems.findIndex(
+        (galleryItem) => galleryItem.id === item.id
+      );
+      const gallery: VirujHospitalGalleryInput = {
+        altText: `${item.title} ${item.subtitle}`,
+        caption: item.subtitle,
+        isPublished: true,
+        mediaType: "IMAGE",
+        sortOrder: Math.max(sortOrder, 0),
+        url,
+      };
+
+      setLocalImagesById((current) => ({ ...current, [item.id]: url }));
+
+      if (!organizationId) return;
+
+      const existing = galleryItemByCardId[item.id];
+
+      if (existing) {
+        updateGalleryMutation.mutate({ gallery, id: existing.id });
+        return;
+      }
+
+      createGalleryMutation.mutate(gallery);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function deleteCardImage(item: ClinicGalleryBentoItem) {
+    setLocalImagesById((current) => {
+      const next = { ...current };
+      delete next[item.id];
+      return next;
+    });
+
+    if (previewItem?.id === item.id) {
+      setPreviewItem(null);
+    }
+
+    const existing = galleryItemByCardId[item.id];
+    if (existing && organizationId) {
+      deleteGalleryMutation.mutate(existing.id);
+    }
+  }
+
+  function previewCardImage(item: ClinicGalleryBentoItem) {
+    if (!imageUrlsById[item.id]) return;
+    setPreviewItem(item);
+  }
+
+  const previewUrl = previewItem ? imageUrlsById[previewItem.id] : undefined;
 
   return (
     <ClinicPageShell eyebrow="Gallery" title="Media Manager" subtitle="Upload, reorder, delete, preview, and choose the cover image." actions={<PrimaryAction icon={<ImagePlus size={16} />} label="Upload Images" />}>
       <ClinicGalleryBento
-        actionsForItem={() => (
+        actionsForItem={(item) => (
           <>
-            <SecondaryAction label="Preview" />
-            <SecondaryAction label="Delete" tone="danger" />
+            <SecondaryAction label="Preview" onClick={() => previewCardImage(item)} />
+            <SecondaryAction label="Delete" onClick={() => deleteCardImage(item)} tone="danger" />
           </>
         )}
         extraItems={extraItems}
+        imageUrlsById={imageUrlsById}
         items={primaryItems}
+        onImageSelected={saveCardImage}
       />
+
+      {previewItem && previewUrl ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 p-6 backdrop-blur-xl backdrop-saturate-50">
+          <div className="max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-2xl border border-slate-900 bg-[#ececec] shadow-[6px_6px_0_0_#0f172a] dark:border-slate-200 dark:bg-[#1a1d22] dark:shadow-[6px_6px_0_0_#e2e8f0]">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-900 px-4 py-3 dark:border-slate-200">
+              <div>
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-900 dark:text-slate-100">
+                  {previewItem.title}
+                </p>
+                <p className="mt-1 text-xs font-semibold text-slate-500">
+                  {previewItem.subtitle}
+                </p>
+              </div>
+              <button
+                className="rounded-sm border border-slate-900 bg-white px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-slate-900 transition hover:bg-slate-100 dark:border-slate-200 dark:bg-slate-900 dark:text-slate-100"
+                onClick={() => setPreviewItem(null)}
+                type="button"
+              >
+                Close
+              </button>
+            </div>
+            <div className="max-h-[76vh] overflow-auto p-4">
+              <img
+                alt={`${previewItem.title} ${previewItem.subtitle}`}
+                className="mx-auto max-h-[70vh] w-auto max-w-full border border-slate-900 object-contain dark:border-slate-200"
+                src={previewUrl}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </ClinicPageShell>
   );
 }
-
 export function ClinicReviewsPage() {
   const reviews = [
     ["Riya Sharma", "5.0", "Clean clinic, easy booking, and helpful doctor.", "Today"],

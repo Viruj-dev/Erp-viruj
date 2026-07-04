@@ -210,408 +210,442 @@ export function ErpDemoLogin({
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-surface md:flex-row">
-      <div className="relative hidden items-center justify-center overflow-hidden bg-primary p-12 md:flex md:w-1/2 lg:w-3/5">
-        <div className="absolute inset-0 opacity-20">
-          <img
-            alt="Modern hospital corridor"
-            className="h-full w-full object-cover"
-            src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&h=800&fit=crop"
-          />
-        </div>
-        <div className="relative z-10 max-w-lg">
-          <motion.div
-            animate={{ opacity: 1, y: 0 }}
-            initial={{ opacity: 0, y: -20 }}
-          >
-            <span className="font-headline text-3xl font-semi-bold tracking-tight text-white">
-              Viruj Health
-            </span>
-            <div className="mt-2 h-1 w-12 bg-secondary" />
-          </motion.div>
-          <motion.h1
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-8 font-headline text-5xl font-extrabold leading-tight text-white"
-            initial={{ opacity: 0, y: 20 }}
-            transition={{ delay: 0.2 }}
-          >
-            Precision health records for the modern clinic.
-          </motion.h1>
-          <motion.p
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-6 text-lg font-medium leading-relaxed text-primary-container"
-            initial={{ opacity: 0, y: 20 }}
-            transition={{ delay: 0.35 }}
-          >
-            Secure Better Auth sessions, organization-scoped roles, and
-            Drizzle-backed clinical operations in one ERP workspace.
-          </motion.p>
-          <div className="mt-12 flex gap-4">
-            <FeaturePill
-              icon={
-                <ShieldCheck className="text-secondary-container" size={24} />
-              }
-              subtitle="Tenant-scoped sessions"
-              title="Role Controlled"
-            />
-            <FeaturePill
-              icon={<Zap className="text-secondary-container" size={24} />}
-              subtitle="Bun + Hono + Drizzle"
-              title="MVP Ready"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-1 items-center justify-center p-6 md:p-12 lg:p-24">
-        <div className="w-full max-w-md">
-          <AnimatePresence mode="wait">
-            {step === "login" ? (
-              <motion.div
-                key="login"
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-8"
-                exit={{ opacity: 0, x: -20 }}
-                initial={{ opacity: 0, x: 20 }}
+    <div className="min-h-screen bg-[#090909] p-3 text-slate-950 md:p-5">
+      <div className="grid min-h-[calc(100vh-1.5rem)] overflow-hidden rounded-[1.75rem] bg-[#f3f4f1] shadow-[0_28px_100px_rgba(0,0,0,0.35)] lg:min-h-[calc(100vh-2.5rem)] lg:grid-cols-[0.42fr_0.58fr]">
+        <section className="relative flex min-h-[760px] flex-col bg-[#f7f7f3] px-6 py-6 md:px-10">
+          <header className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="flex size-9 items-center justify-center rounded-xl bg-slate-950 text-white shadow-sm">
+                <ShieldCheck size={19} />
+              </span>
+              <span className="font-headline text-sm font-bold tracking-tight text-slate-950">
+                Viruj ERP
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+              <span className="hidden sm:inline">
+                {step === "login" ? "Don't have an account?" : "Already enrolled?"}
+              </span>
+              <button
+                className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                onClick={() => {
+                  clearMessages();
+                  setStep(step === "login" ? "onboarding" : "login");
+                }}
+                type="button"
               >
-                <header>
-                  <h2 className="font-headline text-3xl font-bold text-on-surface">
-                    Welcome back
-                  </h2>
-                  <p className="mt-2 text-on-surface-variant">
-                    Access the organization workspace that manages Viruj app
-                    demand
-                  </p>
-                </header>
+                {step === "login" ? "Register" : "Login"}
+              </button>
+            </div>
+          </header>
 
-                <TestGuide />
-
-                <form
-                  className="space-y-5"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void handleLogin();
-                  }}
-                >
-                  <FormField
-                    label="Institutional Email"
-                    onChange={(value) =>
-                      setLoginForm((current) => ({ ...current, email: value }))
-                    }
-                    placeholder="admin@hospital-group.com"
-                    required
-                    type="email"
-                    value={loginForm.email}
-                  />
-                  <FormField
-                    label="Password"
-                    onChange={(value) =>
-                      setLoginForm((current) => ({
-                        ...current,
-                        password: value,
-                      }))
-                    }
-                    placeholder="Enter your secure password"
-                    required
-                    type="password"
-                    value={loginForm.password}
-                  />
-                  <StatusBlock
-                    errorMessage={errorMessage}
-                    successMessage={successMessage}
-                  />
-                  <button
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary to-primary-container py-3 font-bold text-white shadow-md transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={isPending}
-                    type="submit"
+          <div className="flex flex-1 items-center justify-center py-10">
+            <div className="w-full max-w-[420px]">
+              <AnimatePresence mode="wait">
+                {step === "login" ? (
+                  <motion.div
+                    key="login"
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-6"
+                    exit={{ opacity: 0, y: -12 }}
+                    initial={{ opacity: 0, y: 14 }}
+                    transition={{ duration: 0.24, ease: "easeOut" }}
                   >
-                    {isPending ? "Authorizing..." : "Authorize Session"}
-                    <ArrowRight size={18} />
-                  </button>
-                </form>
+                    <div className="text-center">
+                      <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/70">
+                        <ShieldCheck size={30} className="text-slate-900" />
+                      </div>
+                      <h1 className="mt-7 font-headline text-2xl font-bold tracking-tight text-slate-950">
+                        Login to your ERP account
+                      </h1>
+                      <p className="mt-2 text-sm font-medium text-slate-500">
+                        Enter your healthcare workspace details to continue.
+                      </p>
+                    </div>
 
-                <div className="relative py-4">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-outline-variant/30" />
-                  </div>
-                  <div className="relative mx-auto w-fit bg-surface px-4 text-xs font-bold uppercase text-on-surface-variant">
-                    New Facility?
-                  </div>
-                </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      {["SSO", "Google", "LinkedIn"].map((label) => (
+                        <button
+                          className="h-11 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                          key={label}
+                          type="button"
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
 
-                <div className="grid gap-3">
-                  <button
-                    className="w-full rounded-lg border border-outline-variant/30 py-3 font-semibold text-on-surface transition-colors hover:bg-surface-container-low"
-                    onClick={() => {
-                      clearMessages();
-                      setStep("onboarding");
-                    }}
-                    type="button"
-                  >
-                    Create Test Organization
-                  </button>
-                  <button
-                    className="w-full rounded-lg border border-outline-variant/20 py-3 text-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-low"
-                    onClick={() => {
-                      clearMessages();
-                      setStep("invitation");
-                    }}
-                    type="button"
-                  >
-                    Accept Staff Invitation
-                  </button>
-                </div>
-              </motion.div>
-            ) : null}
+                    <div className="relative py-1">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="h-px w-full bg-slate-200" />
+                      </div>
+                      <span className="relative mx-auto block w-fit bg-[#f7f7f3] px-4 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                        or
+                      </span>
+                    </div>
 
-            {step === "onboarding" ? (
-              <motion.div
-                key="onboarding"
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-8"
-                exit={{ opacity: 0, x: -20 }}
-                initial={{ opacity: 0, x: 20 }}
-              >
-                <header className="flex items-center justify-between">
-                  <div>
-                    <h2 className="font-headline text-3xl font-bold text-on-surface">
-                      Organization Setup
-                    </h2>
-                    <p className="mt-2 italic text-on-surface-variant">
-                      Viruj-managed organization onboarding
-                    </p>
-                  </div>
-                  <button
-                    className="rounded-full p-2 transition-colors hover:bg-surface-container-low"
-                    onClick={() => {
-                      clearMessages();
-                      setStep("login");
-                    }}
-                    type="button"
-                  >
-                    <X size={20} />
-                  </button>
-                </header>
+                    <form
+                      className="space-y-4"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void handleLogin();
+                      }}
+                    >
+                      <FormField
+                        label="Email Address"
+                        onChange={(value) =>
+                          setLoginForm((current) => ({ ...current, email: value }))
+                        }
+                        placeholder="admin@yashodahospital.co"
+                        required
+                        type="email"
+                        value={loginForm.email}
+                      />
+                      <FormField
+                        label="Password"
+                        onChange={(value) =>
+                          setLoginForm((current) => ({
+                            ...current,
+                            password: value,
+                          }))
+                        }
+                        placeholder="Enter your secure password"
+                        required
+                        type="password"
+                        value={loginForm.password}
+                      />
+                      <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+                        <label className="inline-flex items-center gap-2">
+                          <input className="size-4 rounded border-slate-300" type="checkbox" />
+                          Keep me logged in
+                        </label>
+                        <button className="underline underline-offset-4" type="button">
+                          Forgot password?
+                        </button>
+                      </div>
+                      <StatusBlock
+                        errorMessage={errorMessage}
+                        successMessage={successMessage}
+                      />
+                      <button
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white shadow-[0_18px_40px_rgba(15,23,42,0.24)] transition hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={isPending}
+                        type="submit"
+                      >
+                        {isPending ? "Authorizing..." : "Login"}
+                        <ArrowRight size={17} />
+                      </button>
+                    </form>
 
-                <div className="flex gap-4 rounded-xl border border-primary-fixed bg-primary-fixed/30 p-4">
-                  <Info className="mt-1 text-primary" size={18} />
-                  <p className="text-xs leading-relaxed text-on-primary-fixed">
-                    This creates an ERP admin account, provisions the
-                    organization, and activates an OWNER session for testing
-                    staff and audit flows.
-                  </p>
-                </div>
-
-                <form
-                  className="space-y-6"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void handleCreateOrganization();
-                  }}
-                >
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      label="Org Name"
-                      onChange={(value) =>
-                        setOnboardingForm((current) => ({
-                          ...current,
-                          organizationName: value,
-                        }))
-                      }
-                      placeholder={
-                        onboardingForm.organizationType === "doctor"
-                          ? "Optional practice name"
-                          : "St. Mary's General"
-                      }
-                      required={onboardingForm.organizationType !== "doctor"}
-                      type="text"
-                      value={onboardingForm.organizationName}
-                    />
-                    <SelectField
-                      label="Type"
-                      onChange={(value) =>
-                        setOnboardingForm((current) => ({
-                          ...current,
-                          organizationType: value as OrganizationType,
-                        }))
-                      }
-                      options={organizationTypeOptions}
-                      value={onboardingForm.organizationType}
-                    />
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <FormField
-                      label="Owner Name"
-                      onChange={(value) =>
-                        setOnboardingForm((current) => ({
-                          ...current,
-                          name: value,
-                        }))
-                      }
-                      placeholder="Dr. Sarah Mitchell"
-                      required
-                      type="text"
-                      value={onboardingForm.name}
-                    />
-                    <FormField
-                      label="Owner Email"
-                      onChange={(value) =>
-                        setOnboardingForm((current) => ({
-                          ...current,
-                          email: value,
-                        }))
-                      }
-                      placeholder="admin@apollo.test"
-                      required
-                      type="email"
-                      value={onboardingForm.email}
-                    />
-                  </div>
-                  <FormField
-                    label="Password"
-                    onChange={(value) =>
-                      setOnboardingForm((current) => ({
-                        ...current,
-                        password: value,
-                      }))
-                    }
-                    placeholder="Minimum secure admin password"
-                    required
-                    type="password"
-                    value={onboardingForm.password}
-                  />
-                  <StatusBlock
-                    errorMessage={errorMessage}
-                    successMessage={successMessage}
-                  />
-                  <div className="flex gap-4 pt-4">
                     <button
-                      className="flex-1 rounded-lg py-3 text-sm font-bold text-primary transition-colors hover:bg-primary/5"
+                      className="w-full text-center text-xs font-bold text-slate-500 transition hover:text-slate-950"
                       onClick={() => {
                         clearMessages();
                         setStep("invitation");
                       }}
                       type="button"
                     >
-                      Accept staff invitation
+                      Accept a staff invitation instead
                     </button>
-                    <button
-                      className="flex-1 rounded-lg bg-primary py-3 font-bold text-white shadow-md transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                      disabled={isPending}
-                      type="submit"
-                    >
-                      {isPending ? "Creating..." : "Create Owner"}
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
-            ) : null}
+                  </motion.div>
+                ) : null}
 
-            {step === "invitation" ? (
-              <motion.div
-                key="invitation"
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-8"
-                exit={{ opacity: 0, x: -20 }}
-                initial={{ opacity: 0, x: 20 }}
-              >
-                <header>
-                  <h2 className="font-headline text-3xl font-bold text-on-surface">
-                    Accept Invitation
-                  </h2>
-                  <p className="mt-2 text-on-surface-variant">
-                    Join an existing organization with the invitation ID shown
-                    on the Staff page.
-                  </p>
-                </header>
-
-                <form
-                  className="space-y-5"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void handleAcceptInvitation();
-                  }}
-                >
-                  <FormField
-                    label="Invitation ID"
-                    onChange={(value) =>
-                      setInvitationForm((current) => ({
-                        ...current,
-                        invitationId: value,
-                      }))
-                    }
-                    placeholder="Paste invitation ID"
-                    required
-                    type="text"
-                    value={invitationForm.invitationId}
-                  />
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <FormField
-                      label="Email"
-                      onChange={(value) =>
-                        setInvitationForm((current) => ({
-                          ...current,
-                          email: value,
-                        }))
-                      }
-                      placeholder="staff@apollo.test"
-                      required
-                      type="email"
-                      value={invitationForm.email}
-                    />
-                    <FormField
-                      label="Name"
-                      onChange={(value) =>
-                        setInvitationForm((current) => ({
-                          ...current,
-                          name: value,
-                        }))
-                      }
-                      placeholder="Dr. Michael Chen"
-                      type="text"
-                      value={invitationForm.name}
-                    />
-                  </div>
-                  <FormField
-                    label="Password"
-                    onChange={(value) =>
-                      setInvitationForm((current) => ({
-                        ...current,
-                        password: value,
-                      }))
-                    }
-                    placeholder="Use your existing password or set a new one"
-                    required
-                    type="password"
-                    value={invitationForm.password}
-                  />
-                  <StatusBlock
-                    errorMessage={errorMessage}
-                    successMessage={successMessage}
-                  />
-                  <button
-                    className="w-full rounded-lg bg-primary py-3 font-bold text-white shadow-md transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={isPending}
-                    type="submit"
+                {step === "onboarding" ? (
+                  <motion.div
+                    key="onboarding"
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-5"
+                    exit={{ opacity: 0, y: -12 }}
+                    initial={{ opacity: 0, y: 14 }}
+                    transition={{ duration: 0.24, ease: "easeOut" }}
                   >
-                    {isPending ? "Connecting..." : "Verify & Connect"}
-                  </button>
-                </form>
+                    <header className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-teal-700">
+                          Healthcare ERP signup
+                        </p>
+                        <h1 className="mt-2 font-headline text-2xl font-bold tracking-tight text-slate-950">
+                          Register your care workspace
+                        </h1>
+                        <p className="mt-2 text-sm font-medium text-slate-500">
+                          Create the owner account and provision your hospital, clinic, lab, or doctor workspace.
+                        </p>
+                      </div>
+                      <button
+                        className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm transition hover:bg-slate-100 hover:text-slate-900"
+                        onClick={() => {
+                          clearMessages();
+                          setStep("login");
+                        }}
+                        type="button"
+                      >
+                        <X size={18} />
+                      </button>
+                    </header>
 
-                <button
-                  className="w-full py-2 text-sm font-semibold text-on-surface-variant transition-colors hover:text-primary"
-                  onClick={() => {
-                    clearMessages();
-                    setStep("onboarding");
-                  }}
-                  type="button"
-                >
-                  Back to organization creation
-                </button>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </div>
+                    <div className="flex gap-3 rounded-2xl border border-teal-100 bg-teal-50 p-4">
+                      <Info className="mt-0.5 shrink-0 text-teal-700" size={18} />
+                      <p className="text-xs font-medium leading-5 text-teal-900">
+                        This creates an ERP owner account, provisions the organization, and activates your clinical operations dashboard.
+                      </p>
+                    </div>
+
+                    <form
+                      className="space-y-4"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void handleCreateOrganization();
+                      }}
+                    >
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <FormField
+                          label="Organization"
+                          onChange={(value) =>
+                            setOnboardingForm((current) => ({
+                              ...current,
+                              organizationName: value,
+                            }))
+                          }
+                          placeholder={
+                            onboardingForm.organizationType === "doctor"
+                              ? "Optional practice name"
+                              : "Yashoda Hospital"
+                          }
+                          required={onboardingForm.organizationType !== "doctor"}
+                          type="text"
+                          value={onboardingForm.organizationName}
+                        />
+                        <SelectField
+                          label="Workspace Type"
+                          onChange={(value) =>
+                            setOnboardingForm((current) => ({
+                              ...current,
+                              organizationType: value as OrganizationType,
+                            }))
+                          }
+                          options={organizationTypeOptions}
+                          value={onboardingForm.organizationType}
+                        />
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <FormField
+                          label="Owner Name"
+                          onChange={(value) =>
+                            setOnboardingForm((current) => ({
+                              ...current,
+                              name: value,
+                            }))
+                          }
+                          placeholder="Dr. Dhruv Negi"
+                          required
+                          type="text"
+                          value={onboardingForm.name}
+                        />
+                        <FormField
+                          label="Owner Email"
+                          onChange={(value) =>
+                            setOnboardingForm((current) => ({
+                              ...current,
+                              email: value,
+                            }))
+                          }
+                          placeholder="owner@hospital.co"
+                          required
+                          type="email"
+                          value={onboardingForm.email}
+                        />
+                      </div>
+                      <FormField
+                        label="Password"
+                        onChange={(value) =>
+                          setOnboardingForm((current) => ({
+                            ...current,
+                            password: value,
+                          }))
+                        }
+                        placeholder="Create a secure password"
+                        required
+                        type="password"
+                        value={onboardingForm.password}
+                      />
+                      <StatusBlock
+                        errorMessage={errorMessage}
+                        successMessage={successMessage}
+                      />
+                      <button
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white shadow-[0_18px_40px_rgba(15,23,42,0.24)] transition hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={isPending}
+                        type="submit"
+                      >
+                        {isPending ? "Creating workspace..." : "Create healthcare ERP"}
+                        <ArrowRight size={17} />
+                      </button>
+                    </form>
+
+                    <button
+                      className="w-full text-center text-xs font-bold text-slate-500 transition hover:text-slate-950"
+                      onClick={() => {
+                        clearMessages();
+                        setStep("invitation");
+                      }}
+                      type="button"
+                    >
+                      Joining an existing team? Accept invitation
+                    </button>
+                  </motion.div>
+                ) : null}
+
+                {step === "invitation" ? (
+                  <motion.div
+                    key="invitation"
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-5"
+                    exit={{ opacity: 0, y: -12 }}
+                    initial={{ opacity: 0, y: 14 }}
+                    transition={{ duration: 0.24, ease: "easeOut" }}
+                  >
+                    <header>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-teal-700">
+                        Staff access
+                      </p>
+                      <h1 className="mt-2 font-headline text-2xl font-bold tracking-tight text-slate-950">
+                        Accept your invitation
+                      </h1>
+                      <p className="mt-2 text-sm font-medium text-slate-500">
+                        Join an existing healthcare organization with the invitation ID from the Staff page.
+                      </p>
+                    </header>
+
+                    <form
+                      className="space-y-4"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void handleAcceptInvitation();
+                      }}
+                    >
+                      <FormField
+                        label="Invitation ID"
+                        onChange={(value) =>
+                          setInvitationForm((current) => ({
+                            ...current,
+                            invitationId: value,
+                          }))
+                        }
+                        placeholder="Paste invitation ID"
+                        required
+                        type="text"
+                        value={invitationForm.invitationId}
+                      />
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <FormField
+                          label="Email"
+                          onChange={(value) =>
+                            setInvitationForm((current) => ({
+                              ...current,
+                              email: value,
+                            }))
+                          }
+                          placeholder="staff@hospital.co"
+                          required
+                          type="email"
+                          value={invitationForm.email}
+                        />
+                        <FormField
+                          label="Name"
+                          onChange={(value) =>
+                            setInvitationForm((current) => ({
+                              ...current,
+                              name: value,
+                            }))
+                          }
+                          placeholder="Dr. Meera Rao"
+                          type="text"
+                          value={invitationForm.name}
+                        />
+                      </div>
+                      <FormField
+                        label="Password"
+                        onChange={(value) =>
+                          setInvitationForm((current) => ({
+                            ...current,
+                            password: value,
+                          }))
+                        }
+                        placeholder="Use existing password or set one"
+                        required
+                        type="password"
+                        value={invitationForm.password}
+                      />
+                      <StatusBlock
+                        errorMessage={errorMessage}
+                        successMessage={successMessage}
+                      />
+                      <button
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white shadow-[0_18px_40px_rgba(15,23,42,0.24)] transition hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={isPending}
+                        type="submit"
+                      >
+                        {isPending ? "Connecting..." : "Verify & connect"}
+                        <ArrowRight size={17} />
+                      </button>
+                    </form>
+
+                    <button
+                      className="w-full text-center text-xs font-bold text-slate-500 transition hover:text-slate-950"
+                      onClick={() => {
+                        clearMessages();
+                        setStep("login");
+                      }}
+                      type="button"
+                    >
+                      Back to login
+                    </button>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          <footer className="flex items-center justify-between text-xs font-semibold text-slate-500">
+            <span>(c) 2026 Viruj Health ERP</span>
+            <span>ENG</span>
+          </footer>
+        </section>
+
+        <aside className="relative hidden overflow-hidden bg-[#e9ebe6] lg:block">
+          <div className="absolute inset-0 bg-[linear-gradient(#cfd6cc_1px,transparent_1px),linear-gradient(90deg,#cfd6cc_1px,transparent_1px)] bg-[size:48px_48px] opacity-55" />
+          <div className="absolute left-[14%] top-[18%] h-28 w-28 rounded-full border border-slate-300/70" />
+          <div className="absolute bottom-[22%] right-[18%] h-48 w-48 rounded-full border border-teal-900/10" />
+          <div className="relative flex min-h-full flex-col justify-center px-16 py-14">
+            <div className="mb-10 flex size-14 items-center justify-center rounded-full bg-white shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
+              <ShieldCheck className="text-teal-800" size={25} />
+            </div>
+            <blockquote className="max-w-2xl font-headline text-4xl font-bold leading-tight tracking-tight text-slate-950 xl:text-5xl">
+              The healthcare ERP system has unified our doctors, staff, appointments, and patient operations into one calm workspace.
+            </blockquote>
+            <div className="mt-8">
+              <p className="text-sm font-bold text-slate-950">Dr. Asha Mehta</p>
+              <p className="mt-1 text-sm font-semibold text-slate-500">Medical Director / Hospital Network</p>
+            </div>
+            <div className="mt-10 flex gap-1.5">
+              <span className="h-1.5 w-7 rounded-full bg-slate-950" />
+              <span className="size-1.5 rounded-full bg-teal-700" />
+              <span className="size-1.5 rounded-full bg-slate-300" />
+            </div>
+            <div className="mt-14 grid max-w-xl grid-cols-2 gap-4">
+              <FeaturePill
+                icon={<ShieldCheck className="text-teal-700" size={22} />}
+                subtitle="Organization scoped access"
+                title="Secure roles"
+              />
+              <FeaturePill
+                icon={<Zap className="text-teal-700" size={22} />}
+                subtitle="Fast clinical workflows"
+                title="Smooth ops"
+              />
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   );
@@ -629,13 +663,13 @@ function FeaturePill({
   return (
     <motion.div
       animate={{ opacity: 1, scale: 1 }}
-      className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/10 p-4 backdrop-blur-md"
+      className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur"
       initial={{ opacity: 0, scale: 0.9 }}
     >
       {icon}
       <div>
-        <p className="text-sm font-bold text-white">{title}</p>
-        <p className="text-xs text-primary-container">{subtitle}</p>
+        <p className="text-sm font-bold text-slate-950">{title}</p>
+        <p className="text-xs font-semibold text-slate-500">{subtitle}</p>
       </div>
     </motion.div>
   );
@@ -662,12 +696,12 @@ function FormField({
 
   return (
     <div className="space-y-1">
-      <label className="px-1 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+      <label className="px-1 text-xs font-bold text-slate-800">
         {label}
       </label>
       <div className="relative">
         <input
-          className={`w-full rounded-lg border-none bg-surface-container-highest px-4 py-3 text-sm transition-all focus:ring-2 focus:ring-primary/20 ${
+          className={`h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-slate-300 focus:ring-2 focus:ring-slate-200 ${
             isPasswordField ? "pr-12" : ""
           }`}
           onChange={(event) => onChange(event.target.value)}
@@ -679,7 +713,7 @@ function FormField({
         {isPasswordField ? (
           <button
             aria-label={isPasswordVisible ? "Hide password" : "Show password"}
-            className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
+            className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900"
             onClick={() => setIsPasswordVisible((visible) => !visible)}
             type="button"
           >
@@ -687,30 +721,6 @@ function FormField({
           </button>
         ) : null}
       </div>
-    </div>
-  );
-}
-
-function TestGuide() {
-  return (
-    <div className="rounded-xl border border-outline-variant/20 bg-surface-container-low p-4">
-      <p className="text-[11px] font-semi-bold uppercase tracking-[0.24em] text-primary">
-        Test path
-      </p>
-      <ol className="mt-3 space-y-2 text-sm text-on-surface-variant">
-        <li>
-          <strong className="text-on-surface">1.</strong> Create an organization
-          admin.
-        </li>
-        <li>
-          <strong className="text-on-surface">2.</strong> Open Staff and invite
-          a role-based user.
-        </li>
-        <li>
-          <strong className="text-on-surface">3.</strong> Sign out, accept the
-          invitation, and verify dashboard access.
-        </li>
-      </ol>
     </div>
   );
 }
@@ -731,11 +741,11 @@ function SelectField({
 }) {
   return (
     <div className="space-y-1">
-      <label className="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">
+      <label className="px-1 text-xs font-bold text-slate-800">
         {label}
       </label>
       <select
-        className="w-full appearance-none rounded-lg border-none bg-surface-container-highest px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20"
+        className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
         onChange={(event) => onChange(event.target.value)}
         value={value}
       >

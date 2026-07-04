@@ -50,6 +50,7 @@ export function DoctorsManagementPage({
   const [deletingDoctor, setDeletingDoctor] = useState<VirujDoctor | null>(
     null
   );
+  const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
 
   const doctorsQuery = useQuery({
     queryFn: virujBackend.doctors.list,
@@ -94,6 +95,21 @@ export function DoctorsManagementPage({
   const publishAllMutation = useMutation({
     mutationFn: virujBackend.doctors.publishAll,
     onSuccess: invalidateDoctors,
+  });
+
+  const deleteAllDoctorsMutation = useMutation({
+    mutationFn: async (targetDoctors: VirujDoctor[]) => {
+      await Promise.all(
+        targetDoctors.map((doctorProfile) =>
+          virujBackend.doctors.delete({ id: doctorProfile.id })
+        )
+      );
+      return { deleted: targetDoctors.length };
+    },
+    onSuccess: async () => {
+      setIsDeleteAllDialogOpen(false);
+      await invalidateDoctors();
+    },
   });
 
   const doctors = useMemo(() => doctorsQuery.data ?? [], [doctorsQuery.data]);
@@ -171,6 +187,15 @@ export function DoctorsManagementPage({
     <DashboardPageShell
       actions={
         <>
+          <button
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-semi-bold text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-200 dark:hover:bg-red-400/15"
+            disabled={!doctors.length || deleteAllDoctorsMutation.isPending}
+            onClick={() => setIsDeleteAllDialogOpen(true)}
+            type="button"
+          >
+            <Trash2 size={16} />
+            Delete all
+          </button>
           <button
             className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semi-bold text-slate-900 transition hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-100 dark:hover:bg-white/[0.08]"
             onClick={openCreateDialog}
@@ -418,6 +443,57 @@ export function DoctorsManagementPage({
         </div>
         </DoctorDialogPortal>
       ) : null}
+
+      {isDeleteAllDialogOpen ? (
+        <DoctorDialogPortal>
+          <div className="erp-dialog-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div
+              aria-modal="true"
+              className="w-full max-w-md rounded-[1.5rem] border border-red-100 bg-white p-5 shadow-2xl dark:border-red-400/20 dark:bg-[#111418]"
+              role="dialog"
+            >
+              <div className="flex size-11 items-center justify-center rounded-2xl bg-red-100 text-red-700 dark:bg-red-400/15 dark:text-red-200">
+                <Trash2 size={18} />
+              </div>
+              <h3 className="mt-4 font-headline text-xl font-semi-bold text-slate-950 dark:text-slate-100">
+                Delete all doctor profiles?
+              </h3>
+              <p className="mt-2 text-sm font-medium leading-6 text-slate-500 dark:text-slate-400">
+                This will remove all {doctors.length} doctor profile
+                {doctors.length === 1 ? "" : "s"} from the ERP list and
+                published app directory.
+              </p>
+              {deleteAllDoctorsMutation.isError ? (
+                <p className="mt-3 text-sm font-semi-bold text-red-600 dark:text-red-300">
+                  Could not delete all doctor profiles. Try again.
+                </p>
+              ) : null}
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-semi-bold text-slate-700 transition hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                  onClick={() => setIsDeleteAllDialogOpen(false)}
+                  type="button"
+                >
+                  Cancel
+                </button>
+                <button
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-sm font-semi-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={!doctors.length || deleteAllDoctorsMutation.isPending}
+                  onClick={() => deleteAllDoctorsMutation.mutate(doctors)}
+                  type="button"
+                >
+                  {deleteAllDoctorsMutation.isPending ? (
+                    <Loader2 className="animate-spin" size={15} />
+                  ) : (
+                    <Trash2 size={15} />
+                  )}
+                  Delete all
+                </button>
+              </div>
+            </div>
+          </div>
+        </DoctorDialogPortal>
+      ) : null}
     </DashboardPageShell>
   );
 }
@@ -563,4 +639,3 @@ function DirectoryState({ label }: { label: string }) {
     </div>
   );
 }
-

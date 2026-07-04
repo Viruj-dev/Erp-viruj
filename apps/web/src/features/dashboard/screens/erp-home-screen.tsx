@@ -377,7 +377,7 @@ function PageContent({
     case "community":
       return <ErpDemoCommunity />;
     case "gallery":
-      return <ClinicGalleryPage />;
+      return <ClinicGalleryPage organizationId={organizationId} />;
     case "billing":
       return <ErpDemoBilling />;
     case "pricing":
