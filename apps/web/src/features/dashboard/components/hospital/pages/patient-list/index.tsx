@@ -4,7 +4,7 @@ import { virujBackend, type VirujAppointment, type VirujAppointmentStatus } from
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 
-import { MobileRequestForm } from "./_components/mobile-request-form";
+import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import { PatientDataTable } from "./_components/patient-data-table";
 import { pageSize } from "./constants";
 import type { DirectoryPatient, PatientRequestForm } from "./types";
@@ -53,7 +53,7 @@ export function ErpDemoPatients() {
     },
   });
   const deleteAllMutation = useMutation({
-    mutationFn: virujBackend.appointments.deleteAll,
+    mutationFn: virujBackend.patients.deleteAll,
     onSuccess: async () => {
       setLastRequest(null);
       setPage(1);
@@ -120,12 +120,8 @@ export function ErpDemoPatients() {
     });
   };
   const deleteAllAppointments = () => {
-    if (!filteredPatients.length) {
-      return;
-    }
-
     const confirmed = window.confirm(
-      "Delete all appointment requests from the backend? This will clear the patient request list."
+      "Delete all patients and their linked appointment data from the backend? This cannot be undone."
     );
     if (!confirmed) return;
 
@@ -133,15 +129,11 @@ export function ErpDemoPatients() {
   };
 
   return (
-    <div className="space-y-7 p-6 lg:p-4">
-      <MobileRequestForm
-        errorMessage={createRequestMutation.error?.message}
-        form={requestForm}
-        isSubmitting={createRequestMutation.isPending}
-        lastRequest={lastRequest}
-        onChange={setRequestForm}
-        onSubmit={sendMobileRequest}
-      />
+    <DashboardPageShell
+      eyebrow="Patients"
+      subtitle="Review patient requests, approval status, appointment movement, and backend patient records."
+      title="Patient Directory"
+    >
       <PatientDataTable
         currentPage={currentPage}
         isDeletingAll={deleteAllMutation.isPending}
@@ -159,7 +151,7 @@ export function ErpDemoPatients() {
         search={search}
         totalPatients={filteredPatients.length}
       />
-    </div>
+    </DashboardPageShell>
   );
 }
 
@@ -207,3 +199,4 @@ function rescheduleAppointment(
     status,
   });
 }
+

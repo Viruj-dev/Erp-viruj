@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Star,
 } from "lucide-react";
+import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 
 const facilities = [
   "24/7 Emergency",
@@ -38,7 +39,11 @@ export function HospitalProfilePage({
     : "from-blue-950 via-blue-800 to-cyan-700";
 
   return (
-    <div className="space-y-6 p-6 lg:p-10">
+    <DashboardPageShell
+      eyebrow={isClinic ? "Clinic Profile" : "Hospital Profile"}
+      subtitle={`Manage the public ${isClinic ? "clinic" : "hospital"} profile patients see across Viruj.`}
+      title={`${organizationLabel} Partner Profile`}
+    >
       <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#14171b]">
         <div className={`bg-gradient-to-br ${theme} p-8 text-white`}>
           <div className="flex flex-wrap items-start justify-between gap-6">
@@ -157,7 +162,7 @@ export function HospitalProfilePage({
           </div>
         </Panel>
       </section>
-    </div>
+    </DashboardPageShell>
   );
 }
 
@@ -216,3 +221,4 @@ function Stat({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+

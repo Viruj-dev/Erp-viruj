@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import { virujBackend } from "@/lib/viruj-backend";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -79,27 +80,23 @@ export function ErpDemoBilling() {
   });
 
   return (
-    <div className="grid gap-6 p-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:p-8">
-      <main className="space-y-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="font-headline text-3xl font-semi-bold tracking-tight text-on-surface">
-              Billing & Invoices
-            </h1>
-            <p className="mt-1 text-sm font-medium text-on-surface-variant">
-              Financial performance and patient transaction management
-            </p>
-          </div>
-          <button
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semi-bold text-white shadow-sm transition hover:bg-primary-container"
-            type="button"
-          >
-            <PlusCircle size={17} />
-            Create New Invoice
-          </button>
-        </div>
-
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <DashboardPageShell
+      actions={
+        <button
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semi-bold text-white shadow-sm transition hover:bg-primary-container"
+          type="button"
+        >
+          <PlusCircle size={17} />
+          Create New Invoice
+        </button>
+      }
+      eyebrow="Billing"
+      subtitle="Financial performance and patient transaction management."
+      title="Billing & Invoices"
+    >
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <main className="space-y-6">
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <SummaryCard
             icon={<Banknote size={18} />}
             label="Total revenue (month)"
@@ -285,7 +282,8 @@ export function ErpDemoBilling() {
           </div>
         </section>
       </aside>
-    </div>
+      </div>
+    </DashboardPageShell>
   );
 }
 
@@ -435,3 +433,4 @@ function formatDate(value: string) {
     year: "numeric",
   }).format(new Date(value));
 }
+

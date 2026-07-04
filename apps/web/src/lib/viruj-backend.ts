@@ -3,6 +3,7 @@
 const backendUrl =
   process.env.NEXT_PUBLIC_VIRUJ_BACKEND_URL || "http://localhost:4000";
 const erpApiUrl = `${backendUrl.replace(/\/$/, "")}/api/erp`;
+const commonApiUrl = `${backendUrl.replace(/\/$/, "")}/api/common`;
 const erpToken = process.env.NEXT_PUBLIC_VIRUJ_BACKEND_ERP_TOKEN;
 const erpServerUrl =
   typeof window !== "undefined"
@@ -46,6 +47,32 @@ async function request<T>(path: string, options: RequestOptions = {}) {
   return response.json() as Promise<T>;
 }
 
+async function commonRequest<T>(path: string, options: RequestOptions = {}) {
+  const headers = new Headers({
+    "Content-Type": "application/json",
+  });
+
+  if (erpToken) {
+    headers.set("Authorization", `Bearer ${erpToken}`);
+  }
+
+  const response = await fetch(`${commonApiUrl}${path}`, {
+    body: options.body ? JSON.stringify(options.body) : undefined,
+    headers,
+    method: options.method ?? "GET",
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+    throw new Error(
+      payload?.message ||
+        payload?.error ||
+        `Viruj backend common request failed (${response.status})`
+    );
+  }
+
+  return response.json() as Promise<T>;
+}
 async function erpServerRequest<T>(path: string, options: RequestOptions = {}) {
   const response = await fetch(`${erpServerUrl}${path}`, {
     body: options.body ? JSON.stringify(options.body) : undefined,
@@ -193,7 +220,131 @@ export type VirujDoctor = VirujDoctorInput & {
   updatedAt: string;
 };
 
+export type VirujAnalyticsDateRange =
+  | "TODAY"
+  | "YESTERDAY"
+  | "LAST_7_DAYS"
+  | "LAST_30_DAYS"
+  | "THIS_MONTH"
+  | "LAST_MONTH"
+  | "CUSTOM";
+
+export type VirujAnalyticsMetricValue = string | number | null;
+
+export type VirujAnalyticsComparison = {
+  changePercentage?: number;
+  direction?: "UP" | "DOWN" | "FLAT";
+  label: string;
+  value: VirujAnalyticsMetricValue;
+};
+
+export type VirujAnalyticsSummaryWidget = {
+  id: string;
+  order: number;
+  payload: {
+    comparison?: VirujAnalyticsComparison;
+    formattedValue?: string;
+    icon?: string;
+    unit?: string;
+    value: VirujAnalyticsMetricValue;
+  };
+  permissions: string[];
+  title: string;
+  type: "SUMMARY";
+};
+
+export type VirujAnalyticsChartWidget = {
+  description?: string;
+  id: string;
+  order: number;
+  payload: {
+    changePercentage?: number;
+    chartType:
+      | "AREA"
+      | "BAR"
+      | "BUBBLE"
+      | "DONUT"
+      | "FUNNEL"
+      | "GAUGE"
+      | "HEATMAP"
+      | "LINE"
+      | "PIE"
+      | "RADAR"
+      | "SCATTER";
+    comparison?: VirujAnalyticsComparison;
+    datasets: Array<{
+      color?: string;
+      data: Array<number | { x: string | number; y: number }>;
+      id: string;
+      label: string;
+      stack?: string;
+    }>;
+    labels: string[];
+    period: string;
+  };
+  permissions: string[];
+  title: string;
+  type: "CHART";
+};
+
+export type VirujAnalyticsSignalWidget = {
+  id: string;
+  order: number;
+  payload: {
+    action?: {
+      href: string;
+      label: string;
+      method?: "DELETE" | "GET" | "PATCH" | "POST";
+    };
+    description: string;
+    severity: "CRITICAL" | "INFO" | "SUCCESS" | "WARNING";
+    value?: VirujAnalyticsMetricValue;
+  };
+  permissions: string[];
+  title: string;
+  type: "SIGNAL";
+};
+
+export type VirujAnalyticsDashboard = {
+  actions: unknown[];
+  charts: VirujAnalyticsChartWidget[];
+  insights: unknown[];
+  leaderboards: unknown[];
+  signals: VirujAnalyticsSignalWidget[];
+  summary: VirujAnalyticsSummaryWidget[];
+  trends: unknown[];
+};
 export const virujBackend = {
+  analytics: {
+    dashboard: (input: {
+      dateRange?: VirujAnalyticsDateRange;
+      entityId: string;
+      role?: "clinic" | "doctor" | "hospital";
+    }) => {
+      const params = new URLSearchParams({
+        dateRange: input.dateRange ?? "LAST_30_DAYS",
+        entityId: input.entityId,
+        role: input.role ?? "hospital",
+      });
+
+      return commonRequest<VirujAnalyticsDashboard>(
+        `/analytics/dashboard?${params.toString()}`
+      );
+    },
+    key: (input: {
+      dateRange?: VirujAnalyticsDateRange;
+      entityId?: string;
+      role?: "clinic" | "doctor" | "hospital";
+    }) =>
+      [
+        "viruj-backend",
+        "common",
+        "analytics",
+        input.role ?? "hospital",
+        input.entityId ?? "none",
+        input.dateRange ?? "LAST_30_DAYS",
+      ] as const,
+  },
   audit: {
     key: (organizationId?: string) =>
       ["viruj-backend", "erp", "audit", "recent", organizationId ?? "none"] as const,
@@ -260,6 +411,13 @@ export const virujBackend = {
         body: input.doctor,
         method: "PATCH",
       }),
+  },
+  patients: {
+    deleteAll: () =>
+      request<{ deleted: number }>("/patients", {
+        method: "DELETE",
+      }),
+    key: ["viruj-backend", "erp", "patients"] as const,
   },
   modules: {
     key: (module: string) =>

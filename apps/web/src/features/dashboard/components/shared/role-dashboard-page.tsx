@@ -15,9 +15,27 @@ import {
   ClinicGalleryBento,
   defaultClinicGalleryItems,
 } from "@/features/dashboard/components/clinic/clinic-gallery-bento";
+import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import type { ReactNode } from "react";
 
 type DashboardTone = "clinic" | "hospital" | "doctor";
+type RoleDashboardKpi = {
+  label: string;
+  note: string;
+  value: string;
+};
+
+type RoleDashboardChart = {
+  title: string;
+  values: number[];
+};
+
+export type RoleDashboardAnalytics = {
+  charts?: RoleDashboardChart[];
+  heroStats?: Record<string, string>;
+  listingScore?: number;
+  stats?: RoleDashboardKpi[];
+};
 
 type ToneConfig = {
   accent: string;
@@ -116,9 +134,11 @@ const activity = [
 ] as const;
 
 export function RoleDashboardPage({
+  analytics,
   tone,
   userName,
 }: {
+  analytics?: RoleDashboardAnalytics;
   tone: DashboardTone;
   userName: string;
 }) {
@@ -139,9 +159,17 @@ export function RoleDashboardPage({
         : "Add Doctor";
   const PrimaryIcon =
     tone === "doctor" ? CalendarDays : tone === "hospital" ? Building2 : Stethoscope;
+  const listingScore = analytics?.listingScore ?? 88;
+  const dashboardStats = analytics?.stats ?? baseStats.map(([label, value, note]) => ({ label, note, value }));
+  const dashboardCharts = analytics?.charts ?? [];
 
   return (
-    <div className="space-y-7 p-6 lg:p-5">
+    <DashboardPageShell
+      eyebrow={`${capitalize(theme.name)} Dashboard`}
+      subtitle="Track marketplace readiness, appointment demand, doctors, services, gallery health, and recent activity."
+      title="Marketplace Command Center"
+      tone={tone === "clinic" ? "violet" : "blue"}
+    >
       <section
         className={`relative overflow-hidden rounded-[2rem] p-6 text-white ${theme.hero} ${theme.shadow} lg:p-8`}
       >
@@ -182,7 +210,7 @@ export function RoleDashboardPage({
                 <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${theme.accentSoft}`}>
                   Listing Score
                 </p>
-                <p className="mt-2 text-4xl font-bold">88%</p>
+                <p className="mt-2 text-4xl font-bold">{listingScore}%</p>
               </div>
               <span
                 className="flex size-14 items-center justify-center rounded-2xl bg-white"
@@ -192,28 +220,28 @@ export function RoleDashboardPage({
               </span>
             </div>
             <div className="mt-6 h-3 rounded-full bg-white/20">
-              <div className="h-3 w-[88%] rounded-full bg-white" />
+              <div className="h-3 rounded-full bg-white" style={{ width: `${listingScore}%` }} />
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-              <HeroStat label="Profile Views" theme={theme} value="48.2k" />
-              <HeroStat label="Requests" theme={theme} value="1,842" />
-              <HeroStat label="Rating" theme={theme} value="4.8" />
-              <HeroStat label="Visibility" theme={theme} value="Public" />
+              <HeroStat label="Profile Views" theme={theme} value={analytics?.heroStats?.["Profile Views"] ?? "48.2k"} />
+              <HeroStat label="Requests" theme={theme} value={analytics?.heroStats?.Requests ?? "1,842"} />
+              <HeroStat label="Rating" theme={theme} value={analytics?.heroStats?.Rating ?? "4.8"} />
+              <HeroStat label="Visibility" theme={theme} value={analytics?.heroStats?.Visibility ?? "Public"} />
             </div>
           </div>
         </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-        {baseStats.map((kpi) => (
-          <KpiCard key={kpi[0]} label={kpi[0]} note={kpi[2]} theme={theme} value={kpi[1]} />
+        {dashboardStats.map((kpi) => (
+          <KpiCard key={kpi.label} label={kpi.label} note={kpi.note} theme={theme} value={kpi.value} />
         ))}
       </section>
 
       <section className="grid gap-5 xl:grid-cols-3">
-        <ChartPanel theme={theme} title="Profile Views Trend" />
-        <ChartPanel theme={theme} title="Appointment Request Trend" />
-        <ChartPanel theme={theme} title="Review Rating Trend" />
+        <ChartPanel theme={theme} title="Profile Views Trend" values={findDashboardChart(dashboardCharts, "Profile Views Trend")} />
+        <ChartPanel theme={theme} title="Appointment Request Trend" values={findDashboardChart(dashboardCharts, "Appointment Request Trend")} />
+        <ChartPanel theme={theme} title="Review Rating Trend" values={findDashboardChart(dashboardCharts, "Review Rating Trend")} />
       </section>
 
       <Panel subtitle="Bento preview of photos patients see on your listing" theme={theme} title="Public Gallery">
@@ -293,7 +321,7 @@ export function RoleDashboardPage({
           ))}
         </div>
       </Panel>
-    </div>
+    </DashboardPageShell>
   );
 }
 
@@ -391,11 +419,12 @@ function Panel({
   );
 }
 
-function ChartPanel({ theme, title }: { theme: ToneConfig; title: string }) {
+function ChartPanel({ theme, title, values }: { theme: ToneConfig; title: string; values?: number[] }) {
+  const bars = chartHeights(values);
   return (
     <Panel subtitle="Last 30 days" theme={theme} title={title}>
       <div className="flex h-44 items-end gap-3">
-        {[42, 68, 54, 82, 72, 96, 88, 110, 104, 128].map((height, index) => (
+        {bars.map((height, index) => (
           <div className="flex flex-1 items-end" key={index}>
             <div className={`w-full rounded-t-xl ${theme.chart}`} style={{ height }} />
           </div>
@@ -466,6 +495,19 @@ function MiniStat({ label, value }: { label: string; value: string }) {
   );
 }
 
+function findDashboardChart(charts: RoleDashboardChart[], title: string) {
+  return charts.find((chart) => chart.title === title)?.values;
+}
+
+function chartHeights(values?: number[]) {
+  const fallback = [42, 68, 54, 82, 72, 96, 88, 110, 104, 128];
+  const cleanValues = values?.filter((value) => Number.isFinite(value)).slice(-10) ?? [];
+  if (cleanValues.length === 0) return fallback;
+  const max = Math.max(...cleanValues, 1);
+  return cleanValues.map((value) => Math.max(18, Math.round((value / max) * 128)));
+}
+
 function capitalize(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
+

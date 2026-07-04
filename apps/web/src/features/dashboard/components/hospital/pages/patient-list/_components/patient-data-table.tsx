@@ -92,7 +92,7 @@ export function PatientDataTable({
         />
         <Button
           className="ml-auto h-10 border-rose-200 bg-white text-rose-600 shadow-none hover:bg-rose-50 hover:text-rose-700 disabled:text-rose-300 dark:border-rose-400/20 dark:bg-[#0b0b0c] dark:text-rose-300 dark:hover:bg-rose-400/[0.08]"
-          disabled={isDeletingAll || totalPatients === 0}
+          disabled={isDeletingAll}
           onClick={onDeleteAll}
           type="button"
           variant="outline"

@@ -130,6 +130,10 @@ export function ErpHomeScreen({
   const organizationLabel = activeOrganizationType
     ? organizationTypeLabels[activeOrganizationType]
     : "Organization";
+  const organizationName = getOrganizationDisplayName(
+    activeOrganization,
+    organizationLabel
+  );
   const activeOrganizationSlug = getOrganizationSlug(activeOrganization);
   const roleLabel = activeMemberRole
     ? activeMemberRole.replace(/_/g, " ")
@@ -281,8 +285,8 @@ export function ErpHomeScreen({
         }`}
       >
         <ErpDemoTopBar
-          currentPage={resolvedPage}
           organizationLabel={organizationLabel}
+          organizationName={organizationName}
           roleLabel={roleLabel}
           userName={userName}
           onNavigateToProfile={() => {
@@ -330,6 +334,7 @@ export function ErpHomeScreen({
                   organizationLabel={organizationLabel}
                   roleLabel={roleLabel}
                   userName={userName}
+                  organizationId={activeOrganization.id}
                 />
               </div>
             </motion.div>
@@ -345,11 +350,13 @@ function PageContent({
   organizationLabel,
   roleLabel,
   userName,
+  organizationId,
 }: {
   currentPage: ErpDemoPage;
   organizationLabel: string;
   roleLabel: string;
   userName: string;
+  organizationId?: string;
 }) {
   switch (currentPage) {
     case "finance":
@@ -386,7 +393,7 @@ function PageContent({
     case "settings-data-export":
       return <ErpDemoSettings section="export" />;
     case "analytics":
-      return <ErpDemoAnalytics />;
+      return <ErpDemoAnalytics organizationId={organizationId} />;
     case "doctors":
       return <DoctorsManagementPage organizationLabel={organizationLabel} />;
     case "hospital-profile":
@@ -412,6 +419,7 @@ function PageContent({
           organizationLabel={organizationLabel}
           roleLabel={roleLabel}
           userName={userName}
+          organizationId={organizationId}
         />
       );
   }
@@ -419,6 +427,20 @@ function PageContent({
 
 function isErpDemoPage(page: string): page is ErpDemoPage {
   return isDashboardPage(page);
+}
+
+function getOrganizationDisplayName(organization: unknown, fallback: string) {
+  if (
+    organization &&
+    typeof organization === "object" &&
+    "name" in organization &&
+    typeof organization.name === "string" &&
+    organization.name.trim()
+  ) {
+    return organization.name.trim();
+  }
+
+  return fallback;
 }
 
 function getOrganizationSlug(organization: unknown) {

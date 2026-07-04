@@ -19,6 +19,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import {
   virujBackend,
   type VirujDoctor,
@@ -167,45 +168,38 @@ export function DoctorsManagementPage({
   }
 
   return (
-    <div className="flex min-h-full flex-col p-2 lg:p-4">
+    <DashboardPageShell
+      actions={
+        <>
+          <button
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semi-bold text-slate-900 transition hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-100 dark:hover:bg-white/[0.08]"
+            onClick={openCreateDialog}
+            type="button"
+          >
+            <Plus size={16} />
+            Add Doctor
+          </button>
+          <button
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+            disabled={!doctors.length || publishAllMutation.isPending}
+            onClick={() => publishAllMutation.mutate()}
+            type="button"
+          >
+            {publishAllMutation.isPending ? (
+              <Loader2 className="animate-spin" size={16} />
+            ) : (
+              <UploadCloud size={16} />
+            )}
+            Publish to app
+          </button>
+        </>
+      }
+      eyebrow="Doctors"
+      framed
+      subtitle={`Add doctors for ${organizationLabel}, review profile readiness, then publish live availability to patients.`}
+      title="Hospital-added Profiles"
+    >
       <section className="flex min-h-full flex-1 flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#111418]">
-        <div className="grid gap-5 border-b border-slate-200 p-5 dark:border-white/[0.08] lg:grid-cols-[1fr_auto] lg:items-start">
-          <div>
-            <h2 className="mt-1 font-headline text-3xl font-semi-bold text-slate-950 dark:text-slate-100">
-              Hospital-added profiles
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-500 dark:text-slate-400">
-              Add doctors for {organizationLabel}, review their profile
-              readiness, then publish the directory so the Viruj app can show
-              live doctor availability to patients.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <button
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semi-bold text-slate-900 transition hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-100 dark:hover:bg-white/[0.08]"
-              onClick={openCreateDialog}
-              type="button"
-            >
-              <Plus size={16} />
-              Add Doctor
-            </button>
-            <button
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
-              disabled={!doctors.length || publishAllMutation.isPending}
-              onClick={() => publishAllMutation.mutate()}
-              type="button"
-            >
-              {publishAllMutation.isPending ? (
-                <Loader2 className="animate-spin" size={16} />
-              ) : (
-                <UploadCloud size={16} />
-              )}
-              Publish to app
-            </button>
-          </div>
-        </div>
-
         <div className="grid border-b border-slate-200 dark:border-white/[0.08] md:grid-cols-3">
           <HeroMetric label="Total doctors" value={doctors.length} />
           <HeroMetric label="Published in app" value={publishedCount} />
@@ -424,7 +418,7 @@ export function DoctorsManagementPage({
         </div>
         </DoctorDialogPortal>
       ) : null}
-    </div>
+    </DashboardPageShell>
   );
 }
 
@@ -569,3 +563,4 @@ function DirectoryState({ label }: { label: string }) {
     </div>
   );
 }
+

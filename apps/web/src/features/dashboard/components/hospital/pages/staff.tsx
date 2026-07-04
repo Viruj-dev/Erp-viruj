@@ -1,12 +1,11 @@
 "use client";
 
+import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import { authClient } from "@/lib/auth-client";
 import { virujBackend } from "@/lib/viruj-backend";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
-  ArrowRight,
-  BriefcaseMedical,
   Clock,
   Edit3,
   Filter,
@@ -178,8 +177,12 @@ export function ErpDemoStaff({
   };
 
   return (
-    <div className="space-y-7 p-5 lg:p-8">
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_330px]">
+    <DashboardPageShell
+      eyebrow="Staff"
+      subtitle="Invite team members, manage role access, and monitor onboarding activity."
+      title="Staff Directory"
+    >
+      <section>
         <div
           className={`overflow-hidden rounded-xl ${theme.hero} p-7 text-white ${theme.shadow}`}
         >
@@ -198,39 +201,13 @@ export function ErpDemoStaff({
             />
           </div>
         </div>
-
-        <div className="rounded-xl border-l-4 border-secondary bg-surface-container-lowest p-5 shadow-sm">
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-secondary/10 text-secondary">
-            <BriefcaseMedical size={20} />
-          </div>
-          <p className="mt-5 text-xs font-semi-bold uppercase tracking-[0.18em] text-primary">
-            Critical role
-          </p>
-          <h3 className="mt-2 font-headline text-lg font-semi-bold text-on-surface">
-            Shift Coverage Gap
-          </h3>
-          <p className="mt-2 text-sm font-medium leading-6 text-on-surface-variant">
-            {pendingInvitations.length > 0
-              ? `${pendingInvitations.length} pending staff invitation${
-                  pendingInvitations.length === 1 ? "" : "s"
-                } require follow-up before roster close.`
-              : "All invited staff have responded. Continue auditing roster coverage by role."}
-          </p>
-          <button
-            className="mt-5 inline-flex items-center gap-2 text-xs font-semi-bold text-primary"
-            type="button"
-          >
-            Resolve Staffing Alert
-            <ArrowRight size={14} />
-          </button>
-        </div>
       </section>
 
-      <section className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
+      <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+        <div className="flex min-w-0 gap-2 overflow-x-auto pb-1">
           {["all", ...availableRoleOptions].map((option) => (
             <button
-              className={`rounded-lg px-3 py-2 text-xs font-semi-bold transition ${
+              className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semi-bold transition ${
                 roleFilter === option
                   ? "bg-primary text-white"
                   : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high"
@@ -243,28 +220,28 @@ export function ErpDemoStaff({
             </button>
           ))}
         </div>
-        <div className="flex flex-wrap gap-2">
-          <span className="relative">
+        <div className="flex flex-wrap gap-2 xl:justify-end">
+          <span className="relative min-w-[min(18rem,100%)] sm:w-72">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-outline"
               size={14}
             />
             <input
-              className="w-72 rounded-lg border border-outline-variant/20 bg-white py-2 pl-9 pr-3 text-xs font-semibold text-on-surface outline-none focus:border-primary"
+              className="h-10 w-full rounded-lg border border-outline-variant/20 bg-white py-2 pl-9 pr-3 text-xs font-semibold text-on-surface outline-none focus:border-primary"
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search staff members..."
               value={query}
             />
           </span>
           <button
-            className="inline-flex items-center gap-2 rounded-lg bg-surface-container-low px-3 py-2 text-xs font-semi-bold text-on-surface transition hover:bg-surface-container-high"
+            className="inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-surface-container-low px-3 py-2 text-xs font-semi-bold text-on-surface transition hover:bg-surface-container-high"
             type="button"
           >
             <Filter size={14} />
             Advanced Filters
           </button>
           <button
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-semi-bold text-white shadow-sm transition hover:scale-[0.99]"
+            className="inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-primary px-3 py-2 text-xs font-semi-bold text-white shadow-sm transition hover:scale-[0.99]"
             onClick={() => {
               setCredentialPreview(null);
               setIsEntryDialogOpen(true);
@@ -277,7 +254,7 @@ export function ErpDemoStaff({
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
         <div className="space-y-5">
           <section className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest shadow-sm">
             <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_auto] gap-4 border-t border-outline-variant/15 bg-surface-container-low px-5 py-3 text-[10px] font-semi-bold uppercase tracking-[0.18em] text-on-surface-variant">
@@ -501,7 +478,7 @@ export function ErpDemoStaff({
           staff={deletingStaff}
         />
       ) : null}
-    </div>
+    </DashboardPageShell>
   );
 }
 

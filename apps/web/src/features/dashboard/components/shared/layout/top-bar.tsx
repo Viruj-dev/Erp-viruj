@@ -8,53 +8,16 @@ import { useTheme } from "@/lib/theme-provider";
 import { Bell, ChevronDown, Grid, Moon, Search, Sun } from "lucide-react";
 import { useState } from "react";
 
-const titles: Record<string, string> = {
-  dashboard: "{} Dashboard",
-  finance: "Finance Command Center",
-  appointments: "Appointment Scheduling",
-  "appointments-dashboard": "Appointment Operations",
-  "appointments-review": "Appointment Review",
-  "appointments-patients": "Appointment Patient History",
-  "appointments-settings": "Appointment Settings",
-  patients: "Patient Directory",
-  staff: "Staff Directory",
-  "clinic-profile": "Clinic Profile",
-  locations: "Clinic Locations",
-  "working-hours": "Working Hours",
-  offerings: "Clinic Offerings",
-  services: "Services",
-  facilities: "Facilities",
-  gallery: "Gallery",
-  reviews: "Reviews",
-  community: "Community",
-  billing: "Billing & Invoices",
-  pricing: "Pricing & Plans",
-  settings: "Organization Settings",
-  "settings-alert-rules": "Alert Rules",
-  "settings-audit-logs": "Clinical Audit Logs",
-  "settings-storage": "Storage Usage",
-  "settings-data-export": "Data Export",
-  analytics: "Performance Analytics",
-  doctors: "Doctor Directory",
-  "hospital-profile": "Hospital Profile",
-  radiology: "Radiology Operations",
-  pathology: "Pathology Lab",
-  pharmacy: "Pharmacy Management",
-  notifications: "Notifications Center",
-  reports: "Reports & Exports",
-  profile: "My Profile",
-};
-
 export function ErpDemoTopBar({
-  currentPage,
   organizationLabel,
+  organizationName,
   roleLabel,
   userName,
   onNavigateToProfile,
   onLogout,
 }: {
-  currentPage: string;
   organizationLabel: string;
+  organizationName?: string;
   roleLabel: string;
   userName: string;
   onNavigateToProfile: () => void;
@@ -65,13 +28,7 @@ export function ErpDemoTopBar({
   const sessionState = authClient.useSession();
   const userImage = sessionState.data?.user?.image;
   const workspaceTheme = getWorkspaceTheme(organizationLabel);
-  const title =
-    currentPage === "hospital-profile"
-      ? `${organizationLabel} Profile`
-      : currentPage === "clinic-profile"
-      ? `${organizationLabel} Profile`
-      : titles[currentPage]?.replace("{}", `${organizationLabel}'s`) ??
-        `${organizationLabel}'s Dashboard`;
+  const title = organizationName?.trim() || organizationLabel;
 
   return (
     <header className="sticky top-0 z-30 flex w-full items-center justify-between border-b border-slate-200 px-6 py-5 transition-colors dark:border-white/[0.08]  lg:px-10">

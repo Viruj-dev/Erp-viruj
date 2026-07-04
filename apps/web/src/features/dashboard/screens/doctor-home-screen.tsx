@@ -149,6 +149,10 @@ export function DoctorHomeScreen({
     ? activeMember.role.replace(/_/g, " ")
     : "doctor";
   const organizationLabel = organizationTypeLabels.doctor;
+  const organizationName = getOrganizationDisplayName(
+    activeOrganization,
+    organizationLabel
+  );
   const workspaceTheme = getWorkspaceTheme(organizationLabel);
 
   useEffect(() => {
@@ -285,8 +289,8 @@ export function DoctorHomeScreen({
         }`}
       >
         <ErpDemoTopBar
-          currentPage={resolvedPage}
           organizationLabel={organizationLabel}
+          organizationName={organizationName}
           roleLabel={roleLabel}
           userName={userName}
           onNavigateToProfile={() => {
@@ -405,6 +409,20 @@ function isErpDemoPage(page: string): page is ErpDemoPage {
   return isDashboardPage(page);
 }
 
+function getOrganizationDisplayName(organization: unknown, fallback: string) {
+  if (
+    organization &&
+    typeof organization === "object" &&
+    "name" in organization &&
+    typeof organization.name === "string" &&
+    organization.name.trim()
+  ) {
+    return organization.name.trim();
+  }
+
+  return fallback;
+}
+
 function getOrganizationSlug(organization: unknown) {
   if (
     organization &&
@@ -428,6 +446,7 @@ function getSessionOrganization(session: unknown) {
   ) {
     return session.activeOrganization as {
       id?: string;
+      name?: string;
       organizationType?: string;
       slug?: string;
     };

@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import { virujBackend } from "@/lib/viruj-backend";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -203,7 +204,12 @@ export function ErpDemoCommunity() {
   );
 
   return (
-    <div className="grid gap-6 p-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:p-8">
+    <DashboardPageShell
+      eyebrow="Community"
+      subtitle="Coordinate announcements, clinical discussions, patient Q&A, and shared resources."
+      title="Community Hub"
+    >
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
       <main className="space-y-6">
         <section className="relative overflow-hidden rounded-xl bg-[#003463] p-7 text-white shadow-sm">
           <div className="absolute right-8 top-10 h-36 w-36 rounded-full border-[28px] border-white/5" />
@@ -397,6 +403,7 @@ export function ErpDemoCommunity() {
         </section>
       </aside>
     </div>
+    </DashboardPageShell>
   );
 }
 
@@ -551,3 +558,6 @@ function EmptyState({ text }: { text: string }) {
     </div>
   );
 }
+
+
+ 
