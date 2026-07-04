@@ -32,6 +32,7 @@ export type ErpDemoPage =
   | "settings-storage"
   | "settings-data-export"
   | "analytics"
+  | "activity-logs"
   | "doctors"
   | "hospital-profile"
   | "radiology"

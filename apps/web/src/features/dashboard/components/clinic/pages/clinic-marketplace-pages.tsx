@@ -768,16 +768,23 @@ export function ClinicGalleryPage({
 }: {
   organizationId?: string;
 }) {
+  const backendHospitalId =
+    process.env.NEXT_PUBLIC_VIRUJ_BACKEND_HOSPITAL_ID ||
+    process.env.NEXT_PUBLIC_VIRUJ_BACKEND_ANALYTICS_ENTITY_ID ||
+    organizationId;
   const primaryItems = extendedClinicGalleryItems.slice(0, 5);
   const extraItems = extendedClinicGalleryItems.slice(5);
   const queryClient = useQueryClient();
-  const queryKey = virujBackend.hospitalGallery.key(organizationId);
+  const queryKey = virujBackend.hospitalGallery.key(backendHospitalId);
   const [localImagesById, setLocalImagesById] = useState<Record<string, string>>({});
   const [previewItem, setPreviewItem] = useState<ClinicGalleryBentoItem | null>(null);
+  const [galleryPersistenceError, setGalleryPersistenceError] = useState<string | null>(null);
+  const [savingCardId, setSavingCardId] = useState<string | null>(null);
 
   const galleryQuery = useQuery({
-    enabled: Boolean(organizationId),
-    queryFn: () => virujBackend.hospitalGallery.list({ organizationId }),
+    enabled: Boolean(backendHospitalId),
+    queryFn: () =>
+      virujBackend.hospitalGallery.list({ organizationId: backendHospitalId }),
     queryKey,
   });
 
@@ -803,7 +810,10 @@ export function ClinicGalleryPage({
 
   const createGalleryMutation = useMutation({
     mutationFn: (gallery: VirujHospitalGalleryInput) =>
-      virujBackend.hospitalGallery.create({ gallery, organizationId }),
+      virujBackend.hospitalGallery.create({
+        gallery,
+        organizationId: backendHospitalId,
+      }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey });
     },
@@ -817,7 +827,7 @@ export function ClinicGalleryPage({
       virujBackend.hospitalGallery.update({
         gallery: input.gallery,
         id: input.id,
-        organizationId,
+        organizationId: backendHospitalId,
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey });
@@ -825,15 +835,26 @@ export function ClinicGalleryPage({
   });
 
   const deleteGalleryMutation = useMutation({
-    mutationFn: (id: string) => virujBackend.hospitalGallery.delete({ id, organizationId }),
+    mutationFn: (id: string) =>
+      virujBackend.hospitalGallery.delete({
+        id,
+        organizationId: backendHospitalId,
+      }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey });
     },
   });
 
   function saveCardImage(item: ClinicGalleryBentoItem, file: File) {
+    setGalleryPersistenceError(null);
+
+    if (!backendHospitalId) {
+      setGalleryPersistenceError("Choose an active organization before uploading gallery images.");
+      return;
+    }
+
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       if (typeof reader.result !== "string") return;
 
       const url = reader.result;
@@ -849,23 +870,48 @@ export function ClinicGalleryPage({
         url,
       };
 
-      setLocalImagesById((current) => ({ ...current, [item.id]: url }));
-
-      if (!organizationId) return;
-
       const existing = galleryItemByCardId[item.id];
 
-      if (existing) {
-        updateGalleryMutation.mutate({ gallery, id: existing.id });
-        return;
-      }
+      setSavingCardId(item.id);
+      try {
+        const saved = existing
+          ? await updateGalleryMutation.mutateAsync({ gallery, id: existing.id })
+          : await createGalleryMutation.mutateAsync(gallery);
 
-      createGalleryMutation.mutate(gallery);
+        setLocalImagesById((current) => ({ ...current, [item.id]: saved.url }));
+      } catch (error) {
+        setGalleryPersistenceError(
+          error instanceof Error
+            ? error.message
+            : "Gallery image could not be saved. Please try again."
+        );
+      } finally {
+        setSavingCardId(null);
+      }
+    };
+    reader.onerror = () => {
+      setGalleryPersistenceError("Image could not be read. Please choose another file.");
     };
     reader.readAsDataURL(file);
   }
 
-  function deleteCardImage(item: ClinicGalleryBentoItem) {
+  async function deleteCardImage(item: ClinicGalleryBentoItem) {
+    setGalleryPersistenceError(null);
+
+    const existing = galleryItemByCardId[item.id];
+    if (existing && backendHospitalId) {
+      try {
+        await deleteGalleryMutation.mutateAsync(existing.id);
+      } catch (error) {
+        setGalleryPersistenceError(
+          error instanceof Error
+            ? error.message
+            : "Gallery image could not be deleted. Please try again."
+        );
+        return;
+      }
+    }
+
     setLocalImagesById((current) => {
       const next = { ...current };
       delete next[item.id];
@@ -874,11 +920,6 @@ export function ClinicGalleryPage({
 
     if (previewItem?.id === item.id) {
       setPreviewItem(null);
-    }
-
-    const existing = galleryItemByCardId[item.id];
-    if (existing && organizationId) {
-      deleteGalleryMutation.mutate(existing.id);
     }
   }
 
@@ -890,14 +931,27 @@ export function ClinicGalleryPage({
   const previewUrl = previewItem ? imageUrlsById[previewItem.id] : undefined;
 
   return (
-    <ClinicPageShell eyebrow="Gallery" title="Media Manager" subtitle="Upload, reorder, delete, preview, and choose the cover image." actions={<PrimaryAction icon={<ImagePlus size={16} />} label="Upload Images" />}>
+    <ClinicPageShell eyebrow="Gallery" title="Media Manager" subtitle="Upload, reorder, delete, preview, and choose the cover image." >
+      {galleryPersistenceError ? (
+        <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-200">
+          {galleryPersistenceError}
+        </div>
+      ) : null}
+      {savingCardId ? (
+        <div className="mb-4 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm font-semibold text-[#6d28d9] dark:border-violet-400/20 dark:bg-violet-400/10 dark:text-violet-200">
+          Saving gallery image...
+        </div>
+      ) : null}
+
       <ClinicGalleryBento
-        actionsForItem={(item) => (
-          <>
-            <SecondaryAction label="Preview" onClick={() => previewCardImage(item)} />
-            <SecondaryAction label="Delete" onClick={() => deleteCardImage(item)} tone="danger" />
-          </>
-        )}
+        actionsForItem={(item) =>
+          imageUrlsById[item.id] ? (
+            <>
+              <SecondaryAction label="Preview" onClick={() => previewCardImage(item)} />
+              <SecondaryAction label="Delete" onClick={() => deleteCardImage(item)} tone="danger" />
+            </>
+          ) : null
+        }
         extraItems={extraItems}
         imageUrlsById={imageUrlsById}
         items={primaryItems}
@@ -906,7 +960,7 @@ export function ClinicGalleryPage({
 
       {previewItem && previewUrl && typeof document !== "undefined"
         ? createPortal(
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/35 p-6 backdrop-blur-2xl backdrop-saturate-50">
+            <div className="fixed inset-0 z-[99] flex items-center justify-center bg-slate-950/35 p-6 backdrop-blur-2xl backdrop-saturate-50">
               <div className="max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-2xl border border-slate-900 bg-[#ececec] shadow-[6px_6px_0_0_#0f172a] dark:border-slate-200 dark:bg-[#1a1d22] dark:shadow-[6px_6px_0_0_#e2e8f0]">
                 <div className="flex items-center justify-between gap-3 border-b border-slate-900 px-4 py-3 dark:border-slate-200">
                   <div>
@@ -1235,6 +1289,3 @@ function getInitials(value: string) {
 
   return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
 }
-
-
-

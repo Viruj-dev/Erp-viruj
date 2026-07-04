@@ -20,6 +20,7 @@ import {
   FileBadge,
   FileText,
   Gauge,
+  History,
   Image,
   Keyboard,
   LayoutDashboard,
@@ -45,8 +46,9 @@ const mainNavItems = [
   { id: "staff", label: "Staff", icon: BadgeCheck },
   { id: "doctors", label: "Doctors", icon: Stethoscope },
   { id: "gallery", label: "Gallery", icon: Image },
-  { id: "community", label: "Community", icon: MessagesSquare },
+  { id: "community", label: "Community", icon: MessagesSquare, badge: "2" },
   { id: "analytics", label: "Analytics", icon: BarChart3, pulse: true },
+  { id: "activity-logs", label: "Activity Logs", icon: History },
 ] as const;
 
 const clinicNavItems = [

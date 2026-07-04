@@ -175,6 +175,40 @@ export type VirujStaffInvitation = {
   status: string;
 };
 
+export type VirujActivity = {
+  id: string;
+  tenantId: string;
+  workspaceType: string;
+  workspaceId: string;
+  actorId: string | null;
+  actorName: string;
+  actorRole: string | null;
+  module: string;
+  resource: string;
+  resourceId: string | null;
+  resourceName: string | null;
+  action: string;
+  title: string;
+  description: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  dayLabel: string;
+  display: {
+    actor: string;
+    resource: string;
+    summary: string;
+  };
+};
+
+export type VirujActivityResponse = {
+  data: VirujActivity[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
 export type VirujAuditLog = {
   action: string;
   actorEmail?: string | null;
@@ -342,6 +376,54 @@ export type VirujAnalyticsDashboard = {
   trends: unknown[];
 };
 export const virujBackend = {
+  activity: {
+    key: (input: {
+      action?: string;
+      from?: string;
+      limit?: number;
+      module?: string;
+      organizationId?: string;
+      page?: number;
+      search?: string;
+      to?: string;
+    }) =>
+      [
+        "viruj-backend",
+        "erp",
+        "activity",
+        input.organizationId ?? "none",
+        input.page ?? 1,
+        input.limit ?? 25,
+        input.search ?? "",
+        input.module ?? "",
+        input.action ?? "",
+        input.from ?? "",
+        input.to ?? "",
+      ] as const,
+    list: (input: {
+      action?: string;
+      from?: string;
+      limit?: number;
+      module?: string;
+      organizationId?: string;
+      page?: number;
+      search?: string;
+      to?: string;
+    }) => {
+      const params = new URLSearchParams();
+      if (input.page) params.set("page", String(input.page));
+      if (input.limit) params.set("limit", String(input.limit));
+      if (input.search) params.set("search", input.search);
+      if (input.module) params.set("module", input.module);
+      if (input.action) params.set("action", input.action);
+      if (input.from) params.set("from", input.from);
+      if (input.to) params.set("to", input.to);
+      return request<VirujActivityResponse>(
+        "/activities?" + params.toString(),
+        { organizationId: input.organizationId }
+      );
+    },
+  },
   analytics: {
     dashboard: (input: {
       dateRange?: VirujAnalyticsDateRange;

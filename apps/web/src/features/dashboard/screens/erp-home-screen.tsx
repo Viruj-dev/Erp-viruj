@@ -1,5 +1,6 @@
 "use client";
 
+import { ActivityLogsPage } from "@/features/dashboard/components/shared/activity";
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
@@ -392,6 +393,8 @@ function PageContent({
       return <ErpDemoSettings section="storage" />;
     case "settings-data-export":
       return <ErpDemoSettings section="export" />;
+    case "activity-logs":
+      return <ActivityLogsPage organizationId={organizationId} />;
     case "analytics":
       return <ErpDemoAnalytics organizationId={organizationId} />;
     case "doctors":
