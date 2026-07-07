@@ -17,6 +17,7 @@ import {
   ErpDemoSettings,
   ErpDemoStaff,
   HospitalProfilePage,
+  OrganizationOnboardingPage,
   PricingPage,
 } from "@/features/dashboard/components/hospital/pages";
 import { ErpUserProfilePage } from "@/features/dashboard/components/shared/profile";
@@ -250,6 +251,16 @@ export function ErpHomeScreen({
     );
   }
 
+  if (resolvedPage === "onboarding") {
+    return (
+      <OrganizationOnboardingPage
+        hospitalId={activeOrganization.id}
+        organizationLabel={organizationLabel}
+        userName={userName}
+      />
+    );
+  }
+
   return (
     <div
       className={`flex h-screen min-h-screen bg-surface text-on-surface transition-colors dark:bg-[#0b0d10] dark:text-slate-100 ${workspaceTheme.selection}`}
@@ -374,6 +385,14 @@ function PageContent({
   routeSegments: string[];
 }) {
   switch (currentPage) {
+    case "onboarding":
+      return (
+        <OrganizationOnboardingPage
+          hospitalId={organizationId}
+          organizationLabel={organizationLabel}
+          userName={userName}
+        />
+      );
     case "finance":
       return <ErpDemoBilling />;
     case "appointments":

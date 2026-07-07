@@ -144,6 +144,10 @@ export function ErpDemoLogin({
         return;
       }
 
+      if (onboardingForm.organizationType === "hospital") {
+        window.localStorage.setItem("viruj:hospital-onboarding:start", "1");
+      }
+
       setSuccessMessage(
         onboardingForm.organizationType === "clinic"
           ? "Clinic workspace ready. Redirecting to the clinic dashboard."

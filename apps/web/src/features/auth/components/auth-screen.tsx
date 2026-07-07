@@ -77,10 +77,21 @@ export function ErpAuthScreen() {
       activeOrganizationType &&
       isDashboardOrganizationType(activeOrganizationType)
     ) {
+      const shouldStartOnboarding =
+        activeOrganizationType === "hospital" &&
+        typeof window !== "undefined" &&
+        window.localStorage.getItem("viruj:hospital-onboarding:start") === "1";
+
+      if (shouldStartOnboarding) {
+        window.localStorage.removeItem("viruj:hospital-onboarding:start");
+      }
+
       router.replace(
         buildDashboardPath(
           activeOrganizationType,
-          getDefaultDashboardPage(activeMember?.role)
+          shouldStartOnboarding
+            ? "onboarding"
+            : getDefaultDashboardPage(activeMember?.role)
         )
       );
       return;

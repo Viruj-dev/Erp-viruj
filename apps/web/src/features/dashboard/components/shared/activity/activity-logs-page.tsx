@@ -107,89 +107,7 @@ export function ActivityLogsPage({
   };
 
   return (
-    <DashboardPageShell
-      actions={
-        <button
-          className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-950 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300"
-          disabled={query.isFetching}
-          onClick={() => void query.refetch()}
-          type="button"
-        >
-          <RefreshCw
-            className={cn("size-3.5", query.isFetching && "animate-spin")}
-          />
-          Refresh list
-        </button>
-      }
-      eyebrow="Workspace activity"
-      subtitle="A simple list of ERP actions with the actor, resource, workspace, time, and context for each event."
-      title="Things happening in ERP"
-      tone="slate"
-    >
-      <section className="rounded-2xl border border-slate-200/90 bg-white/90 p-3 shadow-[0_16px_50px_rgba(15,23,42,0.05)] dark:border-white/[0.08] dark:bg-[#111418]">
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="relative min-w-[240px] flex-1">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-            <input
-              aria-label="Search ERP activity"
-              className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/80 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-white/[0.08] dark:bg-white/[0.035] dark:text-slate-100"
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search actor, resource, action, title or details"
-              value={search}
-            />
-          </label>
-          <FilterSelect
-            label="All modules"
-            onChange={setModule}
-            options={modules}
-            value={module}
-          />
-          <FilterSelect
-            label="All actions"
-            onChange={setAction}
-            options={actions}
-            value={action}
-          />
-          <label className="relative">
-            <CalendarDays className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-slate-400" />
-            <input
-              aria-label="From date"
-              className="h-11 rounded-xl border border-slate-200 bg-white pl-9 pr-2 text-xs font-semibold text-slate-600 outline-none focus:border-blue-400 dark:border-white/[0.08] dark:bg-white/[0.035] dark:text-slate-300"
-              onChange={(event) => setFrom(event.target.value)}
-              type="date"
-              value={from}
-            />
-          </label>
-          <label>
-            <input
-              aria-label="To date"
-              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 outline-none focus:border-blue-400 dark:border-white/[0.08] dark:bg-white/[0.035] dark:text-slate-300"
-              onChange={(event) => setTo(event.target.value)}
-              type="date"
-              value={to}
-            />
-          </label>
-          {(activeFilters > 0 || search) && (
-            <button
-              className="inline-flex h-11 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-white/[0.06] dark:hover:text-white"
-              onClick={resetFilters}
-              type="button"
-            >
-              <X className="size-3.5" />
-              Clear
-            </button>
-          )}
-        </div>
-        <div className="mt-2 flex items-center gap-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-          <SlidersHorizontal className="size-3" />
-          {activeFilters
-            ? activeFilters + " filters active"
-            : "Showing live ERP activity"}
-          <span className="h-px flex-1 bg-slate-100 dark:bg-white/[0.06]" />
-          {pagination?.total ?? 0} actions
-        </div>
-      </section>
-
+    <div className="h-screen space-y-5">
       <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white/90 dark:border-white/[0.08] dark:bg-[#111418]">
         {query.isPending ? (
           <LoadingList />
@@ -236,7 +154,7 @@ export function ActivityLogsPage({
           totalPages={pagination?.totalPages ?? 0}
         />
       </section>
-    </DashboardPageShell>
+    </div>
   );
 }
 

@@ -1,7 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   RoleDashboardPage,
   type RoleDashboardAnalytics,
@@ -78,16 +85,144 @@ export function ErpDemoDashboard({
     () => buildHospitalDashboardAnalytics(analyticsQuery.data, liveCounts),
     [analyticsQuery.data, liveCounts]
   );
+  const onboardingStatus = useHospitalOnboardingStatus(organizationId);
 
   return (
-    <RoleDashboardPage
-      analytics={tone === "hospital" ? analytics : undefined}
-      tone={tone}
-      userName={userName}
-    />
+    <>
+      {onboardingStatus.hasCompleted ? (
+        <OrganizationSetupChecklist skippedSteps={onboardingStatus.skippedSteps} />
+      ) : null}
+      <WelcomeOnboardingModal
+        onOpenChange={onboardingStatus.setShowWelcome}
+        open={onboardingStatus.showWelcome}
+      />
+      <RoleDashboardPage
+        analytics={tone === "hospital" ? analytics : undefined}
+        tone={tone}
+        userName={userName}
+      />
+    </>
   );
 }
 
+const onboardingStoragePrefix = "viruj:hospital-onboarding";
+
+function useHospitalOnboardingStatus(organizationId?: string) {
+  const storageId = organizationId ?? "workspace";
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [hasCompleted, setHasCompleted] = useState(false);
+  const [skippedSteps, setSkippedSteps] = useState<string[]>([]);
+
+  useEffect(() => {
+    const welcomeKey = `${onboardingStoragePrefix}:welcome:${storageId}`;
+    const completeKey = `${onboardingStoragePrefix}:completed:${storageId}`;
+    const shouldWelcome = window.sessionStorage.getItem(welcomeKey) === "1";
+    const completed = window.localStorage.getItem(completeKey);
+
+    if (shouldWelcome) {
+      setShowWelcome(true);
+      window.sessionStorage.removeItem(welcomeKey);
+    }
+
+    if (!completed) return;
+
+    setHasCompleted(true);
+    try {
+      const parsed = JSON.parse(completed) as { skippedSteps?: string[] };
+      setSkippedSteps(Array.isArray(parsed.skippedSteps) ? parsed.skippedSteps : []);
+    } catch {
+      setSkippedSteps([]);
+    }
+  }, [storageId]);
+
+  return { hasCompleted, setShowWelcome, showWelcome, skippedSteps };
+}
+
+function WelcomeOnboardingModal({
+  onOpenChange,
+  open,
+}: {
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+}) {
+  return (
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="max-w-lg rounded-[28px] border-white/70 bg-white p-0 shadow-[0_30px_120px_rgba(15,23,42,0.25)] dark:border-white/[0.10] dark:bg-[#101418]">
+        <div className="overflow-hidden rounded-[28px]">
+          <div className="bg-[linear-gradient(135deg,#062d4f,#075985_58%,#22d3ee)] p-6 text-white">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-white/14 text-2xl shadow-xl">
+              {"\u{1F389}"}
+            </div>
+            <DialogHeader className="mt-5">
+              <DialogTitle className="font-headline text-2xl font-semibold text-white">
+                <span className="mr-2">{"\u{1F389}"}</span>Your organization has been successfully configured.
+              </DialogTitle>
+              <DialogDescription className="text-sm font-medium text-cyan-50/80">
+                Viruj Health ERP is ready for daily operations. Any skipped setup items are waiting on your dashboard checklist.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="p-5">
+            <button
+              className="h-11 w-full rounded-full bg-slate-950 text-sm font-bold text-white transition hover:-translate-y-0.5 dark:bg-white dark:text-slate-950"
+              onClick={() => onOpenChange(false)}
+              type="button"
+            >
+              Continue to dashboard
+            </button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function OrganizationSetupChecklist({ skippedSteps }: { skippedSteps: string[] }) {
+  const skipped = new Set(skippedSteps);
+  const items = [
+    { id: "profile", label: "Hospital Profile", required: true },
+    { id: "departments", label: "Departments", required: true },
+    { id: "services", label: "Services", required: true },
+    { id: "facilities", label: "Facilities", required: true },
+    { id: "doctors", label: "Invite More Doctors" },
+    { id: "billing", label: "Configure Billing" },
+    { id: "insurance", label: "Add Insurance Partners" },
+  ];
+
+  return (
+    <section className="mx-6 mt-6 rounded-[26px] border border-cyan-100 bg-white/88 p-5 shadow-sm dark:border-cyan-300/15 dark:bg-white/[0.06] lg:mx-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-300">
+            Organization Setup Progress
+          </p>
+          <h2 className="mt-1 font-headline text-xl font-semibold text-slate-950 dark:text-white">
+            Launch checklist
+          </h2>
+        </div>
+        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300">
+          Setup saved
+        </span>
+      </div>
+      <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+        {items.map((item) => {
+          const complete = item.required || !skipped.has(item.id);
+          return (
+            <div
+              className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700 dark:bg-white/[0.055] dark:text-slate-300"
+              key={item.id}
+            >
+              <span className={complete ? "text-emerald-600" : "text-slate-400"}>
+                {complete ? "[x]" : "[ ]"}
+              </span>
+              {item.label}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 function buildHospitalDashboardAnalytics(
   dashboard?: VirujAnalyticsDashboard,
   liveCounts?: LiveDashboardCounts

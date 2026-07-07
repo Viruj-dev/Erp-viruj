@@ -79,7 +79,6 @@ const doctorNavItems = [
 
 const doctorProfileOptions = [
   { id: "profile", label: "Profile Details", icon: Stethoscope },
-  { id: "onboarding", label: "Onboarding", icon: Gauge },
   { id: "verification", label: "Verification", icon: FileBadge },
   { id: "documents", label: "Documents", icon: FileText },
 ] as const;

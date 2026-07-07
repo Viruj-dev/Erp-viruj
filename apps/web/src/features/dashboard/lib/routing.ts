@@ -99,6 +99,7 @@ export const allowedDashboardPagesByRole: Record<
 > = {
   OWNER: [
     "dashboard",
+    "onboarding",
     "finance",
     "appointments",
     "appointments-dashboard",
@@ -130,6 +131,7 @@ export const allowedDashboardPagesByRole: Record<
   ],
   ADMIN: [
     "dashboard",
+    "onboarding",
     "finance",
     "appointments",
     "appointments-dashboard",
@@ -210,6 +212,7 @@ export const allowedDashboardPagesByRole: Record<
   ],
   MANAGER: [
     "dashboard",
+    "onboarding",
     "finance",
     "appointments",
     "appointments-dashboard",
@@ -277,6 +280,7 @@ export const allowedDashboardPagesByRole: Record<
   COMMUNITY_MANAGER: ["dashboard", "community", "profile"],
   ORG_ADMIN: [
     "dashboard",
+    "onboarding",
     "finance",
     "appointments",
     "appointments-dashboard",
@@ -308,6 +312,7 @@ export const allowedDashboardPagesByRole: Record<
   ],
   admin: [
     "dashboard",
+    "onboarding",
     "finance",
     "appointments",
     "appointments-dashboard",
@@ -370,6 +375,7 @@ export const allowedDashboardPagesByRole: Record<
   lab_tech: ["dashboard", "pathology", "patients", "reports", "profile"],
   manager: [
     "dashboard",
+    "onboarding",
     "finance",
     "appointments",
     "appointments-dashboard",
@@ -401,6 +407,7 @@ export const allowedDashboardPagesByRole: Record<
   ],
   owner: [
     "dashboard",
+    "onboarding",
     "finance",
     "appointments",
     "appointments-dashboard",

@@ -2,119 +2,94 @@
 
 import { useQuery } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   CalendarDays,
+  ChevronDown,
   Download,
-  Sparkles,
-  Stethoscope,
-  TrendingDown,
 } from "lucide-react";
 import { useMemo } from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import {
   virujBackend,
   type VirujAnalyticsChartWidget,
   type VirujAnalyticsDashboard,
+  type VirujAnalyticsMetricValue,
   type VirujAnalyticsSummaryWidget,
 } from "@/lib/viruj-backend";
 
-type SignalTone = "amber" | "emerald" | "indigo" | "rose";
-type ChartSketchType =
-  | "bars"
-  | "bars-horizontal"
-  | "flow"
-  | "heatmap"
-  | "line"
-  | "stacked";
-
-type SignalCardModel = {
-  action: string;
+type DashboardChartPoint = {
   label: string;
-  level: string;
-  text: string;
-  tone: SignalTone;
-  value: string;
+  primary: number;
+  secondary: number;
+  primaryLabel: string;
+  secondaryLabel: string;
 };
 
-type MetricPanelModel = {
-  axis?: [string, string];
-  chart: ChartSketchType;
-  data?: number[];
-  delta?: string | null;
+type KpiCard = {
   label: string;
   value: string;
+  change?: string | null;
+  direction?: "DOWN" | "FLAT" | "UP";
+  note: string;
 };
 
-const signalCards: SignalCardModel[] = [
-  {
-    action: "Review queue",
-    label: "Appointment pressure",
-    level: "Medium",
-    text: "OPD demand is rising in Cardiology and General Medicine during morning slots.",
-    tone: "rose",
-    value: "68 queued",
-  },
-  {
-    action: "Open approvals",
-    label: "Pending approvals",
-    level: "High",
-    text: "Appointment requests need staff approval before patient reminders can be sent.",
-    tone: "amber",
-    value: "12 urgent",
-  },
-  {
-    action: "View reports",
-    label: "Lab turnaround",
-    level: "Low",
-    text: "Pathology reports are clearing faster than last week with median TAT down 18%.",
-    tone: "emerald",
-    value: "41m median",
-  },
-  {
-    action: "Inspect roster",
-    label: "Doctor utilization",
-    level: "Watch",
-    text: "Five doctors are near full OPD capacity while two departments remain underbooked.",
-    tone: "indigo",
-    value: "87% load",
-  },
+type OverviewSegment = {
+  color: string;
+  label: string;
+  note: string;
+  value: string;
+  width: number;
+};
+
+type BreakdownItem = {
+  color: string;
+  label: string;
+  value: number;
+};
+
+type AnalyticsViewModel = {
+  breakdown: BreakdownItem[];
+  heroData: DashboardChartPoint[];
+  insightSeries: Array<{ label: string; primary: number; secondary: number }>;
+  kpis: KpiCard[];
+  overview: OverviewSegment[];
+  periodLabel: string;
+};
+
+const fallbackHeroData: DashboardChartPoint[] = [
+  { label: "Jan", primary: 820, primaryLabel: "Revenue", secondary: -245, secondaryLabel: "Care load" },
+  { label: "Feb", primary: 960, primaryLabel: "Revenue", secondary: -260, secondaryLabel: "Care load" },
+  { label: "Mar", primary: 1850, primaryLabel: "Revenue", secondary: -155, secondaryLabel: "Care load" },
+  { label: "Apr", primary: 3020, primaryLabel: "Revenue", secondary: -338, secondaryLabel: "Care load" },
+  { label: "May", primary: 2450, primaryLabel: "Revenue", secondary: -278, secondaryLabel: "Care load" },
+  { label: "Jun", primary: 2180, primaryLabel: "Revenue", secondary: -292, secondaryLabel: "Care load" },
+  { label: "Jul", primary: 2110, primaryLabel: "Revenue", secondary: -365, secondaryLabel: "Care load" },
+  { label: "Aug", primary: 1120, primaryLabel: "Revenue", secondary: -185, secondaryLabel: "Care load" },
+  { label: "Sep", primary: 1920, primaryLabel: "Revenue", secondary: -282, secondaryLabel: "Care load" },
+  { label: "Oct", primary: 1580, primaryLabel: "Revenue", secondary: -162, secondaryLabel: "Care load" },
+  { label: "Nov", primary: 2100, primaryLabel: "Revenue", secondary: -366, secondaryLabel: "Care load" },
+  { label: "Dec", primary: 1210, primaryLabel: "Revenue", secondary: -372, secondaryLabel: "Care load" },
 ];
 
-const metricPanels: MetricPanelModel[] = [
-  {
-    chart: "line",
-    delta: "-40%",
-    label: "Appointments waiting",
-    value: "24",
-  },
-  {
-    chart: "flow",
-    label: "Doctor utilization rate",
-    value: "72%",
-  },
-  {
-    chart: "stacked",
-    delta: "-40%",
-    label: "Patient no-show risk",
-    value: "18",
-  },
-  {
-    chart: "bars-horizontal",
-    delta: "-40%",
-    label: "Department load index",
-    value: "15",
-  },
-  {
-    chart: "bars",
-    label: "Daily patient flow",
-    value: "20",
-  },
-  {
-    chart: "heatmap",
-    delta: "-40%",
-    label: "Revenue concentration",
-    value: "18",
-  },
+const fallbackBreakdown: BreakdownItem[] = [
+  { color: "#2f48d7", label: "Completed", value: 37 },
+  { color: "#b87218", label: "Confirmed", value: 24 },
+  { color: "#0f8a9a", label: "Requested", value: 21 },
+  { color: "#a8a29e", label: "Other", value: 18 },
 ];
 
 export function ErpDemoAnalytics({
@@ -140,12 +115,8 @@ export function ErpDemoAnalytics({
     retry: 1,
     staleTime: 60_000,
   });
-  const liveSignalCards = useMemo(
-    () => buildSignalCards(analyticsQuery.data),
-    [analyticsQuery.data]
-  );
-  const liveMetricPanels = useMemo(
-    () => buildMetricPanels(analyticsQuery.data),
+  const model = useMemo(
+    () => buildAnalyticsViewModel(analyticsQuery.data),
     [analyticsQuery.data]
   );
 
@@ -154,14 +125,14 @@ export function ErpDemoAnalytics({
       actions={
         <>
           <button
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semi-bold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-200 dark:hover:bg-white/[0.1]"
+            className="inline-flex h-10 items-center gap-2 rounded-2xl border border-slate-200/80 bg-white/80 px-4 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition hover:bg-white dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-200"
             type="button"
           >
             <CalendarDays size={16} />
-            Past 30 days
+            {model.periodLabel}
           </button>
           <button
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semi-bold text-white shadow-[0_12px_26px_rgba(15,23,42,0.22)] transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100"
+            className="inline-flex h-10 items-center gap-2 rounded-2xl bg-slate-950 px-4 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(15,23,42,0.26)] transition hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-white dark:text-slate-950"
             type="button"
           >
             <Download size={16} />
@@ -171,356 +142,302 @@ export function ErpDemoAnalytics({
       }
       className="overflow-hidden"
       eyebrow="Analytics"
-      subtitle="Live hospital signals across appointments, doctors, billing, labs, departments, and patient movement."
-      title="Viruj Operations Intelligence"
+      subtitle="A widget-driven operations view with revenue, appointments, status mix, and AI-ready insight cards."
+      title="Provider Analytics Command Center"
     >
-      <div className="relative overflow-hidden">
-        <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-24 bg-gradient-to-l from-white to-transparent dark:from-[#111418]" />
-        <div className="flex gap-5 overflow-hidden">
-          {liveSignalCards.map((card, index) => (
-            <SignalCard card={card} index={index} key={card.label} />
-          ))}
-        </div>
-        <div className="mt-6 flex justify-center gap-2">
-          {[0, 1, 2, 3].map((dot) => (
-            <span
-              className={
-                dot === 0
-                  ? "size-2 rounded-full bg-slate-950 dark:bg-white"
-                  : "size-2 rounded-full bg-slate-200 dark:bg-white/[0.16]"
-              }
-              key={dot}
-            />
-          ))}
-        </div>
-      </div>
+      <section className="relative overflow-hidden rounded-[2rem] border border-slate-200/80 bg-[#f4f0e8] p-4 shadow-[0_30px_80px_rgba(15,23,42,0.08)] dark:border-white/[0.08] dark:bg-[#111418]">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(47,72,215,0.12),transparent_28%),radial-gradient(circle_at_78%_12%,rgba(184,114,24,0.16),transparent_30%),linear-gradient(135deg,rgba(255,255,255,0.66),transparent)] dark:bg-[radial-gradient(circle_at_18%_10%,rgba(75,101,255,0.2),transparent_28%),radial-gradient(circle_at_78%_12%,rgba(245,158,11,0.16),transparent_30%)]" />
+        <div className="relative grid gap-4 xl:grid-cols-[minmax(0,1fr)_260px]">
+          <div className="rounded-[1.5rem] border border-white/70 bg-white/64 p-4 shadow-inner backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.04]">
+            <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="font-headline text-2xl font-semibold text-slate-950 dark:text-white">
+                  Operational Analytics
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Revenue above baseline, care load below baseline.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                {["Summary", "Balance", "Spending", "Income", "Net Income"].map((tab, index) => (
+                  <span
+                    className={
+                      index === 0
+                        ? "rounded-full bg-white px-4 py-2 text-slate-950 shadow-sm dark:bg-white dark:text-slate-950"
+                        : "rounded-full px-4 py-2 hover:bg-white/60 dark:hover:bg-white/[0.08]"
+                    }
+                    key={tab}
+                  >
+                    {tab}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <HeroBarChart data={model.heroData} />
+          </div>
 
-      <div className="mt-8 grid border-t border-slate-200 dark:border-white/[0.08] lg:grid-cols-3">
-        {liveMetricPanels.map((panel) => (
-          <MetricPanel key={panel.label} panel={panel} />
-        ))}
-      </div>
+          <aside className="grid gap-3">
+            <div className="flex justify-end gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <button className="rounded-2xl bg-white/70 px-3 py-2 shadow-sm dark:bg-white/[0.06]" type="button">
+                Account <span className="text-slate-400">All</span> <ChevronDown className="inline" size={12} />
+              </button>
+              <button className="rounded-2xl bg-white px-3 py-2 shadow-sm dark:bg-white/[0.1]" type="button">
+                Year
+              </button>
+            </div>
+            {model.kpis.map((kpi) => (
+              <KpiTile key={kpi.label} kpi={kpi} />
+            ))}
+          </aside>
+        </div>
+
+        <div className="relative mt-4 grid gap-4 lg:grid-cols-[1.25fr_0.8fr_0.75fr]">
+          <IncomeOverview segments={model.overview} />
+          <BreakdownDonut items={model.breakdown} />
+          <InsightPanel series={model.insightSeries} />
+        </div>
+      </section>
     </DashboardPageShell>
   );
 }
 
-function SignalCard({
-  card,
-  index,
-}: {
-  card: SignalCardModel;
-  index: number;
-}) {
-  const toneClass = {
-    amber:
-      "from-amber-50 to-white border-amber-200/80 text-amber-700 dark:from-amber-400/12 dark:to-white/[0.02] dark:border-amber-300/15 dark:text-amber-200",
-    emerald:
-      "from-emerald-50 to-white border-emerald-200/80 text-emerald-700 dark:from-emerald-400/12 dark:to-white/[0.02] dark:border-emerald-300/15 dark:text-emerald-200",
-    indigo:
-      "from-indigo-50 to-white border-indigo-200/80 text-indigo-700 dark:from-indigo-400/12 dark:to-white/[0.02] dark:border-indigo-300/15 dark:text-indigo-200",
-    rose: "from-rose-50 to-white border-rose-200/80 text-rose-700 dark:from-rose-400/12 dark:to-white/[0.02] dark:border-rose-300/15 dark:text-rose-200",
-  }[card.tone];
-
-  const Icon =
-    card.tone === "rose"
-      ? CalendarDays
-      : card.tone === "amber"
-        ? AlertTriangle
-        : card.tone === "emerald"
-          ? Sparkles
-          : Stethoscope;
-
+function HeroBarChart({ data }: { data: DashboardChartPoint[] }) {
   return (
-    <article
-      className={`min-w-[330px] rounded-2xl border bg-gradient-to-b p-4 shadow-[0_18px_45px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 ${toneClass}`}
-      style={{ animationDelay: `${index * 100}ms` }}
-    >
-      <div className="flex items-center justify-between border-b border-current/10 pb-3">
-        <p className="flex items-center gap-2 text-[11px] font-semi-bold uppercase tracking-[0.18em]">
-          <Icon size={14} />
-          {card.label}
-        </p>
-        <span className="h-px w-5 bg-current/20" />
+    <div className="h-[330px] w-full">
+      <ResponsiveContainer height="100%" width="100%">
+        <BarChart data={data} margin={{ bottom: 8, left: -20, right: 8, top: 16 }}>
+          <defs>
+            <linearGradient id="analyticsPrimary" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#3048d7" stopOpacity="0.98" />
+              <stop offset="100%" stopColor="#3048d7" stopOpacity="0.3" />
+            </linearGradient>
+            <linearGradient id="analyticsSecondary" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#b87218" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#b87218" stopOpacity="0.98" />
+            </linearGradient>
+          </defs>
+          <CartesianGrid stroke="#d8d1c3" strokeDasharray="0" vertical={false} />
+          <XAxis axisLine={false} dataKey="label" tick={{ fill: "#8a8174", fontSize: 12 }} tickLine={false} />
+          <YAxis axisLine={false} tick={{ fill: "#b0a79a", fontSize: 12 }} tickFormatter={(value) => compactNumber(Math.abs(Number(value)))} tickLine={false} />
+          <ReferenceLine stroke="#bcb3a6" y={0} />
+          <Tooltip content={<HeroTooltip />} cursor={{ fill: "rgba(255,255,255,0.38)" }} />
+          <Bar dataKey="primary" fill="url(#analyticsPrimary)" radius={[9, 9, 0, 0]} />
+          <Bar dataKey="secondary" fill="url(#analyticsSecondary)" radius={[0, 0, 9, 9]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function HeroTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value?: number; payload?: DashboardChartPoint; dataKey?: string }>; label?: string }) {
+  if (!(active && payload?.length)) return null;
+  const point = payload[0]?.payload;
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 text-xs shadow-[0_18px_45px_rgba(15,23,42,0.16)] backdrop-blur dark:border-white/[0.08] dark:bg-slate-950/90">
+      <p className="mb-3 font-semibold text-slate-950 dark:text-white">{label}</p>
+      <p className="flex items-center justify-between gap-8 text-slate-600 dark:text-slate-300">
+        <span><i className="mr-2 inline-block size-2 rounded-full bg-[#3048d7]" />{point?.primaryLabel ?? "Primary"}</span>
+        <strong>{compactNumber(point?.primary ?? 0)}</strong>
+      </p>
+      <p className="mt-2 flex items-center justify-between gap-8 text-slate-600 dark:text-slate-300">
+        <span><i className="mr-2 inline-block size-2 rounded-full bg-[#b87218]" />{point?.secondaryLabel ?? "Secondary"}</span>
+        <strong>{compactNumber(Math.abs(point?.secondary ?? 0))}</strong>
+      </p>
+    </div>
+  );
+}
+
+function KpiTile({ kpi }: { kpi: KpiCard }) {
+  const positive = kpi.direction !== "DOWN";
+  return (
+    <article className="rounded-[1.35rem] border border-white/70 bg-white/70 p-4 shadow-sm backdrop-blur dark:border-white/[0.08] dark:bg-white/[0.04]">
+      <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{kpi.label}</p>
+      <div className="mt-7 flex items-end justify-between gap-3">
+        <strong className="text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">{kpi.value}</strong>
+        {kpi.change ? (
+          <span className={positive ? "rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-bold text-emerald-700" : "rounded-full bg-rose-100 px-2 py-1 text-[11px] font-bold text-rose-700"}>
+            {kpi.change}
+          </span>
+        ) : null}
       </div>
-      <div className="pt-5">
-        <p className="font-headline text-xl font-semi-bold text-slate-950 dark:text-slate-100">
-          {card.value}
-        </p>
-        <p className="mt-3 min-h-12 text-sm leading-6 text-slate-500 dark:text-slate-400">
-          {card.text}
-        </p>
+      <p className="mt-1 text-[11px] text-slate-400">{kpi.note}</p>
+    </article>
+  );
+}
+
+function IncomeOverview({ segments }: { segments: OverviewSegment[] }) {
+  return (
+    <article className="rounded-[1.5rem] border border-white/70 bg-white/62 p-5 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.04]">
+      <p className="text-sm font-semibold text-slate-950 dark:text-white">Income overview</p>
+      <div className="mt-8 flex items-center gap-3">
+        <strong className="text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">{segments[0]?.value ?? "--"}</strong>
+        <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700">+8.7%</span>
       </div>
-      <div className="mt-6 flex items-center justify-between gap-3">
-        <button className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semi-bold text-slate-800 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-200">
-          {card.action} →
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        {segments.map((segment) => (
+          <div key={segment.label}>
+            <div className="h-2 rounded-full bg-slate-200 dark:bg-white/[0.08]">
+              <div className="h-full rounded-full" style={{ backgroundColor: segment.color, width: `${segment.width}%` }} />
+            </div>
+            <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">{segment.label}</p>
+            <strong className="mt-1 block text-lg font-semibold text-slate-950 dark:text-white">{segment.value}</strong>
+            <span className="text-xs text-slate-400">{segment.note}</span>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function BreakdownDonut({ items }: { items: BreakdownItem[] }) {
+  const total = items.reduce((sum, item) => sum + item.value, 0);
+  return (
+    <article className="rounded-[1.5rem] border border-white/70 bg-white/62 p-5 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.04]">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-slate-950 dark:text-white">Expense Analysis</p>
+        <button className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-slate-500 shadow-sm dark:bg-white/[0.06]" type="button">
+          Transactions <ChevronDown className="inline" size={12} />
         </button>
-        <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-600 shadow-sm dark:bg-white/[0.06] dark:text-slate-300">
-          {card.level}
-        </span>
       </div>
-    </article>
-  );
-}
-
-function MetricPanel({ panel }: { panel: MetricPanelModel }) {
-  const delta = panel.delta ?? null;
-  const axis = panel.axis ?? ["4 Nov", "4 Dec"];
-
-  return (
-    <article className="min-h-[270px] border-b border-r border-slate-200 p-7 last:border-r-0 dark:border-white/[0.08]">
-      <p className="font-headline text-3xl font-semi-bold text-slate-950 dark:text-slate-100">
-        {panel.value}
-      </p>
-      <p className="mt-2 text-[11px] font-semi-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-500">
-        {panel.label}
-      </p>
-      {delta ? (
-        <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-xs font-semi-bold text-rose-700 dark:bg-rose-400/10 dark:text-rose-200">
-          <TrendingDown size={12} />
-          {delta}
-        </p>
-      ) : null}
-      <div className="mt-8 h-32">
-        <Chart data={panel.data} type={panel.chart} />
-      </div>
-      <div className="mt-3 flex justify-between text-xs text-slate-400 dark:text-slate-600">
-        <span>{axis[0]}</span>
-        <span>{axis[1]}</span>
-      </div>
-    </article>
-  );
-}
-
-function Chart({ data, type }: { data?: number[]; type: ChartSketchType }) {
-  switch (type) {
-    case "line":
-      return <LineSketch data={data} />;
-    case "flow":
-      return <FlowSketch />;
-    case "stacked":
-      return <StackedBars data={data} />;
-    case "bars-horizontal":
-      return <HorizontalBars data={data} />;
-    case "bars":
-      return <PurpleBars data={data} />;
-    case "heatmap":
-      return <HeatMap data={data} />;
-  }
-}
-
-function LineSketch({ data }: { data?: number[] }) {
-  const line = linePath(data);
-
-  return (
-    <svg className="h-full w-full overflow-visible" viewBox="0 0 280 120">
-      <defs>
-        <linearGradient id="lineFade" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.22" />
-          <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={line.area} fill="url(#lineFade)" />
-      <path
-        d={line.stroke}
-        fill="none"
-        stroke="#6d54d8"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-    </svg>
-  );
-}
-
-function FlowSketch() {
-  return (
-    <svg className="h-full w-full" viewBox="0 0 280 120">
-      {[0, 1, 2].map((layer) => (
-        <path
-          d="M12 34 C58 32 70 62 112 62 C153 62 157 73 205 72 C237 72 252 76 268 78"
-          fill="none"
-          key={layer}
-          opacity={0.18 + layer * 0.16}
-          stroke={layer === 2 ? "#ea580c" : "#fb923c"}
-          strokeLinecap="round"
-          strokeWidth={32 - layer * 10}
-        />
-      ))}
-      <path d="M12 34 H58 V95 H12 Z" fill="#fed7aa" opacity="0.58" />
-      <text fill="#a8a29e" fontSize="12" x="0" y="118">
-        High
-      </text>
-      <text fill="#a8a29e" fontSize="12" x="246" y="118">
-        Low
-      </text>
-    </svg>
-  );
-}
-
-function StackedBars({ data }: { data?: number[] }) {
-  const bars = normalizedHeights(
-    data,
-    [30, 55, 48, 70, 62, 78, 88, 44, 66, 92, 72, 57, 84, 38, 60, 75, 50, 68, 46,
-      36, 57, 42]
-  );
-  return (
-    <div className="flex h-full items-end gap-2">
-      {bars.map((height, index) => (
-        <div className="flex flex-1 flex-col items-stretch gap-1" key={index}>
-          <span
-            className="rounded-t bg-amber-300"
-            style={{ height: `${height * 0.35}%` }}
-          />
-          <span
-            className="bg-orange-400"
-            style={{ height: `${height * 0.25}%` }}
-          />
-          <span
-            className="rounded-b bg-teal-300"
-            style={{ height: `${height * 0.4}%` }}
-          />
+      <div className="mt-3 grid grid-cols-[150px_1fr] items-center gap-4">
+        <div className="relative h-36">
+          <ResponsiveContainer height="100%" width="100%">
+            <PieChart>
+              <Pie data={items} dataKey="value" innerRadius={46} outerRadius={68} paddingAngle={4} stroke="none">
+                {items.map((item) => <Cell fill={item.color} key={item.label} />)}
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="absolute inset-0 grid place-items-center text-center">
+            <strong className="text-2xl font-semibold text-slate-950 dark:text-white">{total}</strong>
+            <span className="block text-[11px] text-slate-400">transactions</span>
+          </div>
         </div>
-      ))}
-    </div>
+        <div className="space-y-3 text-sm">
+          {items.map((item) => (
+            <div className="flex items-center justify-between gap-3" key={item.label}>
+              <span className="flex items-center gap-2 text-slate-600 dark:text-slate-300"><i className="size-2 rounded-full" style={{ backgroundColor: item.color }} />{item.label}</span>
+              <strong className="text-slate-950 dark:text-white">{Math.round((item.value / Math.max(total, 1)) * 100)}%</strong>
+            </div>
+          ))}
+        </div>
+      </div>
+    </article>
   );
 }
 
-function HorizontalBars({ data }: { data?: number[] }) {
-  const bars = normalizedHeights(data, [72, 18, 94, 54, 86, 35]);
+function InsightPanel({ series }: { series: Array<{ label: string; primary: number; secondary: number }> }) {
   return (
-    <div className="flex h-full flex-col justify-center gap-3">
-      {bars.map((width, index) => (
-        <span
-          className="h-3 rounded-full bg-sky-400"
-          key={index}
-          style={{ width: `${width}%` }}
-        />
-      ))}
-    </div>
+    <article className="relative overflow-hidden rounded-[1.5rem] bg-[linear-gradient(135deg,#b47a21,#0f4c9a)] p-5 text-white shadow-[0_24px_60px_rgba(15,23,42,0.22)]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_0%,rgba(255,255,255,0.34),transparent_34%)]" />
+      <div className="relative">
+        <p className="text-sm text-white/65">Expense Analysis</p>
+        <strong className="mt-2 block text-4xl font-semibold">62%</strong>
+        <div className="mt-7 h-28">
+          <ResponsiveContainer height="100%" width="100%">
+            <LineChart data={series} margin={{ bottom: 4, left: 0, right: 0, top: 8 }}>
+              <Line dataKey="primary" dot={{ r: 3 }} stroke="#3346d3" strokeWidth={2} type="monotone" />
+              <Line dataKey="secondary" dot={{ r: 3 }} stroke="rgba(255,255,255,0.45)" strokeWidth={2} type="monotone" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        <p className="mt-4 text-xs leading-5 text-white/66">
+          Your spending remains within optimal range. Appointment demand is rising while revenue quality is holding steady.
+        </p>
+      </div>
+    </article>
   );
 }
 
-function PurpleBars({ data }: { data?: number[] }) {
-  const bars = normalizedHeights(
-    data,
-    [30, 52, 40, 68, 78, 86, 91, 72, 82, 45, 70, 90, 52, 84, 48, 46, 61, 35]
-  );
-  return (
-    <div className="flex h-full items-end justify-center gap-2">
-      {bars.map((height, index) => (
-        <span
-          className="w-2 rounded-t bg-violet-500"
-          key={index}
-          style={{ height: `${height}%` }}
-        />
-      ))}
-    </div>
-  );
-}
+function buildAnalyticsViewModel(dashboard?: VirujAnalyticsDashboard): AnalyticsViewModel {
+  const summary = dashboard?.summary ?? [];
+  const charts = dashboard?.charts ?? [];
+  const summaries = summaryMap(summary);
+  const revenueSummary = firstRevenueSummary(summary);
+  const appointmentSummary = findSummaryByHints(summaries, ["appointments", "consultations"]);
+  const patientSummary = findSummaryByHints(summaries, ["patients", "new-patients"]);
+  const doctorSummary = findSummaryByHints(summaries, ["doctors", "active-doctors"]);
+  const volumeChart = findChartByHints(charts, ["appointments.volume", "consultations.volume"]);
+  const revenueChart = findChartByHints(charts, ["revenue.trend"]);
+  const statusChart = findChartByHints(charts, ["appointments.status", "consultations.status", "reviews.rating"]);
 
-function HeatMap({ data }: { data?: number[] }) {
-  const values = normalizedHeights(data, []);
-  const cells = values.length
-    ? values.slice(0, 8).map((value) =>
-        value > 75
-          ? "bg-violet-500"
-          : value > 45
-            ? "bg-amber-300"
-            : "bg-slate-200"
-      )
-    : [
-        "bg-slate-200",
-        "bg-slate-200",
-        "bg-violet-500",
-        "bg-amber-300",
-        "bg-violet-500",
-        "bg-violet-500",
-        "bg-amber-300",
-        "bg-amber-300",
-      ];
-
-  return (
-    <div className="grid h-full grid-cols-6 grid-rows-4 gap-1">
-      {cells.map((cell, index) => (
-        <span
-          className={`rounded-lg ${cell}`}
-          key={index}
-          style={{
-            gridColumn: index === 2 ? "span 3" : "span 1",
-            gridRow: index === 2 ? "span 2" : "span 1",
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function buildSignalCards(dashboard?: VirujAnalyticsDashboard): SignalCardModel[] {
-  const backendSignals = dashboard?.signals ?? [];
-  if (backendSignals.length > 0) {
-    return signalCards.map((card, index) => {
-      const signal = backendSignals[index];
-      if (!signal) return card;
-      return {
-        ...card,
-        action: signal.payload.action?.label ?? card.action,
-        label: signal.title || card.label,
-        level: signal.payload.severity.toLowerCase(),
-        text: signal.payload.description || card.text,
-        value: formatMetricValue(signal.payload.value) || card.value,
-      };
-    });
-  }
-
-  const summaries = summaryMap(dashboard?.summary ?? []);
-  return signalCards.map((card, index) => {
-    const widget = [
-      summaries.get("hospital.appointments"),
-      summaries.get("hospital.new-patients"),
-      firstRevenueSummary(dashboard?.summary ?? []),
-      summaries.get("hospital.active-doctors"),
-    ][index];
-
-    if (!widget) return card;
-    return {
-      ...card,
-      value: formatSummaryValue(widget),
-    };
-  });
-}
-
-function buildMetricPanels(dashboard?: VirujAnalyticsDashboard): MetricPanelModel[] {
-  const summaries = summaryMap(dashboard?.summary ?? []);
-  const summaryWidgets = [
-    summaries.get("hospital.appointments"),
-    summaries.get("hospital.active-doctors"),
-    summaries.get("hospital.new-patients"),
-    summaries.get("hospital.active-departments"),
-    summaries.get("hospital.active-services"),
-    firstRevenueSummary(dashboard?.summary ?? []),
+  const heroData = buildHeroData(revenueChart, volumeChart);
+  const kpis: KpiCard[] = [
+    toKpi("Total Revenue", revenueSummary, "$384,567.45", "vs last period"),
+    toKpi("Appointments", appointmentSummary, "1,245", "scheduled period"),
+    toKpi(patientSummary ? "Patients" : "Care Team", patientSummary ?? doctorSummary, "143", "current workspace"),
   ];
-  const chartWidgets = [
-    findChart(dashboard?.charts, "hospital.appointments.volume"),
-    undefined,
-    findChart(dashboard?.charts, "hospital.appointments.status"),
-    undefined,
-    findChart(dashboard?.charts, "hospital.appointments.volume"),
-    findChart(dashboard?.charts, "hospital.revenue.trend"),
+  const overview = buildOverview(summary, revenueSummary, appointmentSummary, patientSummary);
+  const breakdown = buildBreakdown(statusChart);
+  return {
+    breakdown,
+    heroData,
+    insightSeries: heroData.slice(-7).map((item) => ({
+      label: item.label,
+      primary: item.primary,
+      secondary: Math.abs(item.secondary),
+    })),
+    kpis,
+    overview,
+    periodLabel: revenueChart?.payload.period ?? volumeChart?.payload.period ?? "Past 30 days",
+  };
+}
+
+function buildHeroData(revenueChart?: VirujAnalyticsChartWidget, volumeChart?: VirujAnalyticsChartWidget): DashboardChartPoint[] {
+  const labels = revenueChart?.payload.labels?.length ? revenueChart.payload.labels : volumeChart?.payload.labels;
+  const primary = chartNumbers(revenueChart) ?? [];
+  const secondarySource = chartNumbers(volumeChart) ?? [];
+  if (!labels?.length || (!primary.length && !secondarySource.length)) return fallbackHeroData;
+
+  const primaryValues = labels.map((_label, index) => primary[index] ?? 0);
+  const secondaryValues = labels.map((_label, index) => secondarySource[index] ?? 0);
+  const maxPrimary = Math.max(...primaryValues, 1);
+  const maxSecondary = Math.max(...secondaryValues, 1);
+  const scale = maxPrimary / maxSecondary;
+  return labels.map((label, index) => ({
+    label: formatCompactAxisLabel(label),
+    primary: primaryValues[index] || secondaryValues[index] * scale,
+    primaryLabel: revenueChart?.payload.datasets[0]?.label ?? "Revenue",
+    secondary: -(secondaryValues[index] * scale * 0.72),
+    secondaryLabel: volumeChart?.payload.datasets[0]?.label ?? "Care load",
+  }));
+}
+
+function buildOverview(summary: VirujAnalyticsSummaryWidget[], revenue?: VirujAnalyticsSummaryWidget, appointments?: VirujAnalyticsSummaryWidget, patients?: VirujAnalyticsSummaryWidget): OverviewSegment[] {
+  const values = [
+    { color: "#3048d7", label: revenue?.title ?? "Primary Revenue", widget: revenue },
+    { color: "#b87218", label: appointments?.title ?? "Appointments", widget: appointments },
+    { color: "#0f8a9a", label: patients?.title ?? "Patients", widget: patients ?? summary[0] },
   ];
+  return values.map((item, index) => ({
+    color: item.color,
+    label: item.label,
+    note: index === 0 ? "54%" : index === 1 ? "25%" : "21%",
+    value: item.widget ? formatSummaryValue(item.widget) : ["$210k", "98,120", "75,997"][index],
+    width: [100, 72, 42][index],
+  }));
+}
 
-  return metricPanels.map((panel, index) => {
-    const summary = summaryWidgets[index];
-    const chart = chartWidgets[index];
-    const comparison = summary?.payload.comparison ?? chart?.payload.comparison;
-    const hasLiveWidget = Boolean(summary || chart);
+function buildBreakdown(chart?: VirujAnalyticsChartWidget): BreakdownItem[] {
+  const values = chartNumbers(chart);
+  const labels = chart?.payload.labels ?? [];
+  if (!values?.length || !labels.length) return fallbackBreakdown;
+  const colors = ["#3048d7", "#b87218", "#0f8a9a", "#a8a29e", "#ef4444", "#8b5cf6"];
+  return labels.slice(0, 6).map((label, index) => ({
+    color: colors[index] ?? "#a8a29e",
+    label,
+    value: Math.max(0, Math.round(values[index] ?? 0)),
+  }));
+}
 
-    return {
-      ...panel,
-      axis: chartAxis(chart) ?? panel.axis,
-      data: chartNumbers(chart) ?? panel.data,
-      delta: hasLiveWidget ? formatDelta(comparison) : panel.delta,
-      value: summary ? formatSummaryValue(summary) : panel.value,
-    };
-  });
+function toKpi(label: string, widget: VirujAnalyticsSummaryWidget | undefined, fallback: string, note: string): KpiCard {
+  return {
+    label,
+    value: widget ? formatSummaryValue(widget) : fallback,
+    change: formatDelta(widget?.payload.comparison),
+    direction: widget?.payload.comparison?.direction,
+    note,
+  };
 }
 
 function summaryMap(widgets: VirujAnalyticsSummaryWidget[]) {
@@ -528,18 +445,22 @@ function summaryMap(widgets: VirujAnalyticsSummaryWidget[]) {
 }
 
 function firstRevenueSummary(widgets: VirujAnalyticsSummaryWidget[]) {
-  return widgets.find((widget) => widget.id.startsWith("hospital.revenue."));
+  return widgets.find((widget) => widget.id.includes("revenue"));
 }
 
-function findChart(widgets: VirujAnalyticsChartWidget[] | undefined, id: string) {
-  return widgets?.find((widget) => widget.id === id || widget.id.startsWith(`${id}.`));
+function findSummaryByHints(widgets: Map<string, VirujAnalyticsSummaryWidget>, hints: string[]) {
+  return [...widgets.entries()].find(([id]) => hints.some((hint) => id.includes(hint)))?.[1];
+}
+
+function findChartByHints(widgets: VirujAnalyticsChartWidget[], hints: string[]) {
+  return widgets.find((widget) => hints.some((hint) => widget.id.includes(hint)));
 }
 
 function formatSummaryValue(widget: VirujAnalyticsSummaryWidget) {
   return widget.payload.formattedValue || formatMetricValue(widget.payload.value) || "0";
 }
 
-function formatMetricValue(value: unknown) {
+function formatMetricValue(value: VirujAnalyticsMetricValue | undefined) {
   if (typeof value === "number") {
     return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 1 }).format(value);
   }
@@ -559,56 +480,18 @@ function chartNumbers(widget?: VirujAnalyticsChartWidget) {
   const values = data
     .map((item) => (typeof item === "number" ? item : item.y))
     .filter((value) => Number.isFinite(value));
-
   return values.length ? values : undefined;
 }
 
-function chartAxis(widget?: VirujAnalyticsChartWidget): [string, string] | undefined {
-  const labels = widget?.payload.labels;
-  if (!labels?.length) return undefined;
-  return [formatAxisLabel(labels[0]), formatAxisLabel(labels[labels.length - 1])];
-}
-
-function formatAxisLabel(label: string) {
+function formatCompactAxisLabel(label: string) {
   const date = new Date(label);
   if (Number.isNaN(date.getTime())) return label;
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "short",
-  }).format(date);
+  return new Intl.DateTimeFormat("en-IN", { month: "short" }).format(date);
 }
 
-function normalizedHeights(data: number[] | undefined, fallback: number[]) {
-  const values = data?.filter((value) => Number.isFinite(value)).slice(-24) ?? [];
-  if (values.length === 0) return fallback;
-  const max = Math.max(...values, 1);
-  return values.map((value) => Math.max(8, Math.min(96, (value / max) * 96)));
-}
-
-function linePath(data: number[] | undefined) {
-  const values = data?.filter((value) => Number.isFinite(value)).slice(-18) ?? [];
-  if (values.length < 2) {
-    return {
-      area: "M0 43 L28 69 L58 82 L96 54 L124 38 L150 56 L176 48 L204 92 L232 105 L258 96 L280 118 L280 120 L0 120 Z",
-      stroke: "M0 43 L28 69 L58 82 L96 54 L124 38 L150 56 L176 48 L204 92 L232 105 L258 96 L280 118",
-    };
-  }
-
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = Math.max(max - min, 1);
-  const points = values.map((value, index) => {
-    const x = (index / (values.length - 1)) * 280;
-    const y = 108 - ((value - min) / range) * 76;
-    return `${roundPathNumber(x)} ${roundPathNumber(y)}`;
-  });
-  const stroke = `M${points.join(" L")}`;
-  return {
-    area: `${stroke} L280 120 L0 120 Z`,
-    stroke,
-  };
-}
-
-function roundPathNumber(value: number) {
-  return Math.round(value * 10) / 10;
+function compactNumber(value: number) {
+  return new Intl.NumberFormat("en-IN", {
+    maximumFractionDigits: value >= 1000 ? 1 : 0,
+    notation: Math.abs(value) >= 10_000 ? "compact" : "standard",
+  }).format(value);
 }
