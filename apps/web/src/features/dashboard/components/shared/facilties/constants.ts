@@ -1,0 +1,53 @@
+import type { VirujFacility, VirujFacilityCategory, VirujFacilityInput } from "@/lib/viruj-backend";
+
+export const facilityCategories: VirujFacilityCategory[] = [
+  "Diagnostic",
+  "Imaging",
+  "Laboratory",
+  "Emergency",
+  "Treatment",
+  "Surgery",
+  "Intensive Care",
+  "Rehabilitation",
+  "Women's Health",
+  "Children's Care",
+  "Cardiology",
+  "Orthopedics",
+  "Neurology",
+  "Oncology",
+  "Pharmacy",
+  "Dental",
+  "Cosmetic",
+  "Vaccination",
+  "Home Care",
+  "Wellness",
+  "Health Packages",
+  "Other",
+];
+
+export const emptyFacilities: VirujFacility[] = [];
+
+export const emptyFacilityForm: VirujFacilityInput = {
+  appointmentRequired: false,
+  available247: false,
+  bannerImage: "",
+  category: "Diagnostic",
+  currency: "INR",
+  description: "",
+  displayOrder: 0,
+  emergencyService: false,
+  galleryImages: [],
+  isAvailable: true,
+  isFeatured: false,
+  keywords: [],
+  name: "",
+  onlineBooking: false,
+  priceText: "",
+  seoDescription: "",
+  seoTitle: "",
+  shortDescription: "",
+  slug: "",
+  startingPrice: null,
+  status: "draft",
+  visibility: "public",
+};

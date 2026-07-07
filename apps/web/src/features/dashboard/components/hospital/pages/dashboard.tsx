@@ -40,9 +40,43 @@ export function ErpDemoDashboard({
     retry: 1,
     staleTime: 60_000,
   });
+  const appointmentsQuery = useQuery({
+    enabled: tone === "hospital",
+    queryFn: virujBackend.appointments.list,
+    queryKey: virujBackend.appointments.key,
+    retry: 1,
+    staleTime: 30_000,
+  });
+  const doctorsQuery = useQuery({
+    enabled: tone === "hospital",
+    queryFn: virujBackend.doctors.list,
+    queryKey: virujBackend.doctors.key,
+    retry: 1,
+    staleTime: 30_000,
+  });
+  const facilitiesQuery = useQuery({
+    enabled: tone === "hospital",
+    queryFn: virujBackend.facilities.list,
+    queryKey: virujBackend.facilities.key,
+    retry: 1,
+    staleTime: 30_000,
+  });
+  const liveCounts = useMemo(
+    () => ({
+      activeDoctors: doctorsQuery.data?.filter((doctor) => doctor.published).length,
+      activeServices: facilitiesQuery.data?.filter(
+        (facility) =>
+          facility.status === "active" &&
+          facility.isAvailable &&
+          facility.visibility === "public"
+      ).length,
+      appointments: appointmentsQuery.data?.length,
+    }),
+    [appointmentsQuery.data, doctorsQuery.data, facilitiesQuery.data]
+  );
   const analytics = useMemo(
-    () => buildHospitalDashboardAnalytics(analyticsQuery.data),
-    [analyticsQuery.data]
+    () => buildHospitalDashboardAnalytics(analyticsQuery.data, liveCounts),
+    [analyticsQuery.data, liveCounts]
   );
 
   return (
@@ -55,20 +89,23 @@ export function ErpDemoDashboard({
 }
 
 function buildHospitalDashboardAnalytics(
-  dashboard?: VirujAnalyticsDashboard
+  dashboard?: VirujAnalyticsDashboard,
+  liveCounts?: LiveDashboardCounts
 ): RoleDashboardAnalytics | undefined {
-  if (!dashboard) return undefined;
+  if (!dashboard && !hasLiveCounts(liveCounts)) return undefined;
 
-  const summaries = new Map(dashboard.summary.map((widget) => [widget.id, widget]));
+  const summaries = new Map(dashboard?.summary.map((widget) => [widget.id, widget]) ?? []);
   const appointments = summaries.get("hospital.appointments");
   const activeDoctors = summaries.get("hospital.active-doctors");
   const activeServices = summaries.get("hospital.active-services");
   const newPatients = summaries.get("hospital.new-patients");
-  const departments = summaries.get("hospital.active-departments");
   const appointmentSeries = findChart(
-    dashboard.charts,
+    dashboard?.charts,
     "hospital.appointments.volume"
   );
+  const appointmentValue = liveOrSummaryValue(liveCounts?.appointments, appointments);
+  const activeDoctorValue = liveOrSummaryValue(liveCounts?.activeDoctors, activeDoctors);
+  const activeServiceValue = liveOrSummaryValue(liveCounts?.activeServices, activeServices);
 
   const stats = [
     {
@@ -80,20 +117,25 @@ function buildHospitalDashboardAnalytics(
     },
     {
       label: "Appointment Requests",
-      note: comparisonNote(appointments) ?? "Last 30 days",
-      value: formatSummaryValue(appointments) || "0",
+      note:
+        liveCountNote(liveCounts?.appointments, "appointment in ERP", "appointments in ERP") ??
+        comparisonNote(appointments) ??
+        "Last 30 days",
+      value: appointmentValue || "0",
     },
     {
       label: "Active Doctors",
-      note: departments
-        ? `${formatSummaryValue(departments)} active departments`
-        : "Current hospital roster",
-      value: formatSummaryValue(activeDoctors) || "0",
+      note:
+        liveCountNote(liveCounts?.activeDoctors, "published doctor", "published doctors") ??
+        "Current hospital roster",
+      value: activeDoctorValue || "0",
     },
     {
       label: "Active Services",
-      note: "Published hospital services",
-      value: formatSummaryValue(activeServices) || "0",
+      note:
+        liveCountNote(liveCounts?.activeServices, "public active service", "public active services") ??
+        "Published hospital services",
+      value: activeServiceValue || "0",
     },
     {
       label: "Average Rating",
@@ -117,12 +159,26 @@ function buildHospitalDashboardAnalytics(
     heroStats: {
       "Profile Views": formatSummaryValue(newPatients) || "48.2k",
       Rating: "4.8",
-      Requests: formatSummaryValue(appointments) || "0",
+      Requests: appointmentValue || "0",
       Visibility: "Public",
     },
-    listingScore: listingScoreFromStats({ activeDoctors, activeServices, appointments }),
+    listingScore: listingScoreFromStats({
+      activeDoctors: metricNumber(liveCounts?.activeDoctors, activeDoctors),
+      activeServices: metricNumber(liveCounts?.activeServices, activeServices),
+      appointments: metricNumber(liveCounts?.appointments, appointments),
+    }),
     stats,
   };
+}
+
+type LiveDashboardCounts = {
+  activeDoctors?: number;
+  activeServices?: number;
+  appointments?: number;
+};
+
+function hasLiveCounts(liveCounts?: LiveDashboardCounts) {
+  return Object.values(liveCounts ?? {}).some((value) => typeof value === "number");
 }
 
 function findChart(widgets: VirujAnalyticsChartWidget[] | undefined, id: string) {
@@ -152,6 +208,17 @@ function formatMetricValue(value: unknown) {
   return "";
 }
 
+function liveOrSummaryValue(liveValue?: number, widget?: VirujAnalyticsSummaryWidget) {
+  return typeof liveValue === "number"
+    ? formatMetricValue(liveValue)
+    : formatSummaryValue(widget);
+}
+
+function liveCountNote(value: number | undefined, singular: string, plural: string) {
+  if (typeof value !== "number") return undefined;
+  return `${formatMetricValue(value)} ${value === 1 ? singular : plural}`;
+}
+
 function comparisonNote(widget?: VirujAnalyticsSummaryWidget) {
   const changePercentage = widget?.payload.comparison?.changePercentage;
   if (typeof changePercentage !== "number") return undefined;
@@ -165,17 +232,15 @@ function listingScoreFromStats({
   activeServices,
   appointments,
 }: {
-  activeDoctors?: VirujAnalyticsSummaryWidget;
-  activeServices?: VirujAnalyticsSummaryWidget;
-  appointments?: VirujAnalyticsSummaryWidget;
+  activeDoctors: number;
+  activeServices: number;
+  appointments: number;
 }) {
-  const doctors = numericValue(activeDoctors);
-  const services = numericValue(activeServices);
-  const appointmentCount = numericValue(appointments);
-  const score = 62 + Math.min(doctors, 8) * 2 + Math.min(services, 8) * 2 + (appointmentCount > 0 ? 8 : 0);
+  const score = 62 + Math.min(activeDoctors, 8) * 2 + Math.min(activeServices, 8) * 2 + (appointments > 0 ? 8 : 0);
   return Math.max(62, Math.min(96, Math.round(score)));
 }
 
-function numericValue(widget?: VirujAnalyticsSummaryWidget) {
+function metricNumber(liveValue?: number, widget?: VirujAnalyticsSummaryWidget) {
+  if (typeof liveValue === "number") return liveValue;
   return typeof widget?.payload.value === "number" ? widget.payload.value : 0;
 }
