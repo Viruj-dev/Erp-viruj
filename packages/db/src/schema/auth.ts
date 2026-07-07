@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
   boolean,
   index,
+  integer,
   jsonb,
   pgEnum,
   pgTable,
@@ -186,6 +187,7 @@ export const invitation = pgTable(
 
 export const organizationRelations = relations(organization, ({ many }) => ({
   doctors: many(doctor),
+  facilities: many(facility),
   invitations: many(invitation),
   members: many(member),
   sessions: many(session),
@@ -290,6 +292,68 @@ export const doctor = pgTable(
 export const doctorRelations = relations(doctor, ({ one }) => ({
   organization: one(organization, {
     fields: [doctor.organizationId],
+    references: [organization.id],
+  }),
+}));
+
+
+export const facility = pgTable(
+  "facilities",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    category: text("category").notNull(),
+    shortDescription: text("short_description").notNull().default(""),
+    description: text("description").notNull().default(""),
+    bannerImage: text("banner_image").notNull().default(""),
+    galleryImages: jsonb("gallery_images").$type<string[]>().notNull().default([]),
+    isAvailable: boolean("is_available").default(true).notNull(),
+    isFeatured: boolean("is_featured").default(false).notNull(),
+    appointmentRequired: boolean("appointment_required").default(false).notNull(),
+    onlineBooking: boolean("online_booking").default(false).notNull(),
+    emergencyService: boolean("emergency_service").default(false).notNull(),
+    available247: boolean("available_247").default(false).notNull(),
+    startingPrice: integer("starting_price"),
+    currency: text("currency").notNull().default("INR"),
+    priceText: text("price_text").notNull().default(""),
+    status: text("status").notNull().default("draft"),
+    displayOrder: integer("display_order").default(0).notNull(),
+    visibility: text("visibility").notNull().default("public"),
+    seoTitle: text("seo_title").notNull().default(""),
+    seoDescription: text("seo_description").notNull().default(""),
+    keywords: jsonb("keywords").$type<string[]>().notNull().default([]),
+    createdBy: text("created_by").notNull().default("System"),
+    updatedBy: text("updated_by").notNull().default("System"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("facilities_organization_id_idx").on(table.organizationId),
+    index("facilities_organization_status_idx").on(
+      table.organizationId,
+      table.status
+    ),
+    index("facilities_organization_category_idx").on(
+      table.organizationId,
+      table.category
+    ),
+    uniqueIndex("facilities_organization_slug_idx").on(
+      table.organizationId,
+      table.slug
+    ),
+  ]
+);
+
+export const facilityRelations = relations(facility, ({ one }) => ({
+  organization: one(organization, {
+    fields: [facility.organizationId],
     references: [organization.id],
   }),
 }));

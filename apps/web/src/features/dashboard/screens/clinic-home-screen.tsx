@@ -286,6 +286,7 @@ export function ClinicHomeScreen({
         }`}
       >
         <ErpDemoTopBar
+          organizationId={activeOrganization.id}
           organizationLabel={organizationLabel}
           organizationName={organizationName}
           roleLabel={roleLabel}

@@ -1,4 +1,8 @@
- "use client";
+"use client";
+
+import { shouldShowApiSuccess } from "@/features/notifications/lib/api-feedback";
+import { notificationEvents } from "@/features/notifications/lib/notification-events";
+import type { ErpNotification, NotificationListResponse } from "@/features/notifications";
 
 const backendUrl =
   process.env.NEXT_PUBLIC_VIRUJ_BACKEND_URL || "http://localhost:4000";
@@ -12,7 +16,10 @@ const erpServerUrl =
 
 type RequestOptions = {
   body?: unknown;
-  method?: "DELETE" | "GET" | "PATCH" | "POST";
+  errorMessage?: string;
+  method?: "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
+  successMessage?: string;
+  suppressToast?: boolean;
   organizationId?: string;
 };
 
@@ -37,13 +44,12 @@ async function request<T>(path: string, options: RequestOptions = {}) {
 
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
-    throw new Error(
-      payload?.message ||
-        payload?.error ||
-        `Viruj backend request failed (${response.status})`
-    );
+    const message = responseErrorMessage(payload, `Viruj backend request failed (${response.status})`);
+    emitApiError(path, options, response.status, message);
+    throw new Error(message);
   }
 
+  emitApiSuccess(path, options);
   return response.json() as Promise<T>;
 }
 
@@ -64,13 +70,12 @@ async function commonRequest<T>(path: string, options: RequestOptions = {}) {
 
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
-    throw new Error(
-      payload?.message ||
-        payload?.error ||
-        `Viruj backend common request failed (${response.status})`
-    );
+    const message = responseErrorMessage(payload, `Viruj backend common request failed (${response.status})`);
+    emitApiError(path, options, response.status, message);
+    throw new Error(message);
   }
 
+  emitApiSuccess(path, options);
   return response.json() as Promise<T>;
 }
 async function erpServerRequest<T>(path: string, options: RequestOptions = {}) {
@@ -85,16 +90,50 @@ async function erpServerRequest<T>(path: string, options: RequestOptions = {}) {
 
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
-    throw new Error(
-      payload?.message ||
-        payload?.error ||
-        `ERP server request failed (${response.status})`
-    );
+    const message = responseErrorMessage(payload, `ERP server request failed (${response.status})`);
+    emitApiError(path, options, response.status, message);
+    throw new Error(message);
   }
 
+  emitApiSuccess(path, options);
   return response.json() as Promise<T>;
 }
 
+
+function emitApiSuccess(path: string, options: RequestOptions) {
+  const method = options.method ?? "GET";
+  if (options.suppressToast || !shouldShowApiSuccess(method)) return;
+  notificationEvents.emit("api.success", {
+    description: undefined,
+    method,
+    path,
+    title: options.successMessage,
+  });
+}
+
+function emitApiError(path: string, options: RequestOptions, status: number, description: string) {
+  if (options.suppressToast) return;
+  notificationEvents.emit("api.error", {
+    description: options.errorMessage ?? description,
+    method: options.method ?? "GET",
+    path,
+    status,
+  });
+}
+
+function responseErrorMessage(payload: unknown, fallback: string) {
+  if (payload && typeof payload === "object") {
+    const record = payload as Record<string, unknown>;
+    const details = record.details;
+    if (typeof record.message === "string") return record.message;
+    if (typeof record.error === "string") return record.error;
+    if (details && typeof details === "object") {
+      const detailRecord = details as Record<string, unknown>;
+      if (typeof detailRecord.message === "string") return detailRecord.message;
+    }
+  }
+  return fallback;
+}
 export type VirujAppointmentStatus =
   | "pending_approval"
   | "approved"
@@ -254,6 +293,68 @@ export type VirujDoctor = VirujDoctorInput & {
   updatedAt: string;
 };
 
+
+export type VirujFacilityCategory =
+  | "Diagnostic"
+  | "Imaging"
+  | "Laboratory"
+  | "Emergency"
+  | "Treatment"
+  | "Surgery"
+  | "Intensive Care"
+  | "Rehabilitation"
+  | "Women's Health"
+  | "Children's Care"
+  | "Cardiology"
+  | "Orthopedics"
+  | "Neurology"
+  | "Oncology"
+  | "Pharmacy"
+  | "Dental"
+  | "Cosmetic"
+  | "Vaccination"
+  | "Home Care"
+  | "Wellness"
+  | "Health Packages"
+  | "Other";
+
+export type VirujFacilityStatus = "active" | "archived" | "draft";
+export type VirujFacilityVisibility = "hidden" | "public";
+
+export type VirujFacilityInput = {
+  appointmentRequired: boolean;
+  available247: boolean;
+  bannerImage: string;
+  category: VirujFacilityCategory;
+  currency: string;
+  description: string;
+  displayOrder: number;
+  emergencyService: boolean;
+  galleryImages: string[];
+  isAvailable: boolean;
+  isFeatured: boolean;
+  keywords: string[];
+  name: string;
+  onlineBooking: boolean;
+  priceText: string;
+  seoDescription: string;
+  seoTitle: string;
+  shortDescription: string;
+  slug: string;
+  startingPrice: number | null;
+  status: VirujFacilityStatus;
+  visibility: VirujFacilityVisibility;
+};
+
+export type VirujFacility = VirujFacilityInput & {
+  createdAt: string;
+  createdBy: string;
+  id: string;
+  organizationId: string;
+  updatedAt: string;
+  updatedBy: string;
+};
+
 export type VirujHospitalGalleryMediaType = "IMAGE" | "VIDEO";
 
 export type VirujHospitalGalleryInput = {
@@ -355,7 +456,10 @@ export type VirujAnalyticsSignalWidget = {
     action?: {
       href: string;
       label: string;
-      method?: "DELETE" | "GET" | "PATCH" | "POST";
+      errorMessage?: string;
+  method?: "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
+  successMessage?: string;
+  suppressToast?: boolean;
     };
     description: string;
     severity: "CRITICAL" | "INFO" | "SUCCESS" | "WARNING";
@@ -491,6 +595,44 @@ export const virujBackend = {
         method: "PATCH",
       }),
   },
+
+  facilities: {
+    create: (input: VirujFacilityInput) =>
+      erpServerRequest<VirujFacility>("/facilities", {
+        body: input,
+        method: "POST",
+      }),
+    delete: (input: { id: string }) =>
+      erpServerRequest<{ success: true }>(`/facilities/${input.id}`, {
+        method: "DELETE",
+      }),
+    get: (input: { id: string }) =>
+      erpServerRequest<VirujFacility>(`/facilities/${input.id}`),
+    key: ["viruj-backend", "erp", "facilities"] as const,
+    list: () => erpServerRequest<VirujFacility[]>("/facilities"),
+    reorder: (input: { items: Array<{ displayOrder: number; id: string }> }) =>
+      erpServerRequest<{ success: true }>("/facilities/reorder", {
+        body: input,
+        method: "PATCH",
+      }),
+    update: (input: { facility: VirujFacilityInput; id: string }) =>
+      erpServerRequest<VirujFacility>(`/facilities/${input.id}`, {
+        body: input.facility,
+        method: "PATCH",
+      }),
+    updateStatus: (input: {
+      id: string;
+      isAvailable?: boolean;
+      status: VirujFacilityStatus;
+    }) =>
+      erpServerRequest<VirujFacility>(`/facilities/${input.id}/status`, {
+        body: {
+          isAvailable: input.isAvailable,
+          status: input.status,
+        },
+        method: "PATCH",
+      }),
+  },
   hospitalGallery: {
     create: (input: { gallery: VirujHospitalGalleryInput; organizationId?: string }) =>
       request<VirujHospitalGalleryItem>("/hospital/profile/gallery", {
@@ -562,6 +704,48 @@ export const virujBackend = {
         method: "DELETE",
       }),
     key: ["viruj-backend", "erp", "patients"] as const,
+  },
+  notifications: {
+    archive: (input: { id: string; organizationId?: string }) =>
+      request<ErpNotification>(`/notifications/${input.id}/archive`, {
+        method: "PATCH",
+        organizationId: input.organizationId,
+        suppressToast: true,
+      }),
+    delete: (input: { id: string; organizationId?: string }) =>
+      request<{ deleted: true }>(`/notifications/${input.id}`, {
+        method: "DELETE",
+        organizationId: input.organizationId,
+        suppressToast: true,
+      }),
+    key: (organizationId?: string) =>
+      ["viruj-backend", "erp", "notifications", organizationId ?? "none"] as const,
+    list: (input?: { limit?: number; organizationId?: string; page?: number }) => {
+      const params = new URLSearchParams();
+      params.set("limit", String(input?.limit ?? 30));
+      params.set("page", String(input?.page ?? 1));
+      return request<NotificationListResponse>(`/notifications?${params.toString()}`, {
+        organizationId: input?.organizationId,
+        suppressToast: true,
+      });
+    },
+    markAllRead: (input?: { organizationId?: string }) =>
+      request<{ updated: number }>("/notifications/read-all", {
+        method: "PATCH",
+        organizationId: input?.organizationId,
+        suppressToast: true,
+      }),
+    markRead: (input: { id: string; organizationId?: string }) =>
+      request<ErpNotification>(`/notifications/${input.id}/read`, {
+        method: "PATCH",
+        organizationId: input.organizationId,
+        suppressToast: true,
+      }),
+    unreadCount: (input?: { organizationId?: string }) =>
+      request<{ count: number }>("/notifications/unread/count", {
+        organizationId: input?.organizationId,
+        suppressToast: true,
+      }),
   },
   modules: {
     key: (module: string) =>

@@ -289,6 +289,7 @@ export function DoctorHomeScreen({
         }`}
       >
         <ErpDemoTopBar
+          organizationId={activeOrganization.id}
           organizationLabel={organizationLabel}
           organizationName={organizationName}
           roleLabel={roleLabel}

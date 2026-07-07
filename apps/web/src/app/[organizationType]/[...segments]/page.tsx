@@ -41,6 +41,7 @@ export default async function OrganizationTenantRoutePage({
     <ErpHomeScreen
       currentPage={currentPage}
       routeOrganizationType={organizationType}
+      routeSegments={segments}
     />
   );
 }
@@ -78,5 +79,9 @@ function resolveRoutePage(segments: string[]) {
       : "dashboard";
   }
 
-  return normalizeDashboardModule(segments[0] ?? "dashboard");
+  const directPageSegment = segments.find((segment) =>
+    segment === "dashboard" || normalizeDashboardModule(segment) !== "dashboard"
+  );
+
+  return normalizeDashboardModule(directPageSegment ?? segments[0] ?? "dashboard");
 }

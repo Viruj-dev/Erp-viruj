@@ -1,11 +1,12 @@
 "use client";
 
 import { ProfileDropdown } from "@/features/dashboard/components/shared/profile/profile-dropdown";
+import { NotificationCenter } from "@/features/notifications";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme-provider";
-import { Bell, ChevronDown, Grid, Moon, Search, Sun } from "lucide-react";
+import { ChevronDown, Grid, Moon, Search, Sun } from "lucide-react";
 import { useState } from "react";
 
 export function ErpDemoTopBar({
@@ -15,9 +16,11 @@ export function ErpDemoTopBar({
   userName,
   onNavigateToProfile,
   onLogout,
+  organizationId,
 }: {
   organizationLabel: string;
   organizationName?: string;
+  organizationId?: string;
   roleLabel: string;
   userName: string;
   onNavigateToProfile: () => void;
@@ -60,13 +63,7 @@ export function ErpDemoTopBar({
         >
           {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
         </button>
-        <button
-          className="relative rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-200/50 dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
-          type="button"
-        >
-          <Bell size={20} />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full border-2 border-slate-50 bg-error dark:border-[#101214]" />
-        </button>
+        <NotificationCenter organizationId={organizationId} />
         <button
           className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-200/50 dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
           type="button"
@@ -75,7 +72,7 @@ export function ErpDemoTopBar({
         </button>
         <div className="h-8 w-px bg-slate-200 dark:bg-white/[0.08]" />
 
-        {/* Profile button – opens dropdown */}
+        {/* Profile button ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ opens dropdown */}
         <div className="relative">
           <button
             id="top-bar-profile-button"

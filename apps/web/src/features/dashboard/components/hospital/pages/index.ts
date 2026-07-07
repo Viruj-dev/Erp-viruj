@@ -8,3 +8,4 @@ export { ErpDemoPatients } from "@/features/dashboard/components/hospital/pages/
 export { default as PricingPage } from "@/features/dashboard/components/hospital/pages/pricing";
 export { ErpDemoSettings } from "@/features/dashboard/components/hospital/pages/settings";
 export { ErpDemoStaff } from "@/features/dashboard/components/hospital/pages/staff";
+export { FacilitiesPage } from "@/features/dashboard/components/hospital/pages/facilities";

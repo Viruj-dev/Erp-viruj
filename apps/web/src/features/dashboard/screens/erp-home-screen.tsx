@@ -13,6 +13,7 @@ import {
   ErpDemoDashboard,
   DoctorsManagementPage,
   ErpDemoPatients,
+  FacilitiesPage,
   ErpDemoSettings,
   ErpDemoStaff,
   HospitalProfilePage,
@@ -43,9 +44,11 @@ const fallbackPage: ErpDemoPage = "dashboard";
 export function ErpHomeScreen({
   currentPage: requestedPage,
   routeOrganizationType,
+  routeSegments = [],
 }: {
   currentPage: string;
   routeOrganizationType: string;
+  routeSegments?: string[];
 }) {
   const router = useRouter();
   const [isActivatingOnlyOrganization, setIsActivatingOnlyOrganization] =
@@ -286,6 +289,7 @@ export function ErpHomeScreen({
         }`}
       >
         <ErpDemoTopBar
+          organizationId={activeOrganization.id}
           organizationLabel={organizationLabel}
           organizationName={organizationName}
           roleLabel={roleLabel}
@@ -336,6 +340,12 @@ export function ErpHomeScreen({
                   roleLabel={roleLabel}
                   userName={userName}
                   organizationId={activeOrganization.id}
+                  routeBasePath={
+                    activeOrganizationSlug
+                      ? `/${activeOrganizationType}/${activeOrganizationSlug}`
+                      : `/${activeOrganizationType}`
+                  }
+                  routeSegments={routeSegments}
                 />
               </div>
             </motion.div>
@@ -352,12 +362,16 @@ function PageContent({
   roleLabel,
   userName,
   organizationId,
+  routeBasePath,
+  routeSegments,
 }: {
   currentPage: ErpDemoPage;
   organizationLabel: string;
   roleLabel: string;
   userName: string;
   organizationId?: string;
+  routeBasePath: string;
+  routeSegments: string[];
 }) {
   switch (currentPage) {
     case "finance":
@@ -399,6 +413,13 @@ function PageContent({
       return <ErpDemoAnalytics organizationId={organizationId} />;
     case "doctors":
       return <DoctorsManagementPage organizationLabel={organizationLabel} />;
+    case "facilities":
+      return (
+        <FacilitiesPage
+          routeBasePath={routeBasePath}
+          routeSegments={routeSegments}
+        />
+      );
     case "hospital-profile":
       return <HospitalProfilePage organizationLabel={organizationLabel} />;
     case "radiology":
