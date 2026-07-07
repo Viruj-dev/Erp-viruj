@@ -71,18 +71,18 @@ type AnalyticsViewModel = {
 };
 
 const fallbackHeroData: DashboardChartPoint[] = [
-  { label: "Jan", primary: 820, primaryLabel: "Revenue", secondary: -245, secondaryLabel: "Care load" },
-  { label: "Feb", primary: 960, primaryLabel: "Revenue", secondary: -260, secondaryLabel: "Care load" },
-  { label: "Mar", primary: 1850, primaryLabel: "Revenue", secondary: -155, secondaryLabel: "Care load" },
-  { label: "Apr", primary: 3020, primaryLabel: "Revenue", secondary: -338, secondaryLabel: "Care load" },
-  { label: "May", primary: 2450, primaryLabel: "Revenue", secondary: -278, secondaryLabel: "Care load" },
-  { label: "Jun", primary: 2180, primaryLabel: "Revenue", secondary: -292, secondaryLabel: "Care load" },
-  { label: "Jul", primary: 2110, primaryLabel: "Revenue", secondary: -365, secondaryLabel: "Care load" },
-  { label: "Aug", primary: 1120, primaryLabel: "Revenue", secondary: -185, secondaryLabel: "Care load" },
-  { label: "Sep", primary: 1920, primaryLabel: "Revenue", secondary: -282, secondaryLabel: "Care load" },
-  { label: "Oct", primary: 1580, primaryLabel: "Revenue", secondary: -162, secondaryLabel: "Care load" },
-  { label: "Nov", primary: 2100, primaryLabel: "Revenue", secondary: -366, secondaryLabel: "Care load" },
-  { label: "Dec", primary: 1210, primaryLabel: "Revenue", secondary: -372, secondaryLabel: "Care load" },
+  { label: "Jan", primary: 820, primaryLabel: "Profile reach", secondary: -245, secondaryLabel: "Promo clicks" },
+  { label: "Feb", primary: 960, primaryLabel: "Profile reach", secondary: -260, secondaryLabel: "Promo clicks" },
+  { label: "Mar", primary: 1850, primaryLabel: "Profile reach", secondary: -155, secondaryLabel: "Promo clicks" },
+  { label: "Apr", primary: 3020, primaryLabel: "Profile reach", secondary: -338, secondaryLabel: "Promo clicks" },
+  { label: "May", primary: 2450, primaryLabel: "Profile reach", secondary: -278, secondaryLabel: "Promo clicks" },
+  { label: "Jun", primary: 2180, primaryLabel: "Profile reach", secondary: -292, secondaryLabel: "Promo clicks" },
+  { label: "Jul", primary: 2110, primaryLabel: "Profile reach", secondary: -365, secondaryLabel: "Promo clicks" },
+  { label: "Aug", primary: 1120, primaryLabel: "Profile reach", secondary: -185, secondaryLabel: "Promo clicks" },
+  { label: "Sep", primary: 1920, primaryLabel: "Profile reach", secondary: -282, secondaryLabel: "Promo clicks" },
+  { label: "Oct", primary: 1580, primaryLabel: "Profile reach", secondary: -162, secondaryLabel: "Promo clicks" },
+  { label: "Nov", primary: 2100, primaryLabel: "Profile reach", secondary: -366, secondaryLabel: "Promo clicks" },
+  { label: "Dec", primary: 1210, primaryLabel: "Profile reach", secondary: -372, secondaryLabel: "Promo clicks" },
 ];
 
 const fallbackBreakdown: BreakdownItem[] = [
@@ -142,8 +142,8 @@ export function ErpDemoAnalytics({
       }
       className="overflow-hidden"
       eyebrow="Analytics"
-      subtitle="A widget-driven operations view with revenue, appointments, status mix, and AI-ready insight cards."
-      title="Provider Analytics Command Center"
+      subtitle="Track profile reach, promotional visibility, campaign clicks, patient interest, and appointment demand."
+      title="Profile & Promotion Analytics"
     >
       <section className="relative overflow-hidden rounded-[2rem] border border-slate-200/80 bg-[#f4f0e8] p-4 shadow-[0_30px_80px_rgba(15,23,42,0.08)] dark:border-white/[0.08] dark:bg-[#111418]">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(47,72,215,0.12),transparent_28%),radial-gradient(circle_at_78%_12%,rgba(184,114,24,0.16),transparent_30%),linear-gradient(135deg,rgba(255,255,255,0.66),transparent)] dark:bg-[radial-gradient(circle_at_18%_10%,rgba(75,101,255,0.2),transparent_28%),radial-gradient(circle_at_78%_12%,rgba(245,158,11,0.16),transparent_30%)]" />
@@ -152,14 +152,14 @@ export function ErpDemoAnalytics({
             <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="font-headline text-2xl font-semibold text-slate-950 dark:text-white">
-                  Operational Analytics
+                  Profile Reach Analytics
                 </h2>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  Revenue above baseline, care load below baseline.
+                  Track profile visits, promotional reach, campaign clicks, and appointment interest in one view.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                {["Summary", "Balance", "Spending", "Income", "Net Income"].map((tab, index) => (
+                {["Summary", "Profile Reach", "Promotions", "Clicks", "Appointments"].map((tab, index) => (
                   <span
                     className={
                       index === 0
@@ -179,7 +179,7 @@ export function ErpDemoAnalytics({
           <aside className="grid gap-3">
             <div className="flex justify-end gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
               <button className="rounded-2xl bg-white/70 px-3 py-2 shadow-sm dark:bg-white/[0.06]" type="button">
-                Account <span className="text-slate-400">All</span> <ChevronDown className="inline" size={12} />
+                Provider <span className="text-slate-400">All</span> <ChevronDown className="inline" size={12} />
               </button>
               <button className="rounded-2xl bg-white px-3 py-2 shadow-sm dark:bg-white/[0.1]" type="button">
                 Year
@@ -192,7 +192,7 @@ export function ErpDemoAnalytics({
         </div>
 
         <div className="relative mt-4 grid gap-4 lg:grid-cols-[1.25fr_0.8fr_0.75fr]">
-          <IncomeOverview segments={model.overview} />
+          <PerformanceOverview segments={model.overview} />
           <BreakdownDonut items={model.breakdown} />
           <InsightPanel series={model.insightSeries} />
         </div>
@@ -265,10 +265,10 @@ function KpiTile({ kpi }: { kpi: KpiCard }) {
   );
 }
 
-function IncomeOverview({ segments }: { segments: OverviewSegment[] }) {
+function PerformanceOverview({ segments }: { segments: OverviewSegment[] }) {
   return (
     <article className="rounded-[1.5rem] border border-white/70 bg-white/62 p-5 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.04]">
-      <p className="text-sm font-semibold text-slate-950 dark:text-white">Income overview</p>
+      <p className="text-sm font-semibold text-slate-950 dark:text-white">Promotion overview</p>
       <div className="mt-8 flex items-center gap-3">
         <strong className="text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">{segments[0]?.value ?? "--"}</strong>
         <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700">+8.7%</span>
@@ -292,32 +292,44 @@ function IncomeOverview({ segments }: { segments: OverviewSegment[] }) {
 function BreakdownDonut({ items }: { items: BreakdownItem[] }) {
   const total = items.reduce((sum, item) => sum + item.value, 0);
   return (
-    <article className="rounded-[1.5rem] border border-white/70 bg-white/62 p-5 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.04]">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-slate-950 dark:text-white">Expense Analysis</p>
-        <button className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-slate-500 shadow-sm dark:bg-white/[0.06]" type="button">
-          Transactions <ChevronDown className="inline" size={12} />
+    <article className="rounded-[1.5rem] border border-white/70 bg-white/70 p-5 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.04]">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-slate-950 dark:text-white">Appointment Status Mix</p>
+        <button className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white px-3 py-2 text-xs font-semibold text-slate-500 shadow-sm dark:bg-white/[0.06] dark:text-slate-300" type="button">
+          Statuses <ChevronDown size={12} />
         </button>
       </div>
-      <div className="mt-3 grid grid-cols-[150px_1fr] items-center gap-4">
-        <div className="relative h-36">
+      <div className="mt-5 grid gap-5 sm:grid-cols-[156px_minmax(0,1fr)] sm:items-center">
+        <div className="relative mx-auto size-40 overflow-visible">
           <ResponsiveContainer height="100%" width="100%">
-            <PieChart>
-              <Pie data={items} dataKey="value" innerRadius={46} outerRadius={68} paddingAngle={4} stroke="none">
+            <PieChart margin={{ bottom: 4, left: 4, right: 4, top: 4 }}>
+              <Pie
+                cx="50%"
+                cy="50%"
+                data={items}
+                dataKey="value"
+                innerRadius={48}
+                outerRadius={72}
+                paddingAngle={4}
+                stroke="none"
+              >
                 {items.map((item) => <Cell fill={item.color} key={item.label} />)}
               </Pie>
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 grid place-items-center text-center">
-            <strong className="text-2xl font-semibold text-slate-950 dark:text-white">{total}</strong>
-            <span className="block text-[11px] text-slate-400">transactions</span>
+          <div className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center text-center leading-none">
+            <strong className="text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">{total}</strong>
+            <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">records</span>
           </div>
         </div>
         <div className="space-y-3 text-sm">
           {items.map((item) => (
-            <div className="flex items-center justify-between gap-3" key={item.label}>
-              <span className="flex items-center gap-2 text-slate-600 dark:text-slate-300"><i className="size-2 rounded-full" style={{ backgroundColor: item.color }} />{item.label}</span>
-              <strong className="text-slate-950 dark:text-white">{Math.round((item.value / Math.max(total, 1)) * 100)}%</strong>
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4" key={item.label}>
+              <span className="flex min-w-0 items-center gap-2 text-slate-600 dark:text-slate-300">
+                <i className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
+                <span className="truncate">{item.label}</span>
+              </span>
+              <strong className="tabular-nums text-slate-950 dark:text-white">{Math.round((item.value / Math.max(total, 1)) * 100)}%</strong>
             </div>
           ))}
         </div>
@@ -331,7 +343,7 @@ function InsightPanel({ series }: { series: Array<{ label: string; primary: numb
     <article className="relative overflow-hidden rounded-[1.5rem] bg-[linear-gradient(135deg,#b47a21,#0f4c9a)] p-5 text-white shadow-[0_24px_60px_rgba(15,23,42,0.22)]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_0%,rgba(255,255,255,0.34),transparent_34%)]" />
       <div className="relative">
-        <p className="text-sm text-white/65">Expense Analysis</p>
+        <p className="text-sm text-white/65">Utilization Signal</p>
         <strong className="mt-2 block text-4xl font-semibold">62%</strong>
         <div className="mt-7 h-28">
           <ResponsiveContainer height="100%" width="100%">
@@ -342,7 +354,7 @@ function InsightPanel({ series }: { series: Array<{ label: string; primary: numb
           </ResponsiveContainer>
         </div>
         <p className="mt-4 text-xs leading-5 text-white/66">
-          Your spending remains within optimal range. Appointment demand is rising while revenue quality is holding steady.
+          Profile reach is improving while promotional clicks and appointment interest remain stable across the selected period.
         </p>
       </div>
     </article>
@@ -353,21 +365,21 @@ function buildAnalyticsViewModel(dashboard?: VirujAnalyticsDashboard): Analytics
   const summary = dashboard?.summary ?? [];
   const charts = dashboard?.charts ?? [];
   const summaries = summaryMap(summary);
-  const revenueSummary = firstRevenueSummary(summary);
+  const profileReachSummary = findSummaryByHints(summaries, ["profile", "views", "reach"]);
   const appointmentSummary = findSummaryByHints(summaries, ["appointments", "consultations"]);
   const patientSummary = findSummaryByHints(summaries, ["patients", "new-patients"]);
   const doctorSummary = findSummaryByHints(summaries, ["doctors", "active-doctors"]);
   const volumeChart = findChartByHints(charts, ["appointments.volume", "consultations.volume"]);
-  const revenueChart = findChartByHints(charts, ["revenue.trend"]);
+  const profileReachChart = findChartByHints(charts, ["profile", "views", "reach", "promotion", "promo"]);
   const statusChart = findChartByHints(charts, ["appointments.status", "consultations.status", "reviews.rating"]);
 
-  const heroData = buildHeroData(revenueChart, volumeChart);
+  const heroData = buildHeroData(profileReachChart, volumeChart);
   const kpis: KpiCard[] = [
-    toKpi("Total Revenue", revenueSummary, "$384,567.45", "vs last period"),
-    toKpi("Appointments", appointmentSummary, "1,245", "scheduled period"),
-    toKpi(patientSummary ? "Patients" : "Care Team", patientSummary ?? doctorSummary, "143", "current workspace"),
+    toKpi("Profile Reach", profileReachSummary, "384.5K", "views this period"),
+    toKpi("Promo Clicks", undefined, "18,045", "campaign engagement"),
+    toKpi(patientSummary ? "Patient Leads" : "Appointment Interest", patientSummary ?? appointmentSummary ?? doctorSummary, "143", "from profile traffic"),
   ];
-  const overview = buildOverview(summary, revenueSummary, appointmentSummary, patientSummary);
+  const overview = buildOverview(summary, profileReachSummary, appointmentSummary, patientSummary);
   const breakdown = buildBreakdown(statusChart);
   return {
     breakdown,
@@ -379,13 +391,13 @@ function buildAnalyticsViewModel(dashboard?: VirujAnalyticsDashboard): Analytics
     })),
     kpis,
     overview,
-    periodLabel: revenueChart?.payload.period ?? volumeChart?.payload.period ?? "Past 30 days",
+    periodLabel: profileReachChart?.payload.period ?? volumeChart?.payload.period ?? "Past 30 days",
   };
 }
 
-function buildHeroData(revenueChart?: VirujAnalyticsChartWidget, volumeChart?: VirujAnalyticsChartWidget): DashboardChartPoint[] {
-  const labels = revenueChart?.payload.labels?.length ? revenueChart.payload.labels : volumeChart?.payload.labels;
-  const primary = chartNumbers(revenueChart) ?? [];
+function buildHeroData(profileReachChart?: VirujAnalyticsChartWidget, volumeChart?: VirujAnalyticsChartWidget): DashboardChartPoint[] {
+  const labels = profileReachChart?.payload.labels?.length ? profileReachChart.payload.labels : volumeChart?.payload.labels;
+  const primary = chartNumbers(profileReachChart) ?? [];
   const secondarySource = chartNumbers(volumeChart) ?? [];
   if (!labels?.length || (!primary.length && !secondarySource.length)) return fallbackHeroData;
 
@@ -397,23 +409,23 @@ function buildHeroData(revenueChart?: VirujAnalyticsChartWidget, volumeChart?: V
   return labels.map((label, index) => ({
     label: formatCompactAxisLabel(label),
     primary: primaryValues[index] || secondaryValues[index] * scale,
-    primaryLabel: revenueChart?.payload.datasets[0]?.label ?? "Revenue",
+    primaryLabel: profileReachChart?.payload.datasets[0]?.label ?? "Profile reach",
     secondary: -(secondaryValues[index] * scale * 0.72),
-    secondaryLabel: volumeChart?.payload.datasets[0]?.label ?? "Care load",
+    secondaryLabel: volumeChart?.payload.datasets[0]?.label ?? "Promo clicks",
   }));
 }
 
-function buildOverview(summary: VirujAnalyticsSummaryWidget[], revenue?: VirujAnalyticsSummaryWidget, appointments?: VirujAnalyticsSummaryWidget, patients?: VirujAnalyticsSummaryWidget): OverviewSegment[] {
+function buildOverview(summary: VirujAnalyticsSummaryWidget[], profileReach?: VirujAnalyticsSummaryWidget, appointments?: VirujAnalyticsSummaryWidget, patients?: VirujAnalyticsSummaryWidget): OverviewSegment[] {
   const values = [
-    { color: "#3048d7", label: revenue?.title ?? "Primary Revenue", widget: revenue },
-    { color: "#b87218", label: appointments?.title ?? "Appointments", widget: appointments },
-    { color: "#0f8a9a", label: patients?.title ?? "Patients", widget: patients ?? summary[0] },
+    { color: "#3048d7", label: profileReach?.title ?? "Profile Reach", widget: profileReach },
+    { color: "#b87218", label: "Promotional Clicks", widget: undefined },
+    { color: "#0f8a9a", label: patients?.title ?? "Patient Leads", widget: patients ?? appointments ?? summary[0] },
   ];
   return values.map((item, index) => ({
     color: item.color,
     label: item.label,
     note: index === 0 ? "54%" : index === 1 ? "25%" : "21%",
-    value: item.widget ? formatSummaryValue(item.widget) : ["$210k", "98,120", "75,997"][index],
+    value: item.widget ? formatSummaryValue(item.widget) : ["384.5K", "18,045", "12,890"][index],
     width: [100, 72, 42][index],
   }));
 }
@@ -444,9 +456,6 @@ function summaryMap(widgets: VirujAnalyticsSummaryWidget[]) {
   return new Map(widgets.map((widget) => [widget.id, widget]));
 }
 
-function firstRevenueSummary(widgets: VirujAnalyticsSummaryWidget[]) {
-  return widgets.find((widget) => widget.id.includes("revenue"));
-}
 
 function findSummaryByHints(widgets: Map<string, VirujAnalyticsSummaryWidget>, hints: string[]) {
   return [...widgets.entries()].find(([id]) => hints.some((hint) => id.includes(hint)))?.[1];

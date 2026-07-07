@@ -373,13 +373,24 @@ export function OrganizationOnboardingPage({
       "1"
     );
     window.localStorage.removeItem(storageKey);
+    window.sessionStorage.removeItem(
+      `${storagePrefix}:entry:${hospitalId ?? "workspace"}`
+    );
     router.push(dashboardPath);
   };
 
-  const saveAndExit = () => {
+  const skipOnboarding = () => {
     window.localStorage.setItem(
-      storageKey,
-      JSON.stringify({ completedSteps, currentStepIndex, data, skippedSteps })
+      completeKey,
+      JSON.stringify({
+        completedAt: new Date().toISOString(),
+        skippedSteps: steps.map((step) => step.id),
+        summary,
+      })
+    );
+    window.localStorage.removeItem(storageKey);
+    window.sessionStorage.removeItem(
+      `${storagePrefix}:entry:${hospitalId ?? "workspace"}`
     );
     router.push(dashboardPath);
   };
@@ -428,14 +439,14 @@ export function OrganizationOnboardingPage({
               className="h-10 rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 dark:border-white/[0.10] dark:bg-white/[0.08] dark:text-slate-200"
               onClick={() =>
                 setConfirmAction({
-                  action: saveAndExit,
-                  body: "Your progress is already saved. You can resume this onboarding from the sidebar later.",
-                  title: "Save and continue later?",
+                  action: skipOnboarding,
+                  body: "You can enter the ERP now. The dashboard will show a setup checklist for anything skipped.",
+                  title: "Skip setup for now?",
                 })
               }
               type="button"
             >
-Skip setup
+              Skip setup
             </button>
           </div>
         </header>
@@ -460,8 +471,7 @@ Skip setup
                 />
               </div>
               <p className="mt-4 text-sm font-semibold text-cyan-50/80">
-                Complete the essentials to publish on Viruj and start running
-                hospital operations with confidence.
+                This setup is optional. Complete it now for a ready workspace, or skip and finish the checklist later.
               </p>
             </div>
 

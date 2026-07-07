@@ -206,7 +206,8 @@ function OrganizationSetupChecklist({ skippedSteps }: { skippedSteps: string[] }
       </div>
       <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         {items.map((item) => {
-          const complete = item.required || !skipped.has(item.id);
+          const complete =
+            !("postLaunch" in item && item.postLaunch) && !skipped.has(item.id);
           return (
             <div
               className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700 dark:bg-white/[0.055] dark:text-slate-300"

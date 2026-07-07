@@ -83,7 +83,14 @@ export function ErpAuthScreen() {
         window.localStorage.getItem("viruj:hospital-onboarding:start") === "1";
 
       if (shouldStartOnboarding) {
-        window.localStorage.removeItem("viruj:hospital-onboarding:start");
+        window.sessionStorage.setItem(
+          `viruj:hospital-onboarding:entry:${activeOrganization?.id ?? "workspace"}`,
+          "1"
+        );
+        window.sessionStorage.setItem(
+          "viruj:hospital-onboarding:entry:workspace",
+          "1"
+        );
       }
 
       router.replace(
@@ -101,6 +108,7 @@ export function ErpAuthScreen() {
   }, [
     activeMember?.role,
     activeMemberState.isPending,
+    activeOrganization?.id,
     activeOrganization?.organizationType,
     activeOrganizationState.isPending,
     router,
@@ -130,6 +138,7 @@ function getSessionOrganization(session: unknown) {
   ) {
     return session.activeOrganization as {
       id?: string;
+      
       organizationType?: string;
     };
   }

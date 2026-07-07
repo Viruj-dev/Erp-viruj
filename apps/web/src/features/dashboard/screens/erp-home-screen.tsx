@@ -56,6 +56,8 @@ export function ErpHomeScreen({
     useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [canRenderSignupOnboarding, setCanRenderSignupOnboarding] =
+    useState(false);
   const isHydrated = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -159,6 +161,94 @@ export function ErpHomeScreen({
     if (
       !isHydrated ||
       isAuthPending ||
+      requestedPage !== "dashboard" ||
+      activeOrganizationType !== "hospital" ||
+      !activeOrganization?.id
+    ) {
+      return;
+    }
+
+    const completeKey = `viruj:hospital-onboarding:completed:${activeOrganization.id}`;
+
+    if (
+      window.localStorage.getItem(completeKey) ||
+      !isRecentlyCreatedOrganization(activeOrganization)
+    ) {
+      return;
+    }
+
+    window.sessionStorage.setItem(
+      `viruj:hospital-onboarding:entry:${activeOrganization.id}`,
+      "1"
+    );
+    router.replace(
+      activeOrganizationSlug
+        ? buildTenantDashboardPath(
+            activeOrganizationType,
+            activeOrganizationSlug,
+            "onboarding"
+          )
+        : buildDashboardPath(activeOrganizationType, "onboarding")
+    );
+  }, [
+    activeOrganization,
+    activeOrganization?.id,
+    activeOrganizationSlug,
+    activeOrganizationType,
+    isAuthPending,
+    isHydrated,
+    requestedPage,
+    router,
+  ]);
+  useEffect(() => {
+    if (
+      !isHydrated ||
+      isAuthPending ||
+      requestedPage !== "onboarding" ||
+      !activeOrganization?.id ||
+      !activeOrganizationType
+    ) {
+      return;
+    }
+
+    const entryKey = `viruj:hospital-onboarding:entry:${activeOrganization.id}`;
+    const workspaceEntryKey = "viruj:hospital-onboarding:entry:workspace";
+    const draftKey = `viruj:hospital-onboarding:draft:${activeOrganization.id}`;
+    const startKey = "viruj:hospital-onboarding:start";
+    const canEnter =
+      window.localStorage.getItem(startKey) === "1" ||
+      window.sessionStorage.getItem(entryKey) === "1" ||
+      window.sessionStorage.getItem(workspaceEntryKey) === "1" ||
+      Boolean(window.localStorage.getItem(draftKey));
+
+    if (canEnter) {
+      window.localStorage.removeItem(startKey);
+      window.sessionStorage.setItem(entryKey, "1");
+      window.sessionStorage.removeItem(workspaceEntryKey);
+    }
+
+    setCanRenderSignupOnboarding(canEnter);
+
+    if (!canEnter) {
+      router.replace(
+        activeOrganizationSlug
+          ? buildTenantDashboardPath(activeOrganizationType, activeOrganizationSlug)
+          : buildDashboardPath(activeOrganizationType)
+      );
+    }
+  }, [
+    activeOrganization?.id,
+    activeOrganizationSlug,
+    activeOrganizationType,
+    isAuthPending,
+    isHydrated,
+    requestedPage,
+    router,
+  ]);
+  useEffect(() => {
+    if (
+      !isHydrated ||
+      isAuthPending ||
       !activeOrganization ||
       !activeMember ||
       !activeOrganizationType
@@ -252,6 +342,10 @@ export function ErpHomeScreen({
   }
 
   if (resolvedPage === "onboarding") {
+    if (!canRenderSignupOnboarding) {
+      return <LoadingScreen />;
+    }
+
     return (
       <OrganizationOnboardingPage
         hospitalId={activeOrganization.id}
@@ -472,6 +566,29 @@ function isErpDemoPage(page: string): page is ErpDemoPage {
   return isDashboardPage(page);
 }
 
+function isRecentlyCreatedOrganization(organization: unknown) {
+  if (
+    !organization ||
+    typeof organization !== "object" ||
+    !("createdAt" in organization)
+  ) {
+    return false;
+  }
+
+  const createdAt = organization.createdAt;
+  const createdTime =
+    createdAt instanceof Date
+      ? createdAt.getTime()
+      : typeof createdAt === "string"
+        ? new Date(createdAt).getTime()
+        : 0;
+
+  if (!Number.isFinite(createdTime) || createdTime <= 0) {
+    return false;
+  }
+
+  return Date.now() - createdTime < 2 * 60 * 60 * 1000;
+}
 function getOrganizationDisplayName(organization: unknown, fallback: string) {
   if (
     organization &&
@@ -508,6 +625,7 @@ function getSessionOrganization(session: unknown) {
     typeof session.activeOrganization === "object"
   ) {
     return session.activeOrganization as {
+      createdAt?: string | Date;
       id?: string;
       organizationType?: string;
       slug?: string;
