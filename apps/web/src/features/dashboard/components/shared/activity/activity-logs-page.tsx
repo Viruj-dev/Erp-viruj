@@ -13,9 +13,7 @@ import {
   Filter,
   RefreshCw,
   Search,
-  ShieldCheck,
   SlidersHorizontal,
-  UserRound,
   X,
 } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
@@ -67,7 +65,6 @@ export function ActivityLogsPage({
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState<VirujActivity | null>(null);
 
   useEffect(() => setPage(1), [deferredSearch, module, action, from, to]);
 
@@ -91,7 +88,7 @@ export function ActivityLogsPage({
 
   const activities = query.data?.data ?? [];
   const pagination = query.data?.pagination;
-  const groups = useMemo(
+  const groupedActivities = useMemo(
     () =>
       activities.reduce<Record<string, VirujActivity[]>>((result, item) => {
         (result[item.dayLabel] ??= []).push(item);
@@ -100,16 +97,6 @@ export function ActivityLogsPage({
     [activities]
   );
   const activeFilters = [module, action, from, to].filter(Boolean).length;
-  const uniqueActors = new Set(
-    activities.map((item) => item.actorId ?? item.actorName)
-  ).size;
-  const uniqueModules = new Set(activities.map((item) => item.module)).size;
-
-  useEffect(() => {
-    if (selected && !activities.some((item) => item.id === selected.id)) {
-      setSelected(null);
-    }
-  }, [activities, selected]);
 
   const resetFilters = () => {
     setSearch("");
@@ -131,44 +118,23 @@ export function ActivityLogsPage({
           <RefreshCw
             className={cn("size-3.5", query.isFetching && "animate-spin")}
           />
-          Refresh ledger
+          Refresh list
         </button>
       }
-      eyebrow="Workspace intelligence"
-      subtitle="A tamper-conscious timeline of meaningful business actions across your workspace."
-      title="Activity logs"
+      eyebrow="Workspace activity"
+      subtitle="A simple list of ERP actions with the actor, resource, workspace, time, and context for each event."
+      title="Things happening in ERP"
       tone="slate"
     >
-      <section className="grid gap-3 sm:grid-cols-3">
-        <Metric
-          icon={Activity}
-          label="Matching events"
-          value={pagination?.total ?? 0}
-          note="Across the selected range"
-        />
-        <Metric
-          icon={UserRound}
-          label="Actors on page"
-          value={uniqueActors}
-          note="People and system agents"
-        />
-        <Metric
-          icon={ShieldCheck}
-          label="Modules on page"
-          value={uniqueModules}
-          note="Operational surfaces touched"
-        />
-      </section>
-
       <section className="rounded-2xl border border-slate-200/90 bg-white/90 p-3 shadow-[0_16px_50px_rgba(15,23,42,0.05)] dark:border-white/[0.08] dark:bg-[#111418]">
         <div className="flex flex-wrap items-center gap-2">
-          <label className="relative min-w-[220px] flex-1">
+          <label className="relative min-w-[240px] flex-1">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             <input
-              aria-label="Search activity logs"
+              aria-label="Search ERP activity"
               className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/80 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10 dark:border-white/[0.08] dark:bg-white/[0.035] dark:text-slate-100"
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search actor, resource, title or description"
+              placeholder="Search actor, resource, action, title or details"
               value={search}
             />
           </label>
@@ -218,226 +184,184 @@ export function ActivityLogsPage({
           <SlidersHorizontal className="size-3" />
           {activeFilters
             ? activeFilters + " filters active"
-            : "Live workspace scope"}
+            : "Showing live ERP activity"}
           <span className="h-px flex-1 bg-slate-100 dark:bg-white/[0.06]" />
-          Tenant isolated
+          {pagination?.total ?? 0} actions
         </div>
       </section>
 
-      <div className="grid min-h-[520px] gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white/90 dark:border-white/[0.08] dark:bg-[#111418]">
-          {query.isPending ? (
-            <LoadingTimeline />
-          ) : query.isError ? (
-            <State
-              description={
-                query.error instanceof Error
-                  ? query.error.message
-                  : "The activity service could not be reached."
-              }
-              title="Couldn’t open the ledger"
-            />
-          ) : activities.length === 0 ? (
-            <State
-              description="Meaningful business actions will appear here as modules call the central activity service."
-              title="No activity matches this view"
-            />
-          ) : (
-            <div className="divide-y divide-slate-100 dark:divide-white/[0.055]">
-              {Object.entries(groups).map(([label, items]) => (
-                <div key={label}>
-                  <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-slate-100 bg-slate-50/95 px-5 py-2.5 backdrop-blur dark:border-white/[0.055] dark:bg-[#15191e]/95">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
-                      {label}
-                    </span>
-                    <span className="h-px flex-1 bg-slate-200/70 dark:bg-white/[0.07]" />
-                    <span className="text-[10px] tabular-nums text-slate-400">
-                      {items.length} events
-                    </span>
-                  </div>
-                  <div>
-                    {items.map((item) => (
-                      <ActivityRow
-                        active={selected?.id === item.id}
-                        item={item}
-                        key={item.id}
-                        onClick={() => setSelected(item)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <Pagination
-            onNext={() => setPage((value) => value + 1)}
-            onPrevious={() => setPage((value) => Math.max(1, value - 1))}
-            page={pagination?.page ?? page}
-            totalPages={pagination?.totalPages ?? 0}
+      <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white/90 dark:border-white/[0.08] dark:bg-[#111418]">
+        {query.isPending ? (
+          <LoadingList />
+        ) : query.isError ? (
+          <State
+            description={
+              query.error instanceof Error
+                ? query.error.message
+                : "The ERP activity service could not be reached."
+            }
+            title="Couldn't load ERP activity"
           />
-        </section>
-        <DetailsPanel activity={selected ?? activities[0] ?? null} />
-      </div>
+        ) : activities.length === 0 ? (
+          <State
+            description="ERP actions will appear here as appointments, staff, payments, doctors, patients, and system modules change."
+            title="No ERP actions match this view"
+          />
+        ) : (
+          <div className="divide-y divide-slate-100 dark:divide-white/[0.055]">
+            {Object.entries(groupedActivities).map(([label, items]) => (
+              <div key={label}>
+                <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-slate-100 bg-slate-50/95 px-5 py-2.5 backdrop-blur dark:border-white/[0.055] dark:bg-[#15191e]/95">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                    {label}
+                  </span>
+                  <span className="h-px flex-1 bg-slate-200/70 dark:bg-white/[0.07]" />
+                  <span className="text-[10px] tabular-nums text-slate-400">
+                    {items.length} actions
+                  </span>
+                </div>
+                <div className="divide-y divide-slate-100 dark:divide-white/[0.055]">
+                  {items.map((item) => (
+                    <ActivityCard item={item} key={item.id} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <Pagination
+          onNext={() => setPage((value) => value + 1)}
+          onPrevious={() => setPage((value) => Math.max(1, value - 1))}
+          page={pagination?.page ?? page}
+          totalPages={pagination?.totalPages ?? 0}
+        />
+      </section>
     </DashboardPageShell>
   );
 }
 
-function ActivityRow({
-  active,
-  item,
-  onClick,
-}: {
-  active: boolean;
-  item: VirujActivity;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      className={cn(
-        "group grid w-full grid-cols-[32px_minmax(0,1fr)_auto] gap-3 px-5 py-4 text-left transition",
-        active
-          ? "bg-blue-50/80 dark:bg-blue-500/[0.08]"
-          : "hover:bg-slate-50/80 dark:hover:bg-white/[0.025]"
-      )}
-      onClick={onClick}
-      type="button"
-    >
-      <span
-        className={cn(
-          "mt-0.5 flex size-8 items-center justify-center rounded-xl border",
-          actionTone(item.action)
-        )}
-      >
-        <CircleDot className="size-3.5" />
-      </span>
-      <span className="min-w-0">
-        <span className="flex flex-wrap items-center gap-2">
-          <strong className="font-headline text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {item.title}
-          </strong>
-          <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
-            {item.module}
-          </span>
-        </span>
-        <span className="mt-1 block truncate text-xs text-slate-500">
-          <b className="font-semibold text-slate-700 dark:text-slate-300">
-            {item.actorName}
-          </b>
-          {" · "}
-          {item.display.summary}
-        </span>
-      </span>
-      <span className="pt-0.5 text-[11px] font-medium tabular-nums text-slate-400">
-        {formatTime(item.createdAt)}
-      </span>
-    </button>
+function ActivityCard({ item }: { item: VirujActivity }) {
+  const metadata = Object.entries(item.metadata ?? {}).filter(
+    ([, value]) => !isEmptyValue(value)
   );
-}
 
-function DetailsPanel({ activity }: { activity: VirujActivity | null }) {
-  if (!activity) {
-    return (
-      <aside className="hidden rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-6 xl:block dark:border-white/[0.08] dark:bg-white/[0.02]">
-        <p className="text-sm font-semibold text-slate-500">
-          Select an event to inspect its context.
-        </p>
-      </aside>
-    );
-  }
-  const metadata = Object.entries(activity.metadata ?? {});
   return (
-    <aside className="rounded-2xl border border-slate-200/90 bg-[#f8fafb] p-5 dark:border-white/[0.08] dark:bg-[#101317]">
-      <div className="flex items-center justify-between">
+    <article className="px-5 py-4 transition hover:bg-slate-50/80 dark:hover:bg-white/[0.025]">
+      <div className="grid gap-3 md:grid-cols-[32px_minmax(0,1fr)_auto]">
         <span
           className={cn(
-            "rounded-lg border px-2 py-1 text-[10px] font-bold tracking-[0.12em]",
-            actionTone(activity.action)
+            "mt-0.5 flex size-8 items-center justify-center rounded-xl border",
+            actionTone(item.action)
           )}
         >
-          {activity.action}
+          <CircleDot className="size-3.5" />
         </span>
-        <span className="text-[10px] font-semibold text-slate-400">
-          {formatTime(activity.createdAt)}
-        </span>
-      </div>
-      <h2 className="mt-5 font-headline text-xl font-semibold text-slate-950 dark:text-white">
-        {activity.title}
-      </h2>
-      <p className="mt-2 text-sm leading-6 text-slate-500">
-        {activity.description || activity.display.summary}
-      </p>
-      <dl className="mt-6 space-y-4 border-t border-slate-200/80 pt-5 dark:border-white/[0.07]">
-        <Detail
-          label="Actor"
-          value={activity.actorName}
-          hint={activity.actorRole ?? undefined}
-        />
-        <Detail
-          label="Resource"
-          value={activity.display.resource}
-          hint={activity.resource}
-        />
-        <Detail label="Module" value={activity.module} />
-        <Detail
-          label="Workspace"
-          value={activity.workspaceType}
-          hint={activity.workspaceId}
-        />
-      </dl>
-      {metadata.length > 0 && (
-        <div className="mt-6 border-t border-slate-200/80 pt-5 dark:border-white/[0.07]">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
-            Context metadata
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={cn(
+                "rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em]",
+                actionTone(item.action)
+              )}
+            >
+              {humanize(item.action)}
+            </span>
+            <span className="rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
+              {humanize(item.module)}
+            </span>
+            <time
+              className="text-[11px] font-medium tabular-nums text-slate-400 md:hidden"
+              dateTime={item.createdAt}
+            >
+              {formatDateTime(item.createdAt)}
+            </time>
+          </div>
+          <h2 className="mt-2 font-headline text-base font-semibold text-slate-950 dark:text-white">
+            {item.title}
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-slate-500">
+            {item.description || item.display.summary}
           </p>
-          <div className="mt-3 space-y-2">
-            {metadata.slice(0, 8).map(([key, value]) => (
-              <div
-                className="flex items-start justify-between gap-4 text-xs"
-                key={key}
-              >
-                <span className="text-slate-400">{humanize(key)}</span>
-                <span className="max-w-[170px] truncate font-mono text-[10px] text-slate-600 dark:text-slate-300">
+        </div>
+        <time
+          className="hidden pt-1 text-right text-[11px] font-medium tabular-nums text-slate-400 md:block"
+          dateTime={item.createdAt}
+        >
+          {formatDateTime(item.createdAt)}
+        </time>
+      </div>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        <InfoChip
+          label="Actor"
+          value={item.actorName}
+          hint={item.actorRole ?? "No role recorded"}
+        />
+        <InfoChip
+          label="Resource"
+          value={item.display.resource}
+          hint={item.resourceId ?? item.resource}
+        />
+        <InfoChip
+          label="Workspace"
+          value={item.workspaceType}
+          hint={item.workspaceId}
+        />
+        <InfoChip label="Event ID" value={item.id} mono />
+      </div>
+
+      {metadata.length > 0 ? (
+        <div className="mt-4 rounded-xl border border-slate-200/80 bg-slate-50/70 p-3 dark:border-white/[0.07] dark:bg-white/[0.025]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+            Action context
+          </p>
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            {metadata.map(([key, value]) => (
+              <div className="min-w-0 text-xs" key={key}>
+                <span className="block font-semibold text-slate-400">
+                  {humanize(key)}
+                </span>
+                <span className="mt-0.5 block break-words font-mono text-[11px] leading-5 text-slate-700 dark:text-slate-300">
                   {formatMetadata(value)}
                 </span>
               </div>
             ))}
           </div>
         </div>
-      )}
-      <p className="mt-7 break-all font-mono text-[9px] text-slate-300 dark:text-slate-700">
-        EVENT {activity.id}
-      </p>
-    </aside>
+      ) : null}
+    </article>
   );
 }
 
-function Metric({
-  icon: Icon,
+function InfoChip({
+  hint,
   label,
-  note,
+  mono = false,
   value,
 }: {
-  icon: typeof Activity;
+  hint?: string | null;
   label: string;
-  note: string;
-  value: number;
+  mono?: boolean;
+  value: string | null;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white/85 p-4 dark:border-white/[0.08] dark:bg-[#111418]">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
-            {label}
-          </p>
-          <p className="mt-2 font-headline text-3xl font-semibold tabular-nums text-slate-950 dark:text-white">
-            {value}
-          </p>
-        </div>
-        <span className="flex size-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-white/[0.06]">
-          <Icon className="size-4" />
-        </span>
-      </div>
-      <p className="mt-2 text-[11px] text-slate-400">{note}</p>
+    <div className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-3 py-2 dark:border-white/[0.07] dark:bg-white/[0.025]">
+      <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">
+        {label}
+      </p>
+      <p
+        className={cn(
+          "mt-1 truncate text-sm font-semibold text-slate-800 dark:text-slate-200",
+          mono && "font-mono text-[11px]"
+        )}
+      >
+        {value ? (mono ? value : humanize(value)) : "Not recorded"}
+      </p>
+      {hint ? (
+        <p className="mt-0.5 truncate font-mono text-[9px] text-slate-400">
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -513,32 +437,6 @@ function Pagination({
   );
 }
 
-function Detail({
-  hint,
-  label,
-  value,
-}: {
-  hint?: string;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div>
-      <dt className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">
-        {label}
-      </dt>
-      <dd className="mt-1 truncate text-sm font-semibold text-slate-800 dark:text-slate-200">
-        {humanize(value)}
-      </dd>
-      {hint && (
-        <dd className="mt-0.5 truncate font-mono text-[9px] text-slate-400">
-          {hint}
-        </dd>
-      )}
-    </div>
-  );
-}
-
 function State({ description, title }: { description: string; title: string }) {
   return (
     <div className="flex min-h-[420px] flex-col items-center justify-center px-6 text-center">
@@ -555,12 +453,12 @@ function State({ description, title }: { description: string; title: string }) {
   );
 }
 
-function LoadingTimeline() {
+function LoadingList() {
   return (
-    <div className="space-y-2 p-5">
+    <div className="space-y-3 p-5">
       {Array.from({ length: 7 }, (_, index) => (
         <div
-          className="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-white/[0.04]"
+          className="h-36 animate-pulse rounded-xl bg-slate-100 dark:bg-white/[0.04]"
           key={index}
         />
       ))}
@@ -569,25 +467,45 @@ function LoadingTimeline() {
 }
 
 function actionTone(action: string) {
-  if (["DELETE", "REJECT", "CANCEL", "REMOVE"].includes(action))
+  if (["DELETE", "REJECT", "CANCEL", "REMOVE"].includes(action)) {
     return "border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300";
-  if (["APPROVE", "COMPLETE", "CONFIRM", "PAY", "CREATE"].includes(action))
+  }
+  if (["APPROVE", "COMPLETE", "CONFIRM", "PAY", "CREATE"].includes(action)) {
     return "border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300";
+  }
   return "border-blue-200 bg-blue-50 text-blue-600 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300";
 }
 
-function formatTime(value: string) {
+function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+    month: "short",
   }).format(new Date(value));
 }
+
 function humanize(value: string) {
   return value
     .replace(/[_-]/g, " ")
     .toLowerCase()
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
+
 function formatMetadata(value: unknown) {
-  return typeof value === "string" ? value : JSON.stringify(value);
+  if (value === null || value === undefined) return "Not recorded";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  return JSON.stringify(value);
+}
+
+function isEmptyValue(value: unknown) {
+  return (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    (Array.isArray(value) && value.length === 0)
+  );
 }
