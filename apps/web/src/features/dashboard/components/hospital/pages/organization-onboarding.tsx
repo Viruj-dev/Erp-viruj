@@ -132,6 +132,18 @@ const steps: Array<{
   { id: "review", label: "Review & Complete", kicker: "Launch" },
 ];
 
+const stepDescriptions: Record<StepId, string> = {
+  profile: "Tell us about your hospital",
+  locations: "Add branches and map locations",
+  departments: "Choose the care units you operate",
+  services: "Configure patient-facing services and facilities",
+  doctors: "Invite doctors now or add them later",
+  staff: "Invite the team that runs daily operations",
+  hours: "Set consultation and emergency availability",
+  public: "Control what appears on the Viruj patient app",
+  review: "Confirm and launch your hospital workspace",
+};
+
 const hospitalTypes = [
   "Hospital",
   "Clinic",
@@ -403,304 +415,310 @@ export function OrganizationOnboardingPage({
   };
 
   return (
-    <div className="min-h-screen bg-[#090909] p-3 text-slate-950 md:p-5">
-      <div className="relative min-h-[calc(100vh-1.5rem)] overflow-hidden rounded-[1.75rem] bg-[#f3f4f1] shadow-[0_28px_100px_rgba(0,0,0,0.35)] lg:min-h-[calc(100vh-2.5rem)]">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[-10%] top-[-18%] h-80 w-80 rounded-full bg-cyan-300/25 blur-3xl dark:bg-cyan-400/10" />
-        <div className="absolute bottom-[-16%] right-[-10%] h-96 w-96 rounded-full bg-blue-400/20 blur-3xl dark:bg-blue-500/10" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(15,23,42,0.055)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.055)_1px,transparent_1px)] bg-[size:44px_44px] dark:bg-[linear-gradient(rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.045)_1px,transparent_1px)]" />
-      </div>
-
-      <div className="relative mx-auto flex min-h-full w-full max-w-[1680px] flex-col p-4 md:p-6 xl:p-8">
-        <header className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-[26px] border border-slate-200/80 bg-[#f7f7f3]/90 px-4 py-3 shadow-[0_20px_70px_rgba(15,23,42,0.10)] backdrop-blur-xl">
-          <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-2xl bg-[#043f73] text-white shadow-[0_16px_38px_rgba(4,63,115,0.28)]">
-              <Hospital size={21} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-700 dark:text-cyan-300">
-                Optional ERP setup
-              </p>
-              <h1 className="font-headline text-lg font-semibold tracking-tight">
-                Tell us about your hospital before entering ERP
-              </h1>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 shadow-sm dark:border-white/[0.10] dark:bg-white/[0.08] dark:text-slate-300">
-              {saveState === "saving" ? (
-                <Loader2 className="animate-spin text-cyan-700" size={14} />
-              ) : (
-                <Cloud className="text-cyan-700 dark:text-cyan-300" size={14} />
-              )}
-              {saveState === "saving" ? "Auto-saving" : "Saved"}
-            </div>
-            <button
-              className="h-10 rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 dark:border-white/[0.10] dark:bg-white/[0.08] dark:text-slate-200"
-              onClick={() =>
-                setConfirmAction({
-                  action: skipOnboarding,
-                  body: "You can enter the ERP now. The dashboard will show a setup checklist for anything skipped.",
-                  title: "Skip setup for now?",
-                })
-              }
-              type="button"
-            >
-              Skip setup
-            </button>
-          </div>
-        </header>
-
-        <div className="grid min-h-[760px] flex-1 gap-5 xl:grid-cols-[330px_minmax(0,1fr)]">
-          <aside className="rounded-[28px] border border-slate-200/80 bg-[#f7f7f3] p-4 shadow-[0_24px_90px_rgba(15,23,42,0.10)]">
-            <div className="rounded-[22px] bg-[#062d4f] p-5 text-white shadow-[0_22px_60px_rgba(6,45,79,0.28)]">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-100/75">
-                  Step {currentStepIndex + 1} of {steps.length}
-                </span>
-                <span className="rounded-full bg-white/12 px-3 py-1 text-xs font-bold">
-                  {completionPercentage}%
-                </span>
+    <div className="min-h-screen bg-[#8c8c89] p-2 text-[#171916] md:p-3">
+      <div className="relative min-h-[calc(100vh-1rem)] overflow-hidden rounded-[24px] border border-black/5 bg-[#f4f4f0] shadow-[0_28px_110px_rgba(0,0,0,0.22)] md:min-h-[calc(100vh-1.5rem)]">
+        <div className="relative flex min-h-[calc(100vh-1rem)] w-full flex-col md:min-h-[calc(100vh-1.5rem)]">
+          <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-dashed border-[#d7d7d0] px-6 md:px-8">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#062f28] text-[#f7f7f2] shadow-[0_10px_24px_rgba(6,47,40,0.18)]">
+                <Hospital size={17} />
               </div>
-              <div className="mt-5 h-2 rounded-full bg-white/15">
-                <motion.div
-                  animate={{ width: `${completionPercentage}%` }}
-                  className="h-2 rounded-full bg-cyan-200"
-                  initial={false}
-                  transition={{ duration: 0.35 }}
-                />
+              <div className="min-w-0">
+                <h1 className="truncate text-sm font-semibold tracking-tight text-[#171916]">
+                  {organizationLabel || "Viruj Health ERP"}
+                </h1>
+                <p className="hidden text-[11px] font-medium text-[#77786f] sm:block">
+                  Optional hospital setup
+                </p>
               </div>
-              <p className="mt-4 text-sm font-semibold text-cyan-50/80">
-                This setup is optional. Complete it now for a ready workspace, or skip and finish the checklist later.
-              </p>
             </div>
 
-            <nav className="mt-5 space-y-2">
-              {steps.map((step, index) => {
-                const complete = completedSteps.includes(step.id);
-                const skipped = skippedSteps.includes(step.id);
-                const active = currentStep.id === step.id;
-
-                return (
-                  <button
-                    className={cn(
-                      "group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition",
-                      active
-                        ? "bg-white text-slate-950 shadow-sm ring-1 ring-cyan-100 dark:bg-white/[0.10] dark:text-white dark:ring-cyan-300/20"
-                        : "text-slate-500 hover:bg-white/70 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-white"
-                    )}
-                    key={step.id}
-                    onClick={() => setCurrentStepIndex(index)}
-                    type="button"
-                  >
-                    <span
-                      className={cn(
-                        "flex size-9 shrink-0 items-center justify-center rounded-xl border text-xs font-bold",
-                        complete
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-300/20 dark:bg-emerald-400/10 dark:text-emerald-300"
-                          : skipped
-                            ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-300/20 dark:bg-amber-400/10 dark:text-amber-300"
-                            : active
-                              ? "border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-300/20 dark:bg-cyan-400/10 dark:text-cyan-300"
-                              : "border-slate-200 bg-white text-slate-400 dark:border-white/[0.10] dark:bg-white/[0.06]"
-                      )}
-                    >
-                      {complete ? <Check size={15} /> : index + 1}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-bold">
-                        {step.label}
-                      </span>
-                      <span className="block truncate text-[11px] font-semibold uppercase tracking-[0.16em] opacity-70">
-                        {skipped ? "Skipped" : step.kicker}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
-            </nav>
-
-            <div className="mt-5 rounded-2xl border border-cyan-100 bg-cyan-50/70 p-4 dark:border-cyan-300/10 dark:bg-cyan-400/[0.08]">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-300">
-                Operator
-              </p>
-              <p className="mt-2 font-headline text-lg font-semibold">
-                {userName}
-              </p>
-              <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
-                Hospital Admin workspace provisioning
-              </p>
+            <div className="flex items-center gap-2">
+              <div className="hidden h-8 items-center gap-2 rounded-full border border-[#dcddd6] bg-[#edede8] px-3 text-[11px] font-semibold text-[#707268] sm:inline-flex">
+                {saveState === "saving" ? (
+                  <Loader2 className="animate-spin text-[#126c4f]" size={13} />
+                ) : (
+                  <Cloud className="text-[#126c4f]" size={13} />
+                )}
+                {saveState === "saving" ? "Auto-saving" : "Saved"}
+              </div>
+              <button
+                className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#d8d8d2] bg-[#eeeeea] px-3 text-xs font-semibold text-[#252822] shadow-sm transition hover:bg-white"
+                onClick={() =>
+                  setConfirmAction({
+                    action: skipOnboarding,
+                    body: "You can enter the ERP now. The dashboard will show a setup checklist for anything skipped.",
+                    title: "Skip setup for now?",
+                  })
+                }
+                type="button"
+              >
+                <ArrowLeft size={14} />
+                Back to dashboard
+                <span className="hidden rounded border border-[#d3d3cd] bg-[#f7f7f3] px-1.5 py-0.5 text-[10px] font-semibold text-[#85867d] sm:inline-flex">
+                  esc
+                </span>
+              </button>
             </div>
-          </aside>
+          </header>
 
-          <main className="min-w-0 rounded-[30px] border border-slate-200/80 bg-[#fbfbf7]/90 shadow-[0_30px_100px_rgba(15,23,42,0.12)] backdrop-blur-2xl">
-            <div className="flex min-h-full flex-col">
-              <div className="border-b border-slate-200/80 px-5 py-4 dark:border-white/[0.08] md:px-7">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-700 dark:text-cyan-300">
-                      {currentStep.kicker}
-                    </p>
-                    <h2 className="mt-1 font-headline text-2xl font-semibold tracking-tight md:text-3xl">
-                      {currentStep.label}
-                    </h2>
-                  </div>
-                  <div className="flex items-center gap-2 rounded-full bg-slate-950 px-3 py-2 text-xs font-bold text-white dark:bg-white dark:text-slate-950">
-                    <ShieldCheck size={14} />
-Optional and auto-saved
-                  </div>
+          <div className="grid flex-1 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
+            <aside className="flex min-h-full flex-col border-b border-dashed border-[#d7d7d0] px-7 py-9 lg:border-b-0 lg:border-r">
+              <div className="mb-8">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#171916]">
+                  <Users size={15} />
+                  Set up your account
                 </div>
-              </div>
-
-              <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 md:px-7">
-                <AnimatePresence mode="wait">
+                <div className="mt-5 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7b7c73]">
+                  <span>Step {currentStepIndex + 1} of {steps.length}</span>
+                  <span>{completionPercentage}%</span>
+                </div>
+                <div className="mt-3 h-1.5 rounded-full bg-[#dedfd8]">
                   <motion.div
-                    key={currentStep.id}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -18 }}
-                    initial={{ opacity: 0, y: 18 }}
-                    transition={{ duration: 0.24, ease: "easeOut" }}
-                  >
-                    {currentStep.id === "profile" ? (
-                      <ProfileStep data={data} updateProfile={updateProfile} />
-                    ) : null}
-
-                    {currentStep.id === "locations" ? (
-                      <LocationsStep data={data} setData={setData} />
-                    ) : null}
-
-                    {currentStep.id === "departments" ? (
-                      <DepartmentsStep
-                        customDepartment={customDepartment}
-                        data={data}
-                        setCustomDepartment={setCustomDepartment}
-                        setData={setData}
-                      />
-                    ) : null}
-
-                    {currentStep.id === "services" ? (
-                      <ServicesStep
-                        customFacility={customFacility}
-                        customService={customService}
-                        data={data}
-                        searchTerm={searchTerm}
-                        setCustomFacility={setCustomFacility}
-                        setCustomService={setCustomService}
-                        setData={setData}
-                        setSearchTerm={setSearchTerm}
-                      />
-                    ) : null}
-
-                    {currentStep.id === "doctors" ? (
-                      <DoctorsStep
-                        bulkImport={bulkImport}
-                        data={data}
-                        inviteDraft={inviteDraft}
-                        setBulkImport={setBulkImport}
-                        setData={setData}
-                        setInviteDraft={setInviteDraft}
-                      />
-                    ) : null}
-
-                    {currentStep.id === "staff" ? (
-                      <StaffStep
-                        data={data}
-                        setData={setData}
-                        setStaffDraft={setStaffDraft}
-                        staffDraft={staffDraft}
-                      />
-                    ) : null}
-
-                    {currentStep.id === "hours" ? (
-                      <HoursStep data={data} setData={setData} />
-                    ) : null}
-
-                    {currentStep.id === "public" ? (
-                      <PublicProfileStep data={data} setData={setData} />
-                    ) : null}
-
-                    {currentStep.id === "review" ? (
-                      <ReviewStep
-                        completionPercentage={completionPercentage}
-                        data={data}
-                        skippedSteps={skippedSteps}
-                        summary={summary}
-                      />
-                    ) : null}
-                  </motion.div>
-                </AnimatePresence>
+                    animate={{ width: `${completionPercentage}%` }}
+                    className="h-1.5 rounded-full bg-[#19865f]"
+                    initial={false}
+                    transition={{ duration: 0.35 }}
+                  />
+                </div>
               </div>
 
-              <footer className="border-t border-slate-200/80 px-5 py-4 dark:border-white/[0.08] md:px-7">
-                {errorMessage ? (
-                  <div className="mb-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 dark:border-rose-300/20 dark:bg-rose-400/10 dark:text-rose-300">
-                    {errorMessage}
-                  </div>
-                ) : null}
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <button
-                    className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 disabled:pointer-events-none disabled:opacity-40 dark:border-white/[0.10] dark:bg-white/[0.08] dark:text-slate-200"
-                    disabled={currentStepIndex === 0}
-                    onClick={() =>
-                      setCurrentStepIndex((value) => Math.max(0, value - 1))
-                    }
-                    type="button"
-                  >
-                    <ArrowLeft size={16} />
-                    Back
-                  </button>
+              <nav className="relative space-y-3 before:absolute before:bottom-3 before:left-[7px] before:top-3 before:border-l before:border-[#d2d3cc]">
+                {steps.map((step, index) => {
+                  const complete = completedSteps.includes(step.id);
+                  const skipped = skippedSteps.includes(step.id);
+                  const active = currentStep.id === step.id;
 
-                  <div className="flex flex-wrap items-center gap-2">
-                    {currentStep.optional ? (
-                      <button
-                        className="h-11 rounded-full px-4 text-sm font-bold text-slate-500 transition hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-white"
-                        onClick={handleSkip}
-                        type="button"
+                  return (
+                    <button
+                      aria-current={active ? "step" : undefined}
+                      className={cn(
+                        "group relative z-10 flex w-full items-start gap-3 rounded-lg px-0 py-1.5 text-left transition",
+                        active ? "text-[#111411]" : "text-[#797a72] hover:text-[#232620]"
+                      )}
+                      key={step.id}
+                      onClick={() => setCurrentStepIndex(index)}
+                      type="button"
+                    >
+                      <span
+                        className={cn(
+                          "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border bg-[#f4f4f0] text-[9px] font-bold",
+                          complete
+                            ? "border-[#19865f] bg-[#19865f] text-white"
+                            : skipped
+                              ? "border-[#c58a35] bg-[#f3eadc] text-[#9a6724]"
+                              : active
+                                ? "border-[#19865f] bg-[#ddefe7] ring-4 ring-[#19865f]/10"
+                                : "border-[#c8c9c2]"
+                        )}
                       >
-                        Skip for now
-                      </button>
-                    ) : null}
-                    {currentStep.id === "review" ? (
-                      <button
-                        className="inline-flex h-12 items-center gap-2 rounded-full bg-[#043f73] px-6 text-sm font-bold text-white shadow-[0_18px_42px_rgba(4,63,115,0.28)] transition hover:-translate-y-0.5 hover:bg-[#032f56]"
-                        onClick={handleLaunch}
-                        type="button"
-                      >
-                        Launch ERP
-                        <Sparkles size={17} />
-                      </button>
-                    ) : (
-                      <button
-                        className="inline-flex h-12 items-center gap-2 rounded-full bg-[#043f73] px-6 text-sm font-bold text-white shadow-[0_18px_42px_rgba(4,63,115,0.28)] transition hover:-translate-y-0.5 hover:bg-[#032f56]"
-                        onClick={handleContinue}
-                        type="button"
-                      >
-                        Save & Continue
-                        <ArrowRight size={17} />
-                      </button>
-                    )}
+                        {complete ? <Check size={10} /> : null}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold">
+                          {step.label}
+                        </span>
+                        <span className="mt-0.5 block truncate text-xs font-medium text-[#8a8b82]">
+                          {skipped ? "Skipped" : stepDescriptions[step.id]}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </nav>
+
+              <div className="mt-10 rounded-lg border border-[#d5d6cf] bg-[#eeeeea] p-3 shadow-sm lg:mt-auto">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-[linear-gradient(135deg,#9ab54d,#5d8d39)] text-xs font-bold text-white">
+                    {userName?.slice(0, 1)?.toUpperCase() || "A"}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-xs font-semibold text-[#252822]">
+                        {userName}
+                      </p>
+                      <span className="rounded border border-[#bfc7bf] bg-[#dfe8df] px-1.5 py-0.5 text-[10px] font-semibold text-[#2f5f44]">
+                        Admin
+                      </span>
+                    </div>
+                    <p className="truncate text-[11px] font-medium text-[#7d7f75]">
+                      Hospital workspace setup
+                    </p>
                   </div>
                 </div>
-              </footer>
-            </div>
-          </main>
+              </div>
+            </aside>
+
+            <main className="min-w-0 bg-[#f4f4f0]">
+              <div className="flex min-h-full flex-col">
+                <div className="mx-auto w-full max-w-[660px] px-6 pb-6 pt-12 md:px-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#77786f]">
+                    {currentStep.kicker}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-2xl font-semibold tracking-tight text-[#111411] md:text-[28px]">
+                        {currentStep.label}
+                      </h2>
+                      <p className="mt-1 text-sm font-medium text-[#76786f]">
+                        {stepDescriptions[currentStep.id]}
+                      </p>
+                    </div>
+                    <div className="inline-flex h-8 items-center gap-2 rounded-lg border border-[#d7d8d1] bg-[#eeeeea] px-3 text-[11px] font-semibold text-[#696b62]">
+                      <ShieldCheck size={13} />
+                      Optional and auto-saved
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mx-auto min-h-0 w-full max-w-[660px] flex-1 overflow-y-auto px-6 pb-8 md:px-0">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentStep.id}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -12 }}
+                      initial={{ opacity: 0, y: 12 }}
+                      transition={{ duration: 0.22, ease: "easeOut" }}
+                    >
+                      {currentStep.id === "profile" ? (
+                        <ProfileStep data={data} updateProfile={updateProfile} />
+                      ) : null}
+
+                      {currentStep.id === "locations" ? (
+                        <LocationsStep data={data} setData={setData} />
+                      ) : null}
+
+                      {currentStep.id === "departments" ? (
+                        <DepartmentsStep
+                          customDepartment={customDepartment}
+                          data={data}
+                          setCustomDepartment={setCustomDepartment}
+                          setData={setData}
+                        />
+                      ) : null}
+
+                      {currentStep.id === "services" ? (
+                        <ServicesStep
+                          customFacility={customFacility}
+                          customService={customService}
+                          data={data}
+                          searchTerm={searchTerm}
+                          setCustomFacility={setCustomFacility}
+                          setCustomService={setCustomService}
+                          setData={setData}
+                          setSearchTerm={setSearchTerm}
+                        />
+                      ) : null}
+
+                      {currentStep.id === "doctors" ? (
+                        <DoctorsStep
+                          bulkImport={bulkImport}
+                          data={data}
+                          inviteDraft={inviteDraft}
+                          setBulkImport={setBulkImport}
+                          setData={setData}
+                          setInviteDraft={setInviteDraft}
+                        />
+                      ) : null}
+
+                      {currentStep.id === "staff" ? (
+                        <StaffStep
+                          data={data}
+                          setData={setData}
+                          setStaffDraft={setStaffDraft}
+                          staffDraft={staffDraft}
+                        />
+                      ) : null}
+
+                      {currentStep.id === "hours" ? (
+                        <HoursStep data={data} setData={setData} />
+                      ) : null}
+
+                      {currentStep.id === "public" ? (
+                        <PublicProfileStep data={data} setData={setData} />
+                      ) : null}
+
+                      {currentStep.id === "review" ? (
+                        <ReviewStep
+                          completionPercentage={completionPercentage}
+                          data={data}
+                          skippedSteps={skippedSteps}
+                          summary={summary}
+                        />
+                      ) : null}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                <footer className="mx-auto w-full max-w-[660px] border-t border-dashed border-[#d7d7d0] px-6 py-4 md:px-0">
+                  {errorMessage ? (
+                    <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+                      {errorMessage}
+                    </div>
+                  ) : null}
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <button
+                      className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#d8d8d2] bg-[#eeeeea] px-4 text-sm font-semibold text-[#4f514a] shadow-sm transition hover:bg-white disabled:pointer-events-none disabled:opacity-40"
+                      disabled={currentStepIndex === 0}
+                      onClick={() =>
+                        setCurrentStepIndex((value) => Math.max(0, value - 1))
+                      }
+                      type="button"
+                    >
+                      <ArrowLeft size={15} />
+                      Back
+                    </button>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {currentStep.optional ? (
+                        <button
+                          className="h-10 rounded-lg px-4 text-sm font-semibold text-[#74766d] transition hover:bg-[#edede8] hover:text-[#252822]"
+                          onClick={handleSkip}
+                          type="button"
+                        >
+                          Skip for now
+                        </button>
+                      ) : null}
+                      {currentStep.id === "review" ? (
+                        <button
+                          className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#062f28] px-5 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(6,47,40,0.22)] transition hover:-translate-y-0.5 hover:bg-[#09271f]"
+                          onClick={handleLaunch}
+                          type="button"
+                        >
+                          Launch ERP
+                          <Sparkles size={16} />
+                        </button>
+                      ) : (
+                        <button
+                          className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#062f28] px-5 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(6,47,40,0.22)] transition hover:-translate-y-0.5 hover:bg-[#09271f]"
+                          onClick={handleContinue}
+                          type="button"
+                        >
+                          Save & Continue
+                          <ArrowRight size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </footer>
+              </div>
+            </main>
+          </div>
         </div>
-      </div>
 
+        {confirmAction ? (
+          <ConfirmationModal
+            body={confirmAction.body}
+            onCancel={() => setConfirmAction(null)}
+            onConfirm={() => {
+              const action = confirmAction.action;
+              setConfirmAction(null);
+              action();
+            }}
+            title={confirmAction.title}
+          />
+        ) : null}
       </div>
-
-      {confirmAction ? (
-        <ConfirmationModal
-          body={confirmAction.body}
-          onCancel={() => setConfirmAction(null)}
-          onConfirm={() => {
-            const action = confirmAction.action;
-            setConfirmAction(null);
-            action();
-          }}
-          title={confirmAction.title}
-        />
-      ) : null}
     </div>
   );
 }
@@ -713,7 +731,7 @@ function ProfileStep({
   updateProfile: (key: keyof OnboardingState["profile"], value: string) => void;
 }) {
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="space-y-5">
       <section className="grid gap-4 md:grid-cols-2">
         <TextField
           label="Hospital Name"
@@ -787,8 +805,8 @@ function ProfileStep({
 
       <aside className="sticky top-4 h-fit rounded-[28px] border border-slate-200/80 bg-white/85 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.10)] dark:border-white/[0.10] dark:bg-white/[0.06]">
         <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white dark:border-white/[0.10] dark:bg-[#10191c]">
-          <div className="relative h-36 bg-[linear-gradient(135deg,#d7f5ff,#b8dfff_45%,#043f73)]">
-            <div className="absolute bottom-4 left-4 flex size-16 items-center justify-center rounded-2xl bg-white text-[#043f73] shadow-xl">
+          <div className="relative h-36 bg-[linear-gradient(135deg,#d7f5ff,#b8dfff_45%,#062f28)]">
+            <div className="absolute bottom-4 left-4 flex size-16 items-center justify-center rounded-2xl bg-white text-[#062f28] shadow-xl">
               <Hospital size={28} />
             </div>
           </div>
@@ -798,7 +816,7 @@ function ProfileStep({
                 <h3 className="font-headline text-xl font-semibold">
                   {data.profile.hospitalName || "Your Hospital"}
                 </h3>
-                <p className="mt-1 text-sm font-semibold text-cyan-700 dark:text-cyan-300">
+                <p className="mt-1 text-sm font-semibold text-[#126c4f]">
                   {data.profile.hospitalType}
                 </p>
               </div>
@@ -847,7 +865,7 @@ function LocationsStep({
         >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-300">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#126c4f]">
                 {index === 0 ? "Main Branch" : `Branch ${index + 1}`}
               </p>
               <h3 className="font-headline text-xl font-semibold">
@@ -934,7 +952,7 @@ function LocationsStep({
       ))}
 
       <button
-        className="flex h-14 w-full items-center justify-center gap-2 rounded-[22px] border border-dashed border-cyan-300 bg-cyan-50/70 text-sm font-bold text-cyan-800 transition hover:-translate-y-0.5 hover:bg-cyan-50 dark:border-cyan-300/25 dark:bg-cyan-400/[0.08] dark:text-cyan-200"
+        className="flex h-14 w-full items-center justify-center gap-2 rounded-[22px] border border-dashed border-[#c8d8cd] bg-[#eef4ef] text-sm font-bold text-[#126c4f] transition hover:-translate-y-0.5 hover:bg-[#f5f8f4] dark:border-cyan-300/25 dark:bg-cyan-400/[0.08] dark:text-cyan-200"
         onClick={() =>
           setData((current) => ({
             ...current,
@@ -954,7 +972,7 @@ function LocationsStep({
             key={`${branch.id}-card`}
           >
             <div className="flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700 dark:bg-cyan-400/10 dark:text-cyan-300">
+              <span className="flex size-10 items-center justify-center rounded-xl bg-[#eaf3ec] text-[#126c4f] dark:bg-cyan-400/10 dark:text-cyan-300">
                 <MapPin size={18} />
               </span>
               <div>
@@ -1031,14 +1049,14 @@ function DepartmentsStep({
               className={cn(
                 "rounded-[24px] border p-4 shadow-sm transition",
                 enabled
-                  ? "border-cyan-100 bg-white/86 dark:border-cyan-300/20 dark:bg-cyan-400/[0.08]"
+                  ? "border-[#d8ddd5] bg-white/86 dark:border-cyan-300/20 dark:bg-cyan-400/[0.08]"
                   : "border-slate-200 bg-white/54 opacity-70 dark:border-white/[0.08] dark:bg-white/[0.04]"
               )}
               key={department}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="flex size-11 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-700 dark:bg-cyan-400/10 dark:text-cyan-300">
+                  <span className="flex size-11 items-center justify-center rounded-2xl bg-[#eaf3ec] text-[#126c4f] dark:bg-cyan-400/10 dark:text-cyan-300">
                     <Stethoscope size={19} />
                   </span>
                   <div>
@@ -1230,7 +1248,7 @@ function DoctorsStep({
   };
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="space-y-5">
       <section className="space-y-5">
         <div className="rounded-[26px] border border-slate-200/80 bg-white/76 p-5 dark:border-white/[0.10] dark:bg-white/[0.055]">
           <h3 className="font-headline text-xl font-semibold">Invite doctors</h3>
@@ -1297,7 +1315,7 @@ function DoctorsStep({
 
         <div className="rounded-[26px] border border-slate-200/80 bg-white/76 p-5 dark:border-white/[0.10] dark:bg-white/[0.055]">
           <div className="flex items-center gap-3">
-            <FileSpreadsheet className="text-cyan-700 dark:text-cyan-300" size={20} />
+            <FileSpreadsheet className="text-[#126c4f]" size={20} />
             <div>
               <h3 className="font-headline text-lg font-semibold">
                 Bulk import support
@@ -1314,7 +1332,7 @@ function DoctorsStep({
             value={bulkImport}
           />
           <button
-            className="mt-4 inline-flex h-11 items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-4 text-sm font-bold text-cyan-800 transition hover:-translate-y-0.5 dark:border-cyan-300/20 dark:bg-cyan-400/10 dark:text-cyan-200"
+            className="mt-4 inline-flex h-11 items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-4 text-sm font-bold text-[#126c4f] transition hover:-translate-y-0.5 dark:border-cyan-300/20 dark:bg-cyan-400/10 dark:text-cyan-200"
             onClick={() => {
               const imported = bulkImport
                 .split(/\n+/)
@@ -1374,7 +1392,7 @@ function StaffStep({
   staffDraft: StaffInvite;
 }) {
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="space-y-5">
       <section className="rounded-[26px] border border-slate-200/80 bg-white/76 p-5 dark:border-white/[0.10] dark:bg-white/[0.055]">
         <h3 className="font-headline text-xl font-semibold">
           Invite staff members
@@ -1488,7 +1506,7 @@ function HoursStep({
   };
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <div className="space-y-5">
       <section className="space-y-3">
         {data.hours.weekly.map((day) => (
           <div
@@ -1496,7 +1514,7 @@ function HoursStep({
             key={day.day}
           >
             <div className="flex items-center gap-3">
-              <CalendarDays className="text-cyan-700 dark:text-cyan-300" size={18} />
+              <CalendarDays className="text-[#126c4f]" size={18} />
               <span className="font-bold">{day.day}</span>
             </div>
             <input
@@ -1531,7 +1549,7 @@ function HoursStep({
 
       <aside className="h-fit space-y-4 rounded-[26px] border border-slate-200/80 bg-white/78 p-5 dark:border-white/[0.10] dark:bg-white/[0.055]">
         <div className="flex items-center gap-3">
-          <Clock3 className="text-cyan-700 dark:text-cyan-300" size={20} />
+          <Clock3 className="text-[#126c4f]" size={20} />
           <h3 className="font-headline text-xl font-semibold">
             Calendar style availability
           </h3>
@@ -1565,7 +1583,7 @@ function HoursStep({
                 "flex aspect-square items-center justify-center rounded-xl text-xs font-bold",
                 day.holiday
                   ? "bg-slate-100 text-slate-400 dark:bg-white/[0.06]"
-                  : "bg-cyan-50 text-cyan-700 dark:bg-cyan-400/10 dark:text-cyan-300"
+                  : "bg-[#eaf3ec] text-[#126c4f] dark:bg-cyan-400/10 dark:text-cyan-300"
               )}
               key={`${day.day}-mini`}
             >
@@ -1586,7 +1604,7 @@ function PublicProfileStep({
   setData: Dispatch<SetStateAction<OnboardingState>>;
 }) {
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <div className="space-y-5">
       <section className="grid gap-3 md:grid-cols-2">
         {publicOptions.map(([key, label]) => (
           <button
@@ -1613,7 +1631,7 @@ function PublicProfileStep({
               className={cn(
                 "flex size-7 items-center justify-center rounded-full",
                 data.publicProfile[key]
-                  ? "bg-cyan-700 text-white"
+                  ? "bg-[#126c4f] text-white"
                   : "bg-slate-100 text-slate-400 dark:bg-white/[0.08]"
               )}
             >
@@ -1625,9 +1643,9 @@ function PublicProfileStep({
 
       <aside className="mx-auto w-full max-w-[330px] rounded-[34px] border border-slate-200 bg-slate-950 p-3 shadow-[0_28px_80px_rgba(15,23,42,0.28)]">
         <div className="overflow-hidden rounded-[26px] bg-[#f6fbfc] text-slate-950">
-          <div className="h-32 bg-[linear-gradient(135deg,#b9eef8,#d7e9ff_55%,#043f73)]" />
+          <div className="h-32 bg-[linear-gradient(135deg,#b9eef8,#d7e9ff_55%,#062f28)]" />
           <div className="-mt-8 px-4 pb-5">
-            <div className="flex size-16 items-center justify-center rounded-2xl bg-white text-[#043f73] shadow-xl">
+            <div className="flex size-16 items-center justify-center rounded-2xl bg-white text-[#062f28] shadow-xl">
               <Hospital size={27} />
             </div>
             <h3 className="mt-4 font-headline text-xl font-semibold">
@@ -1678,7 +1696,7 @@ function ReviewStep({
   summary: Array<{ label: string; value: string }>;
 }) {
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="space-y-5">
       <section className="grid gap-4 md:grid-cols-2">
         {summary.map((item) => (
           <div
@@ -1702,7 +1720,7 @@ function ReviewStep({
         ))}
       </section>
 
-      <aside className="h-fit rounded-[30px] bg-[#062d4f] p-6 text-white shadow-[0_30px_90px_rgba(6,45,79,0.30)]">
+      <aside className="h-fit rounded-[30px] bg-[#062f28] p-6 text-white shadow-[0_30px_90px_rgba(6,47,40,0.24)]">
         <HealthcareLaunchIllustration />
         <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-100/75">
           Ready to launch
@@ -1753,7 +1771,7 @@ function CatalogSection({
     <section className="rounded-[26px] border border-slate-200/80 bg-white/72 p-5 dark:border-white/[0.10] dark:bg-white/[0.055]">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-300">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#126c4f]">
             {title}
           </p>
           <h3 className="font-headline text-xl font-semibold">
@@ -1797,7 +1815,7 @@ function CatalogSection({
                 className={cn(
                   "flex size-7 items-center justify-center rounded-full",
                   enabled
-                    ? "bg-cyan-700 text-white"
+                    ? "bg-[#126c4f] text-white"
                     : "bg-slate-100 text-slate-400 dark:bg-white/[0.08]"
                 )}
               >
@@ -1886,14 +1904,14 @@ function HealthcareLaunchIllustration() {
   return (
     <div className="relative mx-auto h-48 max-w-[280px]">
       <div className="absolute inset-x-8 bottom-0 h-24 rounded-[28px] bg-white/12" />
-      <div className="absolute bottom-8 left-1/2 h-28 w-32 -translate-x-1/2 rounded-[26px] bg-white text-[#043f73] shadow-2xl">
+      <div className="absolute bottom-8 left-1/2 h-28 w-32 -translate-x-1/2 rounded-[26px] bg-white text-[#062f28] shadow-2xl">
         <div className="flex h-full flex-col items-center justify-center gap-3">
           <Hospital size={42} />
           <span className="h-2 w-16 rounded-full bg-cyan-200" />
           <span className="h-2 w-10 rounded-full bg-cyan-100/70" />
         </div>
       </div>
-      <div className="absolute left-2 top-8 flex size-14 items-center justify-center rounded-2xl bg-cyan-200 text-[#043f73] shadow-xl">
+      <div className="absolute left-2 top-8 flex size-14 items-center justify-center rounded-2xl bg-cyan-200 text-[#062f28] shadow-xl">
         <Sun size={24} />
       </div>
       <div className="absolute right-5 top-2 flex size-14 items-center justify-center rounded-2xl bg-white/14 text-cyan-100 shadow-xl">
@@ -2032,7 +2050,7 @@ function UploadField({
   return (
     <label className="block">
       <FieldLabel>{label}</FieldLabel>
-      <div className="flex h-12 cursor-pointer items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/88 px-4 text-sm font-semibold text-slate-500 shadow-sm transition hover:border-cyan-200 hover:bg-cyan-50/60 dark:border-white/[0.10] dark:bg-white/[0.06] dark:text-slate-400 dark:hover:bg-cyan-400/10">
+      <div className="flex h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-[#d5d6cf] bg-[#eeeeea] px-3.5 text-sm font-medium text-[#6d6f66] shadow-sm transition hover:border-[#c6d7cc] hover:bg-white">
         <span className="truncate">{name || "Choose file"}</span>
         <ImagePlus size={17} />
       </div>
@@ -2047,7 +2065,7 @@ function UploadField({
 
 function FieldLabel({ children }: { children: ReactNode }) {
   return (
-    <span className="mb-1.5 block px-1 text-xs font-bold text-slate-700 dark:text-slate-300">
+    <span className="mb-1.5 block px-0.5 text-xs font-semibold text-[#343731]">
       {children}
     </span>
   );
@@ -2055,7 +2073,7 @@ function FieldLabel({ children }: { children: ReactNode }) {
 
 function fieldClassName(extra?: string) {
   return cn(
-    "h-12 w-full rounded-2xl border border-slate-200 bg-white/88 px-4 text-sm font-semibold text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-cyan-300 focus:ring-4 focus:ring-cyan-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.10] dark:bg-white/[0.06] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-300/40 dark:focus:ring-cyan-400/10",
+    "h-11 w-full rounded-lg border border-[#d5d6cf] bg-[#eeeeea] px-3.5 text-sm font-medium text-[#171916] shadow-sm outline-none transition placeholder:text-[#9a9b92] focus:border-[#aabeb0] focus:bg-white focus:ring-4 focus:ring-[#e1ebe4] disabled:cursor-not-allowed disabled:opacity-50",
     extra
   );
 }

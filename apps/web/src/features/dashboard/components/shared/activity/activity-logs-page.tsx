@@ -98,14 +98,6 @@ export function ActivityLogsPage({
   );
   const activeFilters = [module, action, from, to].filter(Boolean).length;
 
-  const resetFilters = () => {
-    setSearch("");
-    setModule("");
-    setAction("");
-    setFrom("");
-    setTo("");
-  };
-
   return (
     <div className="h-screen space-y-5">
       <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white/90 dark:border-white/[0.08] dark:bg-[#111418]">

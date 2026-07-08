@@ -267,26 +267,7 @@ export function ErpDemoLogin({
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3">
-                      {["SSO", "Google", "LinkedIn"].map((label) => (
-                        <button
-                          className="h-11 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
-                          key={label}
-                          type="button"
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
 
-                    <div className="relative py-1">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="h-px w-full bg-slate-200" />
-                      </div>
-                      <span className="relative mx-auto block w-fit bg-[#f7f7f3] px-4 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
-                        or
-                      </span>
-                    </div>
 
                     <form
                       className="space-y-4"
