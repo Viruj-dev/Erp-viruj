@@ -32,7 +32,7 @@ async function request<T>(path: string, options: RequestOptions = {}) {
     headers.set("Authorization", `Bearer ${erpToken}`);
   }
 
-  if (options.organizationId) {
+  if (erpToken && options.organizationId) {
     headers.set("X-Erp-Organization-Id", options.organizationId);
   }
 
@@ -60,7 +60,7 @@ async function formRequest<T>(path: string, formData: FormData, options: Request
     headers.set("Authorization", `Bearer ${erpToken}`);
   }
 
-  if (options.organizationId) {
+  if (erpToken && options.organizationId) {
     headers.set("X-Erp-Organization-Id", options.organizationId);
   }
 

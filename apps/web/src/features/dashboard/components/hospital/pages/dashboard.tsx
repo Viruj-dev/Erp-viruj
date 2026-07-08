@@ -141,13 +141,13 @@ function WelcomeOnboardingModal({
                 <span className="mr-2">{"\u{1F389}"}</span>Your organization has been successfully configured.
               </DialogTitle>
               <DialogDescription className="text-sm font-medium text-cyan-50/80">
-                Viruj Health ERP is ready for daily operations. Any skipped setup items are waiting in Settings under Organization Setup.
+                Viruj Health ERP is ready for daily operations. Continue to the dashboard to manage your hospital workspace.
               </DialogDescription>
             </DialogHeader>
           </div>
           <div className="p-5">
             <button
-              className="h-11 w-full rounded-full bg-slate-950 text-sm font-bold text-white transition hover:-translate-y-0.5 dark:bg-white dark:text-slate-950"
+              className="h-11 w-full rounded-full bg-[linear-gradient(135deg,#062d4f,#075985_58%,#22d3ee)] text-sm font-bold text-white shadow-[0_16px_34px_rgba(7,89,133,0.24)] transition hover:-translate-y-0.5"
               onClick={() => onOpenChange(false)}
               type="button"
             >

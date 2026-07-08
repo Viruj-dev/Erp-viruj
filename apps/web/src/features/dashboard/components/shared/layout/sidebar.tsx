@@ -89,13 +89,10 @@ const clinicProfileOptions = [
   { id: "working-hours", label: "Working Hours", icon: Timer },
   { id: "facilities", label: "Facilities", icon: Sparkles },
   { id: "reviews", label: "Reviews", icon: Star },
- 
 ] as const;
 
 const operationsItems = [
   { id: "pricing", label: "Pricing", icon: BadgeIndianRupee },
-  { id: "notifications", label: "Notifications", icon: Bell, badge: "2" },
-  { id: "reports", label: "Reports", icon: FileText },
 ] as const;
 
 const settingsOptions = [
