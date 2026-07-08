@@ -1,19 +1,18 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { virujBackend } from "@/lib/viruj-backend";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
   ArrowRight,
   BadgeCheck,
-  Building2,
   CalendarDays,
   Check,
   CheckCircle2,
   Clock3,
   Cloud,
   Edit3,
-  FileSpreadsheet,
   Globe2,
   Hospital,
   ImagePlus,
@@ -23,13 +22,11 @@ import {
   Phone,
   Plus,
   RotateCw,
-  Search,
   ShieldCheck,
   Sparkles,
   Stethoscope,
   Sun,
   Trash2,
-  Upload,
   Users,
   X,
 } from "lucide-react";
@@ -41,9 +38,6 @@ type StepId =
   | "profile"
   | "locations"
   | "departments"
-  | "services"
-  | "doctors"
-  | "staff"
   | "hours"
   | "public"
   | "review";
@@ -61,24 +55,6 @@ type Branch = {
   longitude: string;
 };
 
-type InviteDoctor = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  department: string;
-  specialization: string;
-};
-
-type StaffInvite = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  department: string;
-  status: "Pending" | "Resent";
-};
-
 type WorkingDay = {
   day: string;
   open: string;
@@ -86,11 +62,20 @@ type WorkingDay = {
   holiday: boolean;
 };
 
+type ProfileDefaults = {
+  email?: string;
+  hospitalName?: string;
+};
+
 type OnboardingState = {
   profile: {
     hospitalName: string;
     logoName: string;
+    logoPreviewUrl: string;
+    logoUrl: string;
     coverName: string;
+    coverPreviewUrl: string;
+    coverUrl: string;
     hospitalType: string;
     registrationNumber: string;
     gstNumber: string;
@@ -103,10 +88,6 @@ type OnboardingState = {
   branches: Branch[];
   departments: string[];
   disabledDepartments: string[];
-  services: string[];
-  facilities: string[];
-  doctors: InviteDoctor[];
-  staff: StaffInvite[];
   hours: {
     weekly: WorkingDay[];
     emergencyHours: string;
@@ -124,21 +105,17 @@ const steps: Array<{
   { id: "profile", label: "Organization Profile", kicker: "Identity" },
   { id: "locations", label: "Locations & Branches", kicker: "Network" },
   { id: "departments", label: "Departments", kicker: "Care units" },
-  { id: "services", label: "Services & Facilities", kicker: "Capability" },
-  { id: "doctors", label: "Doctors", kicker: "Clinical team", optional: true },
-  { id: "staff", label: "Staff", kicker: "Operations", optional: true },
   { id: "hours", label: "Working Hours", kicker: "Availability" },
   { id: "public", label: "Public Profile", kicker: "Viruj app" },
   { id: "review", label: "Review & Complete", kicker: "Launch" },
 ];
 
+const onboardingStepIds = new Set(steps.map((step) => step.id));
+
 const stepDescriptions: Record<StepId, string> = {
   profile: "Tell us about your hospital",
   locations: "Add branches and map locations",
   departments: "Choose the care units you operate",
-  services: "Configure patient-facing services and facilities",
-  doctors: "Invite doctors now or add them later",
-  staff: "Invite the team that runs daily operations",
   hours: "Set consultation and emergency availability",
   public: "Control what appears on the Viruj patient app",
   review: "Confirm and launch your hospital workspace",
@@ -170,50 +147,10 @@ const defaultDepartments = [
   "Physiotherapy",
 ];
 
-const defaultServices = [
-  "OPD",
-  "IPD",
-  "Online Consultation",
-  "Surgery",
-  "Vaccination",
-  "Health Checkups",
-  "Home Collection",
-  "Dialysis",
-  "Physiotherapy",
-  "Emergency Care",
-];
-
-const defaultFacilities = [
-  "Pharmacy",
-  "Laboratory",
-  "ICU",
-  "Blood Bank",
-  "Ambulance",
-  "Parking",
-  "Cafeteria",
-  "Waiting Lounge",
-  "Wheelchair Access",
-  "Emergency Ward",
-];
-
-const staffRoles = [
-  "Finance Manager",
-  "Appointment Manager",
-  "Receptionist",
-  "Community Manager",
-  "HR",
-  "Lab Technician",
-  "Radiology Staff",
-  "Pharmacist",
-];
-
 const publicOptions = [
   ["showHospitalProfile", "Show Hospital Profile"],
   ["acceptOnlineAppointments", "Accept Online Appointments"],
-  ["displayDoctors", "Display Doctors"],
   ["displayDepartments", "Display Departments"],
-  ["displayFacilities", "Display Facilities"],
-  ["displayServices", "Display Services"],
   ["allowReviews", "Allow Reviews"],
   ["enableCommunity", "Enable Community"],
   ["enableEmergencyContact", "Enable Emergency Contact"],
@@ -224,26 +161,30 @@ const storagePrefix = "viruj:hospital-onboarding";
 export function OrganizationOnboardingPage({
   hospitalId,
   organizationLabel,
+  organizationName,
+  userEmail,
   userName,
 }: {
   hospitalId?: string;
   organizationLabel: string;
+  organizationName?: string;
+  userEmail?: string;
   userName: string;
 }) {
   const router = useRouter();
   const storageKey = `${storagePrefix}:draft:${hospitalId ?? "workspace"}`;
   const completeKey = `${storagePrefix}:completed:${hospitalId ?? "workspace"}`;
-  const [data, setData] = useState<OnboardingState>(getDefaultOnboardingState);
+  const profileDefaults = useMemo(
+    () => ({ email: userEmail, hospitalName: organizationName }),
+    [organizationName, userEmail]
+  );
+  const [data, setData] = useState<OnboardingState>(() =>
+    getDefaultOnboardingState(profileDefaults)
+  );
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<StepId[]>([]);
   const [skippedSteps, setSkippedSteps] = useState<StepId[]>([]);
   const [customDepartment, setCustomDepartment] = useState("");
-  const [customService, setCustomService] = useState("");
-  const [customFacility, setCustomFacility] = useState("");
-  const [inviteDraft, setInviteDraft] = useState(getEmptyDoctorInvite);
-  const [staffDraft, setStaffDraft] = useState(getEmptyStaffInvite);
-  const [bulkImport, setBulkImport] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
     "idle"
@@ -255,13 +196,13 @@ export function OrganizationOnboardingPage({
   }>(null);
 
   const currentStep = steps[currentStepIndex];
-  const progressCount = new Set([...completedSteps, ...skippedSteps]).size;
+  const progressCount = new Set(
+    [...completedSteps, ...skippedSteps].filter((step) => onboardingStepIds.has(step))
+  ).size;
   const completionPercentage = Math.round((progressCount / steps.length) * 100);
   const enabledDepartments = data.departments.filter(
     (department) => !data.disabledDepartments.includes(department)
   );
-  const activeServices = data.services;
-  const activeFacilities = data.facilities;
   const dashboardPath = `/hospital/${hospitalId ?? "workspace"}/admin/dashboard`;
 
   useEffect(() => {
@@ -276,29 +217,52 @@ export function OrganizationOnboardingPage({
         skippedSteps?: StepId[];
       };
 
-      if (parsed.data) setData(mergeOnboardingState(parsed.data));
+      if (parsed.data) {
+        setData(mergeOnboardingState(parsed.data, profileDefaults));
+      }
       if (typeof parsed.currentStepIndex === "number") {
-        setCurrentStepIndex(Math.min(Math.max(parsed.currentStepIndex, 0), 8));
+        setCurrentStepIndex(
+          Math.min(Math.max(parsed.currentStepIndex, 0), steps.length - 1)
+        );
       }
       if (Array.isArray(parsed.completedSteps)) {
-        setCompletedSteps(parsed.completedSteps);
+        setCompletedSteps(
+          parsed.completedSteps.filter((step) => onboardingStepIds.has(step))
+        );
       }
       if (Array.isArray(parsed.skippedSteps)) {
-        setSkippedSteps(parsed.skippedSteps);
+        setSkippedSteps(
+          parsed.skippedSteps.filter((step) => onboardingStepIds.has(step))
+        );
       }
     } catch {
       window.localStorage.removeItem(storageKey);
     }
-  }, [storageKey]);
+  }, [profileDefaults, storageKey]);
 
   useEffect(() => {
     setSaveState("saving");
     const timeout = window.setTimeout(() => {
-      window.localStorage.setItem(
-        storageKey,
-        JSON.stringify({ completedSteps, currentStepIndex, data, skippedSteps })
-      );
-      setSaveState("saved");
+      const draft = JSON.stringify({
+        completedSteps,
+        currentStepIndex,
+        data: getPersistableOnboardingState(data),
+        skippedSteps,
+      });
+
+      try {
+        window.localStorage.setItem(storageKey, draft);
+        setSaveState("saved");
+      } catch (error) {
+        if (isQuotaExceededError(error)) {
+          window.localStorage.removeItem(storageKey);
+          window.localStorage.setItem(storageKey, draft);
+          setSaveState("saved");
+          return;
+        }
+
+        setSaveState("idle");
+      }
     }, 500);
 
     return () => window.clearTimeout(timeout);
@@ -311,10 +275,6 @@ export function OrganizationOnboardingPage({
         value: data.profile.hospitalName || "Hospital name pending",
       },
       { label: "Departments", value: enabledDepartments.length.toString() },
-      { label: "Facilities", value: activeFacilities.length.toString() },
-      { label: "Services", value: activeServices.length.toString() },
-      { label: "Doctors Invited", value: data.doctors.length.toString() },
-      { label: "Staff Invited", value: data.staff.length.toString() },
       { label: "Branches", value: data.branches.length.toString() },
       {
         label: "Public Profile",
@@ -322,13 +282,9 @@ export function OrganizationOnboardingPage({
       },
     ],
     [
-      activeFacilities.length,
-      activeServices.length,
       data.branches.length,
-      data.doctors.length,
       data.profile.hospitalName,
       data.publicProfile.showHospitalProfile,
-      data.staff.length,
       enabledDepartments.length,
       organizationLabel,
     ]
@@ -447,7 +403,7 @@ export function OrganizationOnboardingPage({
                 onClick={() =>
                   setConfirmAction({
                     action: skipOnboarding,
-                    body: "You can enter the ERP now. The dashboard will show a setup checklist for anything skipped.",
+                    body: "You can enter the ERP now. Settings will show a setup checklist for anything skipped.",
                     title: "Skip setup for now?",
                   })
                 }
@@ -581,7 +537,11 @@ export function OrganizationOnboardingPage({
                       transition={{ duration: 0.22, ease: "easeOut" }}
                     >
                       {currentStep.id === "profile" ? (
-                        <ProfileStep data={data} updateProfile={updateProfile} />
+                        <ProfileStep
+                          data={data}
+                          hospitalId={hospitalId}
+                          updateProfile={updateProfile}
+                        />
                       ) : null}
 
                       {currentStep.id === "locations" ? (
@@ -594,39 +554,6 @@ export function OrganizationOnboardingPage({
                           data={data}
                           setCustomDepartment={setCustomDepartment}
                           setData={setData}
-                        />
-                      ) : null}
-
-                      {currentStep.id === "services" ? (
-                        <ServicesStep
-                          customFacility={customFacility}
-                          customService={customService}
-                          data={data}
-                          searchTerm={searchTerm}
-                          setCustomFacility={setCustomFacility}
-                          setCustomService={setCustomService}
-                          setData={setData}
-                          setSearchTerm={setSearchTerm}
-                        />
-                      ) : null}
-
-                      {currentStep.id === "doctors" ? (
-                        <DoctorsStep
-                          bulkImport={bulkImport}
-                          data={data}
-                          inviteDraft={inviteDraft}
-                          setBulkImport={setBulkImport}
-                          setData={setData}
-                          setInviteDraft={setInviteDraft}
-                        />
-                      ) : null}
-
-                      {currentStep.id === "staff" ? (
-                        <StaffStep
-                          data={data}
-                          setData={setData}
-                          setStaffDraft={setStaffDraft}
-                          staffDraft={staffDraft}
                         />
                       ) : null}
 
@@ -725,9 +652,11 @@ export function OrganizationOnboardingPage({
 
 function ProfileStep({
   data,
+  hospitalId,
   updateProfile,
 }: {
   data: OnboardingState;
+  hospitalId?: string;
   updateProfile: (key: keyof OnboardingState["profile"], value: string) => void;
 }) {
   return (
@@ -748,12 +677,42 @@ function ProfileStep({
         <UploadField
           label="Logo Upload"
           name={data.profile.logoName}
-          onChange={(value) => updateProfile("logoName", value)}
+          onChange={async (file) => {
+            updateProfile("logoName", file.name);
+            updateProfile("logoPreviewUrl", file.previewUrl);
+
+            try {
+              const media = await virujBackend.organizationProfile.uploadMedia({
+                file: file.file,
+                kind: "logo",
+                organizationId: hospitalId,
+              });
+              updateProfile("logoUrl", media.url);
+              updateProfile("logoPreviewUrl", media.url);
+            } catch (error) {
+              console.error("[Onboarding] Logo upload failed", error);
+            }
+          }}
         />
         <UploadField
           label="Cover Image"
           name={data.profile.coverName}
-          onChange={(value) => updateProfile("coverName", value)}
+          onChange={async (file) => {
+            updateProfile("coverName", file.name);
+            updateProfile("coverPreviewUrl", file.previewUrl);
+
+            try {
+              const media = await virujBackend.organizationProfile.uploadMedia({
+                file: file.file,
+                kind: "cover",
+                organizationId: hospitalId,
+              });
+              updateProfile("coverUrl", media.url);
+              updateProfile("coverPreviewUrl", media.url);
+            } catch (error) {
+              console.error("[Onboarding] Cover upload failed", error);
+            }
+          }}
         />
         <TextField
           label="Registration Number"
@@ -805,9 +764,25 @@ function ProfileStep({
 
       <aside className="sticky top-4 h-fit rounded-[28px] border border-slate-200/80 bg-white/85 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.10)] dark:border-white/[0.10] dark:bg-white/[0.06]">
         <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white dark:border-white/[0.10] dark:bg-[#10191c]">
-          <div className="relative h-36 bg-[linear-gradient(135deg,#d7f5ff,#b8dfff_45%,#062f28)]">
-            <div className="absolute bottom-4 left-4 flex size-16 items-center justify-center rounded-2xl bg-white text-[#062f28] shadow-xl">
-              <Hospital size={28} />
+          <div className="relative h-36 overflow-hidden bg-[linear-gradient(135deg,#d7f5ff,#b8dfff_45%,#062f28)]">
+            {data.profile.coverPreviewUrl || data.profile.coverUrl ? (
+              <img
+                alt={`${data.profile.hospitalName || "Hospital"} cover`}
+                className="absolute inset-0 h-full w-full object-cover"
+                src={data.profile.coverPreviewUrl || data.profile.coverUrl}
+              />
+            ) : null}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#062f28]/10 to-[#062f28]/35" />
+            <div className="absolute bottom-4 left-4 flex size-16 items-center justify-center overflow-hidden rounded-2xl bg-white text-[#062f28] shadow-xl ring-1 ring-black/5">
+              {data.profile.logoPreviewUrl || data.profile.logoUrl ? (
+                <img
+                  alt={`${data.profile.hospitalName || "Hospital"} logo`}
+                  className="h-full w-full object-cover"
+                  src={data.profile.logoPreviewUrl || data.profile.logoUrl}
+                />
+              ) : (
+                <Hospital size={28} />
+              )}
             </div>
           </div>
           <div className="p-5">
@@ -826,7 +801,7 @@ function ProfileStep({
             </div>
             <p className="mt-4 line-clamp-4 text-sm font-medium text-slate-500 dark:text-slate-400">
               {data.profile.description ||
-                "A trusted healthcare institution configured on Viruj for appointments, departments, doctors, services, and patient engagement."}
+                "A trusted healthcare institution configured on Viruj for appointments, departments, working hours, and patient engagement."}
             </p>
             <div className="mt-5 grid gap-3 text-sm">
               <PreviewRow icon={<Phone size={15} />} value={data.profile.phone || "Phone pending"} />
@@ -847,6 +822,9 @@ function LocationsStep({
   data: OnboardingState;
   setData: Dispatch<SetStateAction<OnboardingState>>;
 }) {
+  const [locatingBranchId, setLocatingBranchId] = useState<string | null>(null);
+  const [locationStatus, setLocationStatus] = useState<Record<string, string>>({});
+
   const updateBranch = (id: string, key: keyof Branch, value: string) => {
     setData((current) => ({
       ...current,
@@ -856,100 +834,191 @@ function LocationsStep({
     }));
   };
 
+  const updateBranchDetails = (id: string, details: Partial<Branch>) => {
+    setData((current) => ({
+      ...current,
+      branches: current.branches.map((branch) =>
+        branch.id === id ? { ...branch, ...details } : branch
+      ),
+    }));
+  };
+
+  const handleUseCurrentLocation = async (branch: Branch) => {
+    if (!navigator.geolocation) {
+      setLocationStatus((current) => ({
+        ...current,
+        [branch.id]: "Location access is not supported in this browser.",
+      }));
+      return;
+    }
+
+    setLocatingBranchId(branch.id);
+    setLocationStatus((current) => ({
+      ...current,
+      [branch.id]: "Requesting browser location permission...",
+    }));
+
+    try {
+      const position = await getCurrentPosition();
+      const latitude = position.coords.latitude.toFixed(6);
+      const longitude = position.coords.longitude.toFixed(6);
+      const mapsLocation = `https://www.google.com/maps?q=${latitude},${longitude}`;
+
+      updateBranchDetails(branch.id, {
+        latitude,
+        longitude,
+        mapsLocation,
+      });
+      setLocationStatus((current) => ({
+        ...current,
+        [branch.id]: "Coordinates found. Looking up address...",
+      }));
+
+      const address = await reverseGeocodeLocation(latitude, longitude);
+      updateBranchDetails(branch.id, {
+        address: address.address || branch.address,
+        city: address.city || branch.city,
+        country: address.country || branch.country,
+        latitude,
+        longitude,
+        mapsLocation,
+        postalCode: address.postalCode || branch.postalCode,
+        state: address.state || branch.state,
+      });
+      setLocationStatus((current) => ({
+        ...current,
+        [branch.id]: address.address
+          ? "Location filled from your current position."
+          : "Coordinates filled. Add address details manually if needed.",
+      }));
+    } catch (error) {
+      setLocationStatus((current) => ({
+        ...current,
+        [branch.id]: locationErrorMessage(error),
+      }));
+    } finally {
+      setLocatingBranchId(null);
+    }
+  };
+
   return (
     <div className="space-y-5">
-      {data.branches.map((branch, index) => (
-        <section
-          className="rounded-[26px] border border-slate-200/80 bg-white/78 p-5 shadow-sm dark:border-white/[0.10] dark:bg-white/[0.055]"
-          key={branch.id}
-        >
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#126c4f]">
-                {index === 0 ? "Main Branch" : `Branch ${index + 1}`}
-              </p>
-              <h3 className="font-headline text-xl font-semibold">
-                {branch.name || "Branch details"}
-              </h3>
+      {data.branches.map((branch, index) => {
+        const isLocating = locatingBranchId === branch.id;
+        const status = locationStatus[branch.id];
+
+        return (
+          <section
+            className="rounded-[26px] border border-slate-200/80 bg-white/78 p-5 shadow-sm dark:border-white/[0.10] dark:bg-white/[0.055]"
+            key={branch.id}
+          >
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#126c4f]">
+                  {index === 0 ? "Main Branch" : `Branch ${index + 1}`}
+                </p>
+                <h3 className="font-headline text-xl font-semibold">
+                  {branch.name || "Branch details"}
+                </h3>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  className="inline-flex h-9 items-center gap-2 rounded-full border border-[#c8d8cd] bg-[#eef4ef] px-3 text-xs font-bold text-[#126c4f] transition hover:bg-[#f8fbf7] disabled:pointer-events-none disabled:opacity-60 dark:border-cyan-300/25 dark:bg-cyan-400/[0.08] dark:text-cyan-200"
+                  disabled={isLocating}
+                  onClick={() => void handleUseCurrentLocation(branch)}
+                  type="button"
+                >
+                  {isLocating ? <Loader2 className="animate-spin" size={14} /> : <MapPin size={14} />}
+                  {isLocating ? "Finding location" : "Use current location"}
+                </button>
+                {index > 0 ? (
+                  <button
+                    className="inline-flex h-9 items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 text-xs font-bold text-rose-700 transition hover:bg-rose-100 dark:border-rose-300/20 dark:bg-rose-400/10 dark:text-rose-300"
+                    onClick={() =>
+                      setData((current) => ({
+                        ...current,
+                        branches: current.branches.filter(
+                          (item) => item.id !== branch.id
+                        ),
+                      }))
+                    }
+                    type="button"
+                  >
+                    <Trash2 size={14} />
+                    Remove
+                  </button>
+                ) : null}
+              </div>
             </div>
-            {index > 0 ? (
-              <button
-                className="inline-flex h-9 items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 text-xs font-bold text-rose-700 transition hover:bg-rose-100 dark:border-rose-300/20 dark:bg-rose-400/10 dark:text-rose-300"
-                onClick={() =>
-                  setData((current) => ({
-                    ...current,
-                    branches: current.branches.filter(
-                      (item) => item.id !== branch.id
-                    ),
-                  }))
-                }
-                type="button"
-              >
-                <Trash2 size={14} />
-                Remove
-              </button>
+
+            {status ? (
+              <div className="mb-4 flex items-center gap-2 rounded-2xl border border-[#d8e5dc] bg-[#f4f8f5] px-3 py-2 text-xs font-semibold text-[#4f665a] dark:border-cyan-300/15 dark:bg-cyan-400/[0.06] dark:text-cyan-100/80">
+                {isLocating ? <Loader2 className="animate-spin" size={14} /> : <MapPin size={14} />}
+                {status}
+              </div>
             ) : null}
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <TextField
-              label="Branch Name"
-              onChange={(value) => updateBranch(branch.id, "name", value)}
-              placeholder="Main Campus"
-              value={branch.name}
-            />
-            <TextField
-              label="Address"
-              onChange={(value) => updateBranch(branch.id, "address", value)}
-              placeholder="Block A, Ring Road"
-              value={branch.address}
-            />
-            <TextField
-              label="City"
-              onChange={(value) => updateBranch(branch.id, "city", value)}
-              placeholder="Delhi"
-              value={branch.city}
-            />
-            <TextField
-              label="State"
-              onChange={(value) => updateBranch(branch.id, "state", value)}
-              placeholder="Delhi"
-              value={branch.state}
-            />
-            <TextField
-              label="Country"
-              onChange={(value) => updateBranch(branch.id, "country", value)}
-              placeholder="India"
-              value={branch.country}
-            />
-            <TextField
-              label="Postal Code"
-              onChange={(value) => updateBranch(branch.id, "postalCode", value)}
-              placeholder="110001"
-              value={branch.postalCode}
-            />
-            <TextField
-              label="Google Maps Location"
-              onChange={(value) =>
-                updateBranch(branch.id, "mapsLocation", value)
-              }
-              placeholder="https://maps.google.com/..."
-              value={branch.mapsLocation}
-            />
-            <TextField
-              label="Latitude"
-              onChange={(value) => updateBranch(branch.id, "latitude", value)}
-              placeholder="28.6139"
-              value={branch.latitude}
-            />
-            <TextField
-              label="Longitude"
-              onChange={(value) => updateBranch(branch.id, "longitude", value)}
-              placeholder="77.2090"
-              value={branch.longitude}
-            />
-          </div>
-        </section>
-      ))}
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <TextField
+                label="Branch Name"
+                onChange={(value) => updateBranch(branch.id, "name", value)}
+                placeholder="Main Campus"
+                value={branch.name}
+              />
+              <TextField
+                label="Address"
+                onChange={(value) => updateBranch(branch.id, "address", value)}
+                placeholder="Block A, Ring Road"
+                value={branch.address}
+              />
+              <TextField
+                label="City"
+                onChange={(value) => updateBranch(branch.id, "city", value)}
+                placeholder="Delhi"
+                value={branch.city}
+              />
+              <TextField
+                label="State"
+                onChange={(value) => updateBranch(branch.id, "state", value)}
+                placeholder="Delhi"
+                value={branch.state}
+              />
+              <TextField
+                label="Country"
+                onChange={(value) => updateBranch(branch.id, "country", value)}
+                placeholder="India"
+                value={branch.country}
+              />
+              <TextField
+                label="Postal Code"
+                onChange={(value) => updateBranch(branch.id, "postalCode", value)}
+                placeholder="110001"
+                value={branch.postalCode}
+              />
+              <TextField
+                label="Google Maps Location"
+                onChange={(value) =>
+                  updateBranch(branch.id, "mapsLocation", value)
+                }
+                placeholder="https://maps.google.com/..."
+                value={branch.mapsLocation}
+              />
+              <TextField
+                label="Latitude"
+                onChange={(value) => updateBranch(branch.id, "latitude", value)}
+                placeholder="28.6139"
+                value={branch.latitude}
+              />
+              <TextField
+                label="Longitude"
+                onChange={(value) => updateBranch(branch.id, "longitude", value)}
+                placeholder="77.2090"
+                value={branch.longitude}
+              />
+            </div>
+          </section>
+        );
+      })}
 
       <button
         className="flex h-14 w-full items-center justify-center gap-2 rounded-[22px] border border-dashed border-[#c8d8cd] bg-[#eef4ef] text-sm font-bold text-[#126c4f] transition hover:-translate-y-0.5 hover:bg-[#f5f8f4] dark:border-cyan-300/25 dark:bg-cyan-400/[0.08] dark:text-cyan-200"
@@ -990,6 +1059,92 @@ function LocationsStep({
   );
 }
 
+type ReverseGeocodeResult = {
+  address: string;
+  city: string;
+  country: string;
+  postalCode: string;
+  state: string;
+};
+
+function getCurrentPosition() {
+  return new Promise<GeolocationPosition>((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      maximumAge: 60_000,
+      timeout: 12_000,
+    });
+  });
+}
+
+async function reverseGeocodeLocation(
+  latitude: string,
+  longitude: string,
+): Promise<ReverseGeocodeResult> {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&addressdetails=1`,
+    );
+
+    if (!response.ok) return emptyReverseGeocodeResult();
+
+    const payload = (await response.json()) as {
+      address?: Record<string, string | undefined>;
+      display_name?: string;
+    };
+    const address = payload.address ?? {};
+    const roadAddress = [
+      address.house_number,
+      address.road,
+      address.neighbourhood,
+      address.suburb,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    return {
+      address: roadAddress || payload.display_name || "",
+      city:
+        address.city ||
+        address.town ||
+        address.village ||
+        address.municipality ||
+        address.county ||
+        "",
+      country: address.country || "",
+      postalCode: address.postcode || "",
+      state: address.state || address.state_district || "",
+    };
+  } catch {
+    return emptyReverseGeocodeResult();
+  }
+}
+
+function emptyReverseGeocodeResult(): ReverseGeocodeResult {
+  return {
+    address: "",
+    city: "",
+    country: "",
+    postalCode: "",
+    state: "",
+  };
+}
+
+function locationErrorMessage(error: unknown) {
+  if (error instanceof GeolocationPositionError) {
+    if (error.code === error.PERMISSION_DENIED) {
+      return "Location permission was denied. Allow location access and try again.";
+    }
+    if (error.code === error.POSITION_UNAVAILABLE) {
+      return "Current location is unavailable. Enter the address manually.";
+    }
+    if (error.code === error.TIMEOUT) {
+      return "Location lookup timed out. Try again or enter the address manually.";
+    }
+  }
+
+  return "Unable to fetch current location. Enter the address manually.";
+}
 function DepartmentsStep({
   customDepartment,
   data,
@@ -1126,362 +1281,6 @@ function DepartmentsStep({
           );
         })}
       </div>
-    </div>
-  );
-}
-
-function ServicesStep({
-  customFacility,
-  customService,
-  data,
-  searchTerm,
-  setCustomFacility,
-  setCustomService,
-  setData,
-  setSearchTerm,
-}: {
-  customFacility: string;
-  customService: string;
-  data: OnboardingState;
-  searchTerm: string;
-  setCustomFacility: (value: string) => void;
-  setCustomService: (value: string) => void;
-  setData: Dispatch<SetStateAction<OnboardingState>>;
-  setSearchTerm: (value: string) => void;
-}) {
-  const visibleServices = defaultServices.filter((item) =>
-    item.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  const visibleFacilities = defaultFacilities.filter((item) =>
-    item.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  return (
-    <div className="space-y-6">
-      <label className="relative block">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
-        <input
-          className={fieldClassName("pl-11")}
-          onChange={(event) => setSearchTerm(event.target.value)}
-          placeholder="Search services or facilities"
-          value={searchTerm}
-        />
-      </label>
-
-      <CatalogSection
-        customLabel="Custom Service"
-        customValue={customService}
-        items={visibleServices}
-        selected={data.services}
-        setCustomValue={setCustomService}
-        title="Services"
-        onAddCustom={() => {
-          const value = customService.trim();
-          if (!value) return;
-          setData((current) => ({
-            ...current,
-            services: current.services.includes(value)
-              ? current.services
-              : [...current.services, value],
-          }));
-          setCustomService("");
-        }}
-        onToggle={(item) =>
-          setData((current) => ({
-            ...current,
-            services: toggleListValue(current.services, item),
-          }))
-        }
-      />
-
-      <CatalogSection
-        customLabel="Custom Facility"
-        customValue={customFacility}
-        items={visibleFacilities}
-        selected={data.facilities}
-        setCustomValue={setCustomFacility}
-        title="Facilities"
-        onAddCustom={() => {
-          const value = customFacility.trim();
-          if (!value) return;
-          setData((current) => ({
-            ...current,
-            facilities: current.facilities.includes(value)
-              ? current.facilities
-              : [...current.facilities, value],
-          }));
-          setCustomFacility("");
-        }}
-        onToggle={(item) =>
-          setData((current) => ({
-            ...current,
-            facilities: toggleListValue(current.facilities, item),
-          }))
-        }
-      />
-    </div>
-  );
-}
-
-function DoctorsStep({
-  bulkImport,
-  data,
-  inviteDraft,
-  setBulkImport,
-  setData,
-  setInviteDraft,
-}: {
-  bulkImport: string;
-  data: OnboardingState;
-  inviteDraft: InviteDoctor;
-  setBulkImport: (value: string) => void;
-  setData: Dispatch<SetStateAction<OnboardingState>>;
-  setInviteDraft: Dispatch<SetStateAction<InviteDoctor>>;
-}) {
-  const addDoctor = (doctor: InviteDoctor) => {
-    if (!doctor.name.trim() || !doctor.email.trim()) return;
-    setData((current) => ({
-      ...current,
-      doctors: [...current.doctors, { ...doctor, id: crypto.randomUUID() }],
-    }));
-    setInviteDraft(getEmptyDoctorInvite());
-  };
-
-  return (
-    <div className="space-y-5">
-      <section className="space-y-5">
-        <div className="rounded-[26px] border border-slate-200/80 bg-white/76 p-5 dark:border-white/[0.10] dark:bg-white/[0.055]">
-          <h3 className="font-headline text-xl font-semibold">Invite doctors</h3>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <TextField
-              label="Name"
-              onChange={(value) =>
-                setInviteDraft((current) => ({ ...current, name: value }))
-              }
-              placeholder="Dr. Aditi Rao"
-              value={inviteDraft.name}
-            />
-            <TextField
-              label="Email"
-              onChange={(value) =>
-                setInviteDraft((current) => ({ ...current, email: value }))
-              }
-              placeholder="aditi@hospital.co"
-              type="email"
-              value={inviteDraft.email}
-            />
-            <TextField
-              label="Phone"
-              onChange={(value) =>
-                setInviteDraft((current) => ({ ...current, phone: value }))
-              }
-              placeholder="+91 90000 00000"
-              value={inviteDraft.phone}
-            />
-            <SelectField
-              label="Department"
-              onChange={(value) =>
-                setInviteDraft((current) => ({ ...current, department: value }))
-              }
-              options={data.departments}
-              value={inviteDraft.department || data.departments[0]}
-            />
-            <TextField
-              label="Specialization"
-              onChange={(value) =>
-                setInviteDraft((current) => ({
-                  ...current,
-                  specialization: value,
-                }))
-              }
-              placeholder="Interventional Cardiology"
-              value={inviteDraft.specialization}
-            />
-          </div>
-          <button
-            className="mt-4 inline-flex h-11 items-center gap-2 rounded-full bg-slate-950 px-4 text-sm font-bold text-white transition hover:-translate-y-0.5 dark:bg-white dark:text-slate-950"
-            onClick={() =>
-              addDoctor({
-                ...inviteDraft,
-                department: inviteDraft.department || data.departments[0],
-              })
-            }
-            type="button"
-          >
-            <Plus size={17} />
-            Add invitation
-          </button>
-        </div>
-
-        <div className="rounded-[26px] border border-slate-200/80 bg-white/76 p-5 dark:border-white/[0.10] dark:bg-white/[0.055]">
-          <div className="flex items-center gap-3">
-            <FileSpreadsheet className="text-[#126c4f]" size={20} />
-            <div>
-              <h3 className="font-headline text-lg font-semibold">
-                Bulk import support
-              </h3>
-              <p className="text-xs font-semibold text-slate-500">
-                Paste one doctor per line: Name, Email, Phone, Department, Specialization
-              </p>
-            </div>
-          </div>
-          <textarea
-            className={fieldClassName("mt-4 min-h-32 resize-none py-3")}
-            onChange={(event) => setBulkImport(event.target.value)}
-            placeholder="Dr. Karan Mehta, karan@hospital.co, +91..., Orthopedics, Joint replacement"
-            value={bulkImport}
-          />
-          <button
-            className="mt-4 inline-flex h-11 items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-4 text-sm font-bold text-[#126c4f] transition hover:-translate-y-0.5 dark:border-cyan-300/20 dark:bg-cyan-400/10 dark:text-cyan-200"
-            onClick={() => {
-              const imported = bulkImport
-                .split(/\n+/)
-                .map((line) => line.split(",").map((item) => item.trim()))
-                .filter((parts) => parts[0] && parts[1])
-                .map(([name, email, phone = "", department = "", specialization = ""]) => ({
-                  department: department || data.departments[0],
-                  email,
-                  id: crypto.randomUUID(),
-                  name,
-                  phone,
-                  specialization,
-                }));
-              setData((current) => ({
-                ...current,
-                doctors: [...current.doctors, ...imported],
-              }));
-              setBulkImport("");
-            }}
-            type="button"
-          >
-            <Upload size={16} />
-            Import doctors
-          </button>
-        </div>
-      </section>
-
-      <InvitationList
-        emptyCopy="No doctor invitations yet. You can skip this and invite doctors later."
-        items={data.doctors.map((doctor) => ({
-          id: doctor.id,
-          meta: doctor.department,
-          name: doctor.name,
-          right: doctor.specialization || "Doctor",
-        }))}
-        title="Pending Doctor Invitations"
-        onRemove={(id) =>
-          setData((current) => ({
-            ...current,
-            doctors: current.doctors.filter((doctor) => doctor.id !== id),
-          }))
-        }
-      />
-    </div>
-  );
-}
-
-function StaffStep({
-  data,
-  setData,
-  setStaffDraft,
-  staffDraft,
-}: {
-  data: OnboardingState;
-  setData: Dispatch<SetStateAction<OnboardingState>>;
-  setStaffDraft: Dispatch<SetStateAction<StaffInvite>>;
-  staffDraft: StaffInvite;
-}) {
-  return (
-    <div className="space-y-5">
-      <section className="rounded-[26px] border border-slate-200/80 bg-white/76 p-5 dark:border-white/[0.10] dark:bg-white/[0.055]">
-        <h3 className="font-headline text-xl font-semibold">
-          Invite staff members
-        </h3>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <TextField
-            label="Name"
-            onChange={(value) =>
-              setStaffDraft((current) => ({ ...current, name: value }))
-            }
-            placeholder="Meera Sharma"
-            value={staffDraft.name}
-          />
-          <TextField
-            label="Email"
-            onChange={(value) =>
-              setStaffDraft((current) => ({ ...current, email: value }))
-            }
-            placeholder="meera@hospital.co"
-            type="email"
-            value={staffDraft.email}
-          />
-          <SelectField
-            label="Role"
-            onChange={(value) =>
-              setStaffDraft((current) => ({ ...current, role: value }))
-            }
-            options={staffRoles}
-            value={staffDraft.role}
-          />
-          <SelectField
-            label="Department"
-            onChange={(value) =>
-              setStaffDraft((current) => ({ ...current, department: value }))
-            }
-            options={data.departments}
-            value={staffDraft.department || data.departments[0]}
-          />
-        </div>
-        <button
-          className="mt-4 inline-flex h-11 items-center gap-2 rounded-full bg-slate-950 px-4 text-sm font-bold text-white transition hover:-translate-y-0.5 dark:bg-white dark:text-slate-950"
-          onClick={() => {
-            if (!staffDraft.name.trim() || !staffDraft.email.trim()) return;
-            setData((current) => ({
-              ...current,
-              staff: [
-                ...current.staff,
-                {
-                  ...staffDraft,
-                  department: staffDraft.department || data.departments[0],
-                  id: crypto.randomUUID(),
-                  status: "Pending",
-                },
-              ],
-            }));
-            setStaffDraft(getEmptyStaffInvite());
-          }}
-          type="button"
-        >
-          <Plus size={17} />
-          Add staff invite
-        </button>
-      </section>
-
-      <InvitationList
-        emptyCopy="No staff invitations yet. Add operations users now or finish this later from Staff."
-        items={data.staff.map((staff) => ({
-          id: staff.id,
-          meta: staff.role,
-          name: staff.name,
-          right: staff.status,
-        }))}
-        resend
-        title="Pending Invitations"
-        onRemove={(id) =>
-          setData((current) => ({
-            ...current,
-            staff: current.staff.filter((staff) => staff.id !== id),
-          }))
-        }
-        onResend={(id) =>
-          setData((current) => ({
-            ...current,
-            staff: current.staff.map((staff) =>
-              staff.id === id ? { ...staff, status: "Resent" } : staff
-            ),
-          }))
-        }
-      />
     </div>
   );
 }
@@ -1658,12 +1457,8 @@ function PublicProfileStep({
               {[
                 data.publicProfile.acceptOnlineAppointments &&
                   "Online appointments",
-                data.publicProfile.displayDoctors &&
-                  `${data.doctors.length || 8} doctors`,
                 data.publicProfile.displayDepartments &&
                   `${data.departments.length} departments`,
-                data.publicProfile.displayFacilities &&
-                  `${data.facilities.length} facilities`,
                 data.publicProfile.enableEmergencyContact &&
                   "Emergency contact",
               ]
@@ -1695,57 +1490,195 @@ function ReviewStep({
   skippedSteps: StepId[];
   summary: Array<{ label: string; value: string }>;
 }) {
+  const hospitalName = data.profile.hospitalName || "Your hospital";
+  const primaryBranch = data.branches[0];
+  const enabledDepartments = data.departments.filter(
+    (department) => !data.disabledDepartments.includes(department)
+  );
+  const skippedLabels = skippedSteps
+    .map((id) => steps.find((step) => step.id === id)?.label)
+    .filter(Boolean);
+  const launchChecks = [
+    {
+      label: "Organization identity",
+      meta: data.profile.email || "Profile details saved",
+      ready: Boolean(data.profile.hospitalName && data.profile.email),
+    },
+    {
+      label: "Primary branch",
+      meta: primaryBranch?.city || primaryBranch?.name || "Branch configured",
+      ready: Boolean(primaryBranch?.name && primaryBranch?.address),
+    },
+    {
+      label: "Care departments",
+      meta: `${enabledDepartments.length} enabled`,
+      ready: enabledDepartments.length > 0,
+    },
+    {
+      label: "Patient app profile",
+      meta: data.publicProfile.showHospitalProfile ? "Visible on Viruj" : "Hidden from Viruj",
+      ready: data.publicProfile.showHospitalProfile,
+    },
+  ];
+  const visiblePatientFeatures = publicOptions
+    .filter(([key]) => data.publicProfile[key])
+    .map(([, label]) => label.replace("Show ", "").replace("Display ", ""));
+
   return (
-    <div className="space-y-5">
-      <section className="grid gap-4 md:grid-cols-2">
-        {summary.map((item) => (
-          <div
-            className="rounded-[24px] border border-slate-200/80 bg-white/80 p-5 shadow-sm dark:border-white/[0.10] dark:bg-white/[0.055]"
-            key={item.label}
-          >
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
-                  {item.label}
-                </p>
-                <p className="mt-2 font-headline text-2xl font-semibold">
-                  {item.value}
-                </p>
+    <div className="space-y-4">
+      <section className="relative overflow-hidden rounded-[28px] bg-[#062f28] p-5 text-white shadow-[0_24px_70px_rgba(6,47,40,0.22)] md:p-6">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(132,186,154,0.24),transparent_36%),linear-gradient(135deg,rgba(255,255,255,0.08),transparent_45%)]" />
+        <div className="relative grid gap-5 md:grid-cols-[minmax(0,1fr)_220px] md:items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/14 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#d9eee2]">
+              <Sparkles size={13} />
+              Launch readiness
+            </div>
+            <h3 className="mt-5 text-[30px] font-semibold leading-tight tracking-tight md:text-[36px]">
+              {hospitalName} is ready for day one.
+            </h3>
+            <p className="mt-3 max-w-lg text-sm font-medium leading-6 text-[#c6d8cf]">
+              We saved the core hospital setup. Launch ERP now and continue any optional configuration from Settings under Organization Setup.
+            </p>
+            <div className="mt-6">
+              <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.16em] text-[#b9d0c6]">
+                <span>Setup completion</span>
+                <span>{completionPercentage}%</span>
               </div>
-              <span className="flex size-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300">
-                <Check size={18} />
-              </span>
+              <div className="mt-3 h-2 rounded-full bg-white/12">
+                <motion.div
+                  animate={{ width: `${completionPercentage}%` }}
+                  className="h-2 rounded-full bg-[#7fc79d]"
+                  initial={false}
+                  transition={{ duration: 0.4 }}
+                />
+              </div>
             </div>
           </div>
-        ))}
+          <div className="hidden md:block">
+            <HealthcareLaunchIllustration />
+          </div>
+        </div>
       </section>
 
-      <aside className="h-fit rounded-[30px] bg-[#062f28] p-6 text-white shadow-[0_30px_90px_rgba(6,47,40,0.24)]">
-        <HealthcareLaunchIllustration />
-        <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-100/75">
-          Ready to launch
-        </p>
-        <h3 className="mt-2 font-headline text-3xl font-semibold">
-          {data.profile.hospitalName || "Your organization"} is configured.
-        </h3>
-        <p className="mt-3 text-sm font-medium text-cyan-50/75">
-          {completionPercentage}% setup complete. Skipped items will appear as a
-          setup checklist on the dashboard.
-        </p>
-        {skippedSteps.length ? (
-          <div className="mt-5 rounded-2xl bg-white/10 p-4 text-sm font-semibold">
-            Skipped:{" "}
-            {skippedSteps
-              .map((id) => steps.find((step) => step.id === id)?.label)
-              .filter(Boolean)
-              .join(", ")}
+      <section className="grid gap-4 md:grid-cols-[minmax(0,1fr)_240px]">
+        <div className="rounded-[22px] border border-[#d8d8d2] bg-[#eeeeea] p-4 shadow-sm">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#77786f]">
+                Configuration summary
+              </p>
+              <h4 className="mt-1 text-lg font-semibold text-[#171916]">
+                Core workspace
+              </h4>
+            </div>
+            <span className="flex size-9 items-center justify-center rounded-full bg-[#dfece3] text-[#126c4f]">
+              <ShieldCheck size={17} />
+            </span>
+          </div>
+
+          <div className="grid gap-2">
+            {summary.map((item) => (
+              <div
+                className="flex items-center justify-between gap-4 rounded-xl border border-[#d9dad3] bg-[#f7f7f3] px-3.5 py-3"
+                key={item.label}
+              >
+                <span className="text-sm font-medium text-[#6d6f66]">
+                  {item.label}
+                </span>
+                <span className="max-w-[220px] truncate text-right text-sm font-semibold text-[#171916]">
+                  {item.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-[22px] border border-[#d8d8d2] bg-[#f7f7f3] p-4 shadow-sm">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#77786f]">
+            Patient app
+          </p>
+          <h4 className="mt-1 text-lg font-semibold text-[#171916]">
+            Public visibility
+          </h4>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {visiblePatientFeatures.length ? (
+              visiblePatientFeatures.map((feature) => (
+                <span
+                  className="rounded-full border border-[#cfd8cf] bg-[#edf4ee] px-3 py-1.5 text-xs font-semibold text-[#126c4f]"
+                  key={feature}
+                >
+                  {feature}
+                </span>
+              ))
+            ) : (
+              <span className="rounded-full border border-[#ddd8cc] bg-[#f4eee3] px-3 py-1.5 text-xs font-semibold text-[#8a652d]">
+                Profile hidden
+              </span>
+            )}
+          </div>
+          <div className="mt-5 rounded-2xl bg-[#062f28] p-4 text-white">
+            <Globe2 size={20} />
+            <p className="mt-3 text-sm font-semibold">
+              {data.publicProfile.showHospitalProfile ? "Ready to publish" : "Private workspace"}
+            </p>
+            <p className="mt-1 text-xs font-medium leading-5 text-[#c2d8cc]">
+              {data.publicProfile.showHospitalProfile
+                ? "Patients will see the enabled profile sections in Viruj."
+                : "You can publish the hospital profile later from settings."}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-[22px] border border-[#d8d8d2] bg-[#f7f7f3] p-4 shadow-sm">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#77786f]">
+              Final checks
+            </p>
+            <h4 className="mt-1 text-lg font-semibold text-[#171916]">
+              Launch checklist
+            </h4>
+          </div>
+          <span className="text-xs font-semibold text-[#77786f]">
+            {launchChecks.filter((check) => check.ready).length}/{launchChecks.length} ready
+          </span>
+        </div>
+        <div className="grid gap-2 md:grid-cols-2">
+          {launchChecks.map((check) => (
+            <div
+              className="flex items-start gap-3 rounded-xl border border-[#d9dad3] bg-[#eeeeea] p-3"
+              key={check.label}
+            >
+              <span
+                className={cn(
+                  "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full",
+                  check.ready ? "bg-[#dfece3] text-[#126c4f]" : "bg-[#f1e7d8] text-[#8a652d]"
+                )}
+              >
+                {check.ready ? <Check size={15} /> : <Clock3 size={14} />}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-[#171916]">
+                  {check.label}
+                </span>
+                <span className="mt-0.5 block truncate text-xs font-medium text-[#77786f]">
+                  {check.meta}
+                </span>
+              </span>
+            </div>
+          ))}
+        </div>
+        {skippedLabels.length ? (
+          <div className="mt-4 rounded-xl border border-[#ddd8cc] bg-[#f4eee3] px-3.5 py-3 text-sm font-medium text-[#73562b]">
+            Skipped for later: {skippedLabels.join(", ")}. These will appear in Settings under Organization Setup.
           </div>
         ) : null}
-      </aside>
+      </section>
     </div>
   );
 }
-
 function CatalogSection({
   customLabel,
   customValue,
@@ -2045,18 +1978,29 @@ function UploadField({
 }: {
   label: string;
   name: string;
-  onChange: (value: string) => void;
+  onChange: (file: { file: File; name: string; previewUrl: string }) => Promise<void> | void;
 }) {
+  const handleFileChange = (file?: File) => {
+    if (!file) return;
+
+    onChange({
+      file,
+      name: file.name,
+      previewUrl: URL.createObjectURL(file),
+    });
+  };
+
   return (
     <label className="block">
       <FieldLabel>{label}</FieldLabel>
       <div className="flex h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-[#d5d6cf] bg-[#eeeeea] px-3.5 text-sm font-medium text-[#6d6f66] shadow-sm transition hover:border-[#c6d7cc] hover:bg-white">
-        <span className="truncate">{name || "Choose file"}</span>
+        <span className="truncate">{name || "Choose image"}</span>
         <ImagePlus size={17} />
       </div>
       <input
+        accept="image/*"
         className="sr-only"
-        onChange={(event) => onChange(event.target.files?.[0]?.name ?? "")}
+        onChange={(event) => handleFileChange(event.target.files?.[0])}
         type="file"
       />
     </label>
@@ -2104,11 +2048,6 @@ function validateStep(stepId: StepId, data: OnboardingState) {
         return "Enable at least one department.";
       }
       return "";
-    case "services":
-      if (data.services.length === 0 || data.facilities.length === 0) {
-        return "Enable at least one service and one facility.";
-      }
-      return "";
     case "hours":
       if (data.hours.weekly.every((day) => day.holiday)) {
         return "Keep at least one working day open.";
@@ -2119,19 +2058,11 @@ function validateStep(stepId: StepId, data: OnboardingState) {
   }
 }
 
-function toggleListValue(list: string[], value: string) {
-  return list.includes(value)
-    ? list.filter((item) => item !== value)
-    : [...list, value];
-}
-
-function getDefaultOnboardingState(): OnboardingState {
+function getDefaultOnboardingState(defaults?: ProfileDefaults): OnboardingState {
   return {
     branches: [getEmptyBranch(true)],
     departments: defaultDepartments,
     disabledDepartments: [],
-    doctors: [],
-    facilities: defaultFacilities,
     hours: {
       consultationHours: "10:00 AM - 5:00 PM",
       emergencyHours: "24/7 emergency",
@@ -2152,13 +2083,17 @@ function getDefaultOnboardingState(): OnboardingState {
     },
     profile: {
       coverName: "",
+      coverPreviewUrl: "",
+      coverUrl: "",
       description: "",
-      email: "",
+      email: defaults?.email?.trim() ?? "",
       establishedYear: "",
       gstNumber: "",
-      hospitalName: "",
+      hospitalName: defaults?.hospitalName?.trim() ?? "",
       hospitalType: "Hospital",
       logoName: "",
+      logoPreviewUrl: "",
+      logoUrl: "",
       phone: "",
       registrationNumber: "",
       website: "",
@@ -2166,13 +2101,30 @@ function getDefaultOnboardingState(): OnboardingState {
     publicProfile: Object.fromEntries(
       publicOptions.map(([key]) => [key, true])
     ) as Record<string, boolean>,
-    services: defaultServices,
-    staff: [],
   };
 }
 
-function mergeOnboardingState(state: OnboardingState) {
-  const fallback = getDefaultOnboardingState();
+function getPersistableOnboardingState(state: OnboardingState): OnboardingState {
+  return {
+    ...state,
+    profile: {
+      ...state.profile,
+      coverPreviewUrl: "",
+      logoPreviewUrl: "",
+    },
+  };
+}
+
+function isQuotaExceededError(error: unknown) {
+  return (
+    error instanceof DOMException &&
+    (error.name === "QuotaExceededError" || error.name === "NS_ERROR_DOM_QUOTA_REACHED")
+  );
+}
+
+function mergeOnboardingState(state: OnboardingState, defaults?: ProfileDefaults) {
+  const fallback = getDefaultOnboardingState(defaults);
+  const persistedProfile = getPersistableOnboardingState(state).profile;
   return {
     ...fallback,
     ...state,
@@ -2181,7 +2133,14 @@ function mergeOnboardingState(state: OnboardingState) {
       ...state.hours,
       weekly: state.hours?.weekly?.length ? state.hours.weekly : fallback.hours.weekly,
     },
-    profile: { ...fallback.profile, ...state.profile },
+    profile: {
+      ...fallback.profile,
+      ...persistedProfile,
+      email: persistedProfile.email?.trim() ? persistedProfile.email : fallback.profile.email,
+      hospitalName: persistedProfile.hospitalName?.trim()
+        ? persistedProfile.hospitalName
+        : fallback.profile.hospitalName,
+    },
     publicProfile: { ...fallback.publicProfile, ...state.publicProfile },
   };
 }
@@ -2198,27 +2157,5 @@ function getEmptyBranch(main: boolean): Branch {
     name: main ? "Main Branch" : "",
     postalCode: "",
     state: "",
-  };
-}
-
-function getEmptyDoctorInvite(): InviteDoctor {
-  return {
-    department: "General Medicine",
-    email: "",
-    id: "",
-    name: "",
-    phone: "",
-    specialization: "",
-  };
-}
-
-function getEmptyStaffInvite(): StaffInvite {
-  return {
-    department: "General Medicine",
-    email: "",
-    id: "",
-    name: "",
-    role: "Receptionist",
-    status: "Pending",
   };
 }

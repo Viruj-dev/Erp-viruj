@@ -89,9 +89,6 @@ export function ErpDemoDashboard({
 
   return (
     <>
-      {onboardingStatus.hasCompleted ? (
-        <OrganizationSetupChecklist skippedSteps={onboardingStatus.skippedSteps} />
-      ) : null}
       <WelcomeOnboardingModal
         onOpenChange={onboardingStatus.setShowWelcome}
         open={onboardingStatus.showWelcome}
@@ -110,32 +107,18 @@ const onboardingStoragePrefix = "viruj:hospital-onboarding";
 function useHospitalOnboardingStatus(organizationId?: string) {
   const storageId = organizationId ?? "workspace";
   const [showWelcome, setShowWelcome] = useState(false);
-  const [hasCompleted, setHasCompleted] = useState(false);
-  const [skippedSteps, setSkippedSteps] = useState<string[]>([]);
 
   useEffect(() => {
     const welcomeKey = `${onboardingStoragePrefix}:welcome:${storageId}`;
-    const completeKey = `${onboardingStoragePrefix}:completed:${storageId}`;
     const shouldWelcome = window.sessionStorage.getItem(welcomeKey) === "1";
-    const completed = window.localStorage.getItem(completeKey);
 
     if (shouldWelcome) {
       setShowWelcome(true);
       window.sessionStorage.removeItem(welcomeKey);
     }
-
-    if (!completed) return;
-
-    setHasCompleted(true);
-    try {
-      const parsed = JSON.parse(completed) as { skippedSteps?: string[] };
-      setSkippedSteps(Array.isArray(parsed.skippedSteps) ? parsed.skippedSteps : []);
-    } catch {
-      setSkippedSteps([]);
-    }
   }, [storageId]);
 
-  return { hasCompleted, setShowWelcome, showWelcome, skippedSteps };
+  return { setShowWelcome, showWelcome };
 }
 
 function WelcomeOnboardingModal({
@@ -158,7 +141,7 @@ function WelcomeOnboardingModal({
                 <span className="mr-2">{"\u{1F389}"}</span>Your organization has been successfully configured.
               </DialogTitle>
               <DialogDescription className="text-sm font-medium text-cyan-50/80">
-                Viruj Health ERP is ready for daily operations. Any skipped setup items are waiting on your dashboard checklist.
+                Viruj Health ERP is ready for daily operations. Any skipped setup items are waiting in Settings under Organization Setup.
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -177,53 +160,6 @@ function WelcomeOnboardingModal({
   );
 }
 
-function OrganizationSetupChecklist({ skippedSteps }: { skippedSteps: string[] }) {
-  const skipped = new Set(skippedSteps);
-  const items = [
-    { id: "profile", label: "Hospital Profile", required: true },
-    { id: "departments", label: "Departments", required: true },
-    { id: "services", label: "Services", required: true },
-    { id: "facilities", label: "Facilities", required: true },
-    { id: "doctors", label: "Invite More Doctors" },
-    { id: "billing", label: "Configure Billing" },
-    { id: "insurance", label: "Add Insurance Partners" },
-  ];
-
-  return (
-    <section className="mx-6 mt-6 rounded-[26px] border border-cyan-100 bg-white/88 p-5 shadow-sm dark:border-cyan-300/15 dark:bg-white/[0.06] lg:mx-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-300">
-            Organization Setup Progress
-          </p>
-          <h2 className="mt-1 font-headline text-xl font-semibold text-slate-950 dark:text-white">
-            Launch checklist
-          </h2>
-        </div>
-        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300">
-          Setup saved
-        </span>
-      </div>
-      <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-        {items.map((item) => {
-          const complete =
-            !("postLaunch" in item && item.postLaunch) && !skipped.has(item.id);
-          return (
-            <div
-              className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700 dark:bg-white/[0.055] dark:text-slate-300"
-              key={item.id}
-            >
-              <span className={complete ? "text-emerald-600" : "text-slate-400"}>
-                {complete ? "[x]" : "[ ]"}
-              </span>
-              {item.label}
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
 function buildHospitalDashboardAnalytics(
   dashboard?: VirujAnalyticsDashboard,
   liveCounts?: LiveDashboardCounts

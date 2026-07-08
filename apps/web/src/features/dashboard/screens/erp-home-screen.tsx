@@ -350,6 +350,8 @@ export function ErpHomeScreen({
       <OrganizationOnboardingPage
         hospitalId={activeOrganization.id}
         organizationLabel={organizationLabel}
+        organizationName={organizationName}
+        userEmail={sessionState.data.user.email}
         userName={userName}
       />
     );
@@ -511,15 +513,15 @@ function PageContent({
     case "pricing":
       return <PricingPage />;
     case "settings":
-      return <ErpDemoSettings section="profile" />;
+      return <ErpDemoSettings organizationId={organizationId} section="profile" />;
     case "settings-alert-rules":
-      return <ErpDemoSettings section="alerts" />;
+      return <ErpDemoSettings organizationId={organizationId} section="alerts" />;
     case "settings-audit-logs":
-      return <ErpDemoSettings section="audit" />;
+      return <ErpDemoSettings organizationId={organizationId} section="audit" />;
     case "settings-storage":
-      return <ErpDemoSettings section="storage" />;
+      return <ErpDemoSettings organizationId={organizationId} section="storage" />;
     case "settings-data-export":
-      return <ErpDemoSettings section="export" />;
+      return <ErpDemoSettings organizationId={organizationId} section="export" />;
     case "activity-logs":
       return <ActivityLogsPage organizationId={organizationId} />;
     case "analytics":

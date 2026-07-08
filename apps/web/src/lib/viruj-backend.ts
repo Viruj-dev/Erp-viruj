@@ -53,6 +53,33 @@ async function request<T>(path: string, options: RequestOptions = {}) {
   return response.json() as Promise<T>;
 }
 
+async function formRequest<T>(path: string, formData: FormData, options: RequestOptions = {}) {
+  const headers = new Headers();
+
+  if (erpToken) {
+    headers.set("Authorization", `Bearer ${erpToken}`);
+  }
+
+  if (options.organizationId) {
+    headers.set("X-Erp-Organization-Id", options.organizationId);
+  }
+
+  const response = await fetch(`${erpApiUrl}${path}`, {
+    body: formData,
+    headers,
+    method: options.method ?? "POST",
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+    const message = responseErrorMessage(payload, `Viruj backend request failed (${response.status})`);
+    emitApiError(path, options, response.status, message);
+    throw new Error(message);
+  }
+
+  emitApiSuccess(path, options);
+  return response.json() as Promise<T>;
+}
 async function commonRequest<T>(path: string, options: RequestOptions = {}) {
   const headers = new Headers({
     "Content-Type": "application/json",
@@ -470,6 +497,11 @@ export type VirujAnalyticsSignalWidget = {
   type: "SIGNAL";
 };
 
+export type VirujOrganizationProfileMedia = {
+  kind: "cover" | "logo";
+  url: string;
+};
+
 export type VirujAnalyticsDashboard = {
   actions: unknown[];
   charts: VirujAnalyticsChartWidget[];
@@ -596,6 +628,22 @@ export const virujBackend = {
       }),
   },
 
+  organizationProfile: {
+    uploadMedia: (input: { file: File; kind: "cover" | "logo"; organizationId?: string }) => {
+      const formData = new FormData();
+      formData.set("kind", input.kind);
+      formData.set("file", input.file);
+      return formRequest<VirujOrganizationProfileMedia>(
+        "/hospital/profile/media",
+        formData,
+        {
+          method: "POST",
+          organizationId: input.organizationId,
+          successMessage: "Organization media saved",
+        }
+      );
+    },
+  },
   facilities: {
     create: (input: VirujFacilityInput) =>
       erpServerRequest<VirujFacility>("/facilities", {

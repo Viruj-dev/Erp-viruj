@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export type SettingsSection =
   | "profile"
@@ -38,8 +38,10 @@ const auditLogs = [
 ] as const;
 
 export function ErpDemoSettings({
+  organizationId,
   section = "profile",
 }: {
+  organizationId?: string;
   section?: SettingsSection;
 }) {
   const [alertRules, setAlertRules] = useState({
@@ -51,13 +53,16 @@ export function ErpDemoSettings({
   return (
     <div className="space-y-7 p-5 lg:p-8">
       {section === "profile" ? (
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-          <OrganizationProfile />
-          <aside className="space-y-6">
-            <PlanCard />
-            <StoragePanel />
-          </aside>
-        </section>
+        <div className="space-y-6">
+          <OrganizationSetupChecklist organizationId={organizationId} />
+          <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+            <OrganizationProfile />
+            <aside className="space-y-6">
+              <PlanCard />
+              <StoragePanel />
+            </aside>
+          </section>
+        </div>
       ) : null}
 
       {section === "alerts" ? (
@@ -128,6 +133,87 @@ export function ErpDemoSettings({
   );
 }
 
+const onboardingStoragePrefix = "viruj:hospital-onboarding";
+
+function OrganizationSetupChecklist({ organizationId }: { organizationId?: string }) {
+  const [hasCompleted, setHasCompleted] = useState(false);
+  const [skippedSteps, setSkippedSteps] = useState<string[]>([]);
+  const skipped = new Set(skippedSteps);
+
+  useEffect(() => {
+    const storageId = organizationId ?? "workspace";
+    const completeKey = `${onboardingStoragePrefix}:completed:${storageId}`;
+    const completed = window.localStorage.getItem(completeKey);
+
+    if (!completed) {
+      setHasCompleted(false);
+      setSkippedSteps([]);
+      return;
+    }
+
+    setHasCompleted(true);
+    try {
+      const parsed = JSON.parse(completed) as { skippedSteps?: string[] };
+      setSkippedSteps(Array.isArray(parsed.skippedSteps) ? parsed.skippedSteps : []);
+    } catch {
+      setSkippedSteps([]);
+    }
+  }, [organizationId]);
+
+  if (!hasCompleted) return null;
+
+  const items = [
+    { id: "profile", label: "Hospital Profile" },
+    { id: "locations", label: "Locations & Branches" },
+    { id: "departments", label: "Departments" },
+    { id: "hours", label: "Working Hours" },
+    { id: "public", label: "Public Profile" },
+  ];
+  const readyCount = items.filter((item) => !skipped.has(item.id)).length;
+
+  return (
+    <section className="rounded-xl border border-primary/15 bg-surface-container-lowest p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-semi-bold uppercase tracking-[0.2em] text-primary">
+            Organization Setup
+          </p>
+          <h1 className="mt-1 font-headline text-2xl font-semi-bold text-on-surface">
+            Setup checklist
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm font-medium text-on-surface-variant">
+            Track onboarding items here so the dashboard can stay focused on daily operations.
+          </p>
+        </div>
+        <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semi-bold text-primary">
+          {readyCount}/{items.length} complete
+        </span>
+      </div>
+
+      <div className="mt-5 grid gap-2 md:grid-cols-2 xl:grid-cols-5">
+        {items.map((item) => {
+          const complete = !skipped.has(item.id);
+          return (
+            <div
+              className="flex items-center gap-2 rounded-xl bg-surface-container-low px-3 py-2 text-sm font-semi-bold text-on-surface"
+              key={item.id}
+            >
+              <span className={complete ? "text-emerald-600" : "text-outline"}>
+                {complete ? "[x]" : "[ ]"}
+              </span>
+              {item.label}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2 text-xs font-semi-bold text-on-surface-variant">
+        <span className="rounded-full bg-surface-container-low px-3 py-1.5">Next: Configure Billing</span>
+        <span className="rounded-full bg-surface-container-low px-3 py-1.5">Next: Add Insurance Partners</span>
+      </div>
+    </section>
+  );
+}
 function OrganizationProfile() {
   return (
     <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-6 shadow-sm">
