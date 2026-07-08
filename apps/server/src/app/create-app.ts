@@ -7,8 +7,7 @@ import { registerDoctorRoutes } from "../routes/doctors";
 import { registerFacilityRoutes } from "../routes/facilities";
 import { registerHealthRoutes } from "../routes/health";
 
-export function createApp() {
-  const app = new Hono();
+export function createApp(app = new Hono()) {
 
   app.onError(handleServerError);
 
