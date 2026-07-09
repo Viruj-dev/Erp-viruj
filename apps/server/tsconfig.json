@@ -9,6 +9,8 @@
     },
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "lib": ["ESNext", "DOM"],
+    "types": ["bun", "node"]
   }
 }

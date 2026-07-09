@@ -39,6 +39,7 @@
       "devDependencies": {
         "@erp_virujhealth/config": "workspace:*",
         "@types/bun": "catalog:",
+        "@types/node": "^20",
         "tsdown": "^0.16.5",
         "typescript": "catalog:",
       },
