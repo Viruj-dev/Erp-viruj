@@ -447,6 +447,7 @@ export function ErpHomeScreen({
                   roleLabel={roleLabel}
                   userName={userName}
                   organizationId={activeOrganization.id}
+                  organizationName={organizationName}
                   routeBasePath={
                     activeOrganizationSlug
                       ? `/${activeOrganizationType}/${activeOrganizationSlug}`
@@ -469,6 +470,7 @@ function PageContent({
   roleLabel,
   userName,
   organizationId,
+  organizationName,
   routeBasePath,
   routeSegments,
 }: {
@@ -477,6 +479,7 @@ function PageContent({
   roleLabel: string;
   userName: string;
   organizationId?: string;
+  organizationName?: string;
   routeBasePath: string;
   routeSegments: string[];
 }) {
@@ -507,7 +510,12 @@ function PageContent({
     case "community":
       return <ErpDemoCommunity />;
     case "gallery":
-      return <ClinicGalleryPage organizationId={organizationId} />;
+      return (
+        <ClinicGalleryPage
+          key={organizationId ?? "workspace"}
+          organizationId={organizationId}
+        />
+      );
     case "billing":
       return <ErpDemoBilling />;
     case "pricing":
@@ -536,7 +544,13 @@ function PageContent({
         />
       );
     case "hospital-profile":
-      return <HospitalProfilePage organizationLabel={organizationLabel} />;
+      return (
+        <HospitalProfilePage
+          organizationId={organizationId}
+          organizationLabel={organizationLabel}
+          organizationName={organizationName}
+        />
+      );
     case "radiology":
       return <ErpEnterpriseModule module="radiology" roleLabel={roleLabel} />;
     case "pathology":

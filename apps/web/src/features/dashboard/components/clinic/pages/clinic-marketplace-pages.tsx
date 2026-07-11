@@ -768,10 +768,7 @@ export function ClinicGalleryPage({
 }: {
   organizationId?: string;
 }) {
-  const backendHospitalId =
-    process.env.NEXT_PUBLIC_VIRUJ_BACKEND_HOSPITAL_ID ||
-    process.env.NEXT_PUBLIC_VIRUJ_BACKEND_ANALYTICS_ENTITY_ID ||
-    organizationId;
+  const backendHospitalId = organizationId;
   const primaryItems = extendedClinicGalleryItems.slice(0, 5);
   const extraItems = extendedClinicGalleryItems.slice(5);
   const queryClient = useQueryClient();

@@ -329,6 +329,7 @@ export function DoctorHomeScreen({
                 <DoctorPageContent
                   currentPage={resolvedPage}
                   detailId={detailId}
+                  organizationId={activeOrganization.id}
                   roleLabel={roleLabel}
                 />
               </div>
@@ -343,10 +344,12 @@ export function DoctorHomeScreen({
 function DoctorPageContent({
   currentPage,
   detailId,
+  organizationId,
   roleLabel,
 }: {
   currentPage: ErpDemoPage;
   detailId?: string;
+  organizationId?: string;
   roleLabel: string;
 }) {
   switch (currentPage) {
@@ -358,7 +361,12 @@ function DoctorPageContent({
     case "patients":
       return detailId ? <DoctorPatientDetailPage id={detailId} /> : <DoctorPatientDirectoryPage />;
     case "gallery":
-      return <ClinicGalleryPage />;
+      return (
+        <ClinicGalleryPage
+          key={organizationId ?? "doctor-workspace"}
+          organizationId={organizationId}
+        />
+      );
     case "community":
       return <ErpDemoCommunity />;
     case "onboarding":

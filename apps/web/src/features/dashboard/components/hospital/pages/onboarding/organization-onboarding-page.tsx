@@ -194,6 +194,7 @@ export function OrganizationOnboardingPage({
       completeKey,
       JSON.stringify({
         completedAt: new Date().toISOString(),
+        data: getPersistableOnboardingState(data),
         summary,
       })
     );

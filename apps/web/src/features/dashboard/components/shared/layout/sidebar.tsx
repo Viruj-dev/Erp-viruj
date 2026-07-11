@@ -162,7 +162,11 @@ export function ErpDemoSidebar({
     ? clinicProfileOptions
     : doctorProfileOptions;
   const systemItems = [
-    { id: "profile", label: "Profile", icon: UserRound },
+    {
+      id: isDoctorWorkspace || isClinicWorkspace ? "profile" : "hospital-profile",
+      label: "Profile",
+      icon: UserRound,
+    },
     { id: "onboarding", label: "Onboarding", icon: ClipboardCheck },
     {
       id: isDoctorWorkspace ? "doctor-settings" : "settings",

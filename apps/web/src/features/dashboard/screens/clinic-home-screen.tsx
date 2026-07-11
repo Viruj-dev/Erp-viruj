@@ -325,6 +325,7 @@ export function ClinicHomeScreen({
               >
                 <ClinicPageContent
                   currentPage={resolvedPage}
+                  organizationId={activeOrganization.id}
                   roleLabel={roleLabel}
                   userName={userName}
                 />
@@ -339,10 +340,12 @@ export function ClinicHomeScreen({
 
 function ClinicPageContent({
   currentPage,
+  organizationId,
   roleLabel,
   userName,
 }: {
   currentPage: ErpDemoPage;
+  organizationId?: string;
   roleLabel: string;
   userName: string;
 }) {
@@ -364,7 +367,12 @@ function ClinicPageContent({
     case "facilities":
       return <ClinicFacilitiesPage />;
     case "gallery":
-      return <ClinicGalleryPage />;
+      return (
+        <ClinicGalleryPage
+          key={organizationId ?? "clinic-workspace"}
+          organizationId={organizationId}
+        />
+      );
     case "community":
       return <ErpDemoCommunity />;
     case "reviews":
