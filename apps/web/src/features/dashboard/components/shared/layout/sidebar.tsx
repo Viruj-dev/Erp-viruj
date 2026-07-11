@@ -9,14 +9,13 @@ import {
   BarChart3,
   BadgeCheck,
   BadgeIndianRupee,
-  Bell,
   Bot,
   BriefcaseMedical,
   Building2,
-  Calendar,
   ChevronDown,
   ChevronLeft,
   ClipboardCheck,
+  Database,
   FileBadge,
   FileText,
   Gauge,
@@ -36,6 +35,7 @@ import {
   Star,
   Stethoscope,
   Timer,
+  UserRound,
   Users,
 } from "lucide-react";
 import type { ComponentType } from "react";
@@ -95,14 +95,6 @@ const operationsItems = [
   { id: "pricing", label: "Pricing", icon: BadgeIndianRupee },
 ] as const;
 
-const settingsOptions = [
-  { id: "settings", label: "General" },
-  { id: "settings-alert-rules", label: "Alert Rules" },
-  { id: "settings-audit-logs", label: "Clinical Audit Logs" },
-  { id: "settings-storage", label: "Storage Usage" },
-  { id: "settings-data-export", label: "Data Export" },
-] as const;
-
 const appointmentOptions = [
   { id: "appointments-dashboard", label: "Dashboard", icon: Gauge },
   { id: "appointments-review", label: "Review", icon: ClipboardCheck },
@@ -132,9 +124,6 @@ export function ErpDemoSidebar({
   onToggle: () => void;
   organizationLabel: string;
 }) {
-  const [isSettingsOpen, setIsSettingsOpen] = useState(
-    currentPage.startsWith("settings")
-  );
   const [isAppointmentsOpen, setIsAppointmentsOpen] = useState(
     currentPage.startsWith("appointments")
   );
@@ -161,9 +150,6 @@ export function ErpDemoSidebar({
     activeMemberRole === "ORG_ADMIN" ||
     activeMemberRole === "owner" ||
     activeMemberRole === "admin";
-  const visibleSettingsOptions = settingsOptions.filter((option) =>
-    allowedPages.includes(option.id)
-  );
   const workspaceTheme = getWorkspaceTheme(organizationLabel);
   const isDoctorWorkspace = organizationLabel.toLowerCase() === "doctor";
   const isClinicWorkspace = organizationLabel.toLowerCase() === "clinic";
@@ -175,7 +161,16 @@ export function ErpDemoSidebar({
   const nestedProfileOptions = isClinicWorkspace
     ? clinicProfileOptions
     : doctorProfileOptions;
-  const canAccessSettings = visibleSettingsOptions.length > 0;
+  const systemItems = [
+    { id: "profile", label: "Profile", icon: UserRound },
+    { id: "onboarding", label: "Onboarding", icon: ClipboardCheck },
+    {
+      id: isDoctorWorkspace ? "doctor-settings" : "settings",
+      label: "Settings",
+      icon: Settings,
+    },
+    { id: "settings-data-export", label: "Data", icon: Database },
+  ] satisfies readonly NavItem[];
   const userName =
     sessionState.data?.user?.name ||
     sessionState.data?.user?.email?.split("@")[0] ||
@@ -327,62 +322,15 @@ export function ErpDemoSidebar({
             theme={workspaceTheme}
           />
 
-          {canAccessSettings ? (
-            <div>
-              <p
-                className={cn(
-                  "mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-600",
-                  isCollapsed && "sr-only"
-                )}
-              >
-                System
-              </p>
-              <NavButton
-                active={currentPage.startsWith("settings")}
-                badge={
-                  visibleSettingsOptions.length > 1
-                    ? visibleSettingsOptions.length.toString()
-                    : undefined
-                }
-                icon={Settings}
-                isCollapsed={isCollapsed}
-                label="Settings"
-                onClick={() => {
-                  if (isCollapsed || visibleSettingsOptions.length === 1) {
-                    onPageChange("settings");
-                    return;
-                  }
-
-                  setIsSettingsOpen((value) => !value);
-                }}
-                showChevron={!isCollapsed && visibleSettingsOptions.length > 1}
-                isOpen={isSettingsOpen}
-                theme={workspaceTheme}
-              />
-
-              {!isCollapsed &&
-              isSettingsOpen &&
-              visibleSettingsOptions.length > 1 ? (
-                <div className="ml-5 mt-1 space-y-1 border-l border-slate-200/80 pl-3 dark:border-white/[0.08]">
-                  {visibleSettingsOptions.map((option) => (
-                    <button
-                      className={cn(
-                        "block h-8 w-full rounded-lg px-2.5 text-left text-[12px] font-semibold transition",
-                        currentPage === option.id
-                          ? workspaceTheme.activeNav
-                          : "text-slate-500 hover:bg-white hover:text-slate-900 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
-                      )}
-                      key={option.id}
-                      onClick={() => onPageChange(option.id)}
-                      type="button"
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+          <SidebarSection
+            allowedPages={allowedPages}
+            currentPage={currentPage}
+            isCollapsed={isCollapsed}
+            items={systemItems}
+            label="System"
+            onPageChange={onPageChange}
+            theme={workspaceTheme}
+          />
         </nav>
 
         <div className="relative mt-4 space-y-2 border-t border-slate-200/80 pt-4 dark:border-white/[0.08]">

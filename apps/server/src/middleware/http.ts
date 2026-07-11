@@ -5,6 +5,7 @@ import { logger } from "hono/logger";
 import { networkInterfaces } from "node:os";
 
 const allowedOrigins = buildAllowedOrigins();
+const defaultOrigin = allowedOrigins.values().next().value ?? "";
 
 export function registerHttpMiddleware(app: Hono) {
   app.use(logger());
@@ -12,7 +13,7 @@ export function registerHttpMiddleware(app: Hono) {
     "/*",
     cors({
       origin: (origin) =>
-        !origin || allowedOrigins.has(origin) ? origin : env.CORS_ORIGIN,
+        !origin || allowedOrigins.has(origin) ? origin : defaultOrigin,
       allowMethods: ["DELETE", "GET", "PATCH", "POST", "OPTIONS"],
       allowHeaders: ["Content-Type", "Authorization", "Cookie"],
       credentials: true,
@@ -21,7 +22,11 @@ export function registerHttpMiddleware(app: Hono) {
 }
 
 function buildAllowedOrigins() {
-  const origins = new Set([env.CORS_ORIGIN]);
+  const origins = new Set(
+    env.CORS_ORIGIN.split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+  );
 
   if (env.NODE_ENV !== "production") {
     origins.add("http://localhost:3001");

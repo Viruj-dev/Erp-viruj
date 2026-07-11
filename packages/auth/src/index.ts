@@ -36,7 +36,14 @@ export const erpStatements = {
   community: ["read", "manage"] as const,
   consultation: ["read", "create", "update", "manage"] as const,
   doctorDirectory: ["read", "manage"] as const,
-  facility: ["read", "create", "update", "delete", "publish", "archive"] as const,
+  facility: [
+    "read",
+    "create",
+    "update",
+    "delete",
+    "publish",
+    "archive",
+  ] as const,
   invitation: ["read", "create", "cancel"] as const,
   member: ["read", "create", "update", "delete"] as const,
   organization: ["read", "update", "delete"] as const,
@@ -509,7 +516,11 @@ export const auth = betterAuth({
 export type AuthSession = typeof auth.$Infer.Session;
 
 function buildTrustedOrigins() {
-  const origins = new Set([env.CORS_ORIGIN]);
+  const origins = new Set(
+    env.CORS_ORIGIN.split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+  );
 
   if (env.NODE_ENV !== "production") {
     origins.add("http://localhost:3001");

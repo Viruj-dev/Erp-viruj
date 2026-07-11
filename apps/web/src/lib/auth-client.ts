@@ -6,11 +6,12 @@ import {
 } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
-const authBaseUrl =
-  typeof window !== "undefined"
-    ? `${window.location.origin}/auth`
-    : `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002"}/auth`;
-
+const authOrigin =
+  process.env.NEXT_PUBLIC_AUTH_URL ||
+  (typeof window !== "undefined"
+    ? window.location.origin
+    : process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002");
+const authBaseUrl = `${authOrigin.replace(/\/$/, "")}/auth`;
 export const authClient = createAuthClient({
   baseURL: authBaseUrl,
   plugins: [
@@ -66,19 +67,31 @@ const organizationActions = authClient as unknown as {
       organizationType: string;
       slug: string;
     }) => Promise<AuthActionResult<OrganizationRecord> | OrganizationRecord>;
-    list?: () => Promise<AuthActionResult<OrganizationRecord[]> | OrganizationRecord[]>;
-    listOrganizations?: () => Promise<AuthActionResult<OrganizationRecord[]> | OrganizationRecord[]>;
+    list?: () => Promise<
+      AuthActionResult<OrganizationRecord[]> | OrganizationRecord[]
+    >;
+    listOrganizations?: () => Promise<
+      AuthActionResult<OrganizationRecord[]> | OrganizationRecord[]
+    >;
     setActive?: (input: {
       organizationId: string | null;
-    }) => Promise<AuthActionResult<OrganizationRecord> | OrganizationRecord | null>;
+    }) => Promise<
+      AuthActionResult<OrganizationRecord> | OrganizationRecord | null
+    >;
     setActiveOrganization?: (input: {
       organizationId: string | null;
-    }) => Promise<AuthActionResult<OrganizationRecord> | OrganizationRecord | null>;
+    }) => Promise<
+      AuthActionResult<OrganizationRecord> | OrganizationRecord | null
+    >;
   };
   setActiveOrganization?: (input: {
     organizationId: string | null;
-  }) => Promise<AuthActionResult<OrganizationRecord> | OrganizationRecord | null>;
-  listOrganizations?: () => Promise<AuthActionResult<OrganizationRecord[]> | OrganizationRecord[]>;
+  }) => Promise<
+    AuthActionResult<OrganizationRecord> | OrganizationRecord | null
+  >;
+  listOrganizations?: () => Promise<
+    AuthActionResult<OrganizationRecord[]> | OrganizationRecord[]
+  >;
 };
 
 export const acceptInvitation =
@@ -135,13 +148,11 @@ export async function bootstrapOrganization(input: {
     method: "POST",
   });
 
-  const payload = (await response.json().catch(() => null)) as
-    | {
-        error?: string;
-        id?: string;
-        organizationType?: string;
-      }
-    | null;
+  const payload = (await response.json().catch(() => null)) as {
+    error?: string;
+    id?: string;
+    organizationType?: string;
+  } | null;
 
   if (!response.ok) {
     return {
@@ -168,13 +179,11 @@ export async function activateOrganization(input: { organizationId: string }) {
     method: "POST",
   });
 
-  const payload = (await response.json().catch(() => null)) as
-    | {
-        error?: string;
-        id?: string;
-        organizationType?: string;
-      }
-    | null;
+  const payload = (await response.json().catch(() => null)) as {
+    error?: string;
+    id?: string;
+    organizationType?: string;
+  } | null;
 
   if (!response.ok) {
     return {

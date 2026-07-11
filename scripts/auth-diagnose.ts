@@ -28,6 +28,10 @@ function printEnv() {
   console.log("NODE_ENV:", process.env.NODE_ENV || "(missing)");
   console.log("DATABASE_URL:", redactUrl(process.env.DATABASE_URL));
   console.log("BETTER_AUTH_URL:", process.env.BETTER_AUTH_URL || "(missing)");
+  console.log(
+    "NEXT_PUBLIC_AUTH_URL:",
+    process.env.NEXT_PUBLIC_AUTH_URL || "(missing)"
+  );
   console.log("CORS_ORIGIN:", process.env.CORS_ORIGIN || "(missing)");
   console.log(
     "NEXT_PUBLIC_SERVER_URL:",

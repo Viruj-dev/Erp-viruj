@@ -65,4 +65,17 @@ erp_virujhealth/
 - `bun run db:generate`: Generate database client/types
 - `bun run db:migrate`: Run database migrations
 - `bun run db:studio`: Open database studio UI
+
 # Erp-viruj
+
+## Auth deployment
+
+Host `apps/server` behind `https://auth.virujhealth.com` and set these environment variables for production:
+
+```bash
+BETTER_AUTH_URL=https://auth.virujhealth.com
+CORS_ORIGIN=https://erp.virujhealth.com
+NEXT_PUBLIC_AUTH_URL=https://auth.virujhealth.com
+```
+
+`NEXT_PUBLIC_SERVER_URL` can stay pointed at the ERP API host. If the same `apps/server` deployment also serves `/erp`, set it to `https://auth.virujhealth.com`. Set `NEXT_PUBLIC_AUTH_URL` only in production; local development should leave it unset so browser requests use the normal same-origin `/auth` path. Keep `http://localhost:3001` in `CORS_ORIGIN` as an additional comma-separated origin.
