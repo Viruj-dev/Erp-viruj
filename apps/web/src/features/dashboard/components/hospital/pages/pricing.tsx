@@ -35,6 +35,7 @@ const tabLabels: Record<SubscriptionTab, string> = {
   current: "Current Subscription",
   invoices: "Invoices",
 };
+const tabOrder = Object.keys(tabLabels) as SubscriptionTab[];
 
 export default function PricingPage({ organizationName = "Viruj Health" }: { organizationId?: string; organizationName?: string; role?: string | null }) {
   const router = useRouter();
@@ -76,6 +77,7 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
   const defaultTab: SubscriptionTab = subscription ? "current" : "plans";
   const requestedTab = searchParams.get("tab") as SubscriptionTab | null;
   const activeTab: SubscriptionTab = requestedTab && requestedTab in tabLabels ? requestedTab : defaultTab;
+  const activeTabIndex = Math.max(tabOrder.indexOf(activeTab), 0);
   const latestInvoice = useMemo(() => newestInvoice(invoicesQuery.data ?? []), [invoicesQuery.data]);
   const latestPayment = useMemo(() => newestPayment(paymentsQuery.data ?? []), [paymentsQuery.data]);
   const defaultPaymentMethod = (paymentMethodsQuery.data ?? []).find((method) => method.defaultMethod) ?? paymentMethodsQuery.data?.[0] ?? null;
@@ -198,16 +200,32 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
     >
       {verification.state !== "idle" ? <PaymentVerificationBanner state={verification.state} /> : null}
       <Tabs value={activeTab} onValueChange={(value) => setTab(value as SubscriptionTab)}>
-        <TabsList className="grid h-auto w-full grid-cols-3 rounded-xl bg-slate-100 p-1 dark:bg-white/[0.06] sm:w-fit">
-          {(Object.keys(tabLabels) as SubscriptionTab[]).map((tab) => <TabsTrigger className="rounded-lg px-3 py-2 text-xs sm:text-sm" key={tab} value={tab}>{tabLabels[tab]}</TabsTrigger>)}
+        <TabsList className="relative grid h-11 w-full grid-cols-3 overflow-hidden rounded-xl bg-slate-100 p-1 dark:bg-white/[0.06] sm:w-[31rem]">
+          <span
+            aria-hidden="true"
+            className="absolute left-1 top-1 bottom-1 rounded-lg bg-white shadow-sm ring-1 ring-slate-200 transition-transform duration-300 ease-out dark:bg-white/[0.12] dark:ring-white/[0.08]"
+            style={{
+              transform: `translateX(${activeTabIndex * 100}%)`,
+              width: "calc((100% - 0.5rem) / 3)",
+            }}
+          />
+          {tabOrder.map((tab) => (
+            <TabsTrigger
+              className="relative z-10 rounded-lg bg-transparent px-3 py-2 text-xs font-semibold text-slate-500 transition-colors duration-200 data-[state=active]:bg-transparent data-[state=active]:text-slate-950 data-[state=active]:shadow-none dark:text-slate-400 dark:data-[state=active]:bg-transparent dark:data-[state=active]:text-white sm:text-sm"
+              key={tab}
+              value={tab}
+            >
+              {tabLabels[tab]}
+            </TabsTrigger>
+          ))}
         </TabsList>
-        <TabsContent className="mt-4" value="plans">
+        <TabsContent className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-bottom-1 data-[state=active]:duration-300" value="plans">
           <PlansTab billingCycle={billingCycle} canChangePlan={canChangePlan} currentPlan={currentPlan} isLoading={plansQuery.isLoading} onBillingCycleChange={setBillingCycle} onSelectPlan={setSelectedPlan} onStartTrial={(plan) => startTrialMutation.mutate(plan)} plans={plans} subscription={subscription} trialPending={startTrialMutation.isPending} />
         </TabsContent>
-        <TabsContent className="mt-4" value="current">
+        <TabsContent className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-bottom-1 data-[state=active]:duration-300" value="current">
           <CurrentSubscriptionTab canCancel={canCancel} canManagePayment={canManagePayment} canReactivate={canReactivate} currentPlan={currentPlan} invoice={latestInvoice} isLoading={subscriptionQuery.isLoading} onCancel={() => setCancelOpen(true)} onChangePlan={() => setTab("plans")} onManagePayment={() => checkoutMutation.mutate()} onReactivate={() => reactivateMutation.mutate()} onRetryPayment={() => checkoutMutation.mutate()} paymentMethod={defaultPaymentMethod} subscription={subscription} />
         </TabsContent>
-        <TabsContent className="mt-4" value="invoices">
+        <TabsContent className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-bottom-1 data-[state=active]:duration-300" value="invoices">
           <InvoicesTab invoices={invoicesQuery.data ?? []} isLoading={invoicesQuery.isLoading} onPayNow={() => checkoutMutation.mutate()} onSelectInvoice={setSelectedInvoiceId} />
         </TabsContent>
       </Tabs>
@@ -295,9 +313,13 @@ function CurrentSubscriptionTab({ canCancel, canManagePayment, canReactivate, cu
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
       <main className="space-y-4">
         <StatusBanner subscription={subscription} />
-        <Card className="border border-slate-200 bg-white/86 p-5 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.04]">
+        <Card className="bg-white/86 p-5 shadow-sm dark:bg-white/[0.04]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Current subscription</p><h2 className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">{currentPlan?.publicName ?? "Selected plan"}</h2><div className="mt-2 flex flex-wrap gap-2"><StatusPill tone={meta.tone}>{meta.label}</StatusPill><Badge variant="outline">{billingCycleLabel(subscription.billingCycle)}</Badge></div></div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Current subscription</p>
+            <h2 className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">{currentPlan?.publicName ?? "Selected plan"}</h2>
+            <div className="mt-2 flex flex-wrap gap-2"><StatusPill tone={meta.tone}>{meta.label}</StatusPill><Badge variant="outline">{billingCycleLabel(subscription.billingCycle)}</Badge></div>
+            </div>
             <div className="flex flex-wrap gap-2"><Button onClick={onChangePlan} size="sm" variant="outline">Change Plan</Button>{subscription.status === "PAST_DUE" || subscription.status === "INCOMPLETE" ? <Button disabled={!canManagePayment} onClick={onRetryPayment} size="sm">Retry Payment</Button> : null}{subscription.status === "SUSPENDED" || subscription.status === "CANCELLED" || subscription.cancelAtPeriodEnd ? <Button disabled={!canReactivate} onClick={onReactivate} size="sm"><RotateCcw size={14} /> Keep Subscription</Button> : null}</div>
           </div>
           <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3"><Fact label="Current period" value={dateRange(subscription.currentBillingPeriodStart, subscription.currentBillingPeriodEnd)} /><Fact label="Renews on" value={formatDate(subscription.nextBillingDate)} /><Fact label="Next payment" value={formatMinorMoney(nextAmount, subscription.currency)} /><Fact label="Trial ends" value={formatDate(subscription.trialEnd)} /><Fact label="Grace period ends" value={formatDate(subscription.gracePeriodEnd)} /><Fact label="Cancellation effective" value={formatDate(subscription.cancellationEffectiveAt)} /></div>
