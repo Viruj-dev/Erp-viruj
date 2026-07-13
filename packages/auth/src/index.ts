@@ -33,6 +33,11 @@ export const erpStatements = {
   audit: ["read"] as const,
   appointment: ["read", "update", "manage"] as const,
   billing: ["read", "manage"] as const,
+  billingInvoices: ["read", "download"] as const,
+  billingPaymentMethods: ["read", "manage"] as const,
+  billingProfile: ["read", "update"] as const,
+  billingRefunds: ["read"] as const,
+  billingTransactions: ["read"] as const,
   community: ["read", "manage"] as const,
   consultation: ["read", "create", "update", "manage"] as const,
   doctorDirectory: ["read", "manage"] as const,
@@ -51,6 +56,7 @@ export const erpStatements = {
   prescription: ["read", "create", "manage"] as const,
   project: ["read", "create", "update", "delete"] as const,
   schedule: ["read", "manage"] as const,
+  subscription: ["read", "change_plan", "cancel", "reactivate"] as const,
 } as const;
 
 const accessControl = createAccessControl(erpStatements);
@@ -60,6 +66,12 @@ export const organizationRoles = {
     audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
+    billingInvoices: ["read", "download"],
+    billingPaymentMethods: ["read", "manage"],
+    billingProfile: ["read", "update"],
+    billingRefunds: ["read"],
+    billingTransactions: ["read"],
+    subscription: ["read", "change_plan", "cancel", "reactivate"],
     community: ["read", "manage"],
     consultation: ["read", "create", "update", "manage"],
     doctorDirectory: ["read", "manage"],
@@ -76,6 +88,12 @@ export const organizationRoles = {
     audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
+    billingInvoices: ["read", "download"],
+    billingPaymentMethods: ["read", "manage"],
+    billingProfile: ["read", "update"],
+    billingRefunds: ["read"],
+    billingTransactions: ["read"],
+    subscription: ["read", "change_plan", "cancel", "reactivate"],
     community: ["read", "manage"],
     consultation: ["read", "create", "update", "manage"],
     doctorDirectory: ["read", "manage"],
@@ -92,6 +110,12 @@ export const organizationRoles = {
     audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
+    billingInvoices: ["read", "download"],
+    billingPaymentMethods: ["read", "manage"],
+    billingProfile: ["read", "update"],
+    billingRefunds: ["read"],
+    billingTransactions: ["read"],
+    subscription: ["read", "change_plan", "cancel", "reactivate"],
     community: ["read", "manage"],
     consultation: ["read", "create", "update", "manage"],
     doctorDirectory: ["read", "manage"],
@@ -108,6 +132,12 @@ export const organizationRoles = {
     audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
+    billingInvoices: ["read", "download"],
+    billingPaymentMethods: ["read", "manage"],
+    billingProfile: ["read", "update"],
+    billingRefunds: ["read"],
+    billingTransactions: ["read"],
+    subscription: ["read", "change_plan", "cancel", "reactivate"],
     community: ["read", "manage"],
     consultation: ["read", "create", "update", "manage"],
     doctorDirectory: ["read", "manage"],
@@ -124,6 +154,12 @@ export const organizationRoles = {
     audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
+    billingInvoices: ["read", "download"],
+    billingPaymentMethods: ["read", "manage"],
+    billingProfile: ["read", "update"],
+    billingRefunds: ["read"],
+    billingTransactions: ["read"],
+    subscription: ["read", "change_plan", "cancel", "reactivate"],
     community: ["read", "manage"],
     consultation: ["read", "create", "update"],
     doctorDirectory: ["read", "manage"],
@@ -186,6 +222,12 @@ export const organizationRoles = {
     audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
+    billingInvoices: ["read", "download"],
+    billingPaymentMethods: ["read", "manage"],
+    billingProfile: ["read", "update"],
+    billingRefunds: ["read"],
+    billingTransactions: ["read"],
+    subscription: ["read", "change_plan", "cancel", "reactivate"],
     community: ["read", "manage"],
     consultation: ["read", "create", "update", "manage"],
     doctorDirectory: ["read", "manage"],
@@ -216,6 +258,12 @@ export const organizationRoles = {
     audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
+    billingInvoices: ["read", "download"],
+    billingPaymentMethods: ["read", "manage"],
+    billingProfile: ["read", "update"],
+    billingRefunds: ["read"],
+    billingTransactions: ["read"],
+    subscription: ["read", "change_plan", "cancel", "reactivate"],
     community: ["read", "manage"],
     consultation: ["read", "create", "update", "manage"],
     doctorDirectory: ["read", "manage"],
@@ -230,6 +278,12 @@ export const organizationRoles = {
   }),
   billing: accessControl.newRole({
     billing: ["read", "manage"],
+    billingInvoices: ["read", "download"],
+    billingPaymentMethods: ["read", "manage"],
+    billingProfile: ["read", "update"],
+    billingRefunds: ["read"],
+    billingTransactions: ["read"],
+    subscription: ["read", "change_plan", "cancel", "reactivate"],
     organization: ["read"],
     project: ["read"],
   }),
@@ -256,6 +310,12 @@ export const organizationRoles = {
     audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
+    billingInvoices: ["read", "download"],
+    billingPaymentMethods: ["read", "manage"],
+    billingProfile: ["read", "update"],
+    billingRefunds: ["read"],
+    billingTransactions: ["read"],
+    subscription: ["read", "change_plan", "cancel", "reactivate"],
     community: ["read", "manage"],
     consultation: ["read", "create", "update"],
     doctorDirectory: ["read", "manage"],
@@ -271,6 +331,12 @@ export const organizationRoles = {
     audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
+    billingInvoices: ["read", "download"],
+    billingPaymentMethods: ["read", "manage"],
+    billingProfile: ["read", "update"],
+    billingRefunds: ["read"],
+    billingTransactions: ["read"],
+    subscription: ["read", "change_plan", "cancel", "reactivate"],
     community: ["read", "manage"],
     consultation: ["read", "create", "update", "manage"],
     doctorDirectory: ["read", "manage"],
@@ -297,10 +363,32 @@ export const organizationRoles = {
 } as const;
 
 export type ErpPermissionRequest = Partial<{
-  [Key in keyof typeof erpStatements]: Array<
+  [Key in keyof typeof erpStatements]: ReadonlyArray<
     (typeof erpStatements)[Key][number]
   >;
 }>;
+
+export const subscriptionBillingPermissionChecks = {
+  "subscription.read": { subscription: ["read"] },
+  "subscription.change_plan": { subscription: ["change_plan"] },
+  "subscription.cancel": { subscription: ["cancel"] },
+  "subscription.reactivate": { subscription: ["reactivate"] },
+  "billing.profile.read": { billingProfile: ["read"] },
+  "billing.profile.update": { billingProfile: ["update"] },
+  "billing.invoices.read": { billingInvoices: ["read"] },
+  "billing.invoices.download": { billingInvoices: ["download"] },
+  "billing.transactions.read": { billingTransactions: ["read"] },
+  "billing.payment_methods.read": { billingPaymentMethods: ["read"] },
+  "billing.payment_methods.manage": { billingPaymentMethods: ["manage"] },
+  "billing.refunds.read": { billingRefunds: ["read"] },
+} as const satisfies Record<string, ErpPermissionRequest>;
+
+export type SubscriptionBillingPermissionName =
+  keyof typeof subscriptionBillingPermissionChecks;
+
+export const subscriptionBillingPermissionNames = Object.keys(
+  subscriptionBillingPermissionChecks
+) as SubscriptionBillingPermissionName[];
 
 const organizationTypeSchema = z.enum(schema.organizationTypes);
 const trustedOrigins = buildTrustedOrigins();
@@ -365,6 +453,7 @@ const buildSessionOrganizationContext = (
       createdAt: membership.createdAt,
       id: membership.id,
       organizationId: membership.organizationId,
+      permissions: getOrganizationPermissions(membership.role),
       role: membership.role,
       userId: membership.userId,
     },
@@ -403,6 +492,11 @@ export const hasOrganizationPermission = (
 
   return authorize(permissions).success;
 };
+
+export const getOrganizationPermissions = (role: string) =>
+  subscriptionBillingPermissionNames.filter((permission) =>
+    hasOrganizationPermission(role, subscriptionBillingPermissionChecks[permission])
+  );
 
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,

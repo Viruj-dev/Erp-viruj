@@ -39,6 +39,7 @@ export const dashboardPageOptions = [
   "community",
   "billing",
   "pricing",
+  "subscription",
   "settings",
   "settings-alert-rules",
   "settings-audit-logs",
@@ -112,6 +113,7 @@ export const allowedDashboardPagesByRole: Record<
     "community",
     "billing",
     "pricing",
+  "subscription",
     "settings",
     "settings-alert-rules",
     "settings-audit-logs",
@@ -144,6 +146,7 @@ export const allowedDashboardPagesByRole: Record<
     "community",
     "billing",
     "pricing",
+  "subscription",
     "settings",
     "settings-alert-rules",
     "settings-audit-logs",
@@ -224,6 +227,7 @@ export const allowedDashboardPagesByRole: Record<
     "community",
     "billing",
     "pricing",
+  "subscription",
     "settings",
     "analytics",
     "activity-logs",
@@ -293,6 +297,7 @@ export const allowedDashboardPagesByRole: Record<
     "community",
     "billing",
     "pricing",
+  "subscription",
     "settings",
     "settings-alert-rules",
     "settings-audit-logs",
@@ -325,6 +330,7 @@ export const allowedDashboardPagesByRole: Record<
     "community",
     "billing",
     "pricing",
+  "subscription",
     "settings",
     "settings-alert-rules",
     "settings-audit-logs",
@@ -347,6 +353,7 @@ export const allowedDashboardPagesByRole: Record<
     "finance",
     "billing",
     "pricing",
+  "subscription",
     "reports",
     "settings",
     "profile",
@@ -388,6 +395,7 @@ export const allowedDashboardPagesByRole: Record<
     "community",
     "billing",
     "pricing",
+  "subscription",
     "settings",
     "settings-alert-rules",
     "settings-audit-logs",
@@ -420,6 +428,7 @@ export const allowedDashboardPagesByRole: Record<
     "community",
     "billing",
     "pricing",
+  "subscription",
     "settings",
     "settings-alert-rules",
     "settings-audit-logs",
@@ -553,7 +562,8 @@ export function normalizeDashboardModule(value: string): DashboardPage {
     case "billing":
       return "billing";
     case "pricing":
-      return "pricing";
+    case "subscription":
+      return "subscription";
     default:
       return isDashboardPage(value) ? value : "dashboard";
   }

@@ -26,6 +26,7 @@ export type ErpDemoPage =
   | "community"
   | "billing"
   | "pricing"
+  | "subscription"
   | "settings"
   | "settings-alert-rules"
   | "settings-audit-logs"

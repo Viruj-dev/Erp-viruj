@@ -92,7 +92,7 @@ const clinicProfileOptions = [
 ] as const;
 
 const operationsItems = [
-  { id: "pricing", label: "Pricing", icon: BadgeIndianRupee },
+  { id: "subscription", label: "Plans & Subscription", icon: BadgeIndianRupee },
 ] as const;
 
 const appointmentOptions = [

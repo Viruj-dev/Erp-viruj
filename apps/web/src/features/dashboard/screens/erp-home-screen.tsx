@@ -519,7 +519,8 @@ function PageContent({
     case "billing":
       return <ErpDemoBilling />;
     case "pricing":
-      return <PricingPage />;
+    case "subscription":
+      return <PricingPage organizationId={organizationId} organizationName={organizationName} />;
     case "settings":
       return <ErpDemoSettings organizationId={organizationId} section="profile" />;
     case "settings-alert-rules":
