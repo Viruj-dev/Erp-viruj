@@ -321,7 +321,7 @@ export function ErpDemoSidebar({
             currentPage={currentPage}
             isCollapsed={isCollapsed}
             items={operationsItems}
-            label="Operations"
+            label="Payments"
             onPageChange={onPageChange}
             theme={workspaceTheme}
           />

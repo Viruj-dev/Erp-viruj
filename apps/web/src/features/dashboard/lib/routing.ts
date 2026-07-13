@@ -59,6 +59,14 @@ export const dashboardPageOptions = [
 
 export type DashboardPage = (typeof dashboardPageOptions)[number];
 
+export const subscriptionReadPermission = "subscription.read";
+
+export function canAccessSubscriptionPage(
+  permissions?: readonly string[] | null
+) {
+  return permissions?.includes(subscriptionReadPermission) ?? false;
+}
+
 export const organizationTypeLabels: Record<DashboardOrganizationType, string> =
   {
     clinic: "Clinic",
@@ -570,15 +578,16 @@ export function normalizeDashboardModule(value: string): DashboardPage {
 }
 
 export function getAllowedDashboardPages(
-  role?: string | null
+  role?: string | null,
+  permissions?: readonly string[] | null
 ): DashboardPage[] {
   const fallbackRole: OrganizationMemberRole = "OWNER";
-
-  return (
+  const pages =
     allowedDashboardPagesByRole[
       (role as OrganizationMemberRole | undefined) ?? fallbackRole
-    ] ?? allowedDashboardPagesByRole[fallbackRole]
-  );
+    ] ?? allowedDashboardPagesByRole[fallbackRole];
+
+  return filterSubscriptionPage(pages, permissions);
 }
 
 export function getDefaultDashboardPage(role?: string | null): DashboardPage {
@@ -625,13 +634,25 @@ export function buildTenantDashboardPath(
 
 export function resolveAccessibleDashboardPage(
   requestedPage: DashboardPage,
-  role?: string | null
+  role?: string | null,
+  permissions?: readonly string[] | null
 ) {
-  const allowedPages = getAllowedDashboardPages(role);
+  const allowedPages = getAllowedDashboardPages(role, permissions);
 
   return allowedPages.includes(requestedPage)
     ? requestedPage
     : getDefaultDashboardPage(role);
+}
+
+function filterSubscriptionPage(
+  pages: readonly DashboardPage[],
+  permissions?: readonly string[] | null
+): DashboardPage[] {
+  if (canAccessSubscriptionPage(permissions)) {
+    return [...pages];
+  }
+
+  return pages.filter((page) => page !== "subscription");
 }
 
 function getAppointmentRouteSegment(page: DashboardPage) {

@@ -20,6 +20,18 @@ const subscriptionBillingPermissionSet = new Set<string>(
   subscriptionBillingPermissionNames
 );
 
+const defaultSubscriptionBillingRoles = new Set([
+  "OWNER",
+  "CLINIC_OWNER",
+  "ADMIN",
+  "CLINIC_ADMIN",
+  "MANAGER",
+  "ORG_ADMIN",
+  "owner",
+  "admin",
+  "billing",
+  "manager",
+]);
 export function hasBillingPermission(
   permissions: readonly string[] | null | undefined,
   permission: BillingPermission
@@ -34,15 +46,24 @@ export function isCanonicalBillingPermission(
 }
 
 export function getBillingPermissionsFromMember(member: unknown) {
+  if (!member || typeof member !== "object") {
+    return [];
+  }
+
+  if ("permissions" in member) {
+    return Array.isArray(member.permissions)
+      ? member.permissions.filter(
+          (permission): permission is string => typeof permission === "string"
+        )
+      : [];
+  }
+
   if (
-    member &&
-    typeof member === "object" &&
-    "permissions" in member &&
-    Array.isArray(member.permissions)
+    "role" in member &&
+    typeof member.role === "string" &&
+    defaultSubscriptionBillingRoles.has(member.role)
   ) {
-    return member.permissions.filter(
-      (permission): permission is string => typeof permission === "string"
-    );
+    return Array.from(subscriptionBillingPermissionNames);
   }
 
   return [];

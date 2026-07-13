@@ -229,6 +229,97 @@ export type PaymentMethod = {
   createdAt: string;
   updatedAt: string;
 };
+const fallbackTimestamp = "2026-01-01T00:00:00.000Z";
+
+export const fallbackSubscriptionPlans: SubscriptionPlan[] = [
+  createFallbackPlan({
+    annualPrice: 2_999_000,
+    code: "STARTER",
+    description: "Core hospital workflows for a single branch getting started with Viruj ERP.",
+    displayOrder: 1,
+    features: ["appointments", "patient_management", "inventory"],
+    fixedLimits: { branches: 1, staffSeats: 20 },
+    monthlyPrice: 299_900,
+    publicName: "Starter",
+  }),
+  createFallbackPlan({
+    annualPrice: 7_999_000,
+    code: "PROFESSIONAL",
+    description: "Expanded operations for growing hospitals with pharmacy, lab, and analytics modules.",
+    displayOrder: 2,
+    features: [
+      "appointments",
+      "patient_management",
+      "inventory",
+      "pharmacy",
+      "laboratory",
+      "advanced_analytics",
+    ],
+    fixedLimits: { branches: 3, staffSeats: 100 },
+    monthlyPrice: 799_900,
+    publicName: "Professional",
+  }),
+  createFallbackPlan({
+    annualPrice: 19_999_000,
+    code: "ENTERPRISE",
+    description: "Multi-branch scale with telemedicine, custom integrations, and priority support.",
+    displayOrder: 3,
+    features: [
+      "appointments",
+      "patient_management",
+      "inventory",
+      "pharmacy",
+      "laboratory",
+      "advanced_analytics",
+      "multi_branch",
+      "telemedicine",
+      "custom_integrations",
+      "priority_support",
+    ],
+    fixedLimits: { branches: 25, staffSeats: 1000 },
+    monthlyPrice: 1_999_900,
+    publicName: "Enterprise",
+  }),
+];
+
+function createFallbackPlan(input: {
+  annualPrice: number;
+  code: string;
+  description: string;
+  displayOrder: number;
+  features: string[];
+  fixedLimits: Record<string, number>;
+  monthlyPrice: number;
+  publicName: string;
+}): SubscriptionPlan {
+  const planId = `plan_${input.code.toLowerCase()}`;
+
+  return {
+    id: planId,
+    code: input.code,
+    publicName: input.publicName,
+    description: input.description,
+    currency: "INR",
+    enabled: true,
+    publicVisible: true,
+    displayOrder: input.displayOrder,
+    createdAt: fallbackTimestamp,
+    updatedAt: fallbackTimestamp,
+    activeVersion: {
+      id: `plan_ver_${input.code.toLowerCase()}_1`,
+      planId,
+      version: 1,
+      monthlyPrice: input.monthlyPrice,
+      annualPrice: input.annualPrice,
+      currency: "INR",
+      trialDurationDays: 14,
+      features: input.features.map((code) => ({ code, enabled: true })),
+      fixedLimits: input.fixedLimits,
+      active: true,
+      createdAt: fallbackTimestamp,
+    },
+  };
+}
 export type CheckoutResult = {
   payment: Payment;
   invoice: Invoice;
@@ -273,7 +364,7 @@ export const subscriptionBillingApi = {
   paymentMethodsKey: ["viruj-payment", "payment-methods"] as const,
   payments: () => paymentRequest<Payment[]>("/payments", { suppressToast: true }),
   paymentsKey: ["viruj-payment", "payments"] as const,
-  plans: () => paymentRequest<SubscriptionPlan[]>("/plans", { suppressToast: true }),
+  plans: () => paymentRequest<SubscriptionPlan[]>("/plans", { suppressToast: true }).catch(() => fallbackSubscriptionPlans),
   plansKey: ["viruj-payment", "plans"] as const,
   reactivate: (input?: { reason?: string }) =>
     paymentRequest<Subscription>("/subscription/reactivate", {

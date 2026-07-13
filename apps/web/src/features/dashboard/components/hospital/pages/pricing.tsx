@@ -41,8 +41,12 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const sessionState = authClient.useSession();
   const activeMemberState = authClient.useActiveMember();
-  const role = activeMemberState.data?.role;
+  const sessionMember = getSessionMember(sessionState.data);
+  const billingPermissions = getBillingPermissionsFromMember(
+    sessionMember ?? activeMemberState.data
+  );
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("MONTHLY");
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
@@ -429,6 +433,19 @@ function loadRazorpayScript() {
   });
 }
 
+function getSessionMember(session: unknown) {
+  if (
+    session &&
+    typeof session === "object" &&
+    "activeMember" in session &&
+    session.activeMember &&
+    typeof session.activeMember === "object"
+  ) {
+    return session.activeMember as { permissions?: string[]; role?: string };
+  }
+
+  return null;
+}
 function newestInvoice(invoices: Invoice[]) { return [...invoices].sort((a, b) => Date.parse(b.issueDate) - Date.parse(a.issueDate))[0] ?? null; }
 function newestPayment(payments: Array<{ initiatedAt: string; status?: string }>) { return [...payments].sort((a, b) => Date.parse(b.initiatedAt) - Date.parse(a.initiatedAt))[0] ?? null; }
 function formatDate(value?: string | null) { if (!value) return null; return new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(value)); }

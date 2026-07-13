@@ -32,6 +32,7 @@ import {
   resolveAccessibleDashboardPage,
 } from "@/features/dashboard/lib/routing";
 import { LoadingScreen } from "@/features/shell/components/loading-screen";
+import { getBillingPermissionsFromMember } from "@/features/subscription/utils/subscription-access";
 import {
   activateOrganization,
   authClient,
@@ -129,10 +130,15 @@ export function ErpHomeScreen({
       ? activeOrganization.organizationType
       : null;
   const activeMemberRole = activeMember?.role;
-  const allowedPages = getAllowedDashboardPages(activeMemberRole);
+  const activeMemberPermissions = getBillingPermissionsFromMember(activeMember);
+  const allowedPages = getAllowedDashboardPages(
+    activeMemberRole,
+    activeMemberPermissions
+  );
   const resolvedPage = resolveAccessibleDashboardPage(
     currentPage,
-    activeMemberRole
+    activeMemberRole,
+    activeMemberPermissions
   );
   const organizationLabel = activeOrganizationType
     ? organizationTypeLabels[activeOrganizationType]
@@ -661,6 +667,7 @@ function getSessionMember(session: unknown) {
     typeof session.activeMember === "object"
   ) {
     return session.activeMember as {
+      permissions?: string[];
       role?: string;
     };
   }
