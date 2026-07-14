@@ -200,8 +200,9 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
     >
       {verification.state !== "idle" ? <PaymentVerificationBanner state={verification.state} /> : null}
       <Tabs value={activeTab} onValueChange={(value) => setTab(value as SubscriptionTab)}>
-        <TabsList className="relative grid h-11 w-full grid-cols-3 overflow-hidden rounded-xl bg-slate-100 p-1 dark:bg-white/[0.06] sm:w-[31rem]">
-          <span
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <TabsList className="relative grid h-11 w-full grid-cols-3 overflow-hidden rounded-xl bg-slate-100 p-1 dark:bg-white/[0.06] md:w-[31rem]">
+            <span
             aria-hidden="true"
             className="absolute left-1 top-1 bottom-1 rounded-lg bg-white shadow-sm ring-1 ring-slate-200 transition-transform duration-300 ease-out dark:bg-white/[0.12] dark:ring-white/[0.08]"
             style={{
@@ -218,9 +219,17 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
               {tabLabels[tab]}
             </TabsTrigger>
           ))}
-        </TabsList>
+          </TabsList>
+          <div className="grid h-11 grid-cols-2 rounded-xl bg-slate-100 p-1 dark:bg-white/[0.06] md:w-48">
+            {(["MONTHLY", "ANNUAL"] as BillingCycle[]).map((cycle) => (
+              <button className={cn("rounded-lg px-4 py-2 text-sm font-semibold transition", billingCycle === cycle ? "bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950" : "text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white")} key={cycle} onClick={() => setBillingCycle(cycle)} type="button">
+                {billingCycleLabel(cycle)}
+              </button>
+            ))}
+          </div>
+        </div>
         <TabsContent className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-bottom-1 data-[state=active]:duration-300" value="plans">
-          <PlansTab billingCycle={billingCycle} canChangePlan={canChangePlan} currentPlan={currentPlan} isLoading={plansQuery.isLoading} onBillingCycleChange={setBillingCycle} onSelectPlan={setSelectedPlan} onStartTrial={(plan) => startTrialMutation.mutate(plan)} plans={plans} subscription={subscription} trialPending={startTrialMutation.isPending} />
+          <PlansTab billingCycle={billingCycle} canChangePlan={canChangePlan} currentPlan={currentPlan} isLoading={plansQuery.isLoading} onSelectPlan={setSelectedPlan} onStartTrial={(plan) => startTrialMutation.mutate(plan)} plans={plans} subscription={subscription} trialPending={startTrialMutation.isPending} />
         </TabsContent>
         <TabsContent className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-bottom-1 data-[state=active]:duration-300" value="current">
           <CurrentSubscriptionTab canCancel={canCancel} canManagePayment={canManagePayment} canReactivate={canReactivate} currentPlan={currentPlan} invoice={latestInvoice} isLoading={subscriptionQuery.isLoading} onCancel={() => setCancelOpen(true)} onChangePlan={() => setTab("plans")} onManagePayment={() => checkoutMutation.mutate()} onReactivate={() => reactivateMutation.mutate()} onRetryPayment={() => checkoutMutation.mutate()} paymentMethod={defaultPaymentMethod} subscription={subscription} />
@@ -238,24 +247,12 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
   );
 }
 
-function PlansTab({ billingCycle, canChangePlan, currentPlan, isLoading, onBillingCycleChange, onSelectPlan, onStartTrial, plans, subscription, trialPending }: { billingCycle: BillingCycle; canChangePlan: boolean; currentPlan: SubscriptionPlan | null; isLoading: boolean; onBillingCycleChange: (cycle: BillingCycle) => void; onSelectPlan: (plan: SubscriptionPlan) => void; onStartTrial: (plan: SubscriptionPlan) => void; plans: SubscriptionPlan[]; subscription: Subscription | null; trialPending: boolean }) {
+function PlansTab({ billingCycle, canChangePlan, currentPlan, isLoading, onSelectPlan, onStartTrial, plans, subscription, trialPending }: { billingCycle: BillingCycle; canChangePlan: boolean; currentPlan: SubscriptionPlan | null; isLoading: boolean; onSelectPlan: (plan: SubscriptionPlan) => void; onStartTrial: (plan: SubscriptionPlan) => void; plans: SubscriptionPlan[]; subscription: Subscription | null; trialPending: boolean }) {
   if (isLoading) return <PlansSkeleton />;
   if (!plans.length) return <EmptyState icon={<Sparkles size={20} />} title="No active plans" description="No public subscription plans are available from the billing service." />;
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/80 p-4 dark:border-white/[0.08] dark:bg-white/[0.04] sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-slate-950 dark:text-white">Choose a fixed-price plan</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Prices and entitlements are loaded from the payment backend.</p>
-        </div>
-        <div className="grid grid-cols-2 rounded-xl bg-slate-100 p-1 dark:bg-white/[0.06]">
-          {(["MONTHLY", "ANNUAL"] as BillingCycle[]).map((cycle) => (
-            <button className={cn("rounded-lg px-4 py-2 text-sm font-semibold transition", billingCycle === cycle ? "bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950" : "text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white")} key={cycle} onClick={() => onBillingCycleChange(cycle)} type="button">
-              {billingCycleLabel(cycle)}
-            </button>
-          ))}
-        </div>
-      </div>
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {plans.map((plan) => <PlanCard billingCycle={billingCycle} canChangePlan={canChangePlan} currentPlan={currentPlan} key={plan.id} onSelectPlan={onSelectPlan} onStartTrial={onStartTrial} plan={plan} subscription={subscription} trialPending={trialPending} />)}
       </div>
