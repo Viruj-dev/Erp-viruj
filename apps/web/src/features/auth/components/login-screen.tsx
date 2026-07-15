@@ -214,24 +214,26 @@ export function ErpDemoLogin({
   };
 
   return (
-    <div className="min-h-screen bg-[#090909] p-3 text-slate-950 md:p-5">
-      <div className="grid min-h-[calc(100vh-1.5rem)] overflow-hidden rounded-[1.75rem] bg-[#f3f4f1] shadow-[0_28px_100px_rgba(0,0,0,0.35)] lg:min-h-[calc(100vh-2.5rem)] lg:grid-cols-[0.42fr_0.58fr]">
-        <section className="relative flex min-h-[760px] flex-col bg-[#f7f7f3] px-6 py-6 md:px-10">
+    <div className="min-h-screen bg-[#eef0ea] p-3 text-slate-950 transition-colors dark:bg-[#05070a] dark:text-slate-100 md:p-5">
+      <div className="grid min-h-[calc(100vh-1.5rem)] overflow-hidden rounded-[1.75rem] bg-[#f3f4f1] shadow-[0_28px_100px_rgba(15,23,42,0.16)] transition-colors dark:bg-[#10151b] dark:shadow-[0_28px_100px_rgba(0,0,0,0.55)] dark:ring-1 dark:ring-white/10 lg:min-h-[calc(100vh-2.5rem)] lg:grid-cols-[0.42fr_0.58fr]">
+        <section className="relative flex min-h-[760px] flex-col bg-[#f7f7f3] px-6 py-6 transition-colors dark:bg-[#0f141a] md:px-10">
           <header className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-slate-950 text-white shadow-sm">
+              <span className="flex size-9 items-center justify-center rounded-xl bg-slate-950 text-white shadow-sm dark:bg-white dark:text-slate-950">
                 <ShieldCheck size={19} />
               </span>
-              <span className="font-headline text-sm font-bold tracking-tight text-slate-950">
+              <span className="font-headline text-sm font-bold tracking-tight text-slate-950 dark:text-white">
                 Viruj ERP
               </span>
             </div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
               <span className="hidden sm:inline">
-                {step === "login" ? "Don't have an account?" : "Already enrolled?"}
+                {step === "login"
+                  ? "Don't have an account?"
+                  : "Already enrolled?"}
               </span>
               <button
-                className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-100 dark:hover:bg-white/[0.10]"
                 onClick={() => {
                   clearMessages();
                   setStep(step === "login" ? "onboarding" : "login");
@@ -256,18 +258,19 @@ export function ErpDemoLogin({
                     transition={{ duration: 0.24, ease: "easeOut" }}
                   >
                     <div className="text-center">
-                      <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/70">
-                        <ShieldCheck size={30} className="text-slate-900" />
+                      <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/70 dark:bg-white/[0.06] dark:shadow-[0_18px_50px_rgba(0,0,0,0.34)] dark:ring-white/10">
+                        <ShieldCheck
+                          size={30}
+                          className="text-slate-900 dark:text-cyan-200"
+                        />
                       </div>
-                      <h1 className="mt-7 font-headline text-2xl font-bold tracking-tight text-slate-950">
+                      <h1 className="mt-7 font-headline text-2xl font-bold tracking-tight text-slate-950 dark:text-white">
                         Login to your ERP account
                       </h1>
-                      <p className="mt-2 text-sm font-medium text-slate-500">
+                      <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
                         Enter your healthcare workspace details to continue.
                       </p>
                     </div>
-
-
 
                     <form
                       className="space-y-4"
@@ -279,7 +282,10 @@ export function ErpDemoLogin({
                       <FormField
                         label="Email Address"
                         onChange={(value) =>
-                          setLoginForm((current) => ({ ...current, email: value }))
+                          setLoginForm((current) => ({
+                            ...current,
+                            email: value,
+                          }))
                         }
                         placeholder="admin@yashodahospital.co"
                         required
@@ -299,12 +305,18 @@ export function ErpDemoLogin({
                         type="password"
                         value={loginForm.password}
                       />
-                      <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+                      <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
                         <label className="inline-flex items-center gap-2">
-                          <input className="size-4 rounded border-slate-300" type="checkbox" />
+                          <input
+                            className="size-4 rounded border-slate-300 dark:border-white/20 dark:bg-[#161c24]"
+                            type="checkbox"
+                          />
                           Keep me logged in
                         </label>
-                        <button className="underline underline-offset-4" type="button">
+                        <button
+                          className="underline underline-offset-4"
+                          type="button"
+                        >
                           Forgot password?
                         </button>
                       </div>
@@ -313,7 +325,7 @@ export function ErpDemoLogin({
                         successMessage={successMessage}
                       />
                       <button
-                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white shadow-[0_18px_40px_rgba(15,23,42,0.24)] transition hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white shadow-[0_18px_40px_rgba(15,23,42,0.24)] transition hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:shadow-[0_18px_40px_rgba(34,211,238,0.12)] dark:hover:bg-cyan-50"
                         disabled={isPending}
                         type="submit"
                       >
@@ -323,7 +335,7 @@ export function ErpDemoLogin({
                     </form>
 
                     <button
-                      className="w-full text-center text-xs font-bold text-slate-500 transition hover:text-slate-950"
+                      className="w-full text-center text-xs font-bold text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
                       onClick={() => {
                         clearMessages();
                         setStep("invitation");
@@ -346,18 +358,19 @@ export function ErpDemoLogin({
                   >
                     <header className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-teal-700">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-teal-700 dark:text-cyan-300">
                           Healthcare ERP signup
                         </p>
-                        <h1 className="mt-2 font-headline text-2xl font-bold tracking-tight text-slate-950">
+                        <h1 className="mt-2 font-headline text-2xl font-bold tracking-tight text-slate-950 dark:text-white">
                           Register your care workspace
                         </h1>
-                        <p className="mt-2 text-sm font-medium text-slate-500">
-                          Create the owner account and provision your hospital, clinic, lab, or doctor workspace.
+                        <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+                          Create the owner account and provision your hospital,
+                          clinic, lab, or doctor workspace.
                         </p>
                       </div>
                       <button
-                        className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm transition hover:bg-slate-100 hover:text-slate-900"
+                        className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm transition hover:bg-slate-100 hover:text-slate-900 dark:bg-white/[0.06] dark:text-slate-400 dark:hover:bg-white/[0.10] dark:hover:text-white"
                         onClick={() => {
                           clearMessages();
                           setStep("login");
@@ -368,10 +381,15 @@ export function ErpDemoLogin({
                       </button>
                     </header>
 
-                    <div className="flex gap-3 rounded-2xl border border-teal-100 bg-teal-50 p-4">
-                      <Info className="mt-0.5 shrink-0 text-teal-700" size={18} />
-                      <p className="text-xs font-medium leading-5 text-teal-900">
-                        This creates an ERP owner account, provisions the organization, and activates your clinical operations dashboard.
+                    <div className="flex gap-3 rounded-2xl border border-teal-100 bg-teal-50 p-4 dark:border-cyan-400/15 dark:bg-cyan-400/10">
+                      <Info
+                        className="mt-0.5 shrink-0 text-teal-700 dark:text-cyan-300"
+                        size={18}
+                      />
+                      <p className="text-xs font-medium leading-5 text-teal-900 dark:text-cyan-100">
+                        This creates an ERP owner account, provisions the
+                        organization, and activates your clinical operations
+                        dashboard.
                       </p>
                     </div>
 
@@ -396,7 +414,9 @@ export function ErpDemoLogin({
                               ? "Optional practice name"
                               : "Yashoda Hospital"
                           }
-                          required={onboardingForm.organizationType !== "doctor"}
+                          required={
+                            onboardingForm.organizationType !== "doctor"
+                          }
                           type="text"
                           value={onboardingForm.organizationName}
                         />
@@ -458,17 +478,19 @@ export function ErpDemoLogin({
                         successMessage={successMessage}
                       />
                       <button
-                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white shadow-[0_18px_40px_rgba(15,23,42,0.24)] transition hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white shadow-[0_18px_40px_rgba(15,23,42,0.24)] transition hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:shadow-[0_18px_40px_rgba(34,211,238,0.12)] dark:hover:bg-cyan-50"
                         disabled={isPending}
                         type="submit"
                       >
-                        {isPending ? "Creating workspace..." : "Create healthcare ERP"}
+                        {isPending
+                          ? "Creating workspace..."
+                          : "Create healthcare ERP"}
                         <ArrowRight size={17} />
                       </button>
                     </form>
 
                     <button
-                      className="w-full text-center text-xs font-bold text-slate-500 transition hover:text-slate-950"
+                      className="w-full text-center text-xs font-bold text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
                       onClick={() => {
                         clearMessages();
                         setStep("invitation");
@@ -490,14 +512,15 @@ export function ErpDemoLogin({
                     transition={{ duration: 0.24, ease: "easeOut" }}
                   >
                     <header>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-teal-700">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-teal-700 dark:text-cyan-300">
                         Staff access
                       </p>
-                      <h1 className="mt-2 font-headline text-2xl font-bold tracking-tight text-slate-950">
+                      <h1 className="mt-2 font-headline text-2xl font-bold tracking-tight text-slate-950 dark:text-white">
                         Accept your invitation
                       </h1>
-                      <p className="mt-2 text-sm font-medium text-slate-500">
-                        Join an existing healthcare organization with the invitation ID from the Staff page.
+                      <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+                        Join an existing healthcare organization with the
+                        invitation ID from the Staff page.
                       </p>
                     </header>
 
@@ -566,7 +589,7 @@ export function ErpDemoLogin({
                         successMessage={successMessage}
                       />
                       <button
-                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white shadow-[0_18px_40px_rgba(15,23,42,0.24)] transition hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white shadow-[0_18px_40px_rgba(15,23,42,0.24)] transition hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:shadow-[0_18px_40px_rgba(34,211,238,0.12)] dark:hover:bg-cyan-50"
                         disabled={isPending}
                         type="submit"
                       >
@@ -576,7 +599,7 @@ export function ErpDemoLogin({
                     </form>
 
                     <button
-                      className="w-full text-center text-xs font-bold text-slate-500 transition hover:text-slate-950"
+                      className="w-full text-center text-xs font-bold text-slate-500 transition hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
                       onClick={() => {
                         clearMessages();
                         setStep("login");
@@ -591,40 +614,55 @@ export function ErpDemoLogin({
             </div>
           </div>
 
-          <footer className="flex items-center justify-between text-xs font-semibold text-slate-500">
+          <footer className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
             <span>(c) 2026 Viruj Health ERP</span>
             <span>ENG</span>
           </footer>
         </section>
 
-        <aside className="relative hidden overflow-hidden bg-[#e9ebe6] lg:block">
-          <div className="absolute inset-0 bg-[linear-gradient(#cfd6cc_1px,transparent_1px),linear-gradient(90deg,#cfd6cc_1px,transparent_1px)] bg-[size:48px_48px] opacity-55" />
-          <div className="absolute left-[14%] top-[18%] h-28 w-28 rounded-full border border-slate-300/70" />
-          <div className="absolute bottom-[22%] right-[18%] h-48 w-48 rounded-full border border-teal-900/10" />
+        <aside className="relative hidden overflow-hidden bg-[#e9ebe6] transition-colors dark:bg-[#090d12] lg:block">
+          <div className="absolute inset-0 bg-[linear-gradient(#cfd6cc_1px,transparent_1px),linear-gradient(90deg,#cfd6cc_1px,transparent_1px)] bg-[size:48px_48px] opacity-55 dark:bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] dark:opacity-70" />
+          <div className="absolute left-[14%] top-[18%] h-28 w-28 rounded-full border border-slate-300/70 dark:border-cyan-300/15" />
+          <div className="absolute bottom-[22%] right-[18%] h-48 w-48 rounded-full border border-teal-900/10 dark:border-cyan-300/10" />
           <div className="relative flex min-h-full flex-col justify-center px-16 py-14">
-            <div className="mb-10 flex size-14 items-center justify-center rounded-full bg-white shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
-              <ShieldCheck className="text-teal-800" size={25} />
+            <div className="mb-10 flex size-14 items-center justify-center rounded-full bg-white shadow-[0_18px_45px_rgba(15,23,42,0.12)] dark:bg-white/[0.08] dark:shadow-[0_18px_45px_rgba(0,0,0,0.34)]">
+              <ShieldCheck
+                className="text-teal-800 dark:text-cyan-200"
+                size={25}
+              />
             </div>
-            <blockquote className="max-w-2xl font-headline text-4xl font-bold leading-tight tracking-tight text-slate-950 xl:text-5xl">
-              The healthcare ERP system has unified our doctors, staff, appointments, and patient operations into one calm workspace.
+            <blockquote className="max-w-2xl font-headline text-4xl font-bold leading-tight tracking-tight text-slate-950 dark:text-white xl:text-5xl">
+              The healthcare ERP system has unified our doctors, staff,
+              appointments, and patient operations into one calm workspace.
             </blockquote>
             <div className="mt-8">
-              <p className="text-sm font-bold text-slate-950">Dr. Asha Mehta</p>
-              <p className="mt-1 text-sm font-semibold text-slate-500">Medical Director / Hospital Network</p>
+              <p className="text-sm font-bold text-slate-950 dark:text-white">
+                Dr. Asha Mehta
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400">
+                Medical Director / Hospital Network
+              </p>
             </div>
             <div className="mt-10 flex gap-1.5">
-              <span className="h-1.5 w-7 rounded-full bg-slate-950" />
-              <span className="size-1.5 rounded-full bg-teal-700" />
-              <span className="size-1.5 rounded-full bg-slate-300" />
+              <span className="h-1.5 w-7 rounded-full bg-slate-950 dark:bg-white" />
+              <span className="size-1.5 rounded-full bg-teal-700 dark:bg-cyan-300" />
+              <span className="size-1.5 rounded-full bg-slate-300 dark:bg-white/20" />
             </div>
             <div className="mt-14 grid max-w-xl grid-cols-2 gap-4">
               <FeaturePill
-                icon={<ShieldCheck className="text-teal-700" size={22} />}
+                icon={
+                  <ShieldCheck
+                    className="text-teal-700 dark:text-cyan-300"
+                    size={22}
+                  />
+                }
                 subtitle="Organization scoped access"
                 title="Secure roles"
               />
               <FeaturePill
-                icon={<Zap className="text-teal-700" size={22} />}
+                icon={
+                  <Zap className="text-teal-700 dark:text-cyan-300" size={22} />
+                }
                 subtitle="Fast clinical workflows"
                 title="Smooth ops"
               />
@@ -648,13 +686,17 @@ function FeaturePill({
   return (
     <motion.div
       animate={{ opacity: 1, scale: 1 }}
-      className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur"
+      className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur dark:border-white/10 dark:bg-white/[0.06] dark:shadow-[0_16px_40px_rgba(0,0,0,0.28)]"
       initial={{ opacity: 0, scale: 0.9 }}
     >
       {icon}
       <div>
-        <p className="text-sm font-bold text-slate-950">{title}</p>
-        <p className="text-xs font-semibold text-slate-500">{subtitle}</p>
+        <p className="text-sm font-bold text-slate-950 dark:text-white">
+          {title}
+        </p>
+        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+          {subtitle}
+        </p>
       </div>
     </motion.div>
   );
@@ -681,12 +723,12 @@ function FormField({
 
   return (
     <div className="space-y-1">
-      <label className="px-1 text-xs font-bold text-slate-800">
+      <label className="px-1 text-xs font-bold text-slate-800 dark:text-slate-200">
         {label}
       </label>
       <div className="relative">
         <input
-          className={`h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-slate-300 focus:ring-2 focus:ring-slate-200 ${
+          className={`h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-slate-300 focus:ring-2 focus:ring-slate-200 dark:border-white/10 dark:bg-[#161c24] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-400/40 dark:focus:ring-cyan-400/15 ${
             isPasswordField ? "pr-12" : ""
           }`}
           onChange={(event) => onChange(event.target.value)}
@@ -698,7 +740,7 @@ function FormField({
         {isPasswordField ? (
           <button
             aria-label={isPasswordVisible ? "Hide password" : "Show password"}
-            className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900"
+            className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-white/[0.08] dark:hover:text-white"
             onClick={() => setIsPasswordVisible((visible) => !visible)}
             type="button"
           >
@@ -726,11 +768,11 @@ function SelectField({
 }) {
   return (
     <div className="space-y-1">
-      <label className="px-1 text-xs font-bold text-slate-800">
+      <label className="px-1 text-xs font-bold text-slate-800 dark:text-slate-200">
         {label}
       </label>
       <select
-        className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
+        className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-200 dark:border-white/10 dark:bg-[#161c24] dark:text-white dark:focus:border-cyan-400/40 dark:focus:ring-cyan-400/15"
         onChange={(event) => onChange(event.target.value)}
         value={value}
       >
@@ -759,8 +801,8 @@ function StatusBlock({
     <div
       className={`rounded-xl border px-4 py-3 text-sm ${
         errorMessage
-          ? "border-rose-200 bg-rose-50 text-rose-700"
-          : "border-emerald-200 bg-emerald-50 text-emerald-700"
+          ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-400/20 dark:bg-rose-500/10 dark:text-rose-200"
+          : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-200"
       }`}
     >
       {errorMessage || successMessage}
@@ -782,13 +824,18 @@ function buildBootstrapOrganizationName(
 
   if (organizationType === "doctor") {
     const owner = ownerName.trim() || email.split("@")[0]?.trim();
-    return owner ? `${owner}'s Doctor Practice` : "Independent Doctor Workspace";
+    return owner
+      ? `${owner}'s Doctor Practice`
+      : "Independent Doctor Workspace";
   }
 
   return "Viruj Health Workspace";
 }
 
-function buildOrganizationSlug(name: string, organizationType: OrganizationType) {
+function buildOrganizationSlug(
+  name: string,
+  organizationType: OrganizationType
+) {
   const normalized = name
     .trim()
     .toLowerCase()

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import { AlertTriangle, ArrowRight, BadgeCheck, Check, CreditCard, Download, FileText, Loader2, RefreshCw, RotateCcw, ShieldCheck, Sparkles, X } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -199,9 +200,17 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
       title="Plans & Subscription"
     >
       {verification.state !== "idle" ? <PaymentVerificationBanner state={verification.state} /> : null}
+      <PaymentHero
+        activeTab={activeTab}
+        currentPlan={currentPlan}
+        invoice={latestInvoice}
+        paymentMethod={defaultPaymentMethod}
+        paymentStatus={latestPayment?.status}
+        subscription={subscription}
+      />
       <Tabs value={activeTab} onValueChange={(value) => setTab(value as SubscriptionTab)}>
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <TabsList className="relative grid h-11 w-full grid-cols-3 overflow-hidden rounded-xl bg-slate-100 p-1 dark:bg-white/[0.06] md:w-[31rem]">
+        <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white/70 p-2 shadow-sm backdrop-blur dark:border-white/[0.08] dark:bg-white/[0.04] md:flex-row md:items-center md:justify-between">
+          <TabsList className="relative grid h-11 w-full grid-cols-3 overflow-hidden rounded-xl bg-slate-100/80 p-1 dark:bg-white/[0.06] md:w-[31rem]">
             <span
             aria-hidden="true"
             className="absolute left-1 top-1 bottom-1 rounded-lg bg-white shadow-sm ring-1 ring-slate-200 transition-transform duration-300 ease-out dark:bg-white/[0.12] dark:ring-white/[0.08]"
@@ -220,7 +229,7 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
             </TabsTrigger>
           ))}
           </TabsList>
-          <div className="grid h-11 grid-cols-2 rounded-xl bg-slate-100 p-1 dark:bg-white/[0.06] md:w-48">
+          <div className="grid h-11 grid-cols-2 rounded-xl bg-slate-100/80 p-1 dark:bg-white/[0.06] md:w-48">
             {(["MONTHLY", "ANNUAL"] as BillingCycle[]).map((cycle) => (
               <button className={cn("rounded-lg px-4 py-2 text-sm font-semibold transition", billingCycle === cycle ? "bg-white text-slate-950 shadow-sm dark:bg-white dark:text-slate-950" : "text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white")} key={cycle} onClick={() => setBillingCycle(cycle)} type="button">
                 {billingCycleLabel(cycle)}
@@ -247,6 +256,22 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
   );
 }
 
+function PaymentHero({ activeTab, currentPlan, invoice,subscription }: { activeTab: SubscriptionTab; currentPlan: SubscriptionPlan | null; invoice: Invoice | null; paymentMethod: PaymentMethod | null; paymentStatus?: string; subscription: Subscription | null }) {
+  const status = subscription ? subscriptionStatusMeta[subscription.status].label : "No subscription";
+  const amount = invoice ? formatMinorMoney(invoice.amountDue, invoice.currency) : currentPlan ? formatMinorMoney(priceForCycle(currentPlan.activeVersion, subscription?.billingCycle ?? "MONTHLY"), currentPlan.currency) : "--";
+  const steps = ["Plan", "Payment", "Invoice"];
+  const activeStep = activeTab === "plans" ? 0 : activeTab === "current" ? 1 : 2;
+
+  return (
+<div>
+
+</div>
+  );
+}
+
+function HeroMetric({ label, value }: { label: string; value: string }) {
+  return <div className="rounded-xl border border-white/70 bg-white/62 p-3 shadow-sm backdrop-blur dark:border-white/[0.08] dark:bg-white/[0.04]"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{label}</p><p className="mt-2 truncate text-sm font-semibold text-slate-950 dark:text-white">{value}</p></div>;
+}
 function PlansTab({ billingCycle, canChangePlan, currentPlan, isLoading, onSelectPlan, onStartTrial, plans, subscription, trialPending }: { billingCycle: BillingCycle; canChangePlan: boolean; currentPlan: SubscriptionPlan | null; isLoading: boolean; onSelectPlan: (plan: SubscriptionPlan) => void; onStartTrial: (plan: SubscriptionPlan) => void; plans: SubscriptionPlan[]; subscription: Subscription | null; trialPending: boolean }) {
   if (isLoading) return <PlansSkeleton />;
   if (!plans.length) return <EmptyState icon={<Sparkles size={20} />} title="No active plans" description="No public subscription plans are available from the billing service." />;
@@ -254,13 +279,13 @@ function PlansTab({ billingCycle, canChangePlan, currentPlan, isLoading, onSelec
     <div className="space-y-5">
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {plans.map((plan) => <PlanCard billingCycle={billingCycle} canChangePlan={canChangePlan} currentPlan={currentPlan} key={plan.id} onSelectPlan={onSelectPlan} onStartTrial={onStartTrial} plan={plan} subscription={subscription} trialPending={trialPending} />)}
+        {plans.map((plan, index) => <PlanCard billingCycle={billingCycle} canChangePlan={canChangePlan} currentPlan={currentPlan} index={index} key={plan.id} onSelectPlan={onSelectPlan} onStartTrial={onStartTrial} plan={plan} subscription={subscription} trialPending={trialPending} />)}
       </div>
     </div>
   );
 }
 
-function PlanCard({ billingCycle, canChangePlan, currentPlan, onSelectPlan, onStartTrial, plan, subscription, trialPending }: { billingCycle: BillingCycle; canChangePlan: boolean; currentPlan: SubscriptionPlan | null; onSelectPlan: (plan: SubscriptionPlan) => void; onStartTrial: (plan: SubscriptionPlan) => void; plan: SubscriptionPlan; subscription: Subscription | null; trialPending: boolean }) {
+function PlanCard({ billingCycle, canChangePlan, currentPlan, index, onSelectPlan, onStartTrial, plan, subscription, trialPending }: { billingCycle: BillingCycle; canChangePlan: boolean; currentPlan: SubscriptionPlan | null; index: number; onSelectPlan: (plan: SubscriptionPlan) => void; onStartTrial: (plan: SubscriptionPlan) => void; plan: SubscriptionPlan; subscription: Subscription | null; trialPending: boolean }) {
   const isCurrent = currentPlan?.id === plan.id;
   const isEnterprise = plan.code.toLowerCase().includes("enterprise");
   const action = planAction(plan, currentPlan, subscription, billingCycle);
@@ -269,7 +294,8 @@ function PlanCard({ billingCycle, canChangePlan, currentPlan, onSelectPlan, onSt
   const popular = plan.code.toLowerCase().includes("professional") || plan.displayOrder === 2;
   const features = plan.activeVersion.features.filter((feature) => feature.enabled);
   return (
-    <Card className={cn("relative flex h-full flex-col border p-5 shadow-sm transition hover:border-primary/35", popular ? "border-primary/50 bg-primary/[0.03]" : "border-slate-200 bg-white/86 dark:border-white/[0.08] dark:bg-white/[0.04]") }>
+    <motion.div animate={{ opacity: 1, y: 0 }} initial={{ opacity: 0, y: 18 }} transition={{ delay: index * 0.06, duration: 0.32, ease: "easeOut" }}>
+    <Card className={cn("group relative h-full overflow-hidden border p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/35 hover:shadow-[0_22px_60px_rgba(15,23,42,0.12)] dark:hover:shadow-none", popular ? "border-primary/50 bg-[linear-gradient(135deg,rgba(0,71,141,0.09),rgba(255,255,255,0.86))] dark:bg-[linear-gradient(135deg,rgba(105,168,255,0.14),rgba(255,255,255,0.04))]" : "border-slate-200 bg-white/86 dark:border-white/[0.08] dark:bg-white/[0.04]") }>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -284,11 +310,11 @@ function PlanCard({ billingCycle, canChangePlan, currentPlan, onSelectPlan, onSt
         {isEnterprise ? <p className="text-2xl font-semibold text-slate-950 dark:text-white">Contact sales</p> : (
           <div className="flex items-end gap-2"><span className="text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">{formatMinorMoney(price, plan.currency)}</span><span className="pb-1 text-sm font-medium text-slate-500">/ {cycleNoun(billingCycle)}</span></div>
         )}
-        <p className="mt-2 text-xs font-semibold text-slate-500">{billingCycle === "ANNUAL" ? "Billed annually" : "Billed monthly"}{billingCycle === "ANNUAL" && hasAnnualSavings(plan.activeVersion) && equivalentMonthly ? ` · Equivalent to ${formatMinorMoney(equivalentMonthly, plan.currency)} / month` : ""}</p>
+        <p className="mt-2 text-xs font-semibold text-slate-500">{billingCycle === "ANNUAL" ? "Billed annually" : "Billed monthly"}{billingCycle === "ANNUAL" && hasAnnualSavings(plan.activeVersion) && equivalentMonthly ? ` - Equivalent to ${formatMinorMoney(equivalentMonthly, plan.currency)} / month` : ""}</p>
       </div>
       <div className="mt-5 flex-1 space-y-3">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Included features</p>
-        {features.length ? <ul className="space-y-2">{features.slice(0, 8).map((feature) => <li className="flex gap-2 text-sm text-slate-700 dark:text-slate-300" key={feature.code}><Check className="mt-0.5 shrink-0 text-emerald-500" size={15} /><span>{labelFeatureCode(feature.code)}{typeof feature.limit === "number" ? ` · ${feature.limit}` : ""}</span></li>)}</ul> : <p className="text-sm text-slate-500">Feature list is managed by the billing catalog.</p>}
+        {features.length ? <ul className="space-y-2">{features.slice(0, 8).map((feature) => <li className="flex gap-2 text-sm text-slate-700 dark:text-slate-300" key={feature.code}><Check className="mt-0.5 shrink-0 text-emerald-500" size={15} /><span>{labelFeatureCode(feature.code)}{typeof feature.limit === "number" ? ` - ${feature.limit}` : ""}</span></li>)}</ul> : <p className="text-sm text-slate-500">Feature list is managed by the billing catalog.</p>}
         {plan.activeVersion.trialDurationDays > 0 ? <p className="text-xs font-semibold text-blue-600 dark:text-blue-300">{plan.activeVersion.trialDurationDays}-day trial available</p> : null}
       </div>
       <div className="mt-6 grid gap-2">
@@ -298,6 +324,7 @@ function PlanCard({ billingCycle, canChangePlan, currentPlan, onSelectPlan, onSt
         {action.reason ? <p className="text-xs text-slate-500">{action.reason}</p> : null}
       </div>
     </Card>
+    </motion.div>
   );
 }
 

@@ -24,6 +24,7 @@ import {
   Image,
   Keyboard,
   LayoutDashboard,
+  Lock,
   LogOut,
   MapPin,
   MessagesSquare,
@@ -49,7 +50,7 @@ const mainNavItems = [
   { id: "facilities", label: "Facilities & Services", icon: HeartPulse },
   { id: "gallery", label: "Gallery", icon: Image },
   { id: "community", label: "Community", icon: MessagesSquare, badge: "2" },
-  { id: "analytics", label: "Analytics", icon: BarChart3, pulse: true },
+  { id: "analytics", label: "Analytics", icon: BarChart3,},
   { id: "activity-logs", label: "Activity Logs", icon: History },
 ] as const;
 
@@ -62,7 +63,6 @@ const clinicNavItems = [
   { id: "community", label: "Community", icon: MessagesSquare },
   { id: "analytics", label: "Analytics", icon: BarChart3, pulse: true },
   { id: "clinic-profile", label: "Clinic Profile", icon: Building2 },
-
 ] as const;
 
 const doctorNavItems = [
@@ -106,6 +106,13 @@ const utilityItems = [
   { label: "Search", icon: Search, shortcut: "K" },
   { label: "Ask AI", icon: Bot, shortcut: "D" },
 ] as const;
+
+const comingSoonNavItems = new Set<ErpDemoPage>([
+  "gallery",
+  "community",
+  "analytics",
+  "activity-logs",
+]);
 
 export function ErpDemoSidebar({
   allowedPages,
@@ -163,7 +170,8 @@ export function ErpDemoSidebar({
     : doctorProfileOptions;
   const systemItems = [
     {
-      id: isDoctorWorkspace || isClinicWorkspace ? "profile" : "hospital-profile",
+      id:
+        isDoctorWorkspace || isClinicWorkspace ? "profile" : "hospital-profile",
       label: "Profile",
       icon: UserRound,
     },
@@ -449,6 +457,7 @@ function SidebarSection({
       <div className="space-y-1">
         {visibleItems.map((item) => {
           const isAppointmentItem = item.id === "appointments";
+          const isComingSoon = comingSoonNavItems.has(item.id);
           const isDoctorProfileItem =
             showDoctorProfileDropdown &&
             profileOptions.some((option) => option.id === item.id);
@@ -456,18 +465,23 @@ function SidebarSection({
           const isActive = isAppointmentItem
             ? currentPage.startsWith("appointments")
             : isDoctorProfileItem && showDoctorProfileDropdown
-            ? profileOptionIds.includes(currentPage as ErpDemoPage)
-            : currentPage === item.id;
+              ? profileOptionIds.includes(currentPage as ErpDemoPage)
+              : currentPage === item.id;
 
           return (
             <div key={item.id}>
               <NavButton
                 active={isActive}
-                badge={item.badge}
+                badge={isComingSoon ? undefined : item.badge}
                 icon={item.icon}
                 isCollapsed={isCollapsed}
+                isComingSoon={isComingSoon}
                 label={item.label}
                 onClick={() => {
+                  if (isComingSoon) {
+                    return;
+                  }
+
                   if (isAppointmentItem && showAppointmentDropdown) {
                     onAppointmentToggle?.();
                     return;
@@ -485,8 +499,8 @@ function SidebarSection({
                   isAppointmentItem
                     ? currentPage.startsWith("appointments")
                     : isDoctorProfileItem && showDoctorProfileDropdown
-                    ? profileOptionIds.includes(currentPage as ErpDemoPage)
-                    : undefined
+                      ? profileOptionIds.includes(currentPage as ErpDemoPage)
+                      : undefined
                 }
                 showChevron={
                   ((isAppointmentItem && showAppointmentDropdown) ||
@@ -536,6 +550,7 @@ function NavButton({
   badge,
   icon: Icon,
   isCollapsed,
+  isComingSoon = false,
   isOpen,
   label,
   onClick,
@@ -547,6 +562,7 @@ function NavButton({
   badge?: string;
   icon: ComponentType<{ size?: number; className?: string }>;
   isCollapsed: boolean;
+  isComingSoon?: boolean;
   isOpen?: boolean;
   label: string;
   onClick: () => void;
@@ -559,12 +575,22 @@ function NavButton({
       className={cn(
         "group relative flex h-9 w-full items-center rounded-lg text-[13px] font-semibold transition-all duration-200",
         isCollapsed ? "justify-center px-0" : "gap-3 px-2.5",
+        isComingSoon && "cursor-not-allowed",
         active
           ? theme.activeNav
-          : "text-slate-600 hover:bg-white hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.055] dark:hover:text-slate-100"
+          : isComingSoon
+            ? "text-slate-400 hover:bg-white/70 dark:text-slate-600 dark:hover:bg-white/[0.035]"
+            : "text-slate-600 hover:bg-white hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.055] dark:hover:text-slate-100"
       )}
+      aria-disabled={isComingSoon}
       onClick={onClick}
-      title={isCollapsed ? label : undefined}
+      title={
+        isComingSoon
+          ? `${label} is coming soon`
+          : isCollapsed
+            ? label
+            : undefined
+      }
       type="button"
     >
       <Icon
@@ -572,16 +598,23 @@ function NavButton({
           "shrink-0 transition",
           active
             ? theme.activeIcon
-            : "text-slate-400 group-hover:text-slate-700 dark:text-slate-500 dark:group-hover:text-slate-300"
+            : isComingSoon
+              ? "text-slate-400 dark:text-slate-600"
+              : "text-slate-400 group-hover:text-slate-700 dark:text-slate-500 dark:group-hover:text-slate-300"
         )}
         size={16}
       />
       {!isCollapsed ? (
         <>
-          <span className="min-w-0 flex-1 truncate text-left">{label}</span>
+          <span className="min-w-0 flex-1 inline truncate text-left">{label}</span>
           {badge ? (
             <span className="rounded-md border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] leading-none text-slate-500 dark:border-white/[0.10] dark:bg-transparent">
               {badge}
+            </span>
+          ) : null}
+          {isComingSoon ? (
+            <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] leading-none text-slate-500 dark:border-white/[0.10] dark:bg-transparent dark:text-slate-500">
+              <Lock size={10} />
             </span>
           ) : null}
           {pulse ? (
@@ -604,6 +637,12 @@ function NavButton({
             "absolute right-2 size-1.5 rounded-full",
             theme.activeDot
           )}
+        />
+      ) : null}
+      {isComingSoon && isCollapsed ? (
+        <Lock
+          className="absolute right-2 text-slate-400 dark:text-slate-600"
+          size={11}
         />
       ) : null}
     </button>
