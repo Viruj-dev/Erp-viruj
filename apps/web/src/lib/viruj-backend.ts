@@ -8,12 +8,14 @@ import {
   signOutAfterCentralApiUnauthorized,
 } from "./central-api-token";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 const erpApiUrl =
   typeof window !== "undefined"
     ? `${window.location.origin}/erp`
     : `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002"}/erp`;
-const commonApiUrl = `${apiUrl.replace(/\/$/, "")}/api/common`;
+const commonApiUrl =
+  typeof window !== "undefined"
+    ? `${window.location.origin}/common`
+    : `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002"}/common`;
 
 type RequestOptions = {
   body?: unknown;
@@ -47,9 +49,6 @@ async function commonRequest<T>(path: string, options: RequestOptions = {}) {
   });
 }
 
-async function erpServerRequest<T>(path: string, options: RequestOptions = {}) {
-  return request<T>(path, options);
-}
 
 async function centralApiRequest<T>(
   url: string,
@@ -638,25 +637,25 @@ export const virujBackend = {
   },
   facilities: {
     create: (input: VirujFacilityInput) =>
-      erpServerRequest<VirujFacility>("/facilities", {
+      request<VirujFacility>("/facilities", {
         body: input,
         method: "POST",
       }),
     delete: (input: { id: string }) =>
-      erpServerRequest<{ success: true }>(`/facilities/${input.id}`, {
+      request<{ success: true }>(`/facilities/${input.id}`, {
         method: "DELETE",
       }),
     get: (input: { id: string }) =>
-      erpServerRequest<VirujFacility>(`/facilities/${input.id}`),
+      request<VirujFacility>(`/facilities/${input.id}`),
     key: ["viruj-backend", "erp", "facilities"] as const,
-    list: () => erpServerRequest<VirujFacility[]>("/facilities"),
+    list: () => request<VirujFacility[]>("/facilities"),
     reorder: (input: { items: Array<{ displayOrder: number; id: string }> }) =>
-      erpServerRequest<{ success: true }>("/facilities/reorder", {
+      request<{ success: true }>("/facilities/reorder", {
         body: input,
         method: "PATCH",
       }),
     update: (input: { facility: VirujFacilityInput; id: string }) =>
-      erpServerRequest<VirujFacility>(`/facilities/${input.id}`, {
+      request<VirujFacility>(`/facilities/${input.id}`, {
         body: input.facility,
         method: "PATCH",
       }),
@@ -665,7 +664,7 @@ export const virujBackend = {
       isAvailable?: boolean;
       status: VirujFacilityStatus;
     }) =>
-      erpServerRequest<VirujFacility>(`/facilities/${input.id}/status`, {
+      request<VirujFacility>(`/facilities/${input.id}/status`, {
         body: {
           isAvailable: input.isAvailable,
           status: input.status,
@@ -710,22 +709,22 @@ export const virujBackend = {
   },
   doctors: {
     create: (input: VirujDoctorInput) =>
-      erpServerRequest<VirujDoctor>("/doctors", {
+      request<VirujDoctor>("/doctors", {
         body: input,
         method: "POST",
       }),
     delete: (input: { id: string }) =>
-      erpServerRequest<{ success: true }>(`/doctors/${input.id}`, {
+      request<{ success: true }>(`/doctors/${input.id}`, {
         method: "DELETE",
       }),
     key: ["viruj-backend", "erp", "doctors"] as const,
-    list: () => erpServerRequest<VirujDoctor[]>("/doctors"),
+    list: () => request<VirujDoctor[]>("/doctors"),
     publish: (input: { id: string }) =>
-      erpServerRequest<VirujDoctor>(`/doctors/${input.id}/publish`, {
+      request<VirujDoctor>(`/doctors/${input.id}/publish`, {
         method: "POST",
       }),
     publishAll: () =>
-      erpServerRequest<{
+      request<{
         count: number;
         doctors: VirujDoctor[];
         message: string;
@@ -733,7 +732,7 @@ export const virujBackend = {
         method: "POST",
       }),
     update: (input: { doctor: VirujDoctorInput; id: string }) =>
-      erpServerRequest<VirujDoctor>(`/doctors/${input.id}`, {
+      request<VirujDoctor>(`/doctors/${input.id}`, {
         body: input.doctor,
         method: "PATCH",
       }),

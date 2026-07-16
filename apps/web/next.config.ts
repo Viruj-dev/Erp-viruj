@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
         source: "/erp/:path*",
         destination: `${apiUrl.replace(/\/$/, "")}/api/erp/:path*`,
       },
+      {
+        source: "/common/:path*",
+        destination: `${apiUrl.replace(/\/$/, "")}/api/common/:path*`,
+      },
     ];
   },
 };
