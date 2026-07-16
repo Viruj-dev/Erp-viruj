@@ -5,7 +5,6 @@ import { notificationEvents } from "@/features/notifications/lib/notification-ev
 const paymentUrl = process.env.NEXT_PUBLIC_VIRUJ_PAYMENT_URL || "http://localhost:4100";
 const paymentApiUrl = `${paymentUrl.replace(/\/$/, "")}/api/v1`;
 const paymentAccessToken = process.env.NEXT_PUBLIC_VIRUJ_PAYMENT_ACCESS_TOKEN;
-const erpToken = process.env.NEXT_PUBLIC_VIRUJ_BACKEND_ERP_TOKEN;
 
 type RequestOptions = {
   body?: unknown;
@@ -18,9 +17,7 @@ type RequestOptions = {
 
 async function paymentRequest<T>(path: string, options: RequestOptions = {}) {
   const headers = new Headers({ "Content-Type": "application/json" });
-  const token = paymentAccessToken ?? erpToken;
-
-  if (token) headers.set("Authorization", `Bearer ${token}`);
+  if (paymentAccessToken) headers.set("Authorization", `Bearer ${paymentAccessToken}`);
   if (options.idempotencyKey) headers.set("Idempotency-Key", options.idempotencyKey);
 
   const response = await fetch(`${paymentApiUrl}${path}`, {
@@ -391,4 +388,3 @@ export const subscriptionBillingApi = {
       successMessage: "Upgrade requested",
     }),
 };
-

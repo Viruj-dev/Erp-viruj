@@ -5,6 +5,7 @@ Bun.env.DATABASE_URL ??= "postgres://test:test@localhost:5432/viruj_test";
 Bun.env.BETTER_AUTH_SECRET ??= "test-secret-for-rbac-permission-tests";
 Bun.env.BETTER_AUTH_URL ??= "http://localhost:3001/auth";
 Bun.env.CORS_ORIGIN ??= "http://localhost:3001";
+Bun.env.CENTRAL_API_JWT_SECRET ??= "test-central-api-jwt-secret-32-bytes";
 
 const authModule = import("./index");
 

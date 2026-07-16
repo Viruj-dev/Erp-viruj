@@ -8,6 +8,7 @@ export const env = createEnv({
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.url(),
     CORS_ORIGIN: z.string().min(1),
+    CENTRAL_API_JWT_SECRET: z.string().min(32),
     ERP_FROM_EMAIL: z
       .string()
       .default("Viruj Health ERP <noreply@virujhealth.com>"),

@@ -1,5 +1,6 @@
-import { auth } from "@erp_virujhealth/auth";
+import { auth, getCentralApiPermissions } from "@erp_virujhealth/auth";
 import { db } from "@erp_virujhealth/db";
+import { env } from "@erp_virujhealth/env/server";
 import {
   member,
   organization,
@@ -10,10 +11,77 @@ import {
 import { and, eq } from "drizzle-orm";
 import type { Hono } from "hono";
 import { randomUUID } from "node:crypto";
+import { SignJWT } from "jose";
 
 const defaultOrganizationType = "hospital";
 
 export function registerAuthRoutes(app: Hono) {
+  app.get("/auth/central-api-token", async (context) => {
+    try {
+      const authSession = await auth.api.getSession({
+        headers: context.req.raw.headers,
+      });
+
+      if (!authSession?.user) {
+        return context.json({ error: "Not authenticated" }, 401);
+      }
+
+      const activeOrganization = authSession.activeOrganization as
+        | { id?: string }
+        | null
+        | undefined;
+      const tenantId = activeOrganization?.id;
+
+      if (!tenantId) {
+        return context.json({ error: "Active organization required" }, 403);
+      }
+
+      const activeMembership = await db
+        .select({
+          organizationId: member.organizationId,
+          role: member.role,
+        })
+        .from(member)
+        .where(
+          and(
+            eq(member.organizationId, tenantId),
+            eq(member.userId, authSession.user.id)
+          )
+        )
+        .limit(1)
+        .then((memberships) => memberships[0] ?? null);
+
+      if (!activeMembership) {
+        return context.json({ error: "Active organization membership required" }, 403);
+      }
+
+      const now = Math.floor(Date.now() / 1000);
+      const exp = now + 15 * 60;
+      const role = activeMembership.role;
+      const permissions = getCentralApiPermissions(role);
+      const token = await new SignJWT({
+        platform: "erp",
+        role,
+        tenant_id: activeMembership.organizationId,
+        permissions,
+      })
+        .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+        .setSubject(authSession.user.id)
+        .setIssuer("viruj-auth")
+        .setAudience("viruj-central-api")
+        .setIssuedAt(now)
+        .setExpirationTime(exp)
+        .sign(new TextEncoder().encode(env.CENTRAL_API_JWT_SECRET));
+
+      return context.json({
+        token,
+        expiresAt: new Date(exp * 1000).toISOString(),
+      });
+    } catch (error) {
+      console.error("[Auth] Central API token issue failed:", error);
+      return context.json({ error: "Unable to issue central API token." }, 500);
+    }
+  });
   app.post("/auth/activate-organization", async (context) => {
     try {
       const authSession = await auth.api.getSession({

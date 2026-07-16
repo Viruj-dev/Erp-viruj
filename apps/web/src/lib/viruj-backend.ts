@@ -3,16 +3,17 @@
 import { shouldShowApiSuccess } from "@/features/notifications/lib/api-feedback";
 import { notificationEvents } from "@/features/notifications/lib/notification-events";
 import type { ErpNotification, NotificationListResponse } from "@/features/notifications";
+import {
+  getCentralApiToken,
+  signOutAfterCentralApiUnauthorized,
+} from "./central-api-token";
 
-const backendUrl =
-  process.env.NEXT_PUBLIC_VIRUJ_BACKEND_URL || "http://localhost:4000";
-const erpApiUrl = `${backendUrl.replace(/\/$/, "")}/api/erp`;
-const commonApiUrl = `${backendUrl.replace(/\/$/, "")}/api/common`;
-const erpToken = process.env.NEXT_PUBLIC_VIRUJ_BACKEND_ERP_TOKEN;
-const erpServerUrl =
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const erpApiUrl =
   typeof window !== "undefined"
     ? `${window.location.origin}/erp`
     : `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002"}/erp`;
+const commonApiUrl = `${apiUrl.replace(/\/$/, "")}/api/common`;
 
 type RequestOptions = {
   body?: unknown;
@@ -24,108 +25,99 @@ type RequestOptions = {
 };
 
 async function request<T>(path: string, options: RequestOptions = {}) {
-  const headers = new Headers({
-    "Content-Type": "application/json",
+  return centralApiRequest<T>(`${erpApiUrl}${path}`, path, options, {
+    fallbackMessage: "Viruj backend request failed",
+    json: true,
+    organizationId: options.organizationId,
   });
-
-  if (erpToken) {
-    headers.set("Authorization", `Bearer ${erpToken}`);
-  }
-
-  if (erpToken && options.organizationId) {
-    headers.set("X-Erp-Organization-Id", options.organizationId);
-  }
-
-  const response = await fetch(`${erpApiUrl}${path}`, {
-    body: options.body ? JSON.stringify(options.body) : undefined,
-    headers,
-    method: options.method ?? "GET",
-  });
-
-  if (!response.ok) {
-    const payload = await response.json().catch(() => null);
-    const message = responseErrorMessage(payload, `Viruj backend request failed (${response.status})`);
-    emitApiError(path, options, response.status, message);
-    throw new Error(message);
-  }
-
-  emitApiSuccess(path, options);
-  return response.json() as Promise<T>;
 }
 
 async function formRequest<T>(path: string, formData: FormData, options: RequestOptions = {}) {
-  const headers = new Headers();
-
-  if (erpToken) {
-    headers.set("Authorization", `Bearer ${erpToken}`);
-  }
-
-  if (erpToken && options.organizationId) {
-    headers.set("X-Erp-Organization-Id", options.organizationId);
-  }
-
-  const response = await fetch(`${erpApiUrl}${path}`, {
+  return centralApiRequest<T>(`${erpApiUrl}${path}`, path, options, {
     body: formData,
-    headers,
-    method: options.method ?? "POST",
+    fallbackMessage: "Viruj backend request failed",
+    organizationId: options.organizationId,
   });
-
-  if (!response.ok) {
-    const payload = await response.json().catch(() => null);
-    const message = responseErrorMessage(payload, `Viruj backend request failed (${response.status})`);
-    emitApiError(path, options, response.status, message);
-    throw new Error(message);
-  }
-
-  emitApiSuccess(path, options);
-  return response.json() as Promise<T>;
 }
+
 async function commonRequest<T>(path: string, options: RequestOptions = {}) {
-  const headers = new Headers({
-    "Content-Type": "application/json",
+  return centralApiRequest<T>(`${commonApiUrl}${path}`, path, options, {
+    fallbackMessage: "Viruj backend common request failed",
+    json: true,
   });
+}
 
-  if (erpToken) {
-    headers.set("Authorization", `Bearer ${erpToken}`);
+async function erpServerRequest<T>(path: string, options: RequestOptions = {}) {
+  return request<T>(path, options);
+}
+
+async function centralApiRequest<T>(
+  url: string,
+  path: string,
+  options: RequestOptions,
+  requestOptions: {
+    body?: BodyInit;
+    fallbackMessage: string;
+    json?: boolean;
+    organizationId?: string;
+  },
+) {
+  const response = await fetchWithCentralApiToken(url, options, requestOptions);
+
+  if (response.status === 401) {
+    const retry = await fetchWithCentralApiToken(url, options, requestOptions, true);
+
+    if (retry.ok) {
+      emitApiSuccess(path, options);
+      return retry.json() as Promise<T>;
+    }
+
+    await signOutAfterCentralApiUnauthorized();
+    const payload = await retry.json().catch(() => null);
+    const message = responseErrorMessage(payload, `${requestOptions.fallbackMessage} (${retry.status})`);
+    emitApiError(path, options, retry.status, message);
+    throw new Error(message);
   }
 
-  const response = await fetch(`${commonApiUrl}${path}`, {
-    body: options.body ? JSON.stringify(options.body) : undefined,
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+    const message = responseErrorMessage(payload, `${requestOptions.fallbackMessage} (${response.status})`);
+    emitApiError(path, options, response.status, message);
+    throw new Error(message);
+  }
+
+  emitApiSuccess(path, options);
+  return response.json() as Promise<T>;
+}
+
+async function fetchWithCentralApiToken(
+  url: string,
+  options: RequestOptions,
+  requestOptions: {
+    body?: BodyInit;
+    json?: boolean;
+    organizationId?: string;
+  },
+  forceRefresh = false,
+) {
+  const headers = new Headers();
+  headers.set("Authorization", `Bearer ${await getCentralApiToken(forceRefresh)}`);
+
+  if (requestOptions.json) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  if (requestOptions.organizationId) {
+    headers.set("X-Erp-Organization-Id", requestOptions.organizationId);
+  }
+
+  return fetch(url, {
+    body: requestOptions.body ?? (options.body ? JSON.stringify(options.body) : undefined),
+    credentials: "include",
     headers,
     method: options.method ?? "GET",
   });
-
-  if (!response.ok) {
-    const payload = await response.json().catch(() => null);
-    const message = responseErrorMessage(payload, `Viruj backend common request failed (${response.status})`);
-    emitApiError(path, options, response.status, message);
-    throw new Error(message);
-  }
-
-  emitApiSuccess(path, options);
-  return response.json() as Promise<T>;
 }
-async function erpServerRequest<T>(path: string, options: RequestOptions = {}) {
-  const response = await fetch(`${erpServerUrl}${path}`, {
-    body: options.body ? JSON.stringify(options.body) : undefined,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    method: options.method ?? "GET",
-  });
-
-  if (!response.ok) {
-    const payload = await response.json().catch(() => null);
-    const message = responseErrorMessage(payload, `ERP server request failed (${response.status})`);
-    emitApiError(path, options, response.status, message);
-    throw new Error(message);
-  }
-
-  emitApiSuccess(path, options);
-  return response.json() as Promise<T>;
-}
-
 
 function emitApiSuccess(path: string, options: RequestOptions) {
   const method = options.method ?? "GET";
