@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
-const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002";
-const authUrl = process.env.NEXT_PUBLIC_AUTH_URL || serverUrl;
+const authUrl =
+  process.env.NEXT_PUBLIC_AUTH_URL || "http://localhost:3002";
+
+const apiUrl =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 const nextConfig: NextConfig = {
   async rewrites() {
@@ -12,7 +15,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/erp/:path*",
-        destination: `${serverUrl.replace(/\/$/, "")}/erp/:path*`,
+        destination: `${apiUrl.replace(/\/$/, "")}/api/erp/:path*`,
       },
     ];
   },
