@@ -99,8 +99,7 @@ export function ErpDemoAnalytics({
   organizationId?: string;
   providerRole?: "clinic" | "doctor" | "hospital";
 }) {
-  const analyticsEntityId =
-    process.env.NEXT_PUBLIC_VIRUJ_BACKEND_ANALYTICS_ENTITY_ID || organizationId;
+  const analyticsEntityId = organizationId;
   const analyticsQuery = useQuery({
     enabled: Boolean(analyticsEntityId),
     queryFn: () =>

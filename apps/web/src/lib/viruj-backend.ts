@@ -372,6 +372,41 @@ export type VirujFacility = VirujFacilityInput & {
   updatedAt: string;
   updatedBy: string;
 };
+type VirujHospitalServiceStatus = "ACTIVE" | "ARCHIVED" | "INACTIVE";
+type VirujHospitalServiceVisibility = "HIDDEN" | "INTERNAL" | "PUBLIC_REFERENCE";
+type VirujHospitalServiceAvailabilityStatus = "AVAILABLE" | "BY_APPOINTMENT" | "LIMITED" | "TEMPORARILY_UNAVAILABLE";
+
+type VirujHospitalService = {
+  availabilityStatus: VirujHospitalServiceAvailabilityStatus;
+  basePrice?: number;
+  createdAt: string;
+  currency: string;
+  description?: string;
+  hospitalId: string;
+  id: string;
+  name: string;
+  serviceType: string;
+  slug: string;
+  status: VirujHospitalServiceStatus;
+  updatedAt: string;
+  visibility: VirujHospitalServiceVisibility;
+};
+
+type VirujHospitalServiceListResponse = {
+  data: VirujHospitalService[];
+};
+
+type VirujHospitalServiceInput = {
+  availabilityStatus?: VirujHospitalServiceAvailabilityStatus;
+  basePrice?: number;
+  currency?: string;
+  description?: string;
+  name?: string;
+  serviceType?: string;
+  slug?: string;
+  status?: VirujHospitalServiceStatus;
+  visibility?: VirujHospitalServiceVisibility;
+};
 
 export type VirujHospitalGalleryMediaType = "IMAGE" | "VIDEO";
 
@@ -475,9 +510,6 @@ export type VirujAnalyticsSignalWidget = {
       href: string;
       label: string;
       errorMessage?: string;
-  method?: "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
-  successMessage?: string;
-  suppressToast?: boolean;
     };
     description: string;
     severity: "CRITICAL" | "INFO" | "SUCCESS" | "WARNING";
@@ -502,6 +534,101 @@ export type VirujAnalyticsDashboard = {
   summary: VirujAnalyticsSummaryWidget[];
   trends: unknown[];
 };
+
+function facilityToHospitalService(input: VirujFacilityInput, create: boolean): VirujHospitalServiceInput {
+  const availabilityStatus: VirujHospitalServiceAvailabilityStatus | undefined = input.isAvailable === false
+    ? "TEMPORARILY_UNAVAILABLE"
+    : input.onlineBooking
+      ? "BY_APPOINTMENT"
+      : undefined;
+  const visibility: VirujHospitalServiceVisibility = input.visibility === "public" ? "PUBLIC_REFERENCE" : "HIDDEN";
+
+  return compactObject({
+    availabilityStatus,
+    basePrice: input.startingPrice ?? undefined,
+    currency: input.currency || undefined,
+    description: input.description || input.shortDescription || undefined,
+    name: create ? input.name : input.name || undefined,
+    serviceType: serviceTypeForFacilityCategory(input.category),
+    slug: slugValue(input.slug),
+    status: hospitalServiceStatus(input.status),
+    visibility,
+  });
+}
+
+function facilityStatusToHospitalService(input: {
+  isAvailable?: boolean;
+  status: VirujFacilityStatus;
+}): VirujHospitalServiceInput {
+  const availabilityStatus: VirujHospitalServiceAvailabilityStatus | undefined = input.isAvailable === undefined
+    ? undefined
+    : input.isAvailable
+      ? "AVAILABLE"
+      : "TEMPORARILY_UNAVAILABLE";
+
+  return compactObject({
+    availabilityStatus,
+    status: hospitalServiceStatus(input.status),
+  });
+}
+function hospitalServiceToFacility(service: VirujHospitalService): VirujFacility {
+  return {
+    appointmentRequired: service.availabilityStatus === "BY_APPOINTMENT",
+    available247: false,
+    bannerImage: "",
+    category: service.serviceType as VirujFacilityCategory,
+    createdAt: service.createdAt,
+    createdBy: "central-api",
+    currency: service.currency,
+    description: service.description ?? "",
+    displayOrder: 0,
+    emergencyService: service.serviceType === "EMERGENCY",
+    galleryImages: [],
+    id: service.id,
+    isAvailable: service.availabilityStatus === "AVAILABLE" || service.availabilityStatus === "BY_APPOINTMENT",
+    isFeatured: false,
+    keywords: [],
+    name: service.name,
+    onlineBooking: service.availabilityStatus === "BY_APPOINTMENT",
+    organizationId: service.hospitalId,
+    priceText: service.basePrice === undefined ? "" : String(service.basePrice),
+    seoDescription: service.description ?? "",
+    seoTitle: service.name,
+    shortDescription: service.description ?? "",
+    slug: service.slug,
+    startingPrice: service.basePrice ?? null,
+    status: service.status === "ACTIVE" ? "active" : service.status === "ARCHIVED" ? "archived" : "draft",
+    updatedAt: service.updatedAt,
+    updatedBy: "central-api",
+    visibility: service.visibility === "PUBLIC_REFERENCE" ? "public" : "hidden",
+  };
+}
+
+function hospitalServiceStatus(status: VirujFacilityStatus): VirujHospitalServiceStatus {
+  if (status === "active") return "ACTIVE";
+  if (status === "archived") return "ARCHIVED";
+  return "INACTIVE";
+}
+
+function serviceTypeForFacilityCategory(category: string) {
+  const value = category.toLowerCase();
+  if (value.includes("diagnostic") || value.includes("laboratory") || value.includes("imaging")) return "DIAGNOSTIC";
+  if (value.includes("emergency")) return "EMERGENCY";
+  if (value.includes("intensive")) return "CRITICAL_CARE";
+  if (value.includes("transport")) return "TRANSPORT";
+  if (value.includes("surgery") || value.includes("treatment")) return "INPATIENT";
+  return "OUTPATIENT";
+}
+
+function slugValue(value: string) {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || undefined;
+}
+
+function compactObject<T extends Record<string, unknown>>(value: T) {
+  return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined)) as {
+    [K in keyof T as T[K] extends undefined ? never : K]: Exclude<T[K], undefined>;
+  };
+}
 export const virujBackend = {
   activity: {
     key: (input: {
@@ -637,40 +764,37 @@ export const virujBackend = {
   },
   facilities: {
     create: (input: VirujFacilityInput) =>
-      request<VirujFacility>("/facilities", {
-        body: input,
+      request<VirujHospitalService>("/hospital/services", {
+        body: facilityToHospitalService(input, true),
         method: "POST",
-      }),
+      }).then(hospitalServiceToFacility),
     delete: (input: { id: string }) =>
-      request<{ success: true }>(`/facilities/${input.id}`, {
-        method: "DELETE",
-      }),
+      request<VirujHospitalService>(`/hospital/services/${input.id}`, {
+        body: { status: "ARCHIVED" },
+        method: "PATCH",
+      }).then(() => ({ success: true as const })),
     get: (input: { id: string }) =>
-      request<VirujFacility>(`/facilities/${input.id}`),
+      request<VirujHospitalService>(`/hospital/services/${input.id}`).then(hospitalServiceToFacility),
     key: ["viruj-backend", "erp", "facilities"] as const,
-    list: () => request<VirujFacility[]>("/facilities"),
-    reorder: (input: { items: Array<{ displayOrder: number; id: string }> }) =>
-      request<{ success: true }>("/facilities/reorder", {
-        body: input,
-        method: "PATCH",
-      }),
+    list: () =>
+      request<VirujHospitalServiceListResponse>("/hospital/services?pageSize=100").then((response) =>
+        response.data.map(hospitalServiceToFacility)
+      ),
+    reorder: async (_input: { items: Array<{ displayOrder: number; id: string }> }) => ({ success: true as const }),
     update: (input: { facility: VirujFacilityInput; id: string }) =>
-      request<VirujFacility>(`/facilities/${input.id}`, {
-        body: input.facility,
+      request<VirujHospitalService>(`/hospital/services/${input.id}`, {
+        body: facilityToHospitalService(input.facility, false),
         method: "PATCH",
-      }),
+      }).then(hospitalServiceToFacility),
     updateStatus: (input: {
       id: string;
       isAvailable?: boolean;
       status: VirujFacilityStatus;
     }) =>
-      request<VirujFacility>(`/facilities/${input.id}/status`, {
-        body: {
-          isAvailable: input.isAvailable,
-          status: input.status,
-        },
+      request<VirujHospitalService>(`/hospital/services/${input.id}`, {
+        body: facilityStatusToHospitalService(input),
         method: "PATCH",
-      }),
+      }).then(hospitalServiceToFacility),
   },
   hospitalGallery: {
     create: (input: { gallery: VirujHospitalGalleryInput; organizationId?: string }) =>

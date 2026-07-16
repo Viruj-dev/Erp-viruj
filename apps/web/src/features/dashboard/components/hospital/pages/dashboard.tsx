@@ -31,8 +31,7 @@ export function ErpDemoDashboard({
   userName: string;
 }) {
   const tone = organizationLabel.toLowerCase() === "clinic" ? "clinic" : "hospital";
-  const analyticsEntityId =
-    process.env.NEXT_PUBLIC_VIRUJ_BACKEND_ANALYTICS_ENTITY_ID || organizationId;
+  const analyticsEntityId = organizationId;
   const analyticsQuery = useQuery({
     enabled: tone === "hospital" && Boolean(analyticsEntityId),
     queryFn: () =>
