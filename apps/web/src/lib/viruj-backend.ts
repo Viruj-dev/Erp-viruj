@@ -283,10 +283,6 @@ export type VirujStaffInviteResult = VirujStaffInvitation & {
     confirmationUrl?: string;
     emailSent?: boolean;
     loginUrl?: string;
-    temporaryCredentials?: {
-      email: string;
-      password: string;
-    } | null;
   };
 };
 

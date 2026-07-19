@@ -75,7 +75,9 @@ Host `apps/server` behind `https://auth.virujhealth.com` and set these environme
 ```bash
 BETTER_AUTH_URL=https://auth.virujhealth.com
 CORS_ORIGIN=https://erp.virujhealth.com
+CENTRAL_API_JWT_SECRET=replace-with-32-plus-byte-shared-secret
 NEXT_PUBLIC_AUTH_URL=https://auth.virujhealth.com
+NEXT_PUBLIC_API_URL=https://api.virujhealth.com
 ```
 
 `NEXT_PUBLIC_SERVER_URL` can stay pointed at the ERP API host. If the same `apps/server` deployment also serves `/erp`, set it to `https://auth.virujhealth.com`. Set `NEXT_PUBLIC_AUTH_URL` only in production; local development should leave it unset so browser requests use the normal same-origin `/auth` path. Keep `http://localhost:3001` in `CORS_ORIGIN` as an additional comma-separated origin.

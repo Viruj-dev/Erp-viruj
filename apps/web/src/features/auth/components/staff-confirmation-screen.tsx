@@ -65,7 +65,7 @@ export function StaffConfirmationScreen({
                 <ShieldCheck className="h-7 w-7" />
               )}
             </div>
-            <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-[#9fd7ff]">
+            <p className="text-xs font-extrabold uppercase tracking-[0.28em] text-[#9fd7ff]" suppressHydrationWarning>
               Viruj Health ERP
             </p>
             <h1 className="headline mt-3 max-w-xl text-3xl font-semi-bold leading-tight sm:text-4xl">
@@ -79,8 +79,8 @@ export function StaffConfirmationScreen({
             {confirmedAccess ? (
               <div>
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-950">
-                  <p className="font-bold">Status updated to On Duty</p>
-                  <p className="mt-1 text-emerald-900">
+                  <p className="font-bold" suppressHydrationWarning>Status updated to On Duty</p>
+                  <p className="mt-1 text-emerald-900" suppressHydrationWarning>
                     {confirmedAccess.email} is now active as {roleLabel}.
                   </p>
                 </div>
@@ -95,10 +95,10 @@ export function StaffConfirmationScreen({
               </div>
             ) : (
               <div>
-                <p className="text-base leading-7 text-[#344054]">
+                <p className="text-base leading-7 text-[#344054]" suppressHydrationWarning>
                   Confirming this invite will mark your staff profile as on duty
-                  in the hospital staff directory. After that, use the
-                  credentials from your email to sign in.
+                  in the hospital staff directory. After that, sign in with
+                  your existing Viruj Health ERP account.
                 </p>
 
                 {confirmMutation.error ? (

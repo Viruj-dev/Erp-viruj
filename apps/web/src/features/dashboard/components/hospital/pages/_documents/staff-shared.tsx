@@ -32,19 +32,6 @@ export const roleLabels: Record<string, string> = {
 
 export type StaffRole = (typeof roleOptions)[number];
 
-export type StaffInviteResult = {
-  onboarding?: StaffOnboarding | null;
-};
-
-export type StaffOnboarding = {
-  confirmationUrl?: string;
-  emailSent?: boolean;
-  loginUrl?: string;
-  temporaryCredentials?: {
-    email: string;
-    password: string;
-  } | null;
-};
 
 export type StaffPerson = {
   email: string;

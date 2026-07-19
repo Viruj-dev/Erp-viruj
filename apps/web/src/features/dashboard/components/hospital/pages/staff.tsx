@@ -27,8 +27,6 @@ import {
   isStaffRole,
   RolePill,
   StaffAvatar,
-  type StaffInviteResult,
-  type StaffOnboarding,
   type StaffRole,
 } from "./_documents";
 
@@ -42,8 +40,6 @@ export function ErpDemoStaff({
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [credentialPreview, setCredentialPreview] =
-    useState<StaffOnboarding | null>(null);
   const [role, setRole] = useState<StaffRole>("DOCTOR");
   const [roleFilter, setRoleFilter] = useState("all");
   const [query, setQuery] = useState("");
@@ -104,14 +100,10 @@ export function ErpDemoStaff({
   };
   const inviteMutation = useMutation({
     mutationFn: virujBackend.staff.invite,
-    onSuccess: async (result) => {
-      const onboarding = (result as StaffInviteResult).onboarding ?? null;
-      setCredentialPreview(onboarding);
+    onSuccess: async () => {
       setName("");
       setEmail("");
-      if (!onboarding?.temporaryCredentials) {
-        setIsEntryDialogOpen(false);
-      }
+      setIsEntryDialogOpen(false);
       await invalidateStaffData();
     },
   });
@@ -243,7 +235,6 @@ export function ErpDemoStaff({
           <button
             className="inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-primary px-3 py-2 text-xs font-semi-bold text-white shadow-sm transition hover:scale-[0.99]"
             onClick={() => {
-              setCredentialPreview(null);
               setIsEntryDialogOpen(true);
             }}
             type="button"
@@ -415,13 +406,11 @@ export function ErpDemoStaff({
 
       {isEntryDialogOpen ? (
         <AddStaffEntryDialog
-          credentialPreview={credentialPreview}
           email={email}
           inviteError={inviteMutation.isError ? inviteMutation.error : null}
           isInvitePending={inviteMutation.isPending}
           name={name}
           onClose={() => {
-            setCredentialPreview(null);
             setIsEntryDialogOpen(false);
           }}
           onEmailChange={setEmail}

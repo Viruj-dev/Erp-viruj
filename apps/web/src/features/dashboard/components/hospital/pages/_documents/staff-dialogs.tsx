@@ -6,7 +6,6 @@ import { createPortal } from "react-dom";
 import {
   roleLabels,
   StaffAvatar,
-  type StaffOnboarding,
   type StaffPerson,
   type StaffRole,
 } from "./staff-shared";
@@ -14,7 +13,6 @@ import {
 type MutationError = { message?: string } | null | undefined;
 
 type AddStaffEntryDialogProps = {
-  credentialPreview: StaffOnboarding | null;
   email: string;
   inviteError: MutationError;
   isInvitePending: boolean;
@@ -29,7 +27,6 @@ type AddStaffEntryDialogProps = {
 };
 
 export function AddStaffEntryDialog({
-  credentialPreview,
   email,
   inviteError,
   isInvitePending,
@@ -42,7 +39,6 @@ export function AddStaffEntryDialog({
   role,
   roleOptions,
 }: AddStaffEntryDialogProps) {
-  const hasCredentials = Boolean(credentialPreview?.temporaryCredentials);
 
   return (
     <StaffDialogPortal>
@@ -83,26 +79,6 @@ export function AddStaffEntryDialog({
               value={role}
             />
 
-            {credentialPreview?.temporaryCredentials ? (
-              <div className="rounded-xl border border-secondary/20 bg-secondary/10 p-4 text-sm">
-                <p className="font-headline text-base font-semi-bold text-on-surface">
-                  Staff login credentials generated
-                </p>
-                <p className="mt-1 font-medium text-on-surface-variant">
-                  The invite email now asks the staff member to confirm access
-                  first. After confirmation, their status changes from pending to
-                  on duty.
-                </p>
-                <div className="mt-3 space-y-2 rounded-lg bg-white/70 p-3 font-mono text-xs font-bold text-on-surface">
-                  <p>Email: {credentialPreview.temporaryCredentials.email}</p>
-                  <p>
-                    Password: {credentialPreview.temporaryCredentials.password}
-                  </p>
-                  <p>Confirm: {credentialPreview.confirmationUrl}</p>
-                  <p>Login: {credentialPreview.loginUrl}</p>
-                </div>
-              </div>
-            ) : null}
 
             {inviteError ? (
               <p className="rounded-lg bg-error-container/30 px-3 py-2 text-sm font-semibold text-error">
@@ -116,11 +92,11 @@ export function AddStaffEntryDialog({
                 onClick={onClose}
                 type="button"
               >
-                {hasCredentials ? "Done" : "Cancel"}
+                Cancel
               </button>
               <button
                 className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semi-bold text-white shadow-md transition hover:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={isInvitePending || !email.trim() || hasCredentials}
+                disabled={isInvitePending || !email.trim()}
                 type="submit"
               >
                 <Mail size={16} />
