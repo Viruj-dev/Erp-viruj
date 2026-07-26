@@ -29,7 +29,7 @@ declare global {
 }
 
 type SubscriptionTab = "plans" | "current" | "invoices";
-type VerificationState = "idle" | "initiated" | "received" | "verifying" | "activated" | "pending" | "failed";
+type VerificationState = "idle" | "initiated" | "received" | "verifying" | "activated" | "pending" | "failed" | "dismissed";
 
 const tabLabels: Record<SubscriptionTab, string> = {
   plans: "Plans",
@@ -98,11 +98,23 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
 
   const checkoutMutation = useMutation({
     mutationFn: () => subscriptionBillingApi.checkout(),
+    onError: () => setVerification({ state: "failed" }),
     onSuccess: async (checkout) => {
       setVerification({ paymentId: checkout.payment.id, startedAt: Date.now(), state: "initiated" });
-      await openCheckout(checkout, organizationName, billingProfileQuery.data, () => {
-        setVerification({ paymentId: checkout.payment.id, startedAt: Date.now(), state: "received" });
-        notificationEvents.emit("toast.show", { title: "Payment received", description: "Waiting for secure backend confirmation before activating the subscription.", tone: "info" });
+      await openCheckout(checkout, organizationName, billingProfileQuery.data, {
+        onDismissed: () => {
+          setVerification({ paymentId: checkout.payment.id, startedAt: Date.now(), state: "dismissed" });
+          notificationEvents.emit("toast.show", { title: "Checkout dismissed", description: "No subscription changes are made until Razorpay sends verified confirmation.", tone: "warning" });
+        },
+        onFailed: () => {
+          setVerification({ paymentId: checkout.payment.id, startedAt: Date.now(), state: "failed" });
+          notificationEvents.emit("toast.show", { title: "Payment failed", description: "Retry payment or update the payment method.", tone: "error" });
+        },
+        onReceived: () => {
+          setVerification({ paymentId: checkout.payment.id, startedAt: Date.now(), state: "received" });
+          notificationEvents.emit("toast.show", { title: "Payment received", description: "Waiting for secure backend confirmation before activating the subscription.", tone: "info" });
+          window.setTimeout(() => setVerification((value) => value.paymentId === checkout.payment.id && value.state === "received" ? { ...value, state: "verifying" } : value), 800);
+        },
       });
     },
   });
@@ -122,7 +134,16 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
         return "scheduled" as const;
       }
       if (targetPrice > currentPrice) {
-        await subscriptionBillingApi.upgrade({ reason: `Upgrade from Plans & Subscription UI to ${plan.publicName}`, targetPlanCode: plan.code });
+        const recoverableUpgradePayment = latestPayment
+          && latestInvoice
+          && latestPayment.subscriptionId === subscription.id
+          && latestPayment.invoiceId === latestInvoice.id
+          && latestInvoice.status === "OPEN"
+          && ["INITIATED", "PENDING", "AUTHORIZED"].includes(latestPayment.status)
+          && latestInvoice.lineItems.some((item) => item.description.toLowerCase().includes("upgrade"));
+        if (!recoverableUpgradePayment) {
+          await subscriptionBillingApi.upgrade({ reason: `Upgrade from Plans & Subscription UI to ${plan.publicName}`, targetPlanCode: plan.code });
+        }
         return "checkout" as const;
       }
       return "current" as const;
@@ -158,25 +179,46 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
 
   useEffect(() => {
     if (verification.state !== "received" && verification.state !== "verifying") return;
-    const interval = window.setInterval(async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: subscriptionBillingApi.currentKey }),
-        queryClient.invalidateQueries({ queryKey: subscriptionBillingApi.paymentsKey }),
-        queryClient.invalidateQueries({ queryKey: subscriptionBillingApi.invoicesKey }),
+    const poll = async () => {
+      const [freshSubscription, freshInvoices, freshPayments] = await Promise.allSettled([
+        subscriptionBillingApi.current(),
+        subscriptionBillingApi.invoices(),
+        subscriptionBillingApi.payments(),
       ]);
+      if (freshSubscription.status === "fulfilled") queryClient.setQueryData(subscriptionBillingApi.currentKey, freshSubscription.value);
+      if (freshInvoices.status === "fulfilled") queryClient.setQueryData(subscriptionBillingApi.invoicesKey, freshInvoices.value);
+      if (freshPayments.status === "fulfilled") queryClient.setQueryData(subscriptionBillingApi.paymentsKey, freshPayments.value);
+
       const elapsed = Date.now() - (verification.startedAt ?? Date.now());
-      const fresh = queryClient.getQueryData<Subscription>(subscriptionBillingApi.currentKey);
-      if (fresh?.status === "ACTIVE" || fresh?.status === "TRIALING") {
+      const payment = freshPayments.status === "fulfilled" && verification.paymentId
+        ? freshPayments.value.find((item) => item.id === verification.paymentId)
+        : null;
+      const status = freshSubscription.status === "fulfilled" ? freshSubscription.value.status : undefined;
+
+      if (status === "ACTIVE" || status === "TRIALING") {
+        await invalidateBilling();
         setVerification({ state: "activated" });
+        setSelectedPlan(null);
+        setTab("current");
         notificationEvents.emit("toast.show", { title: "Subscription activated", description: "Billing is confirmed by the backend and ERP access can refresh.", tone: "success" });
-        window.clearInterval(interval);
-      } else if (elapsed > 45_000) {
-        setVerification((value) => ({ ...value, state: "pending" }));
-        window.clearInterval(interval);
+        return "done" as const;
       }
+      if (payment?.status === "FAILED") {
+        setVerification((value) => ({ ...value, state: "failed" }));
+        return "done" as const;
+      }
+      if (elapsed > 90_000) {
+        setVerification((value) => ({ ...value, state: "pending" }));
+        return "done" as const;
+      }
+      return "continue" as const;
+    };
+    void poll();
+    const interval = window.setInterval(async () => {
+      if (await poll() === "done") window.clearInterval(interval);
     }, 3_000);
     return () => window.clearInterval(interval);
-  }, [queryClient, verification.startedAt, verification.state]);
+  }, [queryClient, verification.paymentId, verification.startedAt, verification.state]);
 
   function setTab(value: SubscriptionTab) {
     const params = new URLSearchParams(searchParams.toString());
@@ -415,6 +457,7 @@ function StatusBanner({ subscription }: { subscription: Subscription }) {
 function PaymentVerificationBanner({ state }: { state: VerificationState }) {
   const copy: Record<VerificationState, { description: string; title: string }> = {
     activated: { description: "The backend confirmed the subscription and ERP access can refresh.", title: "Subscription activated" },
+    dismissed: { description: "Checkout was closed before payment completed. You can safely retry from the latest open invoice.", title: "Checkout dismissed" },
     failed: { description: "Payment failed. Retry payment or update the payment method.", title: "Payment failed" },
     idle: { description: "", title: "" },
     initiated: { description: "Razorpay checkout is opening.", title: "Payment initiated" },
@@ -454,13 +497,33 @@ function planAction(plan: SubscriptionPlan, currentPlan: SubscriptionPlan | null
   return targetPrice < currentPrice ? { disabled: false, label: "Schedule Downgrade", variant: "outline" as const } : { disabled: false, label: "Upgrade", variant: "default" as const };
 }
 
-async function openCheckout(checkout: CheckoutResult, organizationName: string, profile: BillingProfile | null | undefined, onReceived: () => void) {
-  if (checkout.checkout.checkoutUrl && !checkout.checkout.publicKeyId) { window.open(checkout.checkout.checkoutUrl, "_blank", "noopener,noreferrer"); onReceived(); return; }
+async function openCheckout(
+  checkout: CheckoutResult,
+  organizationName: string,
+  profile: BillingProfile | null | undefined,
+  callbacks: { onDismissed: () => void; onFailed: () => void; onReceived: () => void },
+) {
+  if (checkout.checkout.checkoutUrl && !checkout.checkout.publicKeyId) {
+    window.open(checkout.checkout.checkoutUrl, "_blank", "noopener,noreferrer");
+    callbacks.onReceived();
+    return;
+  }
   if (!checkout.checkout.publicKeyId) throw new Error("Checkout configuration is incomplete");
   await loadRazorpayScript();
   if (!window.Razorpay) throw new Error("Razorpay checkout is unavailable");
-  const razorpay = new window.Razorpay({ amount: checkout.checkout.amount ?? checkout.payment.amount, currency: checkout.checkout.currency ?? checkout.payment.currency, description: checkout.invoice.invoiceNumber, handler: onReceived, key: checkout.checkout.publicKeyId, name: organizationName, order_id: checkout.checkout.gatewayOrderId, prefill: { email: profile?.billingEmail }, theme: { color: "#2563eb" } });
-  razorpay.on("payment.failed", () => notificationEvents.emit("toast.show", { title: "Payment failed", description: "Retry payment or update the payment method.", tone: "error" }));
+  const razorpay = new window.Razorpay({
+    amount: checkout.checkout.amount ?? checkout.payment.amount,
+    currency: checkout.checkout.currency ?? checkout.payment.currency,
+    description: checkout.invoice.invoiceNumber,
+    handler: callbacks.onReceived,
+    key: checkout.checkout.publicKeyId,
+    modal: { ondismiss: callbacks.onDismissed },
+    name: organizationName,
+    order_id: checkout.checkout.gatewayOrderId,
+    prefill: { email: profile?.billingEmail },
+    theme: { color: "#2563eb" },
+  });
+  razorpay.on("payment.failed", callbacks.onFailed);
   razorpay.open();
 }
 
@@ -493,7 +556,7 @@ function getSessionMember(session: unknown) {
   return null;
 }
 function newestInvoice(invoices: Invoice[]) { return [...invoices].sort((a, b) => Date.parse(b.issueDate) - Date.parse(a.issueDate))[0] ?? null; }
-function newestPayment(payments: Array<{ initiatedAt: string; status?: string }>) { return [...payments].sort((a, b) => Date.parse(b.initiatedAt) - Date.parse(a.initiatedAt))[0] ?? null; }
+function newestPayment<T extends { initiatedAt: string }>(payments: T[]) { return [...payments].sort((a, b) => Date.parse(b.initiatedAt) - Date.parse(a.initiatedAt))[0] ?? null; }
 function formatDate(value?: string | null) { if (!value) return null; return new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(value)); }
 function dateRange(start?: string | null, end?: string | null) { const a = formatDate(start); const b = formatDate(end); return a && b ? `${a} - ${b}` : a ?? b ?? "--"; }
 function pillTone(tone: "danger" | "info" | "neutral" | "success" | "warning") { return { danger: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300", info: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300", neutral: "bg-slate-100 text-slate-700 dark:bg-white/[0.08] dark:text-slate-300", success: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300", warning: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300" }[tone]; }

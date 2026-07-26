@@ -110,7 +110,6 @@ const utilityItems = [
 const comingSoonNavItems = new Set<ErpDemoPage>([
   "gallery",
   "community",
-  "analytics",
   "activity-logs",
 ]);
 
