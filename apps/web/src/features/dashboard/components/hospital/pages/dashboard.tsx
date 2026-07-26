@@ -19,14 +19,19 @@ import {
   type VirujAnalyticsDashboard,
   type VirujAnalyticsSummaryWidget,
 } from "@/lib/viruj-backend";
+import { storagePrefix } from "./onboarding/constants";
+import { getDefaultOnboardingState, getPersistableOnboardingState, mergeOnboardingState } from "./onboarding/state";
+import type { OnboardingState } from "./onboarding/types";
 
 export function ErpDemoDashboard({
   organizationId,
   organizationLabel,
+  organizationName,
   userName,
 }: {
   organizationId?: string;
   organizationLabel: string;
+  organizationName?: string;
   roleLabel: string;
   userName: string;
 }) {
@@ -85,6 +90,7 @@ export function ErpDemoDashboard({
     [analyticsQuery.data, liveCounts]
   );
   const onboardingStatus = useHospitalOnboardingStatus(organizationId);
+  const profileVisibility = useHospitalProfileVisibility(organizationId, organizationName || organizationLabel);
 
   return (
     <>
@@ -96,6 +102,7 @@ export function ErpDemoDashboard({
         analytics={tone === "hospital" ? analytics : undefined}
         tone={tone}
         userName={userName}
+        visibility={tone === "hospital" ? profileVisibility : undefined}
       />
     </>
   );
@@ -120,6 +127,107 @@ function useHospitalOnboardingStatus(organizationId?: string) {
   return { setShowWelcome, showWelcome };
 }
 
+
+type StoredOnboardingPayload = {
+  completedAt?: string;
+  completedSteps?: string[];
+  currentStepIndex?: number;
+  data?: OnboardingState;
+  summary?: Array<{ label: string; value: string }>;
+};
+
+function useHospitalProfileVisibility(organizationId: string | undefined, hospitalName: string) {
+  const storageId = organizationId ?? "workspace";
+  const defaults = useMemo(() => ({ hospitalName }), [hospitalName]);
+  const [isPublic, setIsPublic] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  useEffect(() => {
+    setIsPublic(readHospitalProfileVisibility(storageId, defaults));
+  }, [defaults, storageId]);
+
+  const onToggle = () => {
+    const next = !isPublic;
+    setIsUpdating(true);
+    setIsPublic(next);
+    window.setTimeout(() => {
+      writeHospitalProfileVisibility(storageId, defaults, next);
+      setIsUpdating(false);
+    }, 120);
+  };
+
+  return { isPublic, isUpdating, onToggle };
+}
+
+function onboardingKeys(storageId: string) {
+  return [
+    `${storagePrefix}:draft:${storageId}`,
+    `${storagePrefix}:completed:${storageId}`,
+    `${storagePrefix}:draft:workspace`,
+    `${storagePrefix}:completed:workspace`,
+  ];
+}
+
+function readHospitalProfileVisibility(storageId: string, defaults: { hospitalName: string }) {
+  if (typeof window === "undefined") return true;
+
+  for (const key of onboardingKeys(storageId)) {
+    const payload = readOnboardingPayload(key, defaults);
+    if (payload?.data) return Boolean(payload.data.publicProfile.showHospitalProfile);
+  }
+
+  return true;
+}
+
+function writeHospitalProfileVisibility(storageId: string, defaults: { hospitalName: string }, isPublic: boolean) {
+  if (typeof window === "undefined") return;
+
+  const keys = onboardingKeys(storageId);
+  let wroteExisting = false;
+
+  for (const key of keys) {
+    const payload = readOnboardingPayload(key, defaults);
+    if (!payload?.data) continue;
+    window.localStorage.setItem(key, JSON.stringify(patchVisibility(payload, defaults, isPublic)));
+    wroteExisting = true;
+  }
+
+  if (!wroteExisting) {
+    const data = getDefaultOnboardingState(defaults);
+    data.publicProfile.showHospitalProfile = isPublic;
+    window.localStorage.setItem(
+      `${storagePrefix}:draft:${storageId}`,
+      JSON.stringify({ currentStepIndex: 0, data: getPersistableOnboardingState(data) })
+    );
+  }
+}
+
+function readOnboardingPayload(key: string, defaults: { hospitalName: string }) {
+  const raw = window.localStorage.getItem(key);
+  if (!raw) return null;
+
+  try {
+    const payload = JSON.parse(raw) as StoredOnboardingPayload;
+    if (!payload.data) return payload;
+    return { ...payload, data: mergeOnboardingState(payload.data, defaults) };
+  } catch {
+    window.localStorage.removeItem(key);
+    return null;
+  }
+}
+
+function patchVisibility(payload: StoredOnboardingPayload, defaults: { hospitalName: string }, isPublic: boolean) {
+  const data = mergeOnboardingState(payload.data ?? getDefaultOnboardingState(defaults), defaults);
+  data.publicProfile.showHospitalProfile = isPublic;
+  const summary = payload.summary?.map((item) =>
+    item.label === "Public Profile" ? { ...item, value: isPublic ? "Enabled" : "Hidden" } : item
+  );
+  return {
+    ...payload,
+    data: getPersistableOnboardingState(data),
+    ...(summary ? { summary } : {}),
+  };
+}
 function WelcomeOnboardingModal({
   onOpenChange,
   open,

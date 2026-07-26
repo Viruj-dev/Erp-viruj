@@ -5,6 +5,7 @@ import {
   CalendarDays,
   Camera,
   Eye,
+  EyeOff,
   ImagePlus,
   Plus,
   Sparkles,
@@ -35,6 +36,12 @@ export type RoleDashboardAnalytics = {
   heroStats?: Record<string, string>;
   listingScore?: number;
   stats?: RoleDashboardKpi[];
+};
+
+type ProfileVisibilityControl = {
+  isPublic: boolean;
+  isUpdating?: boolean;
+  onToggle?: () => void;
 };
 
 type ToneConfig = {
@@ -137,10 +144,12 @@ export function RoleDashboardPage({
   analytics,
   tone,
   userName,
+  visibility,
 }: {
   analytics?: RoleDashboardAnalytics;
   tone: DashboardTone;
   userName: string;
+  visibility?: ProfileVisibilityControl;
 }) {
   const theme = tones[tone];
   const displayName =
@@ -160,6 +169,8 @@ export function RoleDashboardPage({
   const PrimaryIcon =
     tone === "doctor" ? CalendarDays : tone === "hospital" ? Building2 : Stethoscope;
   const listingScore = analytics?.listingScore ?? 88;
+  const isProfilePublic = visibility?.isPublic ?? (analytics?.heroStats?.Visibility ?? "Public") !== "Private";
+  const visibilityLabel = isProfilePublic ? "Public" : "Private";
   const dashboardStats = analytics?.stats ?? baseStats.map(([label, value, note]) => ({ label, note, value }));
   const dashboardCharts = analytics?.charts ?? [];
 
@@ -222,11 +233,23 @@ export function RoleDashboardPage({
             <div className="mt-6 h-3 rounded-full bg-white/20">
               <div className="h-3 rounded-full bg-white" style={{ width: `${listingScore}%` }} />
             </div>
+            {visibility?.onToggle ? (
+              <button
+                className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-bold shadow-sm transition hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-70"
+                disabled={visibility.isUpdating}
+                onClick={visibility.onToggle}
+                style={{ color: theme.accent }}
+                type="button"
+              >
+                {isProfilePublic ? <EyeOff size={16} /> : <Eye size={16} />}
+                {visibility.isUpdating ? "Updating..." : isProfilePublic ? "Make Private" : "Make Public"}
+              </button>
+            ) : null}
             <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
               <HeroStat label="Profile Views" theme={theme} value={analytics?.heroStats?.["Profile Views"] ?? "48.2k"} />
               <HeroStat label="Requests" theme={theme} value={analytics?.heroStats?.Requests ?? "1,842"} />
               <HeroStat label="Rating" theme={theme} value={analytics?.heroStats?.Rating ?? "4.8"} />
-              <HeroStat label="Visibility" theme={theme} value={analytics?.heroStats?.Visibility ?? "Public"} />
+              <HeroStat label="Visibility" theme={theme} value={visibilityLabel} />
             </div>
           </div>
         </div>
