@@ -531,6 +531,94 @@ export type VirujAnalyticsDashboard = {
   trends: unknown[];
 };
 
+
+export type VirujWeekDay = "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
+export type VirujSettingsEnvelope<TSettings> = { data: { settings: TSettings; updatedAt?: string; updatedBy?: { id: string }; version: number } };
+export type VirujOperationalSettings = {
+  admissionNumberPattern: string;
+  appointmentNumberPattern: string;
+  cancellationCutoffMinutes: number;
+  dateFormat: string;
+  defaultAppointmentSlotMinutes: number;
+  defaultConsultationDurationMinutes: number;
+  emergencyServicesEnabled: boolean;
+  fiscalYearStartMonth: number;
+  invoiceNumberPattern: string;
+  locale: string;
+  maximumAdvanceBookingDays: number;
+  minimumBookingNoticeMinutes: number;
+  operatingHours: Partial<Record<VirujWeekDay, { closed: boolean; closeTime?: string; openTime?: string }>>;
+  patientIdPattern: string;
+  prescriptionNumberPattern: string;
+  queueEnabled: boolean;
+  reschedulingCutoffMinutes: number;
+  timeFormat: "H12" | "H24";
+  timezone: string;
+  tokenGenerationEnabled: boolean;
+  walkInAppointmentsEnabled: boolean;
+  weekStartsOn: VirujWeekDay;
+  workingDays: VirujWeekDay[];
+};
+export type VirujNotificationChannel = "EMAIL" | "IN_APP" | "PUSH" | "SMS" | "WHATSAPP";
+export type VirujNotificationSettings = {
+  defaultReminderMinutes: number[];
+  enabledChannels: VirujNotificationChannel[];
+  escalationEnabled: boolean;
+  quietHoursEnabled: boolean;
+  quietHoursEnd?: string;
+  quietHoursStart?: string;
+  quietHoursTimezone: string;
+};
+export type VirujNotificationRule = {
+  channels: VirujNotificationChannel[];
+  createdAt: string;
+  departmentIds: string[];
+  enabled: boolean;
+  escalationDelayMinutes?: number;
+  eventCategory: string;
+  eventType: string;
+  id: string;
+  priority: string;
+  recipientType: string;
+  roleIds: string[];
+  updatedAt: string;
+  userIds: string[];
+  version: number;
+};
+export type VirujSecuritySettings = {
+  accountLockoutMinutes: number;
+  allowedIpRanges: string[];
+  allowedLoginSchedule: Partial<Record<VirujWeekDay, Array<{ end: string; start: string }>>>;
+  emergencyAccessEnabled: boolean;
+  emergencyAccessRequiresReason: boolean;
+  emergencyAccessSessionMinutes: number;
+  failedLoginAttemptLimit: number;
+  ipAllowlistEnabled: boolean;
+  loginAlertsEnabled: boolean;
+  loginHoursRestrictionEnabled: boolean;
+  maximumActiveSessions: number;
+  mfaPolicy: "DISABLED" | "OPTIONAL" | "REQUIRED";
+  minimumPasswordLength: number;
+  passwordExpiryDays: number | null;
+  passwordHistoryCount: number;
+  requireLowercase: boolean;
+  requireNumber: boolean;
+  requireSpecialCharacter: boolean;
+  requireUppercase: boolean;
+  sensitiveActionReauthenticationEnabled: boolean;
+  sessionTimeoutMinutes: number;
+  trustedDeviceDurationDays: number;
+};
+export type VirujSecurityPolicyHistoryEntry = {
+  actor?: { id: string | null };
+  afterVersion?: number;
+  beforeVersion?: number;
+  changedFields: string[];
+  createdAt: string;
+  id: string;
+  reason?: string;
+  requestId?: string;
+};
 function facilityToHospitalService(input: VirujFacilityInput, create: boolean): VirujHospitalServiceInput {
   const availabilityStatus: VirujHospitalServiceAvailabilityStatus | undefined = input.isAvailable === false
     ? "TEMPORARILY_UNAVAILABLE"
@@ -759,7 +847,18 @@ export const virujBackend = {
       );
     },
   },
-  facilities: {
+  hospitalSettings: {
+    key: (section: "notifications" | "operational" | "security", organizationId?: string) => ["viruj-backend", "erp", "hospital", "settings", section, organizationId ?? "none"] as const,
+    notificationRulesKey: (organizationId?: string) => ["viruj-backend", "erp", "hospital", "settings", "notifications", "rules", organizationId ?? "none"] as const,
+    securityHistoryKey: (organizationId?: string) => ["viruj-backend", "erp", "hospital", "settings", "security", "history", organizationId ?? "none"] as const,
+    getOperational: (input?: { organizationId?: string }) => request<VirujSettingsEnvelope<VirujOperationalSettings>>("/hospital/settings/operational", { organizationId: input?.organizationId, suppressToast: true }),
+    updateOperational: (input: { organizationId?: string; settings: VirujOperationalSettings; version: number }) => request<VirujSettingsEnvelope<VirujOperationalSettings>>("/hospital/settings/operational", { body: { ...input.settings, version: input.version }, method: "PUT", organizationId: input.organizationId, successMessage: "Operational settings saved" }),
+    getNotifications: (input?: { organizationId?: string }) => request<VirujSettingsEnvelope<VirujNotificationSettings>>("/hospital/settings/notifications", { organizationId: input?.organizationId, suppressToast: true }),
+    updateNotifications: (input: { organizationId?: string; settings: VirujNotificationSettings; version: number }) => request<VirujSettingsEnvelope<VirujNotificationSettings>>("/hospital/settings/notifications", { body: { ...input.settings, version: input.version }, method: "PUT", organizationId: input.organizationId, successMessage: "Notification settings saved" }),
+    getNotificationRules: (input?: { organizationId?: string }) => request<{ data: { limit: number; page: number; rules: VirujNotificationRule[] } }>("/hospital/settings/notifications/rules?limit=50&page=1", { organizationId: input?.organizationId, suppressToast: true }),
+    getSecurity: (input?: { organizationId?: string }) => request<VirujSettingsEnvelope<VirujSecuritySettings>>("/hospital/settings/security", { organizationId: input?.organizationId, suppressToast: true }),
+    getSecurityHistory: (input?: { organizationId?: string }) => request<{ data: { entries: VirujSecurityPolicyHistoryEntry[]; limit: number; page: number } }>("/hospital/settings/security/policy-history?limit=50&page=1", { organizationId: input?.organizationId, suppressToast: true }),
+  },  facilities: {
     create: (input: VirujFacilityInput) =>
       request<VirujHospitalService>("/hospital/services", {
         body: facilityToHospitalService(input, true),

@@ -536,15 +536,14 @@ function PageContent({
     case "subscription":
       return <PricingPage organizationId={organizationId} organizationName={organizationName} />;
     case "settings":
-      return <ErpDemoSettings organizationId={organizationId} section="profile" />;
+      return <ErpDemoSettings key="settings-operational" organizationId={organizationId} section="operational" />;
     case "settings-alert-rules":
-      return <ErpDemoSettings organizationId={organizationId} section="alerts" />;
+      return <ErpDemoSettings key="settings-notifications" organizationId={organizationId} section="notifications" />;
     case "settings-audit-logs":
-      return <ErpDemoSettings organizationId={organizationId} section="audit" />;
+      return <ErpDemoSettings key="settings-security" organizationId={organizationId} section="security" />;
     case "settings-storage":
-      return <ErpDemoSettings organizationId={organizationId} section="storage" />;
     case "settings-data-export":
-      return <ErpDemoSettings organizationId={organizationId} section="export" />;
+      return <ErpDemoSettings key="settings-operational" organizationId={organizationId} section="operational" />;
     case "activity-logs":
       return <ActivityLogsPage organizationId={organizationId} />;
     case "analytics":

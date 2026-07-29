@@ -176,7 +176,6 @@ export function ErpDemoSidebar({
       label: "Profile",
       icon: UserRound,
     },
-    { id: "onboarding", label: "Onboarding", icon: ClipboardCheck },
     {
       id: isDoctorWorkspace ? "doctor-settings" : "settings",
       label: "Settings",
