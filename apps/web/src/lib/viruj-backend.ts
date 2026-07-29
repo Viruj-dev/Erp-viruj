@@ -687,7 +687,8 @@ export const virujBackend = {
       });
 
       return commonRequest<VirujAnalyticsDashboard>(
-        `/analytics/dashboard?${params.toString()}`
+        `/analytics/dashboard?${params.toString()}`,
+        { suppressToast: true }
       );
     },
     key: (input: {

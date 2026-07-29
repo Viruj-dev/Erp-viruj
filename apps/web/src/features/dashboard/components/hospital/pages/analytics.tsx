@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ChevronDown,
   Download,
+  LockKeyhole,
 } from "lucide-react";
 import { useMemo } from "react";
 import {
@@ -200,6 +201,45 @@ export function ErpDemoAnalytics({
   );
 }
 
+function AnalyticsAccessPending() {
+  return (
+    <DashboardPageShell
+      eyebrow="Analytics"
+      subtitle="Checking subscription access for this organization."
+      title="Profile & Promotion Analytics"
+    >
+      <section className="grid min-h-[360px] place-items-center rounded-3xl border border-slate-200/80 bg-white/80 p-8 text-center shadow-sm dark:border-white/[0.08] dark:bg-white/[0.04]">
+        <div className="max-w-md">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
+            <CalendarDays size={20} />
+          </div>
+          <h2 className="mt-5 text-2xl font-semibold text-slate-950 dark:text-white">Verifying analytics access</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">Analytics opens only after the backend confirms the advanced analytics entitlement.</p>
+        </div>
+      </section>
+    </DashboardPageShell>
+  );
+}
+
+function AnalyticsLocked() {
+  return (
+    <DashboardPageShell
+      eyebrow="Analytics"
+      subtitle="This module is controlled by subscription entitlements."
+      title="Profile & Promotion Analytics"
+    >
+      <section className="grid min-h-[360px] place-items-center rounded-3xl border border-slate-200/80 bg-white/80 p-8 text-center shadow-sm dark:border-white/[0.08] dark:bg-white/[0.04]">
+        <div className="max-w-md">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 dark:bg-white/[0.08] dark:text-slate-200">
+            <LockKeyhole size={20} />
+          </div>
+          <h2 className="mt-5 text-2xl font-semibold text-slate-950 dark:text-white">Analytics is locked</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">Advanced Analytics unlocks only when the backend confirms the feature entitlement for this organization.</p>
+        </div>
+      </section>
+    </DashboardPageShell>
+  );
+}
 function HeroBarChart({ data }: { data: DashboardChartPoint[] }) {
   return (
     <div className="h-[330px] w-full">

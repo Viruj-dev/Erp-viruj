@@ -117,6 +117,7 @@ export function ErpDemoSidebar({
   allowedPages,
   currentPage,
   isCollapsed,
+  lockedPages = [],
   onLogout,
   onPageChange,
   onToggle,
@@ -125,6 +126,7 @@ export function ErpDemoSidebar({
   allowedPages: ErpDemoPage[];
   currentPage: string;
   isCollapsed: boolean;
+  lockedPages?: ErpDemoPage[];
   onLogout: () => void;
   onPageChange: (page: ErpDemoPage) => void;
   onToggle: () => void;
@@ -273,6 +275,7 @@ export function ErpDemoSidebar({
             currentPage={currentPage}
             isCollapsed={isCollapsed}
             items={navItems}
+            lockedPages={lockedPages}
             label="Main Menu"
             onAppointmentToggle={() => {
               if (isCollapsed) {
@@ -328,6 +331,7 @@ export function ErpDemoSidebar({
             currentPage={currentPage}
             isCollapsed={isCollapsed}
             items={operationsItems}
+            lockedPages={lockedPages}
             label="Payments"
             onPageChange={onPageChange}
             theme={workspaceTheme}
@@ -338,6 +342,7 @@ export function ErpDemoSidebar({
             currentPage={currentPage}
             isCollapsed={isCollapsed}
             items={systemItems}
+            lockedPages={lockedPages}
             label="System"
             onPageChange={onPageChange}
             theme={workspaceTheme}
@@ -414,6 +419,7 @@ function SidebarSection({
   isCollapsed,
   items,
   label,
+  lockedPages = [],
   onAppointmentToggle,
   onDoctorProfileToggle,
   onPageChange,
@@ -428,6 +434,7 @@ function SidebarSection({
   isCollapsed: boolean;
   items: readonly NavItem[];
   label: string;
+  lockedPages?: ErpDemoPage[];
   onAppointmentToggle?: () => void;
   onDoctorProfileToggle?: () => void;
   onPageChange: (page: ErpDemoPage) => void;
@@ -438,6 +445,7 @@ function SidebarSection({
   theme: WorkspaceTheme;
 }) {
   const visibleItems = items.filter((item) => allowedPages.includes(item.id));
+  const lockedPageSet = new Set(lockedPages);
 
   if (visibleItems.length === 0) {
     return null;
@@ -457,6 +465,7 @@ function SidebarSection({
         {visibleItems.map((item) => {
           const isAppointmentItem = item.id === "appointments";
           const isComingSoon = comingSoonNavItems.has(item.id);
+          const isLocked = isComingSoon || lockedPageSet.has(item.id);
           const isDoctorProfileItem =
             showDoctorProfileDropdown &&
             profileOptions.some((option) => option.id === item.id);
@@ -471,13 +480,13 @@ function SidebarSection({
             <div key={item.id}>
               <NavButton
                 active={isActive}
-                badge={isComingSoon ? undefined : item.badge}
+                badge={isLocked ? undefined : item.badge}
                 icon={item.icon}
                 isCollapsed={isCollapsed}
-                isComingSoon={isComingSoon}
+                isComingSoon={isLocked}
                 label={item.label}
                 onClick={() => {
-                  if (isComingSoon) {
+                  if (isLocked) {
                     return;
                   }
 
@@ -585,7 +594,7 @@ function NavButton({
       onClick={onClick}
       title={
         isComingSoon
-          ? `${label} is coming soon`
+          ? `${label} is locked`
           : isCollapsed
             ? label
             : undefined

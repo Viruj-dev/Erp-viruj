@@ -234,11 +234,23 @@ const fallbackTimestamp = "2026-01-01T00:00:00.000Z";
 
 export const fallbackSubscriptionPlans: SubscriptionPlan[] = [
   createFallbackPlan({
+    annualPrice: 0,
+    code: "HOSPITAL_FREE_TRIAL",
+    providerType: "HOSPITAL",
+    description: "One month of core Viruj ERP access with premium modules locked.",
+    displayOrder: 1,
+    features: ["appointments", "patient_management", "inventory"],
+    fixedLimits: { branches: 1, staffSeats: 25 },
+    monthlyPrice: 0,
+    publicName: "Hospital Free Trial",
+    trialDurationDays: 30,
+  }),
+  createFallbackPlan({
     annualPrice: 9_000_000,
     code: "HOSPITAL_BASIC",
     providerType: "HOSPITAL",
     description: "Core hospital workflows for a single branch getting started with Viruj ERP.",
-    displayOrder: 1,
+    displayOrder: 2,
     features: ["appointments", "patient_management", "inventory"],
     fixedLimits: { branches: 1, staffSeats: 50 },
     monthlyPrice: 750_000,
@@ -249,24 +261,11 @@ export const fallbackSubscriptionPlans: SubscriptionPlan[] = [
     code: "HOSPITAL_COMPLETE",
     providerType: "HOSPITAL",
     description: "Expanded operations for hospitals with pharmacy, lab, radiology, telemedicine, and analytics modules.",
-    displayOrder: 2,
+    displayOrder: 3,
     features: ["appointments", "patient_management", "inventory", "pharmacy", "laboratory", "radiology", "advanced_analytics", "telemedicine"],
     fixedLimits: { branches: 5, staffSeats: 250 },
     monthlyPrice: 1_500_000,
     publicName: "Hospital Complete",
-  }),
-  createFallbackPlan({
-    annualPrice: 0,
-    code: "HOSPITAL_ENTERPRISE",
-    providerType: "HOSPITAL",
-    customPricing: true,
-    contactSales: true,
-    description: "Multi-branch scale with custom integrations and priority support.",
-    displayOrder: 3,
-    features: ["appointments", "patient_management", "inventory", "pharmacy", "laboratory", "radiology", "advanced_analytics", "multi_branch", "telemedicine", "custom_integrations", "priority_support"],
-    fixedLimits: { branches: 25, staffSeats: 1000 },
-    monthlyPrice: 0,
-    publicName: "Hospital Enterprise",
   }),
 ];
 function createFallbackPlan(input: {
@@ -281,6 +280,7 @@ function createFallbackPlan(input: {
   fixedLimits: Record<string, number>;
   monthlyPrice: number;
   publicName: string;
+  trialDurationDays?: number;
 }): SubscriptionPlan {
   const planId = `plan_${input.code.toLowerCase()}`;
 
@@ -305,7 +305,7 @@ function createFallbackPlan(input: {
       monthlyPrice: input.monthlyPrice,
       annualPrice: input.annualPrice,
       currency: "INR",
-      trialDurationDays: 14,
+      trialDurationDays: input.trialDurationDays ?? 0,
       features: input.features.map((code) => ({ code, enabled: true })),
       fixedLimits: input.fixedLimits,
       active: true,

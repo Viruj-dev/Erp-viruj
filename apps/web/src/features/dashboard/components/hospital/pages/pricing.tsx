@@ -400,7 +400,7 @@ function CurrentSubscriptionTab({ canCancel, canManagePayment, canReactivate, cu
       <aside className="space-y-4">
         <Card className="border border-slate-200 bg-white/86 p-5 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.04]"><div className="flex items-center justify-between gap-3"><h3 className="font-semibold text-slate-950 dark:text-white">Payment method</h3><CreditCard className="text-slate-400" size={18} /></div><PaymentMethodSummary method={paymentMethod} /><Button className="mt-4 w-full" disabled={!canManagePayment} onClick={onManagePayment} variant="outline">Manage Payment Method</Button></Card>
         <Card className="border border-slate-200 bg-white/86 p-5 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.04]"><h3 className="font-semibold text-slate-950 dark:text-white">Latest invoice</h3>{invoice ? <div className="mt-4 space-y-3 text-sm"><Fact label="Invoice" value={invoice.invoiceNumber} /><Fact label="Status" value={invoiceStatusLabels[invoice.status]} /><Fact label="Amount due" value={formatMinorMoney(invoice.amountDue, invoice.currency)} /></div> : <p className="mt-4 text-sm text-slate-500">No invoices have been generated yet.</p>}</Card>
-        {canCancel && subscription.status !== "CANCELLED" ? <Button className="w-full" onClick={onCancel} variant="outline"><X size={15} /> Cancel Subscription</Button> : null}
+        {canCancel && subscription.status !== "CANCELLED" && !subscription.cancelAtPeriodEnd ? <Button className="w-full" onClick={onCancel} variant="outline"><X size={15} /> Cancel Subscription</Button> : null}
       </aside>
     </div>
   );
@@ -449,7 +449,7 @@ function CancellationSheet({ canCancel, isPending, onConfirm, onOpenChange, open
       <SheetContent className="w-full sm:max-w-lg">
         <SheetHeader><SheetTitle>Cancel subscription</SheetTitle><SheetDescription>Preferred default is cancellation at the end of the current billing period.</SheetDescription></SheetHeader>
         <div className="space-y-4 px-4"><section className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200"><p className="font-semibold">Access remains until {formatDate(subscription?.currentBillingPeriodEnd) ?? "the backend effective date"}.</p><p className="mt-2">This does not delete hospital data. Reactivation remains available when supported by billing state.</p></section><label className="grid gap-2 text-sm font-semibold">Cancellation reason<Textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Tell us why you are cancelling" /></label></div>
-        <SheetFooter><Button disabled={!canCancel || isPending} onClick={onConfirm} variant="destructive">{isPending ? <Loader2 className="animate-spin" size={15} /> : null} Schedule Cancellation</Button></SheetFooter>
+        <SheetFooter><Button disabled={!canCancel || isPending || Boolean(subscription?.cancelAtPeriodEnd)} onClick={onConfirm} variant="destructive">{isPending ? <Loader2 className="animate-spin" size={15} /> : null} Schedule Cancellation</Button></SheetFooter>
       </SheetContent>
     </Sheet>
   );
@@ -457,7 +457,10 @@ function CancellationSheet({ canCancel, isPending, onConfirm, onOpenChange, open
 
 function StatusBanner({ subscription }: { subscription: Subscription }) {
   const meta = subscriptionStatusMeta[subscription.status];
-  return <section className={cn("rounded-2xl border p-4", bannerTone(meta.tone))} role={meta.tone === "danger" ? "alert" : "status"}><div className="flex gap-3">{meta.tone === "danger" || meta.tone === "warning" ? <AlertTriangle className="mt-0.5 shrink-0" size={18} /> : <BadgeCheck className="mt-0.5 shrink-0" size={18} />}<div><h3 className="font-semibold">{meta.title}</h3><p className="mt-1 text-sm leading-6">{meta.description}</p>{subscription.status === "TRIALING" && subscription.trialEnd ? <p className="mt-2 text-sm font-semibold">Trial ends on {formatDate(subscription.trialEnd)}.</p> : null}{subscription.status === "PAST_DUE" && subscription.gracePeriodEnd ? <p className="mt-2 text-sm font-semibold">Grace period ends on {formatDate(subscription.gracePeriodEnd)}.</p> : null}{subscription.cancelAtPeriodEnd && subscription.cancellationEffectiveAt ? <p className="mt-2 text-sm font-semibold">Cancellation is scheduled for {formatDate(subscription.cancellationEffectiveAt)}.</p> : null}</div></div></section>;
+  const scheduled = subscription.cancelAtPeriodEnd && subscription.cancellationEffectiveAt;
+  const title = scheduled ? "Cancellation scheduled" : meta.title;
+  const description = scheduled ? "Access remains available until the effective date shown below." : meta.description;
+  return <section className={cn("rounded-2xl border p-4", bannerTone(scheduled ? "warning" : meta.tone))} role={meta.tone === "danger" ? "alert" : "status"}><div className="flex gap-3">{meta.tone === "danger" || meta.tone === "warning" || scheduled ? <AlertTriangle className="mt-0.5 shrink-0" size={18} /> : <BadgeCheck className="mt-0.5 shrink-0" size={18} />}<div><h3 className="font-semibold">{title}</h3><p className="mt-1 text-sm leading-6">{description}</p>{subscription.status === "TRIALING" && subscription.trialEnd ? <p className="mt-2 text-sm font-semibold">Trial ends on {formatDate(subscription.trialEnd)}.</p> : null}{subscription.status === "PAST_DUE" && subscription.gracePeriodEnd ? <p className="mt-2 text-sm font-semibold">Grace period ends on {formatDate(subscription.gracePeriodEnd)}.</p> : null}{scheduled ? <p className="mt-2 text-sm font-semibold">Cancellation is scheduled for {formatDate(subscription.cancellationEffectiveAt)}.</p> : null}</div></div></section>;
 }
 
 function PaymentVerificationBanner({ state }: { state: VerificationState }) {
@@ -493,8 +496,9 @@ function TableSkeleton() { return <Skeleton className="h-80 rounded-2xl" />; }
 
 function planAction(plan: SubscriptionPlan, currentPlan: SubscriptionPlan | null, subscription: Subscription | null, billingCycle: BillingCycle) {
   if (plan.contactSales || plan.customPricing || plan.code.toLowerCase().includes("enterprise")) return { disabled: false, label: "Contact Sales", reason: "Enterprise subscriptions require sales approval.", variant: "outline" as const };
+  if (!subscription && plan.activeVersion.trialDurationDays > 0) return { disabled: false, label: "Start Free Trial", variant: "default" as const };
   if (!subscription && priceForCycle(plan.activeVersion, billingCycle) === 0) return { disabled: false, label: "Start Free", variant: "default" as const };
-  if (!subscription) return plan.activeVersion.trialDurationDays > 0 ? { disabled: false, label: "Start Free Trial", variant: "default" as const } : { disabled: false, label: "Choose Plan", variant: "default" as const };
+  if (!subscription) return { disabled: false, label: "Choose Plan", variant: "default" as const };
   if (subscription.status === "SUSPENDED") return { disabled: currentPlan?.id !== plan.id, label: "Reactivate", reason: currentPlan?.id !== plan.id ? "Recover the current subscription before changing plans." : undefined, variant: "default" as const };
   if (subscription.status === "PAST_DUE") return { disabled: currentPlan?.id !== plan.id, label: currentPlan?.id === plan.id ? "Resolve Payment" : "Change After Recovery", reason: currentPlan?.id !== plan.id ? "Resolve the failed renewal before changing plans." : undefined, variant: "default" as const };
   if (currentPlan?.id === plan.id) return { disabled: true, label: "Current Plan", variant: "outline" as const };

@@ -5,6 +5,7 @@ import {
   organizationClient,
 } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
+import { clearCentralApiToken } from "./central-api-token";
 
 const authOrigin =
   process.env.NEXT_PUBLIC_AUTH_URL ||
@@ -163,6 +164,7 @@ export async function bootstrapOrganization(input: {
     };
   }
 
+  clearCentralApiToken();
   return {
     data: payload,
     error: null,
@@ -194,6 +196,7 @@ export async function activateOrganization(input: { organizationId: string }) {
     };
   }
 
+  clearCentralApiToken();
   return {
     data: payload,
     error: null,

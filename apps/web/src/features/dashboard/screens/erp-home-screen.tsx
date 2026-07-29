@@ -32,12 +32,14 @@ import {
   resolveAccessibleDashboardPage,
 } from "@/features/dashboard/lib/routing";
 import { LoadingScreen } from "@/features/shell/components/loading-screen";
-import { getBillingPermissionsFromMember } from "@/features/subscription/utils/subscription-access";
+import { subscriptionBillingApi } from "@/features/subscription/api/subscription.api";
+import { getBillingPermissionsFromMember, hasBillingPermission, hasFeature } from "@/features/subscription/utils/subscription-access";
 import {
   activateOrganization,
   authClient,
 } from "@/lib/auth-client";
 import { AnimatePresence, motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
@@ -131,15 +133,20 @@ export function ErpHomeScreen({
       : null;
   const activeMemberRole = activeMember?.role;
   const activeMemberPermissions = getBillingPermissionsFromMember(activeMember);
+  const canReadSubscription = hasBillingPermission(activeMemberPermissions, "subscription.read");
+  const subscriptionQuery = useQuery({ enabled: canReadSubscription && activeOrganizationType === "hospital", queryFn: subscriptionBillingApi.current, queryKey: subscriptionBillingApi.currentKey, retry: false, staleTime: 30_000 });
+  const plansQuery = useQuery({ enabled: canReadSubscription && activeOrganizationType === "hospital", queryFn: subscriptionBillingApi.plans, queryKey: subscriptionBillingApi.plansKey, retry: false, staleTime: 60_000 });
   const allowedPages = getAllowedDashboardPages(
     activeMemberRole,
     activeMemberPermissions
   );
-  const resolvedPage = resolveAccessibleDashboardPage(
-    currentPage,
-    activeMemberRole,
-    activeMemberPermissions
-  );
+  const lockedPages = activeOrganizationType === "hospital"
+    ? getLockedPages(subscriptionQuery.data, plansQuery.data)
+    : [];
+  const routablePages = allowedPages.filter((page) => !lockedPages.includes(page));
+  const resolvedPage = routablePages.includes(currentPage)
+    ? currentPage
+    : resolveAccessibleDashboardPage("dashboard", activeMemberRole, activeMemberPermissions);
   const organizationLabel = activeOrganizationType
     ? organizationTypeLabels[activeOrganizationType]
     : "Organization";
@@ -371,6 +378,7 @@ export function ErpHomeScreen({
         allowedPages={allowedPages}
         currentPage={currentPage}
         isCollapsed={isSidebarCollapsed}
+        lockedPages={lockedPages}
         onLogout={async () => {
           setIsSigningOut(true);
           try {
@@ -587,6 +595,12 @@ function PageContent({
 
 function isErpDemoPage(page: string): page is ErpDemoPage {
   return isDashboardPage(page);
+}
+
+function getLockedPages(subscription: Awaited<ReturnType<typeof subscriptionBillingApi.current>> | undefined, plans: Awaited<ReturnType<typeof subscriptionBillingApi.plans>> | undefined): ErpDemoPage[] {
+  const plan = plans?.find((item) => item.id === subscription?.planId);
+  const featureCodes = plan?.activeVersion.features.filter((feature) => feature.enabled).map((feature) => feature.code) ?? [];
+  return hasFeature(featureCodes, "advanced_analytics") ? [] : ["analytics"];
 }
 
 function isRecentlyCreatedOrganization(organization: unknown) {
