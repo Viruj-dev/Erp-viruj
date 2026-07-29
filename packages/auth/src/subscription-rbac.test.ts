@@ -190,6 +190,51 @@ describe("subscription billing RBAC", () => {
       }
     }
   });
+
+  test("central API hospital data export permissions go only to owner and admin roles", async () => {
+    const { getCentralApiPermissions } = await authModule;
+    const exportPermissions = [
+      "hospital.data-exports.capabilities.read",
+      "hospital.data-exports.policies.read",
+      "hospital.data-exports.policies.update",
+      "hospital.data-exports.read",
+      "hospital.data-exports.create",
+      "hospital.data-exports.approve",
+      "hospital.data-exports.reject",
+      "hospital.data-exports.cancel",
+      "hospital.data-exports.download",
+    ];
+
+    for (const role of [
+      "OWNER",
+      "CLINIC_OWNER",
+      "ADMIN",
+      "CLINIC_ADMIN",
+      "ORG_ADMIN",
+      "admin",
+      "owner",
+    ]) {
+      for (const permission of exportPermissions) {
+        expect(getCentralApiPermissions(role)).toContain(permission);
+      }
+    }
+
+    for (const role of [
+      "MANAGER",
+      "STAFF",
+      "CLINIC_STAFF",
+      "RECEPTIONIST",
+      "TECHNICIAN",
+      "billing",
+      "doctor",
+      "manager",
+      "receptionist",
+    ]) {
+      for (const permission of exportPermissions) {
+        expect(getCentralApiPermissions(role)).not.toContain(permission);
+      }
+    }
+  });
   test("permission-name mismatch cannot occur in canonical billing list", async () => {
     const { subscriptionBillingPermissionNames } = await authModule;
 
