@@ -101,6 +101,7 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
     onError: () => setVerification({ state: "failed" }),
     onSuccess: async (checkout) => {
       setVerification({ paymentId: checkout.payment.id, startedAt: Date.now(), state: "initiated" });
+      setSelectedPlan(null);
       await openCheckout(checkout, organizationName, billingProfileQuery.data, {
         onDismissed: () => {
           setVerification({ paymentId: checkout.payment.id, startedAt: Date.now(), state: "dismissed" });
@@ -195,7 +196,7 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
         : null;
       const status = freshSubscription.status === "fulfilled" ? freshSubscription.value.status : undefined;
 
-      if (status === "ACTIVE" || status === "TRIALING") {
+      if ((status === "ACTIVE" || status === "TRIALING") && payment?.status === "CAPTURED") {
         await invalidateBilling();
         setVerification({ state: "activated" });
         setSelectedPlan(null);
