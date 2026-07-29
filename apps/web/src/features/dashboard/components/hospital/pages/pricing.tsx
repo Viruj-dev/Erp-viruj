@@ -124,7 +124,7 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
     mutationFn: async (plan: SubscriptionPlan) => {
       if (!subscription) {
         await subscriptionBillingApi.createSubscription({ billingCycle, planCode: plan.code, trial: false });
-        return "checkout" as const;
+        return priceForCycle(plan.activeVersion, billingCycle) === 0 ? "activated" as const : "checkout" as const;
       }
       if (["INCOMPLETE", "PAST_DUE", "PAYMENT_PENDING"].includes(subscription.status)) return "checkout" as const;
       if (!currentPlan) return "checkout" as const;
@@ -152,6 +152,11 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
     onSuccess: async (result) => {
       await invalidateBilling();
       if (result === "checkout") checkoutMutation.mutate();
+      if (result === "activated") {
+        notificationEvents.emit("toast.show", { title: "Subscription activated", description: "Your free plan is active and entitlements are refreshing.", tone: "success" });
+        setSelectedPlan(null);
+        setTab("current");
+      }
       if (result === "scheduled") {
         notificationEvents.emit("toast.show", { title: "Downgrade scheduled", description: "Current features remain available until the effective date.", tone: "success" });
         setSelectedPlan(null);
@@ -330,7 +335,7 @@ function PlansTab({ billingCycle, canChangePlan, currentPlan, isLoading, onSelec
 
 function PlanCard({ billingCycle, canChangePlan, currentPlan, index, onSelectPlan, onStartTrial, plan, subscription, trialPending }: { billingCycle: BillingCycle; canChangePlan: boolean; currentPlan: SubscriptionPlan | null; index: number; onSelectPlan: (plan: SubscriptionPlan) => void; onStartTrial: (plan: SubscriptionPlan) => void; plan: SubscriptionPlan; subscription: Subscription | null; trialPending: boolean }) {
   const isCurrent = currentPlan?.id === plan.id;
-  const isEnterprise = plan.code.toLowerCase().includes("enterprise");
+  const isEnterprise = Boolean(plan.contactSales || plan.customPricing || plan.code.toLowerCase().includes("enterprise"));
   const action = planAction(plan, currentPlan, subscription, billingCycle);
   const price = priceForCycle(plan.activeVersion, billingCycle);
   const equivalentMonthly = annualEquivalentMonthly(plan.activeVersion);
@@ -361,7 +366,7 @@ function PlanCard({ billingCycle, canChangePlan, currentPlan, index, onSelectPla
         {plan.activeVersion.trialDurationDays > 0 ? <p className="text-xs font-semibold text-blue-600 dark:text-blue-300">{plan.activeVersion.trialDurationDays}-day trial available</p> : null}
       </div>
       <div className="mt-6 grid gap-2">
-        <Button disabled={!canChangePlan || action.disabled || trialPending} onClick={() => { if (isEnterprise) return; if (!subscription && plan.activeVersion.trialDurationDays > 0 && action.label === "Start Free Trial") { onStartTrial(plan); return; } onSelectPlan(plan); }} variant={action.variant}>
+        <Button disabled={!canChangePlan || action.disabled || trialPending} onClick={() => { if (isEnterprise) { notificationEvents.emit("toast.show", { title: "Contact sales", description: "Viruj sales approval is required for this plan.", tone: "info" }); return; } if (!subscription && plan.activeVersion.trialDurationDays > 0 && action.label === "Start Free Trial") { onStartTrial(plan); return; } onSelectPlan(plan); }} variant={action.variant}>
           {trialPending ? <Loader2 className="animate-spin" size={15} /> : null}{action.label}{!action.disabled ? <ArrowRight size={15} /> : null}
         </Button>
         {action.reason ? <p className="text-xs text-slate-500">{action.reason}</p> : null}
@@ -487,7 +492,8 @@ function CurrentSkeleton() { return <Skeleton className="h-72 rounded-2xl" />; }
 function TableSkeleton() { return <Skeleton className="h-80 rounded-2xl" />; }
 
 function planAction(plan: SubscriptionPlan, currentPlan: SubscriptionPlan | null, subscription: Subscription | null, billingCycle: BillingCycle) {
-  if (plan.code.toLowerCase().includes("enterprise")) return { disabled: false, label: "Contact Sales", reason: "Enterprise subscriptions require sales approval.", variant: "outline" as const };
+  if (plan.contactSales || plan.customPricing || plan.code.toLowerCase().includes("enterprise")) return { disabled: false, label: "Contact Sales", reason: "Enterprise subscriptions require sales approval.", variant: "outline" as const };
+  if (!subscription && priceForCycle(plan.activeVersion, billingCycle) === 0) return { disabled: false, label: "Start Free", variant: "default" as const };
   if (!subscription) return plan.activeVersion.trialDurationDays > 0 ? { disabled: false, label: "Start Free Trial", variant: "default" as const } : { disabled: false, label: "Choose Plan", variant: "default" as const };
   if (subscription.status === "SUSPENDED") return { disabled: currentPlan?.id !== plan.id, label: "Reactivate", reason: currentPlan?.id !== plan.id ? "Recover the current subscription before changing plans." : undefined, variant: "default" as const };
   if (subscription.status === "PAST_DUE") return { disabled: currentPlan?.id !== plan.id, label: currentPlan?.id === plan.id ? "Resolve Payment" : "Change After Recovery", reason: currentPlan?.id !== plan.id ? "Resolve the failed renewal before changing plans." : undefined, variant: "default" as const };

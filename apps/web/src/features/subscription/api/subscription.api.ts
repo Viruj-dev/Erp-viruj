@@ -81,6 +81,7 @@ export type BillingCycle = "MONTHLY" | "ANNUAL";
 export type SubscriptionStatus = "INCOMPLETE" | "TRIALING" | "ACTIVE" | "PAYMENT_PENDING" | "PAST_DUE" | "SUSPENDED" | "CANCELLED" | "EXPIRED";
 export type InvoiceStatus = "DRAFT" | "OPEN" | "PAID" | "PAST_DUE" | "VOID" | "REFUNDED" | "PARTIALLY_REFUNDED";
 export type PaymentStatus = "INITIATED" | "PENDING" | "AUTHORIZED" | "CAPTURED" | "FAILED" | "CANCELLED" | "REFUNDED" | "PARTIALLY_REFUNDED";
+export type ProviderType = "DOCTOR" | "CLINIC" | "LAB" | "RADIOLOGY" | "HOSPITAL";
 
 export type PlanFeature = { code: string; enabled: boolean; limit?: number };
 export type PlanVersion = {
@@ -99,11 +100,14 @@ export type PlanVersion = {
 export type SubscriptionPlan = {
   id: string;
   code: string;
+  providerType?: ProviderType;
   publicName: string;
   description?: string;
   currency: string;
   enabled: boolean;
   publicVisible: boolean;
+  customPricing?: boolean;
+  contactSales?: boolean;
   displayOrder: number;
   createdAt: string;
   updatedAt: string;
@@ -230,58 +234,47 @@ const fallbackTimestamp = "2026-01-01T00:00:00.000Z";
 
 export const fallbackSubscriptionPlans: SubscriptionPlan[] = [
   createFallbackPlan({
-    annualPrice: 2_999_000,
-    code: "STARTER",
+    annualPrice: 9_000_000,
+    code: "HOSPITAL_BASIC",
+    providerType: "HOSPITAL",
     description: "Core hospital workflows for a single branch getting started with Viruj ERP.",
     displayOrder: 1,
     features: ["appointments", "patient_management", "inventory"],
-    fixedLimits: { branches: 1, staffSeats: 20 },
-    monthlyPrice: 299_900,
-    publicName: "Starter",
+    fixedLimits: { branches: 1, staffSeats: 50 },
+    monthlyPrice: 750_000,
+    publicName: "Hospital Basic",
   }),
   createFallbackPlan({
-    annualPrice: 7_999_000,
-    code: "PROFESSIONAL",
-    description: "Expanded operations for growing hospitals with pharmacy, lab, and analytics modules.",
+    annualPrice: 18_000_000,
+    code: "HOSPITAL_COMPLETE",
+    providerType: "HOSPITAL",
+    description: "Expanded operations for hospitals with pharmacy, lab, radiology, telemedicine, and analytics modules.",
     displayOrder: 2,
-    features: [
-      "appointments",
-      "patient_management",
-      "inventory",
-      "pharmacy",
-      "laboratory",
-      "advanced_analytics",
-    ],
-    fixedLimits: { branches: 3, staffSeats: 100 },
-    monthlyPrice: 799_900,
-    publicName: "Professional",
+    features: ["appointments", "patient_management", "inventory", "pharmacy", "laboratory", "radiology", "advanced_analytics", "telemedicine"],
+    fixedLimits: { branches: 5, staffSeats: 250 },
+    monthlyPrice: 1_500_000,
+    publicName: "Hospital Complete",
   }),
   createFallbackPlan({
-    annualPrice: 19_999_000,
-    code: "ENTERPRISE",
-    description: "Multi-branch scale with telemedicine, custom integrations, and priority support.",
+    annualPrice: 0,
+    code: "HOSPITAL_ENTERPRISE",
+    providerType: "HOSPITAL",
+    customPricing: true,
+    contactSales: true,
+    description: "Multi-branch scale with custom integrations and priority support.",
     displayOrder: 3,
-    features: [
-      "appointments",
-      "patient_management",
-      "inventory",
-      "pharmacy",
-      "laboratory",
-      "advanced_analytics",
-      "multi_branch",
-      "telemedicine",
-      "custom_integrations",
-      "priority_support",
-    ],
+    features: ["appointments", "patient_management", "inventory", "pharmacy", "laboratory", "radiology", "advanced_analytics", "multi_branch", "telemedicine", "custom_integrations", "priority_support"],
     fixedLimits: { branches: 25, staffSeats: 1000 },
-    monthlyPrice: 1_999_900,
-    publicName: "Enterprise",
+    monthlyPrice: 0,
+    publicName: "Hospital Enterprise",
   }),
 ];
-
 function createFallbackPlan(input: {
   annualPrice: number;
   code: string;
+  providerType?: ProviderType;
+  customPricing?: boolean;
+  contactSales?: boolean;
   description: string;
   displayOrder: number;
   features: string[];
@@ -294,11 +287,14 @@ function createFallbackPlan(input: {
   return {
     id: planId,
     code: input.code,
+    providerType: input.providerType,
     publicName: input.publicName,
     description: input.description,
     currency: "INR",
     enabled: true,
     publicVisible: true,
+    customPricing: input.customPricing,
+    contactSales: input.contactSales,
     displayOrder: input.displayOrder,
     createdAt: fallbackTimestamp,
     updatedAt: fallbackTimestamp,
@@ -361,7 +357,7 @@ export const subscriptionBillingApi = {
   paymentMethodsKey: ["viruj-payment", "payment-methods"] as const,
   payments: () => paymentRequest<Payment[]>("/payments", { suppressToast: true }),
   paymentsKey: ["viruj-payment", "payments"] as const,
-  plans: () => paymentRequest<SubscriptionPlan[]>("/plans", { suppressToast: true }).catch(() => fallbackSubscriptionPlans),
+  plans: () => paymentRequest<SubscriptionPlan[]>("/plans", { suppressToast: true }),
   plansKey: ["viruj-payment", "plans"] as const,
   reactivate: (input?: { reason?: string }) =>
     paymentRequest<Subscription>("/subscription/reactivate", {
