@@ -50,6 +50,7 @@ export const erpStatements = {
     "archive",
   ] as const,
   invitation: ["read", "create", "cancel"] as const,
+  hospitalSettings: ["read", "update"] as const,
   member: ["read", "create", "update", "delete"] as const,
   organization: ["read", "update", "delete"] as const,
   patient: ["read"] as const,
@@ -77,6 +78,7 @@ export const organizationRoles = {
     doctorDirectory: ["read", "manage"],
     facility: ["read", "create", "update", "delete", "publish", "archive"],
     invitation: ["read", "create", "cancel"],
+    hospitalSettings: ["read", "update"],
     member: ["read", "create", "update", "delete"],
     organization: ["read", "update", "delete"],
     patient: ["read"],
@@ -99,6 +101,7 @@ export const organizationRoles = {
     doctorDirectory: ["read", "manage"],
     facility: ["read", "create", "update", "delete", "publish", "archive"],
     invitation: ["read", "create", "cancel"],
+    hospitalSettings: ["read", "update"],
     member: ["read", "create", "update", "delete"],
     organization: ["read", "update", "delete"],
     patient: ["read"],
@@ -121,6 +124,7 @@ export const organizationRoles = {
     doctorDirectory: ["read", "manage"],
     facility: ["read", "create", "update", "delete", "publish", "archive"],
     invitation: ["read", "create", "cancel"],
+    hospitalSettings: ["read", "update"],
     member: ["read", "create", "update", "delete"],
     organization: ["read", "update"],
     patient: ["read"],
@@ -143,6 +147,7 @@ export const organizationRoles = {
     doctorDirectory: ["read", "manage"],
     facility: ["read", "create", "update", "delete", "publish", "archive"],
     invitation: ["read", "create", "cancel"],
+    hospitalSettings: ["read", "update"],
     member: ["read", "create", "update", "delete"],
     organization: ["read", "update"],
     patient: ["read"],
@@ -233,6 +238,7 @@ export const organizationRoles = {
     doctorDirectory: ["read", "manage"],
     facility: ["read", "create", "update", "delete", "publish", "archive"],
     invitation: ["read", "create", "cancel"],
+    hospitalSettings: ["read", "update"],
     member: ["read", "create", "update", "delete"],
     organization: ["read", "update"],
     patient: ["read"],
@@ -269,6 +275,7 @@ export const organizationRoles = {
     doctorDirectory: ["read", "manage"],
     facility: ["read", "create", "update", "delete", "publish", "archive"],
     invitation: ["read", "create", "cancel"],
+    hospitalSettings: ["read", "update"],
     member: ["read", "create", "update", "delete"],
     organization: ["read", "update"],
     patient: ["read"],
@@ -342,6 +349,7 @@ export const organizationRoles = {
     doctorDirectory: ["read", "manage"],
     facility: ["read", "create", "update", "delete", "publish", "archive"],
     invitation: ["read", "create", "cancel"],
+    hospitalSettings: ["read", "update"],
     member: ["read", "create", "update", "delete"],
     organization: ["read", "update", "delete"],
     patient: ["read"],
@@ -495,7 +503,10 @@ export const hasOrganizationPermission = (
 
 export const getOrganizationPermissions = (role: string) =>
   subscriptionBillingPermissionNames.filter((permission) =>
-    hasOrganizationPermission(role, subscriptionBillingPermissionChecks[permission])
+    hasOrganizationPermission(
+      role,
+      subscriptionBillingPermissionChecks[permission]
+    )
   );
 
 const centralApiPermissionChecks = {
@@ -574,6 +585,16 @@ const centralApiPermissionChecks = {
   "hospital_service.create": { facility: ["create"] },
   "hospital_service.read": { facility: ["read"] },
   "hospital_service.update": { facility: ["update"] },
+  "hospital.settings.operational.read": { hospitalSettings: ["read"] },
+  "hospital.settings.operational.update": { hospitalSettings: ["update"] },
+  "hospital.settings.notifications.read": { hospitalSettings: ["read"] },
+  "hospital.settings.notifications.update": { hospitalSettings: ["update"] },
+  "hospital.settings.security.read": { hospitalSettings: ["read"] },
+  "hospital.settings.security.update": { hospitalSettings: ["update"] },
+  "hospital.security.sessions.read": { hospitalSettings: ["read"] },
+  "hospital.security.sessions.revoke": { hospitalSettings: ["update"] },
+  "hospital.security.sessions.revoke-all": { hospitalSettings: ["update"] },
+  "hospital.security.policy-history.read": { hospitalSettings: ["read"] },
   "lead.assign": { community: ["manage"] },
   "lead.convert": { community: ["manage"] },
   "lead.create": { community: ["manage"] },

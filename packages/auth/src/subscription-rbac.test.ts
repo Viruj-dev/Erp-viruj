@@ -33,9 +33,9 @@ describe("subscription billing RBAC", () => {
       expect(getOrganizationPermissions(role)).toEqual(
         Array.from(expectedBillingPermissions)
       );
-      expect(
-        hasOrganizationPermission(role, { subscription: ["read"] })
-      ).toBe(true);
+      expect(hasOrganizationPermission(role, { subscription: ["read"] })).toBe(
+        true
+      );
     }
   });
 
@@ -54,9 +54,9 @@ describe("subscription billing RBAC", () => {
       await authModule;
 
     expect(getOrganizationPermissions("STAFF")).toEqual([]);
-    expect(
-      hasOrganizationPermission("STAFF", { subscription: ["read"] })
-    ).toBe(false);
+    expect(hasOrganizationPermission("STAFF", { subscription: ["read"] })).toBe(
+      false
+    );
   });
 
   test("stale token refresh obtains newly assigned permissions", async () => {
@@ -69,6 +69,127 @@ describe("subscription billing RBAC", () => {
     expect(refreshedSessionPermissions).toContain("billing.profile.update");
   });
 
+  test("central API hospital operational settings permissions go only to owner and admin roles", async () => {
+    const { getCentralApiPermissions } = await authModule;
+
+    for (const role of [
+      "OWNER",
+      "CLINIC_OWNER",
+      "ADMIN",
+      "CLINIC_ADMIN",
+      "ORG_ADMIN",
+      "admin",
+      "owner",
+    ]) {
+      expect(getCentralApiPermissions(role)).toContain(
+        "hospital.settings.operational.read"
+      );
+      expect(getCentralApiPermissions(role)).toContain(
+        "hospital.settings.operational.update"
+      );
+    }
+
+    for (const role of [
+      "MANAGER",
+      "STAFF",
+      "CLINIC_STAFF",
+      "RECEPTIONIST",
+      "TECHNICIAN",
+      "billing",
+      "doctor",
+      "manager",
+      "receptionist",
+    ]) {
+      expect(getCentralApiPermissions(role)).not.toContain(
+        "hospital.settings.operational.read"
+      );
+      expect(getCentralApiPermissions(role)).not.toContain(
+        "hospital.settings.operational.update"
+      );
+    }
+  });
+
+  test("central API hospital notification settings permissions go only to owner and admin roles", async () => {
+    const { getCentralApiPermissions } = await authModule;
+
+    for (const role of [
+      "OWNER",
+      "CLINIC_OWNER",
+      "ADMIN",
+      "CLINIC_ADMIN",
+      "ORG_ADMIN",
+      "admin",
+      "owner",
+    ]) {
+      expect(getCentralApiPermissions(role)).toContain(
+        "hospital.settings.notifications.read"
+      );
+      expect(getCentralApiPermissions(role)).toContain(
+        "hospital.settings.notifications.update"
+      );
+    }
+
+    for (const role of [
+      "MANAGER",
+      "STAFF",
+      "CLINIC_STAFF",
+      "RECEPTIONIST",
+      "TECHNICIAN",
+      "billing",
+      "doctor",
+      "manager",
+      "receptionist",
+    ]) {
+      expect(getCentralApiPermissions(role)).not.toContain(
+        "hospital.settings.notifications.read"
+      );
+      expect(getCentralApiPermissions(role)).not.toContain(
+        "hospital.settings.notifications.update"
+      );
+    }
+  });
+
+  test("central API hospital security settings permissions go only to owner and admin roles", async () => {
+    const { getCentralApiPermissions } = await authModule;
+    const securityPermissions = [
+      "hospital.settings.security.read",
+      "hospital.settings.security.update",
+      "hospital.security.sessions.read",
+      "hospital.security.sessions.revoke",
+      "hospital.security.sessions.revoke-all",
+      "hospital.security.policy-history.read",
+    ];
+
+    for (const role of [
+      "OWNER",
+      "CLINIC_OWNER",
+      "ADMIN",
+      "CLINIC_ADMIN",
+      "ORG_ADMIN",
+      "admin",
+      "owner",
+    ]) {
+      for (const permission of securityPermissions) {
+        expect(getCentralApiPermissions(role)).toContain(permission);
+      }
+    }
+
+    for (const role of [
+      "MANAGER",
+      "STAFF",
+      "CLINIC_STAFF",
+      "RECEPTIONIST",
+      "TECHNICIAN",
+      "billing",
+      "doctor",
+      "manager",
+      "receptionist",
+    ]) {
+      for (const permission of securityPermissions) {
+        expect(getCentralApiPermissions(role)).not.toContain(permission);
+      }
+    }
+  });
   test("permission-name mismatch cannot occur in canonical billing list", async () => {
     const { subscriptionBillingPermissionNames } = await authModule;
 
