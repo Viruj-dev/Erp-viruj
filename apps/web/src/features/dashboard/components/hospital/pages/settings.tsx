@@ -102,11 +102,11 @@ const HISTORY_ROWS = [
 ============================================================================ */
 function Badge({ tone = "slate", children, icon: Icon }) {
   const tones = {
-    slate: "bg-slate-100 text-slate-600 border-slate-200",
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    amber: "bg-amber-50 text-amber-700 border-amber-200",
-    rose: "bg-rose-50 text-rose-700 border-rose-200",
-    blue: "bg-blue-50 text-blue-700 border-blue-200",
+    slate: "bg-slate-100 text-slate-600 border-slate-200 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-300",
+    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:border-emerald-400/25 dark:bg-emerald-400/[0.12] dark:text-emerald-200",
+    amber: "bg-amber-50 text-amber-700 border-amber-200 dark:border-amber-400/25 dark:bg-amber-400/[0.12] dark:text-amber-200",
+    rose: "bg-rose-50 text-rose-700 border-rose-200 dark:border-rose-400/25 dark:bg-rose-400/[0.12] dark:text-rose-200",
+    blue: "bg-blue-50 text-blue-700 border-blue-200 dark:border-blue-400/25 dark:bg-blue-400/[0.12] dark:text-blue-200",
   };
   return (
     <span className={cx("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium", tones[tone])}>
@@ -142,9 +142,9 @@ function TextInput({ className, disabled, ...props }) {
     <input
       disabled={disabled}
       className={cx(
-        "h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-800 outline-none transition placeholder:text-slate-400",
-        "focus:border-blue-400 focus:ring-2 focus:ring-blue-100",
-        disabled && "cursor-not-allowed bg-slate-50 text-slate-400",
+        "h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-800 outline-none transition placeholder:text-slate-400 dark:border-white/10 dark:bg-[#0b1118] dark:text-slate-100 dark:placeholder:text-slate-600",
+        "focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:border-blue-400/50 dark:focus:ring-blue-400/15",
+        disabled && "cursor-not-allowed bg-slate-50 text-slate-400 dark:bg-[#0e141c] dark:text-slate-600",
         className
       )}
       {...props}
@@ -158,9 +158,9 @@ function Select({ className, disabled, children, ...props }) {
       <select
         disabled={disabled}
         className={cx(
-          "h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-[13px] text-slate-800 outline-none transition",
-          "focus:border-blue-400 focus:ring-2 focus:ring-blue-100",
-          disabled && "cursor-not-allowed bg-slate-50 text-slate-400",
+          "h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-[13px] text-slate-800 outline-none transition dark:border-white/10 dark:bg-[#0b1118] dark:text-slate-100",
+          "focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:focus:border-blue-400/50 dark:focus:ring-blue-400/15",
+          disabled && "cursor-not-allowed bg-slate-50 text-slate-400 dark:bg-[#0e141c] dark:text-slate-600",
           className
         )}
         {...props}
@@ -184,7 +184,7 @@ function Toggle({ checked, onChange, disabled, label }) {
       className={cx(
         "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors outline-none",
         "focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-1",
-        checked ? "bg-blue-600" : "bg-slate-200",
+        checked ? "bg-blue-600" : "bg-slate-200 dark:bg-slate-700",
         disabled && "opacity-50 cursor-not-allowed"
       )}
     >
@@ -195,13 +195,13 @@ function Toggle({ checked, onChange, disabled, label }) {
 
 function Checkbox({ checked, onChange, disabled, label }) {
   return (
-    <label className={cx("flex select-none items-center gap-2 text-[13px] text-slate-700", disabled ? "cursor-not-allowed text-slate-400" : "cursor-pointer")}>
+    <label className={cx("flex select-none items-center gap-2 text-[13px] text-slate-700 dark:text-slate-300", disabled ? "cursor-not-allowed text-slate-400 dark:text-slate-600" : "cursor-pointer")}>
       <span
         onClick={() => !disabled && onChange(!checked)}
         className={cx(
           "flex h-4 w-4 items-center justify-center rounded border transition-colors",
-          checked ? "border-blue-600 bg-blue-600" : "border-slate-300 bg-white",
-          disabled && "border-slate-200 bg-slate-100"
+          checked ? "border-blue-600 bg-blue-600" : "border-slate-300 bg-white dark:border-white/15 dark:bg-[#0b1118]",
+          disabled && "border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-[#111821]"
         )}
       >
         {checked && <Check className="h-3 w-3 text-white" />}
@@ -214,9 +214,9 @@ function Checkbox({ checked, onChange, disabled, label }) {
 function Button({ variant = "secondary", size = "md", className, icon: Icon, children, ...props }) {
   const variants = {
     primary: "bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300",
-    secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 disabled:text-slate-300",
-    ghost: "text-slate-500 hover:bg-slate-100 disabled:text-slate-300",
-    danger: "bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 disabled:text-rose-200",
+    secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 disabled:text-slate-300 dark:border-white/10 dark:bg-[#111821] dark:text-slate-200 dark:hover:bg-white/[0.07] dark:disabled:text-slate-600",
+    ghost: "text-slate-500 hover:bg-slate-100 disabled:text-slate-300 dark:text-slate-400 dark:hover:bg-white/[0.07] dark:disabled:text-slate-600",
+    danger: "bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 disabled:text-rose-200 dark:border-rose-400/25 dark:bg-[#111821] dark:text-rose-300 dark:hover:bg-rose-400/[0.12] dark:disabled:text-rose-900",
     dangerSolid: "bg-rose-600 text-white hover:bg-rose-700 disabled:bg-rose-300",
   };
   const sizes = { sm: "h-7 px-2.5 text-[12px]", md: "h-9 px-3.5 text-[13px]" };
@@ -233,7 +233,7 @@ function Button({ variant = "secondary", size = "md", className, icon: Icon, chi
 
 function SectionCard({ title, eyebrow, description, actions, children, id }) {
   return (
-    <section id={id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section id={id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/[0.08] dark:bg-[#10161d] sm:p-6">
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           {eyebrow && <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-blue-600">{eyebrow}</p>}
@@ -247,15 +247,15 @@ function SectionCard({ title, eyebrow, description, actions, children, id }) {
   );
 }
 
-function InlineBanner({ tone = "amber", icon: Icon = AlertTriangle, title, children, action }) {
+function InlineBanner({ tone = "amber", icon: Icon = AlertTriangle, title, children, action, className }) {
   const tones = {
-    amber: "border-amber-200 bg-amber-50 text-amber-800",
-    rose: "border-rose-200 bg-rose-50 text-rose-800",
-    blue: "border-blue-200 bg-blue-50 text-blue-800",
-    slate: "border-slate-200 bg-slate-50 text-slate-600",
+    amber: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-400/25 dark:bg-amber-400/[0.12] dark:text-amber-200",
+    rose: "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-400/25 dark:bg-rose-400/[0.12] dark:text-rose-200",
+    blue: "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-400/25 dark:bg-blue-400/[0.12] dark:text-blue-200",
+    slate: "border-slate-200 bg-slate-50 text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-300",
   };
   return (
-    <div className={cx("flex items-start gap-3 rounded-xl border p-3.5", tones[tone])}>
+    <div className={cx("flex items-start gap-3 rounded-xl border p-3.5", tones[tone], className)}>
       <Icon className="mt-0.5 h-4 w-4 shrink-0" />
       <div className="flex-1 text-[13px] leading-relaxed">
         {title && <p className="font-semibold">{title}</p>}
@@ -267,7 +267,7 @@ function InlineBanner({ tone = "amber", icon: Icon = AlertTriangle, title, child
 }
 
 function Skeleton({ className }) {
-  return <div className={cx("animate-pulse rounded-md bg-slate-200/70", className)} />;
+  return <div className={cx("animate-pulse rounded-md bg-slate-200/70 dark:bg-white/[0.08]", className)} />;
 }
 
 function EmptyState({ icon: Icon = Info, title, description, action }) {
@@ -656,7 +656,7 @@ function RuleDrawer({ open, onClose, rule, onSave }) {
           <Field label="Event type" required hint="What triggers this notification">
             <TextInput placeholder="e.g. Appointment confirmed" value={form.event} onChange={(e) => update({ event: e.target.value })} />
           </Field>
-          <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2.5">
+          <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2.5 dark:bg-[#0d131a]">
             <span className="text-[13px] font-medium text-slate-700">Rule enabled</span>
             <Toggle checked={form.enabled} disabled={isEdit && form.protected} onChange={(v) => update({ enabled: v })} />
           </div>
@@ -812,7 +812,7 @@ function NotificationsTab({ data, setData, readOnly, rules, setRules, pushToast 
       </SectionCard>
 
       <SectionCard title="Quiet hours" eyebrow="Delivery timing" description="Non-critical notifications are held during this window and delivered afterward.">
-        <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2.5">
+        <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2.5 dark:bg-[#0d131a]">
           <span className="text-[13px] font-medium text-slate-700">Enable quiet hours</span>
           <Toggle checked={data.quietHours.enabled} disabled={readOnly} onChange={(v) => set({ quietHours: { ...data.quietHours, enabled: v } })} />
         </div>
@@ -866,7 +866,7 @@ function NotificationsTab({ data, setData, readOnly, rules, setRules, pushToast 
         <InlineBanner tone="amber" className="mb-4">
           Escalation delivery is configuration-only on the current plan — rules save, but escalated sends are queued rather than delivered until this is enabled on your subscription.
         </InlineBanner>
-        <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2.5">
+        <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2.5 dark:bg-[#0d131a]">
           <span className="text-[13px] font-medium text-slate-700">Enable escalation</span>
           <Toggle checked={data.escalation.enabled} disabled={readOnly} onChange={(v) => set({ escalation: { ...data.escalation, enabled: v } })} />
         </div>
@@ -1330,8 +1330,7 @@ export function ErpDemoSettings({ organizationId, section = "operational" }: { o
   }, [securityQuery.data]);
   useEffect(() => { if (securityHistoryQuery.data?.data.entries) setSecurityHistory(securityHistoryQuery.data.data.entries.map(historyFromBackend)); }, [securityHistoryQuery.data]);
   useEffect(() => {
-    if (activeSettingsQuery.isError) { setPageState("error"); return; }
-    if (activeSettingsQuery.data && pageState === "loading") setPageState("ready");
+    if ((activeSettingsQuery.data || activeSettingsQuery.isError) && pageState === "loading") setPageState("ready");
   }, [activeSettingsQuery.data, activeSettingsQuery.isError, pageState]);
 
   const pushToast = useCallback((message, tone = "success") => {
@@ -1384,35 +1383,55 @@ export function ErpDemoSettings({ organizationId, section = "operational" }: { o
       <style>{`
         @keyframes fadeIn { from { opacity:0; transform: translateY(4px);} to {opacity:1; transform:none;} }
         input[type="time"]::-webkit-calendar-picker-indicator { opacity: 0.5; }
-        .dark .hospital-settings-page { color-scheme: dark; }
-        .dark .hospital-settings-page .bg-white { background-color: #171d26; }
+        .dark .hospital-settings-page {
+          --hs-bg: #0f141b;
+          --hs-panel: #171d26;
+          --hs-panel-soft: rgba(30, 41, 59, 0.46);
+          --hs-panel-muted: rgba(51, 65, 85, 0.78);
+          --hs-border: rgba(148, 163, 184, 0.22);
+          --hs-border-soft: rgba(148, 163, 184, 0.14);
+          --hs-text: #e5edf7;
+          --hs-muted: #a8b3c3;
+          --hs-faint: #7f8da1;
+          color-scheme: dark;
+        }
+        .dark .hospital-settings-page .bg-white { background-color: var(--hs-panel); }
         .dark .hospital-settings-page .bg-slate-50,
         .dark .hospital-settings-page .bg-slate-50\/50,
-        .dark .hospital-settings-page .bg-slate-50\/60 { background-color: rgba(30, 41, 59, 0.46); }
-        .dark .hospital-settings-page .bg-slate-100 { background-color: rgba(51, 65, 85, 0.78); }
+        .dark .hospital-settings-page .bg-slate-50\/60 { background-color: var(--hs-panel-soft); }
+        .dark .hospital-settings-page .bg-slate-100 { background-color: var(--hs-panel-muted); }
+        .dark .hospital-settings-page .bg-slate-200 { background-color: rgba(71, 85, 105, 0.58); }
         .dark .hospital-settings-page .bg-slate-200\/70 { background-color: rgba(71, 85, 105, 0.48); }
         .dark .hospital-settings-page .bg-blue-50,
         .dark .hospital-settings-page .bg-blue-50\/60 { background-color: rgba(37, 99, 235, 0.16); }
-        .dark .hospital-settings-page .bg-emerald-50 { background-color: rgba(16, 185, 129, 0.14); }
-        .dark .hospital-settings-page .bg-amber-50 { background-color: rgba(245, 158, 11, 0.14); }
+        .dark .hospital-settings-page .bg-emerald-50,
+        .dark .hospital-settings-page .bg-emerald-50\/50 { background-color: rgba(16, 185, 129, 0.14); }
+        .dark .hospital-settings-page .bg-amber-50,
+        .dark .hospital-settings-page .bg-amber-50\/50 { background-color: rgba(245, 158, 11, 0.14); }
         .dark .hospital-settings-page .bg-rose-50,
         .dark .hospital-settings-page .bg-rose-50\/50 { background-color: rgba(244, 63, 94, 0.14); }
         .dark .hospital-settings-page .border-slate-50 { border-color: rgba(148, 163, 184, 0.12); }
-        .dark .hospital-settings-page .border-slate-100 { border-color: rgba(148, 163, 184, 0.14); }
+        .dark .hospital-settings-page .border-slate-100 { border-color: var(--hs-border-soft); }
         .dark .hospital-settings-page .border-slate-200,
-        .dark .hospital-settings-page .border-slate-300 { border-color: rgba(148, 163, 184, 0.22); }
+        .dark .hospital-settings-page .border-slate-300 { border-color: var(--hs-border); }
         .dark .hospital-settings-page .border-blue-200,
-        .dark .hospital-settings-page .border-blue-300 { border-color: rgba(96, 165, 250, 0.35); }
+        .dark .hospital-settings-page .border-blue-300,
+        .dark .hospital-settings-page .border-blue-600 { border-color: rgba(96, 165, 250, 0.35); }
+        .dark .hospital-settings-page .focus\:border-blue-400:focus { border-color: rgba(96, 165, 250, 0.44); }
+        .dark .hospital-settings-page .border-emerald-100,
         .dark .hospital-settings-page .border-emerald-200 { border-color: rgba(52, 211, 153, 0.32); }
+        .dark .hospital-settings-page .border-amber-100,
         .dark .hospital-settings-page .border-amber-200 { border-color: rgba(251, 191, 36, 0.32); }
         .dark .hospital-settings-page .border-rose-100,
         .dark .hospital-settings-page .border-rose-200 { border-color: rgba(251, 113, 133, 0.32); }
+        .dark .hospital-settings-page .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: var(--hs-border-soft); }
         .dark .hospital-settings-page .text-slate-900,
         .dark .hospital-settings-page .text-slate-800,
-        .dark .hospital-settings-page .text-slate-700 { color: #e5edf7; }
+        .dark .hospital-settings-page .text-slate-700 { color: var(--hs-text); }
         .dark .hospital-settings-page .text-slate-600,
-        .dark .hospital-settings-page .text-slate-500 { color: #a8b3c3; }
-        .dark .hospital-settings-page .text-slate-400 { color: #7f8da1; }
+        .dark .hospital-settings-page .text-slate-500 { color: var(--hs-muted); }
+        .dark .hospital-settings-page .text-slate-400,
+        .dark .hospital-settings-page .text-slate-300 { color: var(--hs-faint); }
         .dark .hospital-settings-page .text-blue-700,
         .dark .hospital-settings-page .text-blue-600 { color: #93c5fd; }
         .dark .hospital-settings-page .text-emerald-700 { color: #6ee7b7; }
@@ -1423,25 +1442,150 @@ export function ErpDemoSettings({ organizationId, section = "operational" }: { o
         .dark .hospital-settings-page .text-rose-800 { color: #fda4af; }
         .dark .hospital-settings-page input,
         .dark .hospital-settings-page select,
-        .dark .hospital-settings-page textarea { background-color: rgba(15, 23, 42, 0.58); border-color: rgba(148, 163, 184, 0.24); color: #e5edf7; }
+        .dark .hospital-settings-page textarea { background-color: rgba(15, 23, 42, 0.58); border-color: rgba(148, 163, 184, 0.24); color: var(--hs-text); }
         .dark .hospital-settings-page input::placeholder,
         .dark .hospital-settings-page textarea::placeholder { color: #64748b; }
         .dark .hospital-settings-page input:disabled,
         .dark .hospital-settings-page select:disabled,
-        .dark .hospital-settings-page textarea:disabled { background-color: rgba(15, 23, 42, 0.34); color: #7f8da1; }
+        .dark .hospital-settings-page textarea:disabled,
+        .dark .hospital-settings-page .disabled\:bg-slate-50:disabled { background-color: rgba(15, 23, 42, 0.34); color: var(--hs-faint); }
+        .dark .hospital-settings-page .disabled\:text-slate-400:disabled { color: var(--hs-faint); }
         .dark .hospital-settings-page .shadow-sm,
         .dark .hospital-settings-page .shadow-lg,
         .dark .hospital-settings-page .shadow-xl,
         .dark .hospital-settings-page .shadow-2xl { box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28); }
         .dark .hospital-settings-page .ring-slate-200 { --tw-ring-color: rgba(148, 163, 184, 0.24); }
+        .dark .hospital-settings-page .ring-blue-100,
+        .dark .hospital-settings-page .ring-blue-300 { --tw-ring-color: rgba(96, 165, 250, 0.32); }
+        .dark .hospital-settings-page .ring-rose-200 { --tw-ring-color: rgba(251, 113, 133, 0.3); }
+        .dark .hospital-settings-page .ring-offset-1 { --tw-ring-offset-color: var(--hs-bg); }
+        .dark .hospital-settings-page .focus\:ring-blue-100:focus { --tw-ring-color: rgba(96, 165, 250, 0.26); }
         .dark .hospital-settings-page .hover\:bg-slate-50:hover,
         .dark .hospital-settings-page .hover\:bg-slate-100:hover { background-color: rgba(51, 65, 85, 0.64); }
         .dark .hospital-settings-page .hover\:text-slate-700:hover,
-        .dark .hospital-settings-page .hover\:text-slate-600:hover { color: #e5edf7; }
+        .dark .hospital-settings-page .hover\:text-slate-600:hover { color: var(--hs-text); }
         .dark .hospital-settings-page table thead tr { background-color: rgba(30, 41, 59, 0.72); }
         .dark .hospital-settings-page table tbody tr:hover { background-color: rgba(30, 41, 59, 0.36); }
         .dark .hospital-settings-page .bg-white\/95 { background-color: rgba(23, 29, 38, 0.95); }
+        .dark .hospital-settings-page .bg-slate-900\/30 { background-color: rgba(2, 6, 23, 0.62); }
         .dark .hospital-settings-page .bg-slate-900\/40 { background-color: rgba(2, 6, 23, 0.72); }
+        .dark .hospital-settings-page {
+          background-color: #080c11 !important;
+          color: #e8edf4 !important;
+        }
+        .dark .hospital-settings-page .bg-white,
+        .dark .hospital-settings-page .bg-white\/95 {
+          background-color: #111821 !important;
+        }
+        .dark .hospital-settings-page [role="switch"] .bg-white {
+          background-color: #dbeafe !important;
+        }
+        .dark .hospital-settings-page .bg-slate-50,
+        .dark .hospital-settings-page .bg-slate-50\/50,
+        .dark .hospital-settings-page .bg-slate-50\/60 {
+          background-color: #0d131a !important;
+        }
+        .dark .hospital-settings-page .bg-slate-100 {
+          background-color: #151d27 !important;
+        }
+        .dark .hospital-settings-page .bg-slate-200,
+        .dark .hospital-settings-page .bg-slate-200\/70 {
+          background-color: #243142 !important;
+        }
+        .dark .hospital-settings-page .bg-blue-50,
+        .dark .hospital-settings-page .bg-blue-50\/60 {
+          background-color: #0d2444 !important;
+        }
+        .dark .hospital-settings-page .bg-emerald-50,
+        .dark .hospital-settings-page .bg-emerald-50\/50 {
+          background-color: #10251f !important;
+        }
+        .dark .hospital-settings-page .bg-amber-50,
+        .dark .hospital-settings-page .bg-amber-50\/50 {
+          background-color: #2a2111 !important;
+        }
+        .dark .hospital-settings-page .bg-rose-50,
+        .dark .hospital-settings-page .bg-rose-50\/50 {
+          background-color: #2a151c !important;
+        }
+        .dark .hospital-settings-page .bg-slate-900\/30,
+        .dark .hospital-settings-page .bg-slate-900\/40 {
+          background-color: rgba(3, 7, 18, 0.74) !important;
+        }
+        .dark .hospital-settings-page .border-slate-50,
+        .dark .hospital-settings-page .border-slate-100,
+        .dark .hospital-settings-page .border-slate-200,
+        .dark .hospital-settings-page .border-slate-300 {
+          border-color: rgba(148, 163, 184, 0.18) !important;
+        }
+        .dark .hospital-settings-page .border-blue-200,
+        .dark .hospital-settings-page .border-blue-300,
+        .dark .hospital-settings-page .border-blue-600 {
+          border-color: rgba(96, 165, 250, 0.34) !important;
+        }
+        .dark .hospital-settings-page .border-emerald-100,
+        .dark .hospital-settings-page .border-emerald-200 {
+          border-color: rgba(52, 211, 153, 0.28) !important;
+        }
+        .dark .hospital-settings-page .border-amber-100,
+        .dark .hospital-settings-page .border-amber-200 {
+          border-color: rgba(251, 191, 36, 0.28) !important;
+        }
+        .dark .hospital-settings-page .border-rose-100,
+        .dark .hospital-settings-page .border-rose-200 {
+          border-color: rgba(251, 113, 133, 0.3) !important;
+        }
+        .dark .hospital-settings-page .text-slate-900,
+        .dark .hospital-settings-page .text-slate-800,
+        .dark .hospital-settings-page .text-slate-700 {
+          color: #e8edf4 !important;
+        }
+        .dark .hospital-settings-page .text-slate-600,
+        .dark .hospital-settings-page .text-slate-500 {
+          color: #a8b3c3 !important;
+        }
+        .dark .hospital-settings-page .text-slate-400,
+        .dark .hospital-settings-page .text-slate-300 {
+          color: #7f8da1 !important;
+        }
+        .dark .hospital-settings-page .text-blue-600,
+        .dark .hospital-settings-page .text-blue-700,
+        .dark .hospital-settings-page .text-blue-800 {
+          color: #bfdbfe !important;
+        }
+        .dark .hospital-settings-page .text-emerald-700,
+        .dark .hospital-settings-page .text-emerald-800 {
+          color: #86efac !important;
+        }
+        .dark .hospital-settings-page .text-amber-700,
+        .dark .hospital-settings-page .text-amber-800 {
+          color: #f8d782 !important;
+        }
+        .dark .hospital-settings-page .text-rose-600,
+        .dark .hospital-settings-page .text-rose-700,
+        .dark .hospital-settings-page .text-rose-800 {
+          color: #fda4af !important;
+        }
+        .dark .hospital-settings-page input,
+        .dark .hospital-settings-page select,
+        .dark .hospital-settings-page textarea {
+          background-color: #0b1118 !important;
+          border-color: rgba(148, 163, 184, 0.2) !important;
+          color: #e8edf4 !important;
+        }
+        .dark .hospital-settings-page input:disabled,
+        .dark .hospital-settings-page select:disabled,
+        .dark .hospital-settings-page textarea:disabled,
+        .dark .hospital-settings-page .disabled\:bg-slate-50:disabled {
+          background-color: #0e141c !important;
+          color: #748197 !important;
+        }
+        .dark .hospital-settings-page .ring-slate-200,
+        .dark .hospital-settings-page .ring-blue-100,
+        .dark .hospital-settings-page .ring-blue-300,
+        .dark .hospital-settings-page .ring-rose-200 {
+          --tw-ring-color: rgba(148, 163, 184, 0.22) !important;
+        }
       `}</style>
 
       {/* Header */}
@@ -1487,8 +1631,6 @@ export function ErpDemoSettings({ organizationId, section = "operational" }: { o
             ))}
           </div>
         )}
-
-        {pageState === "error" && <ErrorState onRetry={retryActiveSettings} />}
 
         {pageState === "empty" && (
           <EmptyState
