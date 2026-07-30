@@ -27,7 +27,7 @@ export function registerAuthRoutes(app: Hono) {
       }
 
       const activeOrganization = authSession.activeOrganization as
-        | { id?: string }
+        | { id?: string; organizationType?: string }
         | null
         | undefined;
       const tenantId = activeOrganization?.id;
@@ -40,8 +40,10 @@ export function registerAuthRoutes(app: Hono) {
         .select({
           organizationId: member.organizationId,
           role: member.role,
+          organizationType: organization.organizationType,
         })
         .from(member)
+        .innerJoin(organization, eq(member.organizationId, organization.id))
         .where(
           and(
             eq(member.organizationId, tenantId),
@@ -63,6 +65,7 @@ export function registerAuthRoutes(app: Hono) {
         platform: "erp",
         role,
         tenant_id: activeMembership.organizationId,
+        organization_type: activeMembership.organizationType,
         permissions,
       })
         .setProtectedHeader({ alg: "HS256", typ: "JWT" })

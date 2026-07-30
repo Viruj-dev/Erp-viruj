@@ -8,7 +8,6 @@ import {
 } from "@/features/dashboard/components/clinic/clinic-gallery-bento";
 import {
   Camera,
-  CheckCircle2,
   Clock,
   Eye,
   ImagePlus,
@@ -20,7 +19,6 @@ import {
   Sparkles,
   Star,
   Stethoscope,
-  Trash2,
   Users,
 } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
@@ -36,12 +34,6 @@ const doctors = [
   ["Dr. Nisha Kapoor", "Fertility", "Draft", "Fertility Counselling", "8.9k", "176", "4.9"],
 ] as const;
 
-const services = [
-  ["Full Body Checkup", "Preventive Care", "4 doctors", "Rs 1,499", "Visible", "642"],
-  ["Dental Cleaning", "Dental", "2 doctors", "Rs 799", "Visible", "388"],
-  ["Skin Consultation", "Skin Care", "1 doctor", "Rs 599", "Draft", "219"],
-  ["Fertility Counselling", "Fertility", "1 doctor", "Rs 999", "Visible", "174"],
-] as const;
 
 const offeringCategories = [
   "Dental",
@@ -127,14 +119,6 @@ const patients = [
   ["Kabir Malhotra", "+91 90000 45678", "Fertility Counselling", "Doctor Profile", "Request Sent", "2 days ago"],
 ] as const;
 
-const facilities = [
-  "Parking",
-  "Pharmacy",
-  "Laboratory",
-  "Wheelchair Access",
-  "Insurance Accepted",
-  "Waiting Area",
-] as const;
 
 const activity = [
   ["New review received", "Riya Sharma rated the clinic 5 stars.", "12 min ago"],
@@ -651,117 +635,6 @@ export function ClinicOfferingsPage() {
   );
 }
 
-export function ClinicServicesPage() {
-  const [serviceRows, setServiceRows] = useState(() =>
-    services.map((service) => [...service] as string[])
-  );
-
-  const createService = () => {
-    setServiceRows((rows) => [
-      ...rows,
-      [
-        `New Service ${rows.length + 1}`,
-        "Wellness",
-        "No doctor required",
-        "Rs 499",
-        "Draft",
-        "0",
-      ],
-    ]);
-  };
-
-  const editService = (serviceName: string) => {
-    setServiceRows((rows) =>
-      rows.map((service) =>
-        service[0] === serviceName
-          ? [
-              service[0],
-              service[1],
-              service[2],
-              service[3],
-              service[4] === "Visible" ? "Draft" : "Visible",
-              service[5],
-            ]
-          : service
-      )
-    );
-  };
-
-  const deleteService = (serviceName: string) => {
-    setServiceRows((rows) =>
-      rows.filter((service) => service[0] !== serviceName)
-    );
-  };
-
-  return (
-    <ClinicPageShell eyebrow="Services" title="Custom Services" subtitle="Create dynamic services and categories without hardcoded clinic departments." actions={<PrimaryAction icon={<Plus size={16} />} label="Create Service" onClick={createService} />}>
-      <Toolbar placeholder="Search services..." tabs={["All", "Visible", "Draft", "Archived"]} />
-      <Panel title="Service Catalog" subtitle="Marketplace availability">
-        <div className="overflow-hidden rounded-2xl border border-violet-100 dark:border-violet-400/[0.12]">
-          <div className="grid min-w-[860px] grid-cols-[220px_150px_180px_120px_110px_180px] gap-4 bg-violet-50 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:bg-violet-400/[0.08]">
-            <span>Service</span>
-            <span>Category</span>
-            <span>Assigned Doctors</span>
-            <span>Price</span>
-            <span>Status</span>
-            <span className="text-right">Actions</span>
-          </div>
-          <div className="divide-y divide-violet-100 dark:divide-violet-400/[0.1]">
-            {serviceRows.map((service) => (
-              <div
-                className="grid min-w-[860px] grid-cols-[220px_150px_180px_120px_110px_180px] items-center gap-4 px-5 py-4 text-sm"
-                key={service[0]}
-              >
-                <span className="font-bold text-slate-950 dark:text-white">
-                  {service[0]}
-                </span>
-                <span className="font-semibold text-slate-700 dark:text-slate-200">
-                  {service[1]}
-                </span>
-                <span className="font-medium text-slate-600 dark:text-slate-400">
-                  {service[2]}
-                </span>
-                <span className="font-semibold text-slate-700 dark:text-slate-200">
-                  {service[3]}
-                </span>
-                <StatusPill value={service[4]} />
-                <div className="flex justify-end gap-2">
-                  <SecondaryAction label="Edit" onClick={() => editService(service[0])} />
-                  <SecondaryAction label="Delete" onClick={() => deleteService(service[0])} tone="danger" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Panel>
-      <DrawerPreview title="Create Service" fields={["Name", "Description", "Category", "Duration", "Price", "Assign Doctors", "Online Booking"]} />
-    </ClinicPageShell>
-  );
-}
-
-export function ClinicFacilitiesPage() {
-  return (
-    <ClinicPageShell eyebrow="Facilities" title="Facility Highlights" subtitle="Show patients what is available before they visit." actions={<PrimaryAction icon={<Plus size={16} />} label="Add Facility" />}>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {facilities.map((facility) => (
-          <Panel key={facility} title={facility} subtitle="Visible on public profile">
-            <div className="flex items-center justify-between">
-              <span className="flex size-12 items-center justify-center rounded-2xl bg-violet-50 text-[#6d28d9] dark:bg-violet-400/[0.12] dark:text-violet-200">
-                <CheckCircle2 size={22} />
-              </span>
-              <div className="flex gap-2">
-                <SecondaryAction label="Edit" />
-                <button className="flex size-9 items-center justify-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-400/[0.12]" type="button">
-                  <Trash2 size={15} />
-                </button>
-              </div>
-            </div>
-          </Panel>
-        ))}
-      </div>
-    </ClinicPageShell>
-  );
-}
 
 export function ClinicGalleryPage({
   organizationId,
@@ -1022,7 +895,7 @@ export function ClinicReviewsPage() {
                   <p className="font-bold text-slate-950 dark:text-white">{review[0]}</p>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{review[2]}</p>
                 </div>
-                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">{review[1]} ★</span>
+                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">{review[1]} Ã¢Ëœâ€¦</span>
               </div>
               <div className="mt-4 flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500">{review[3]}</span>

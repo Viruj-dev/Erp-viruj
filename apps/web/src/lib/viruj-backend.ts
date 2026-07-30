@@ -182,6 +182,7 @@ export type VirujAppointment = {
 
 export type VirujMobileAppointmentRequestInput = {
   mobileUserId?: string;
+  organizationId?: string;
   patientAge?: number | null;
   patientGender?: string | null;
   patientName: string;
@@ -802,21 +803,28 @@ export const virujBackend = {
       }),
   },
   appointments: {
-    key: ["viruj-backend", "erp", "appointments"] as const,
+    key: (input?: { organizationId?: string }) =>
+      ["viruj-backend", "erp", "appointments", input?.organizationId ?? "none"] as const,
     createMobileRequest: (input: VirujMobileAppointmentRequestInput) =>
       request<VirujAppointment>("/appointments/mobile-request", {
         body: input,
         method: "POST",
+        organizationId: input.organizationId,
       }),
-    deleteAll: () =>
+    deleteAll: (input?: { organizationId?: string }) =>
       request<{ deleted: number }>("/appointments", {
         method: "DELETE",
+        organizationId: input?.organizationId,
       }),
-    list: () => request<VirujAppointment[]>("/appointments"),
+    list: (input?: { organizationId?: string }) =>
+      request<VirujAppointment[]>("/appointments", {
+        organizationId: input?.organizationId,
+      }),
     updateStatus: (input: {
       approvalNotes?: string | null;
       endsAt?: string | null;
       id: string;
+      organizationId?: string;
       startsAt?: string | null;
       status: VirujAppointmentStatus;
     }) =>
@@ -828,9 +836,9 @@ export const virujBackend = {
           status: input.status,
         },
         method: "PATCH",
+        organizationId: input.organizationId,
       }),
   },
-
   organizationProfile: {
     uploadMedia: (input: { file: File; kind: "cover" | "logo"; organizationId?: string }) => {
       const formData = new FormData();
@@ -858,39 +866,94 @@ export const virujBackend = {
     getNotificationRules: (input?: { organizationId?: string }) => request<{ data: { limit: number; page: number; rules: VirujNotificationRule[] } }>("/hospital/settings/notifications/rules?limit=50&page=1", { organizationId: input?.organizationId, suppressToast: true }),
     getSecurity: (input?: { organizationId?: string }) => request<VirujSettingsEnvelope<VirujSecuritySettings>>("/hospital/settings/security", { organizationId: input?.organizationId, suppressToast: true }),
     getSecurityHistory: (input?: { organizationId?: string }) => request<{ data: { entries: VirujSecurityPolicyHistoryEntry[]; limit: number; page: number } }>("/hospital/settings/security/policy-history?limit=50&page=1", { organizationId: input?.organizationId, suppressToast: true }),
-  },  facilities: {
-    create: (input: VirujFacilityInput) =>
-      request<VirujHospitalService>("/hospital/services", {
-        body: facilityToHospitalService(input, true),
+  },
+  facilities: {
+    create: (input: VirujFacilityInput & { organizationId?: string }) =>
+      request<VirujFacility>("/facilities", {
+        body: input,
         method: "POST",
-      }).then(hospitalServiceToFacility),
-    delete: (input: { id: string }) =>
-      request<VirujHospitalService>(`/hospital/services/${input.id}`, {
-        body: { status: "ARCHIVED" },
+        organizationId: input.organizationId,
+      }),
+    delete: (input: { id: string; organizationId?: string }) =>
+      request<{ success: true }>(`/facilities/${input.id}`, {
+        method: "DELETE",
+        organizationId: input.organizationId,
+      }),
+    get: (input: { id: string; organizationId?: string }) =>
+      request<VirujFacility>(`/facilities/${input.id}`, {
+        organizationId: input.organizationId,
+      }),
+    key: (input?: { organizationId?: string }) =>
+      ["viruj-backend", "erp", "facilities", input?.organizationId ?? "none"] as const,
+    list: (input?: { organizationId?: string }) =>
+      request<VirujFacility[]>("/facilities", {
+        organizationId: input?.organizationId,
+      }),
+    reorder: async (_input: { items: Array<{ displayOrder: number; id: string }>; organizationId?: string }) => ({ success: true as const }),
+    update: (input: { facility: VirujFacilityInput; id: string; organizationId?: string }) =>
+      request<VirujFacility>(`/facilities/${input.id}`, {
+        body: input.facility,
         method: "PATCH",
-      }).then(() => ({ success: true as const })),
-    get: (input: { id: string }) =>
-      request<VirujHospitalService>(`/hospital/services/${input.id}`).then(hospitalServiceToFacility),
-    key: ["viruj-backend", "erp", "facilities"] as const,
-    list: () =>
-      request<VirujHospitalServiceListResponse>("/hospital/services?pageSize=100").then((response) =>
-        response.data.map(hospitalServiceToFacility)
-      ),
-    reorder: async (_input: { items: Array<{ displayOrder: number; id: string }> }) => ({ success: true as const }),
-    update: (input: { facility: VirujFacilityInput; id: string }) =>
-      request<VirujHospitalService>(`/hospital/services/${input.id}`, {
-        body: facilityToHospitalService(input.facility, false),
-        method: "PATCH",
-      }).then(hospitalServiceToFacility),
+        organizationId: input.organizationId,
+      }),
     updateStatus: (input: {
       id: string;
       isAvailable?: boolean;
+      organizationId?: string;
       status: VirujFacilityStatus;
     }) =>
-      request<VirujHospitalService>(`/hospital/services/${input.id}`, {
-        body: facilityStatusToHospitalService(input),
+      request<VirujFacility>(`/facilities/${input.id}/status`, {
+        body: {
+          isAvailable: input.isAvailable,
+          status: input.status,
+        },
         method: "PATCH",
-      }).then(hospitalServiceToFacility),
+        organizationId: input.organizationId,
+      }),
+  },
+  services: {
+    create: (input: VirujFacilityInput & { organizationId?: string }) =>
+      request<VirujFacility>("/services", {
+        body: input,
+        method: "POST",
+        organizationId: input.organizationId,
+      }),
+    delete: (input: { id: string; organizationId?: string }) =>
+      request<{ success: true }>(`/services/${input.id}`, {
+        method: "DELETE",
+        organizationId: input.organizationId,
+      }),
+    get: (input: { id: string; organizationId?: string }) =>
+      request<VirujFacility>(`/services/${input.id}`, {
+        organizationId: input.organizationId,
+      }),
+    key: (input?: { organizationId?: string }) =>
+      ["viruj-backend", "erp", "services", input?.organizationId ?? "none"] as const,
+    list: (input?: { organizationId?: string }) =>
+      request<VirujFacility[] | { data: VirujFacility[] }>("/services", {
+        organizationId: input?.organizationId,
+      }).then((response) => Array.isArray(response) ? response : response.data),
+    reorder: async (_input: { items: Array<{ displayOrder: number; id: string }>; organizationId?: string }) => ({ success: true as const }),
+    update: (input: { facility: VirujFacilityInput; id: string; organizationId?: string }) =>
+      request<VirujFacility>(`/services/${input.id}`, {
+        body: input.facility,
+        method: "PATCH",
+        organizationId: input.organizationId,
+      }),
+    updateStatus: (input: {
+      id: string;
+      isAvailable?: boolean;
+      organizationId?: string;
+      status: VirujFacilityStatus;
+    }) =>
+      request<VirujFacility>(`/services/${input.id}/status`, {
+        body: {
+          isAvailable: input.isAvailable,
+          status: input.status,
+        },
+        method: "PATCH",
+        organizationId: input.organizationId,
+      }),
   },
   hospitalGallery: {
     create: (input: { gallery: VirujHospitalGalleryInput; organizationId?: string }) =>

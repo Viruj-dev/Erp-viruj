@@ -52,9 +52,9 @@ export function ErpDemoDashboard({
     staleTime: 60_000,
   });
   const appointmentsQuery = useQuery({
-    enabled: tone === "hospital",
-    queryFn: virujBackend.appointments.list,
-    queryKey: virujBackend.appointments.key,
+    enabled: tone === "hospital" && Boolean(organizationId),
+    queryFn: () => virujBackend.appointments.list({ organizationId }),
+    queryKey: virujBackend.appointments.key({ organizationId }),
     retry: 1,
     staleTime: 30_000,
   });
@@ -66,9 +66,9 @@ export function ErpDemoDashboard({
     staleTime: 30_000,
   });
   const facilitiesQuery = useQuery({
-    enabled: tone === "hospital",
-    queryFn: virujBackend.facilities.list,
-    queryKey: virujBackend.facilities.key,
+    enabled: tone === "hospital" && Boolean(organizationId),
+    queryFn: () => virujBackend.facilities.list({ organizationId }),
+    queryKey: virujBackend.facilities.key({ organizationId }),
     retry: 1,
     staleTime: 30_000,
   });

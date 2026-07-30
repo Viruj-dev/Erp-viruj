@@ -1,5 +1,6 @@
 "use client";
 
+import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import { virujBackend } from "@/lib/viruj-backend";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -12,8 +13,10 @@ import { matchesAppointmentSearch } from "./utils";
 
 export function ErpDemoAppointments({
   section = "dashboard",
+  tenant,
 }: {
   section?: AppointmentTab;
+  tenant?: ErpTenantContext;
 }) {
   const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
@@ -22,18 +25,20 @@ export function ErpDemoAppointments({
     string | null
   >(null);
   const [decisionReason, setDecisionReason] = useState("");
+  const organizationId = tenant?.organizationId;
+  const appointmentQueryKey = virujBackend.appointments.key({ organizationId });
+  const departmentLabel = tenant?.terminology.departmentLabel ?? "Department";
 
   const appointmentsQuery = useQuery({
-    queryFn: virujBackend.appointments.list,
-    queryKey: virujBackend.appointments.key,
+    enabled: Boolean(organizationId),
+    queryFn: () => virujBackend.appointments.list({ organizationId }),
+    queryKey: appointmentQueryKey,
   });
   const updateStatusMutation = useMutation({
     mutationFn: virujBackend.appointments.updateStatus,
     onSuccess: async () => {
       setDecisionReason("");
-      await queryClient.invalidateQueries({
-        queryKey: virujBackend.appointments.key,
-      });
+      await queryClient.invalidateQueries({ queryKey: appointmentQueryKey });
     },
   });
 
@@ -101,9 +106,20 @@ export function ErpDemoAppointments({
           ? "Confirmed by appointment handler."
           : "Rejected by appointment handler."),
       id,
+      organizationId,
       status,
     });
   };
+
+  if (!tenant || !tenant.capabilities.appointments.enabled) {
+    return (
+      <div className="p-5 lg:p-8">
+        <div className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm font-bold text-muted-foreground">
+          Appointments are not enabled for this workspace.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-5 lg:p-8">
@@ -123,6 +139,7 @@ export function ErpDemoAppointments({
           appointment={selectedAppointment}
           appointments={filteredReviewAppointments}
           departmentFilter={departmentFilter}
+          departmentLabel={departmentLabel}
           departments={departments}
           decisionReason={decisionReason}
           isLoading={appointmentsQuery.isPending}
@@ -141,6 +158,7 @@ export function ErpDemoAppointments({
         <PatientDecisionHistory
           appointments={filteredHistory}
           departmentFilter={departmentFilter}
+          departmentLabel={departmentLabel}
           departments={departments}
           isLoading={appointmentsQuery.isPending}
           onDepartmentFilter={setDepartmentFilter}

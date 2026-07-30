@@ -4,6 +4,7 @@ import { ActivityLogsPage } from "@/features/dashboard/components/shared/activit
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
+import { createErpTenantContext, type ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import { ClinicGalleryPage } from "@/features/dashboard/components/clinic/pages";
 import { ErpDemoAppointments, ErpEnterpriseModule } from "@/features/dashboard/components/shared/modules";
 import {
@@ -158,6 +159,15 @@ export function ErpHomeScreen({
   const roleLabel = activeMemberRole
     ? activeMemberRole.replace(/_/g, " ")
     : "member";
+  const appointmentTenant = activeOrganization?.id && activeOrganizationType
+    ? createErpTenantContext({
+        organizationId: activeOrganization.id,
+        organizationSlug: activeOrganizationSlug,
+        permissions: activeMemberPermissions,
+        providerType: activeOrganizationType,
+        role: activeMemberRole,
+      })
+    : null;
   const workspaceTheme = getWorkspaceTheme(organizationLabel);
 
   useEffect(() => {
@@ -462,6 +472,7 @@ export function ErpHomeScreen({
                   userName={userName}
                   organizationId={activeOrganization.id}
                   organizationName={organizationName}
+                  appointmentTenant={appointmentTenant}
                   routeBasePath={
                     activeOrganizationSlug
                       ? `/${activeOrganizationType}/${activeOrganizationSlug}`
@@ -487,6 +498,7 @@ function PageContent({
   organizationName,
   routeBasePath,
   routeSegments,
+  appointmentTenant,
 }: {
   currentPage: ErpDemoPage;
   organizationLabel: string;
@@ -496,6 +508,7 @@ function PageContent({
   organizationName?: string;
   routeBasePath: string;
   routeSegments: string[];
+  appointmentTenant: ErpTenantContext | null;
 }) {
   switch (currentPage) {
     case "onboarding":
@@ -510,15 +523,15 @@ function PageContent({
       return <ErpDemoBilling />;
     case "appointments":
     case "appointments-dashboard":
-      return <ErpDemoAppointments section="dashboard" />;
+      return appointmentTenant ? <ErpDemoAppointments section="dashboard" tenant={appointmentTenant} /> : <ErpEnterpriseModule module="appointments" roleLabel={roleLabel} />;
     case "appointments-review":
-      return <ErpDemoAppointments section="review" />;
+      return appointmentTenant ? <ErpDemoAppointments section="review" tenant={appointmentTenant} /> : <ErpEnterpriseModule module="appointments" roleLabel={roleLabel} />;
     case "appointments-patients":
-      return <ErpDemoAppointments section="patients" />;
+      return appointmentTenant ? <ErpDemoAppointments section="patients" tenant={appointmentTenant} /> : <ErpEnterpriseModule module="appointments" roleLabel={roleLabel} />;
     case "appointments-settings":
-      return <ErpDemoAppointments section="settings" />;
+      return appointmentTenant ? <ErpDemoAppointments section="settings" tenant={appointmentTenant} /> : <ErpEnterpriseModule module="appointments" roleLabel={roleLabel} />;
     case "patients":
-      return <ErpDemoPatients />;
+      return <ErpDemoPatients organizationId={organizationId} />;
     case "staff":
       return <ErpDemoStaff organizationLabel={organizationLabel} />;
     case "community":
@@ -555,6 +568,7 @@ function PageContent({
         <FacilitiesPage
           routeBasePath={routeBasePath}
           routeSegments={routeSegments}
+          tenant={appointmentTenant}
         />
       );
     case "hospital-profile":

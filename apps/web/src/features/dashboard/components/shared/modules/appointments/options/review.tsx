@@ -31,6 +31,7 @@ type ReviewAppointmentRecord = AppointmentRecord & {
 export function ReviewQueue({
   appointments,
   departmentFilter,
+  departmentLabel,
   departments,
   decisionReason,
   isLoading,
@@ -46,6 +47,7 @@ export function ReviewQueue({
   appointment: AppointmentRecord | null;
   appointments: AppointmentRecord[];
   departmentFilter: string;
+  departmentLabel: string;
   departments: string[];
   decisionReason: string;
   isLoading: boolean;
@@ -182,7 +184,7 @@ export function ReviewQueue({
                         <User size={16} />
 
                         <span>
-                          {request.patientAge || "N/A"} years •{" "}
+                          {request.patientAge || "N/A"} years ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢{" "}
                           {request.patientGender || "N/A"}
                         </span>
                       </div>
@@ -210,7 +212,7 @@ export function ReviewQueue({
                         </p>
 
                         <p className="text-xs text-muted-foreground">
-                          Department: {request.departmentName || "General"}
+                          {departmentLabel}: {request.departmentName || "General"}
                         </p>
                       </div>
                     </div>
@@ -368,7 +370,7 @@ export function ReviewQueue({
                   </div>
 
                   <div>
-                    <p className="text-muted-foreground">Department</p>
+                    <p className="text-muted-foreground">{departmentLabel}</p>
 
                     <p className="font-medium">
                       {selectedRequest.departmentName || "General"}

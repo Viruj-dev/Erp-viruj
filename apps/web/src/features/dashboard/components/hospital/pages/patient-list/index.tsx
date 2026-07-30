@@ -14,7 +14,7 @@ import {
   mapAppointmentToPatient,
 } from "./utils";
 
-export function ErpDemoPatients() {
+export function ErpDemoPatients({ organizationId }: { organizationId?: string }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -29,27 +29,25 @@ export function ErpDemoPatients() {
   });
   const [lastRequest, setLastRequest] = useState<VirujAppointment | null>(null);
 
+  const appointmentQueryKey = virujBackend.appointments.key({ organizationId });
   const appointmentsQuery = useQuery({
-    queryFn: virujBackend.appointments.list,
-    queryKey: virujBackend.appointments.key,
+    enabled: Boolean(organizationId),
+    queryFn: () => virujBackend.appointments.list({ organizationId }),
+    queryKey: appointmentQueryKey,
   });
   const createRequestMutation = useMutation({
     mutationFn: virujBackend.appointments.createMobileRequest,
     onSuccess: async (appointment) => {
       setLastRequest(appointment);
       setPage(1);
-      await queryClient.invalidateQueries({
-        queryKey: virujBackend.appointments.key,
-      });
+      await queryClient.invalidateQueries({ queryKey: appointmentQueryKey });
     },
   });
   const updateStatusMutation = useMutation({
     mutationFn: virujBackend.appointments.updateStatus,
     onSuccess: async (appointment) => {
       setLastRequest(appointment);
-      await queryClient.invalidateQueries({
-        queryKey: virujBackend.appointments.key,
-      });
+      await queryClient.invalidateQueries({ queryKey: appointmentQueryKey });
     },
   });
   const deleteAllMutation = useMutation({
@@ -57,9 +55,7 @@ export function ErpDemoPatients() {
     onSuccess: async () => {
       setLastRequest(null);
       setPage(1);
-      await queryClient.invalidateQueries({
-        queryKey: virujBackend.appointments.key,
-      });
+      await queryClient.invalidateQueries({ queryKey: appointmentQueryKey });
     },
   });
 
@@ -90,11 +86,12 @@ export function ErpDemoPatients() {
       }
 
       if (status === "rescheduled") {
-        rescheduleAppointment(patient, status, updateStatusMutation.mutate);
+        rescheduleAppointment(patient, status, organizationId, updateStatusMutation.mutate);
         return;
       }
 
       updateStatusMutation.mutate({
+        organizationId,
         approvalNotes:
           status === "approved"
             ? "Approved by ERP user."
@@ -103,11 +100,12 @@ export function ErpDemoPatients() {
         status,
       });
     },
-    [updateStatusMutation]
+    [organizationId, updateStatusMutation]
   );
 
   const sendMobileRequest = () => {
     createRequestMutation.mutate({
+      organizationId,
       mobileUserId: requestForm.mobileUserId,
       patientAge: Number(requestForm.patientAge) || null,
       patientGender: requestForm.patientGender,
@@ -173,10 +171,12 @@ function filterPatients(patients: DirectoryPatient[], search: string) {
 function rescheduleAppointment(
   patient: DirectoryPatient,
   status: VirujAppointmentStatus,
+  organizationId: string | undefined,
   mutate: (input: {
     approvalNotes?: string | null;
     endsAt?: string | null;
     id: string;
+    organizationId?: string;
     startsAt?: string | null;
     status: VirujAppointmentStatus;
   }) => void
@@ -193,6 +193,7 @@ function rescheduleAppointment(
   const endsAt = new Date(startsAt.getTime() + 30 * 60 * 1000);
   mutate({
     approvalNotes: "Rescheduled by ERP user.",
+    organizationId,
     endsAt: endsAt.toISOString(),
     id: patient.appointmentId,
     startsAt: startsAt.toISOString(),

@@ -2,8 +2,8 @@ import { AlertTriangle, CalendarCheck, CheckCircle2, ClipboardList, Star, Zap } 
 import type { ChangeEvent } from "react";
 import type { VirujFacility, VirujFacilityInput, VirujFacilityStatus } from "@/lib/viruj-backend";
 import type { FacilityAction, FacilityRoute, FilterState, SortKey } from "./types";
-export function parseFacilityRoute(segments: string[]): FacilityRoute {
-  const facilityIndex = segments.indexOf("facilities");
+export function parseFacilityRoute(segments: string[], root = "facilities"): FacilityRoute {
+  const facilityIndex = segments.indexOf(root);
   const trailing = facilityIndex >= 0 ? segments.slice(facilityIndex + 1) : [];
   const first = trailing[0];
   const second = trailing[1];

@@ -50,8 +50,10 @@ function getStatusColor(status?: string) {
 
 function AppointmentCard({
   appointment,
+  departmentLabel,
 }: {
   appointment: PatientHistoryAppointment;
+  departmentLabel: string;
 }) {
   const isApproved = appointment.status?.toLowerCase() === "approved";
 
@@ -94,7 +96,7 @@ function AppointmentCard({
               </p>
 
               <p className="text-xs text-muted-foreground">
-                Department: {appointment.departmentName || "General"}
+                {departmentLabel}: {appointment.departmentName || "General"}
               </p>
             </div>
           </div>
@@ -167,6 +169,7 @@ function AppointmentCard({
 export function PatientDecisionHistory({
   appointments,
   departmentFilter,
+  departmentLabel,
   departments,
   isLoading,
   onDepartmentFilter,
@@ -175,6 +178,7 @@ export function PatientDecisionHistory({
 }: {
   appointments: AppointmentRecord[];
   departmentFilter: string;
+  departmentLabel: string;
   departments: string[];
   isLoading: boolean;
   onDepartmentFilter: (value: string) => void;
@@ -290,6 +294,7 @@ export function PatientDecisionHistory({
               filteredApproved.map((appointment) => (
                 <AppointmentCard
                   appointment={appointment}
+                  departmentLabel={departmentLabel}
                   key={appointment.id}
                 />
               ))
@@ -315,6 +320,7 @@ export function PatientDecisionHistory({
               filteredRejected.map((appointment) => (
                 <AppointmentCard
                   appointment={appointment}
+                  departmentLabel={departmentLabel}
                   key={appointment.id}
                 />
               ))

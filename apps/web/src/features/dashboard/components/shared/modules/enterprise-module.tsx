@@ -19,6 +19,7 @@ import {
 import type { ReactNode } from "react";
 
 type ModuleKey =
+  | "appointments"
   | "doctors"
   | "radiology"
   | "pathology"
@@ -39,6 +40,27 @@ const moduleContent: Record<
     workflows: string[];
   }
 > = {
+  appointments: {
+    accent: "from-emerald-950 to-teal-800",
+    description:
+      "Shared appointment review, scheduling, patient decisions, and operational settings for provider tenants.",
+    icon: <CalendarClock size={22} />,
+    kpis: [
+      { label: "Requests", note: "Awaiting tenant context", value: "--" },
+      { label: "Approved", note: "Scoped by organization", value: "--" },
+      { label: "Reschedules", note: "Clinic and hospital ready", value: "--" },
+    ],
+    primary: "Appointments",
+    queue: [
+      {
+        label: "Tenant context required",
+        meta: "Select a clinic or hospital organization",
+        status: "Waiting",
+      },
+    ],
+    title: "Appointments Workspace",
+    workflows: ["Appointment review", "Patient decisions", "Scheduling settings"],
+  },
   doctors: {
     accent: "from-blue-950 to-cyan-800",
     description:

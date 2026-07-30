@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
+import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import {
   DeleteDialog,
   EmptyFacilities,
@@ -29,20 +30,24 @@ import {
   type SortKey,
 } from "@/features/dashboard/components/shared/facilties";
 import { authClient } from "@/lib/auth-client";
-import { virujBackend, type VirujFacility } from "@/lib/viruj-backend";
+import { virujBackend, type VirujFacility, type VirujFacilityInput } from "@/lib/viruj-backend";
 
 export function FacilitiesPage({
+  catalogKind = "facilities",
   routeBasePath,
   routeSegments,
+  tenant,
 }: {
+  catalogKind?: "facilities" | "services";
   routeBasePath: string;
   routeSegments: string[];
+  tenant?: ErpTenantContext | null;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const activeMemberState = authClient.useActiveMember();
   const permissions = getFacilityPermissions(activeMemberState.data?.role);
-  const route = parseFacilityRoute(routeSegments);
+  const route = parseFacilityRoute(routeSegments, catalogKind);
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<FilterState>({
     availability: "all",
@@ -54,35 +59,44 @@ export function FacilitiesPage({
   const [sortKey, setSortKey] = useState<SortKey>("updated");
   const [deleteTarget, setDeleteTarget] = useState<VirujFacility | null>(null);
 
+  const organizationId = tenant?.organizationId;
+  const catalogApi = catalogKind === "services" ? virujBackend.services : virujBackend.facilities;
+  const catalogLabel = catalogKind === "services" ? "Services" : "Facilities";
+  const catalogSubtitle = catalogKind === "services"
+    ? "A persisted service catalog for patient discovery and booking."
+    : "A persisted facility catalog for infrastructure, amenities, and access.";
+  const catalogQueryKey = catalogApi.key({ organizationId });
+
   const facilitiesQuery = useQuery({
-    queryFn: virujBackend.facilities.list,
-    queryKey: virujBackend.facilities.key,
+    enabled: Boolean(organizationId),
+    queryFn: () => catalogApi.list({ organizationId }),
+    queryKey: catalogQueryKey,
   });
   const facilities = facilitiesQuery.data ?? emptyFacilities;
 
   const invalidateFacilities = () =>
-    queryClient.invalidateQueries({ queryKey: virujBackend.facilities.key });
+    queryClient.invalidateQueries({ queryKey: catalogQueryKey });
 
   const createMutation = useMutation({
-    mutationFn: virujBackend.facilities.create,
+    mutationFn: (input: VirujFacilityInput) => catalogApi.create({ ...input, organizationId }),
     onSuccess: async () => {
       await invalidateFacilities();
-      router.push(`${routeBasePath}/facilities`);
+      router.push(`${routeBasePath}/${catalogKind}`);
     },
   });
   const updateMutation = useMutation({
-    mutationFn: virujBackend.facilities.update,
+    mutationFn: (input: { facility: VirujFacilityInput; id: string }) => catalogApi.update({ ...input, organizationId }),
     onSuccess: async () => {
       await invalidateFacilities();
-      router.push(`${routeBasePath}/facilities`);
+      router.push(`${routeBasePath}/${catalogKind}`);
     },
   });
   const statusMutation = useMutation({
-    mutationFn: virujBackend.facilities.updateStatus,
+    mutationFn: (input: { id: string; isAvailable?: boolean; status: VirujFacility["status"] }) => catalogApi.updateStatus({ ...input, organizationId }),
     onMutate: async (input) => {
-      await queryClient.cancelQueries({ queryKey: virujBackend.facilities.key });
-      const previous = queryClient.getQueryData<VirujFacility[]>(virujBackend.facilities.key);
-      queryClient.setQueryData<VirujFacility[]>(virujBackend.facilities.key, (current) =>
+      await queryClient.cancelQueries({ queryKey: catalogQueryKey });
+      const previous = queryClient.getQueryData<VirujFacility[]>(catalogQueryKey);
+      queryClient.setQueryData<VirujFacility[]>(catalogQueryKey, (current) =>
         current?.map((facility) =>
           facility.id === input.id
             ? {
@@ -96,23 +110,23 @@ export function FacilitiesPage({
       return { previous };
     },
     onError: (_error, _input, context) => {
-      if (context?.previous) queryClient.setQueryData(virujBackend.facilities.key, context.previous);
+      if (context?.previous) queryClient.setQueryData(catalogQueryKey, context.previous);
     },
     onSettled: invalidateFacilities,
   });
   const deleteMutation = useMutation({
-    mutationFn: virujBackend.facilities.delete,
+    mutationFn: (input: { id: string }) => catalogApi.delete({ ...input, organizationId }),
     onSuccess: async () => {
       setDeleteTarget(null);
       await invalidateFacilities();
-      if (route.mode !== "list") router.push(`${routeBasePath}/facilities`);
+      if (route.mode !== "list") router.push(`${routeBasePath}/${catalogKind}`);
     },
   });
   const publishAllMutation = useMutation({
     mutationFn: async (services: VirujFacility[]) => {
       await Promise.all(
         services.map((facility) =>
-          virujBackend.facilities.update({
+          catalogApi.update({
             facility: {
               ...toFacilityInput(facility),
               isAvailable: true,
@@ -120,6 +134,7 @@ export function FacilitiesPage({
               visibility: "public",
             },
             id: facility.id,
+            organizationId,
           })
         )
       );
@@ -163,17 +178,17 @@ export function FacilitiesPage({
                 {permissions.create ? (
                   <PrimaryButton
                     icon={<Plus size={16} />}
-                    label="Add Service"
-                    onClick={() => router.push(`${routeBasePath}/facilities/new`)}
+                    label={`Add ${catalogKind === "services" ? "Service" : "Facility"}`}
+                    onClick={() => router.push(`${routeBasePath}/${catalogKind}/new`)}
                   />
                 ) : null}
               </div>
             ) : null
           }
-          eyebrow="Facilities & Services"
+          eyebrow={catalogLabel}
           framed
-          subtitle="A clean public service catalog for hospital discovery."
-          title="Facilities & Services"
+          subtitle={catalogSubtitle}
+          title={catalogLabel}
         >
           <section className="space-y-5">
             <Toolbar
@@ -200,14 +215,14 @@ export function FacilitiesPage({
                 />
               ) : facilities.length === 0 ? (
                 <EmptyFacilities
-                  onCreate={() => router.push(`${routeBasePath}/facilities/new`)}
+                  onCreate={() => router.push(`${routeBasePath}/${catalogKind}/new`)}
                   permissions={permissions}
                 />
               ) : filteredFacilities.length === 0 ? (
                 <StatePanel
                   icon={<Filter size={26} />}
                   subtitle="Adjust category, availability, status, or search terms."
-                  title="No services match these filters."
+                  title={`No ${catalogLabel.toLowerCase()} match these filters.`}
                 />
               ) : (
                 <div className="grid gap-4 p-4 md:grid-cols-2 2xl:grid-cols-3">
@@ -219,7 +234,7 @@ export function FacilitiesPage({
                       onActivate={() => statusMutation.mutate({ id: facility.id, isAvailable: true, status: "active" })}
                       onDeactivate={() => statusMutation.mutate({ id: facility.id, isAvailable: false, status: "draft" })}
                       onDelete={() => setDeleteTarget(facility)}
-onEdit={() => router.push(`${routeBasePath}/facilities/${facility.id}/edit`)}
+onEdit={() => router.push(`${routeBasePath}/${catalogKind}/${facility.id}/edit`)}
                       onPublish={() =>
                         updateMutation.mutate({
                           facility: {
@@ -254,15 +269,15 @@ onEdit={() => router.push(`${routeBasePath}/facilities/${facility.id}/edit`)}
       <>
         {renderCatalog(true)}
         <FacilityEditorDialog
-          onClose={() => router.push(`${routeBasePath}/facilities`)}
-          subtitle="Create a simple service card for the public catalog."
-          title="Add Service Card"
+          onClose={() => router.push(`${routeBasePath}/${catalogKind}`)}
+          subtitle={`Create a ${catalogKind === "services" ? "service" : "facility"} card for this ${tenant?.terminology.organizationLabel.toLowerCase() ?? "workspace"}.`}
+          title={`Add ${catalogKind === "services" ? "Service" : "Facility"}`}
         >
           <FacilityForm
             existingFacilities={facilities}
             initialValue={{ ...emptyFacilityForm, displayOrder: facilities.length + 1 }}
             isSaving={isSaving}
-            onCancel={() => router.push(`${routeBasePath}/facilities`)}
+            onCancel={() => router.push(`${routeBasePath}/${catalogKind}`)}
             onSubmit={(input) => createMutation.mutate(input)}
             saveError={createMutation.error}
             submitLabel="Create card"
@@ -273,22 +288,22 @@ onEdit={() => router.push(`${routeBasePath}/facilities/${facility.id}/edit`)}
   }
 
   if (route.mode === "edit") {
-    if (facilitiesQuery.isLoading) return <FacilitiesLoading title="Loading service editor..." />;
-    if (!routeFacility) return <FacilityMissing onBack={() => router.push(`${routeBasePath}/facilities`)} />;
+    if (facilitiesQuery.isLoading) return <FacilitiesLoading title={`Loading ${catalogKind === "services" ? "service" : "facility"} editor...`} />;
+    if (!routeFacility) return <FacilityMissing onBack={() => router.push(`${routeBasePath}/${catalogKind}`)} />;
 
     return (
       <>
         {renderCatalog(true)}
         <FacilityEditorDialog
-          onClose={() => router.push(`${routeBasePath}/facilities`)}
-          subtitle="Edit the service card shown in the catalog."
-          title="Edit Service Card"
+          onClose={() => router.push(`${routeBasePath}/${catalogKind}`)}
+          subtitle={`Edit this ${catalogKind === "services" ? "service" : "facility"} card.`}
+          title={`Edit ${catalogKind === "services" ? "Service" : "Facility"}`}
         >
           <FacilityForm
             existingFacilities={facilities.filter((facility) => facility.id !== routeFacility.id)}
             initialValue={toFacilityInput(routeFacility)}
             isSaving={isSaving}
-            onCancel={() => router.push(`${routeBasePath}/facilities`)}
+            onCancel={() => router.push(`${routeBasePath}/${catalogKind}`)}
             onSubmit={(input) => updateMutation.mutate({ facility: input, id: routeFacility.id })}
             saveError={updateMutation.error}
             submitLabel="Save card"

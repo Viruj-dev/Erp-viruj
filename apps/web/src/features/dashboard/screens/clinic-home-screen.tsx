@@ -4,24 +4,25 @@ import { OrganizationAccessScreen } from "@/features/auth/components/organizatio
 import {
   ClinicDashboardPage,
   ClinicDoctorsPresencePage,
-  ClinicFacilitiesPage,
   ClinicGalleryPage,
   ClinicLocationsPage,
   ClinicOfferingsPage,
   ClinicPatientsPage,
   ClinicProfileManagementPage,
   ClinicReviewsPage,
-  ClinicServicesPage,
   ClinicSettingsPage,
   ClinicWorkingHoursPage,
 } from "@/features/dashboard/components/clinic/pages";
 import {
   ErpDemoAnalytics,
   ErpDemoCommunity,
+  FacilitiesPage,
 } from "@/features/dashboard/components/hospital/pages";
 import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
+import { createErpTenantContext, type ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import { ErpUserProfilePage } from "@/features/dashboard/components/shared/profile";
+import { ErpDemoAppointments } from "@/features/dashboard/components/shared/modules";
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
 import {
   buildDashboardPath,
@@ -42,6 +43,11 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 
 const clinicSupportedPages: ErpDemoPage[] = [
   "dashboard",
+  "appointments",
+  "appointments-dashboard",
+  "appointments-review",
+  "appointments-patients",
+  "appointments-settings",
   "clinic-profile",
   "locations",
   "working-hours",
@@ -60,6 +66,7 @@ const clinicSupportedPages: ErpDemoPage[] = [
 
 export function ClinicHomeScreen({
   currentPage: requestedPage,
+  routeSegments,
 }: {
   currentPage: string;
   routeOrganizationType?: string;
@@ -133,6 +140,7 @@ export function ClinicHomeScreen({
       : null;
   const activeOrganizationSlug = getOrganizationSlug(activeOrganization);
   const activeMemberRole = activeMember?.role;
+  const activeMemberPermissions = getMemberPermissions(activeMember);
   const allowedPages = useMemo(
     () => getClinicAllowedPages(activeMemberRole),
     [activeMemberRole]
@@ -145,6 +153,15 @@ export function ClinicHomeScreen({
   const roleLabel = activeMemberRole
     ? activeMemberRole.replace(/_/g, " ")
     : "clinic member";
+  const appointmentTenant = activeOrganization?.id
+    ? createErpTenantContext({
+        organizationId: activeOrganization.id,
+        organizationSlug: activeOrganizationSlug,
+        permissions: activeMemberPermissions,
+        providerType: "clinic",
+        role: activeMemberRole,
+      })
+    : null;
   const organizationLabel = organizationTypeLabels.clinic;
   const organizationName = getOrganizationDisplayName(
     activeOrganization,
@@ -326,7 +343,14 @@ export function ClinicHomeScreen({
                 <ClinicPageContent
                   currentPage={resolvedPage}
                   organizationId={activeOrganization.id}
+                  appointmentTenant={appointmentTenant}
                   roleLabel={roleLabel}
+                  routeBasePath={
+                    activeOrganizationSlug
+                      ? `/clinic/${activeOrganizationSlug}`
+                      : "/clinic"
+                  }
+                  routeSegments={routeSegments ?? [resolvedPage]}
                   userName={userName}
                 />
               </div>
@@ -340,16 +364,31 @@ export function ClinicHomeScreen({
 
 function ClinicPageContent({
   currentPage,
+  appointmentTenant,
   organizationId,
   roleLabel,
+  routeBasePath,
+  routeSegments,
   userName,
 }: {
   currentPage: ErpDemoPage;
+  appointmentTenant: ErpTenantContext | null;
   organizationId?: string;
   roleLabel: string;
+  routeBasePath: string;
+  routeSegments: string[];
   userName: string;
 }) {
   switch (currentPage) {
+    case "appointments":
+    case "appointments-dashboard":
+      return appointmentTenant ? <ErpDemoAppointments section="dashboard" tenant={appointmentTenant} /> : null;
+    case "appointments-review":
+      return appointmentTenant ? <ErpDemoAppointments section="review" tenant={appointmentTenant} /> : null;
+    case "appointments-patients":
+      return appointmentTenant ? <ErpDemoAppointments section="patients" tenant={appointmentTenant} /> : null;
+    case "appointments-settings":
+      return appointmentTenant ? <ErpDemoAppointments section="settings" tenant={appointmentTenant} /> : null;
     case "clinic-profile":
       return <ClinicProfileManagementPage />;
     case "locations":
@@ -363,9 +402,13 @@ function ClinicPageContent({
     case "offerings":
       return <ClinicOfferingsPage />;
     case "services":
-      return <ClinicServicesPage />;
+      return appointmentTenant ? (
+        <FacilitiesPage catalogKind="services" routeBasePath={routeBasePath} routeSegments={routeSegments} tenant={appointmentTenant} />
+      ) : null;
     case "facilities":
-      return <ClinicFacilitiesPage />;
+      return appointmentTenant ? (
+        <FacilitiesPage catalogKind="facilities" routeBasePath={routeBasePath} routeSegments={routeSegments} tenant={appointmentTenant} />
+      ) : null;
     case "gallery":
       return (
         <ClinicGalleryPage
@@ -468,6 +511,21 @@ function getSessionOrganization(session: unknown) {
   }
 
   return null;
+}
+
+function getMemberPermissions(member: unknown) {
+  if (
+    member &&
+    typeof member === "object" &&
+    "permissions" in member &&
+    Array.isArray(member.permissions)
+  ) {
+    return member.permissions.filter(
+      (permission): permission is string => typeof permission === "string"
+    );
+  }
+
+  return [];
 }
 
 function getSessionMember(session: unknown) {

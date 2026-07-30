@@ -306,19 +306,19 @@ async function requireFacilityAccess(context: Context, action: FacilityPermissio
       response: context.json(
         {
           error: "active_organization_required",
-          message: "Choose a hospital workspace before managing facilities.",
+          message: "Choose a hospital or clinic workspace before managing facilities.",
         },
         401
       ),
     };
   }
 
-  if (activeOrganization.organizationType !== "hospital") {
+  if (activeOrganization.organizationType !== "hospital" && activeOrganization.organizationType !== "clinic") {
     return {
       response: context.json(
         {
-          error: "hospital_workspace_required",
-          message: "Facilities & Services is only available in hospital workspaces.",
+          error: "provider_workspace_required",
+          message: "Facilities & Services is only available in hospital and clinic workspaces.",
         },
         403
       ),
