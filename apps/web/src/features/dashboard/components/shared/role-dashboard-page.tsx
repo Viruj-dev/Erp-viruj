@@ -9,12 +9,12 @@ import {
   ImagePlus,
   Plus,
   Sparkles,
-  Star,
   Stethoscope,
 } from "lucide-react";
 import {
   ClinicGalleryBento,
   defaultClinicGalleryItems,
+  type ClinicGalleryBentoItem,
 } from "@/features/dashboard/components/clinic/clinic-gallery-bento";
 import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import type { ReactNode } from "react";
@@ -31,10 +31,27 @@ type RoleDashboardChart = {
   values: number[];
 };
 
+type RoleDashboardListItem = {
+  badge?: string;
+  id?: string;
+  meta?: string;
+  subtitle: string;
+  title: string;
+};
+
 export type RoleDashboardAnalytics = {
+  activity?: RoleDashboardListItem[];
   charts?: RoleDashboardChart[];
+  doctors?: RoleDashboardListItem[];
+  gallery?: {
+    completeness: number;
+    imageUrlsById?: Record<string, string | undefined>;
+    items?: ClinicGalleryBentoItem[];
+    liveCount: number;
+  };
   heroStats?: Record<string, string>;
   listingScore?: number;
+  services?: RoleDashboardListItem[];
   stats?: RoleDashboardKpi[];
 };
 
@@ -112,32 +129,12 @@ const tones: Record<DashboardTone, ToneConfig> = {
 };
 
 const baseStats = [
-  ["Profile Views", "48.2k", "+18% this month"],
-  ["Appointment Requests", "1,842", "+246 this week"],
-  ["Active Doctors", "06", "2 pending approval"],
-  ["Active Services", "14", "3 draft services"],
-  ["Average Rating", "4.8", "Across 1,284 reviews"],
-  ["Review Count", "1,284", "+42 new reviews"],
-] as const;
-
-const doctors = [
-  ["Dr. Aditi Rao", "Dermatology", "18.4k", "428", "4.8"],
-  ["Dr. Karan Mehta", "Orthopedics", "12.2k", "301", "4.7"],
-  ["Dr. Nisha Kapoor", "Fertility", "8.9k", "176", "4.9"],
-] as const;
-
-const services = [
-  ["Full Body Checkup", "642 requests", "Visible"],
-  ["Dental Cleaning", "388 requests", "Visible"],
-  ["Skin Consultation", "219 requests", "Draft"],
-] as const;
-
-const activity = [
-  ["New review received", "Riya Sharma rated the listing 5 stars."],
-  ["Doctor added", "Dr. Nisha Kapoor was attached to this workspace."],
-  ["Service published", "Dental Cleaning is now visible on Viruj."],
-  ["Gallery image uploaded", "Reception area photo added to public gallery."],
-  ["Profile updated", "Cover image and description were refreshed."],
+  ["Patients", "0", "No appointment requesters yet"],
+  ["Appointment Requests", "0", "0 pending, 0 completed"],
+  ["Active Doctors", "0", "0 waiting to publish"],
+  ["Active Services", "0", "0 draft services"],
+  ["Average Rating", "0.0", "Review backend has no rating yet"],
+  ["Gallery Photos", "0", "0% gallery completeness"],
 ] as const;
 
 export function RoleDashboardPage({
@@ -168,11 +165,20 @@ export function RoleDashboardPage({
         : "Add Doctor";
   const PrimaryIcon =
     tone === "doctor" ? CalendarDays : tone === "hospital" ? Building2 : Stethoscope;
-  const listingScore = analytics?.listingScore ?? 88;
+  const listingScore = analytics?.listingScore ?? 0;
   const isProfilePublic = visibility?.isPublic ?? (analytics?.heroStats?.Visibility ?? "Public") !== "Private";
   const visibilityLabel = isProfilePublic ? "Public" : "Private";
   const dashboardStats = analytics?.stats ?? baseStats.map(([label, value, note]) => ({ label, note, value }));
   const dashboardCharts = analytics?.charts ?? [];
+  const chartPanels = [
+    "Appointment Request Trend",
+    "Doctor Publish Trend",
+    "Service Publish Trend",
+  ];
+  const dashboardDoctors = analytics?.doctors ?? [];
+  const dashboardServices = analytics?.services ?? [];
+  const dashboardActivity = analytics?.activity ?? [];
+  const gallery = analytics?.gallery;
 
   return (
     <DashboardPageShell
@@ -246,9 +252,9 @@ export function RoleDashboardPage({
               </button>
             ) : null}
             <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-              <HeroStat label="Profile Views" theme={theme} value={analytics?.heroStats?.["Profile Views"] ?? "48.2k"} />
-              <HeroStat label="Requests" theme={theme} value={analytics?.heroStats?.Requests ?? "1,842"} />
-              <HeroStat label="Rating" theme={theme} value={analytics?.heroStats?.Rating ?? "4.8"} />
+              <HeroStat label="Profile Views" theme={theme} value={analytics?.heroStats?.["Profile Views"] ?? "0"} />
+              <HeroStat label="Requests" theme={theme} value={analytics?.heroStats?.Requests ?? "0"} />
+              <HeroStat label="Rating" theme={theme} value={analytics?.heroStats?.Rating ?? "0.0"} />
               <HeroStat label="Visibility" theme={theme} value={visibilityLabel} />
             </div>
           </div>
@@ -262,15 +268,20 @@ export function RoleDashboardPage({
       </section>
 
       <section className="grid gap-5 xl:grid-cols-3">
-        <ChartPanel theme={theme} title="Profile Views Trend" values={findDashboardChart(dashboardCharts, "Profile Views Trend")} />
-        <ChartPanel theme={theme} title="Appointment Request Trend" values={findDashboardChart(dashboardCharts, "Appointment Request Trend")} />
-        <ChartPanel theme={theme} title="Review Rating Trend" values={findDashboardChart(dashboardCharts, "Review Rating Trend")} />
+        {chartPanels.map((title) => (
+          <ChartPanel
+            key={title}
+            theme={theme}
+            title={title}
+            values={findDashboardChart(dashboardCharts, title)}
+          />
+        ))}
       </section>
 
       <Panel subtitle="Bento preview of photos patients see on your listing" theme={theme} title="Public Gallery">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-            8 photos live - 72% gallery completeness
+            {gallery?.liveCount ?? 0} photos live - {gallery?.completeness ?? 0}% gallery completeness
           </p>
           <button
             className="inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-white transition"
@@ -281,22 +292,33 @@ export function RoleDashboardPage({
             Manage Gallery
           </button>
         </div>
-        <ClinicGalleryBento items={defaultClinicGalleryItems} />
+        <ClinicGalleryBento
+          imageUrlsById={gallery?.imageUrlsById}
+          items={gallery?.items?.length ? gallery.items : defaultClinicGalleryItems}
+        />
       </Panel>
 
       <section className="grid gap-5 xl:grid-cols-[1fr_1fr_360px]">
         <Panel subtitle="Doctor marketplace performance" theme={theme} title="Most Viewed Doctors">
           <div className="space-y-3">
-            {doctors.map((doctor) => (
-              <DoctorPerformance doctor={doctor} key={doctor[0]} theme={theme} />
-            ))}
+            {dashboardDoctors.length ? (
+              dashboardDoctors.map((doctor) => (
+                <DoctorPerformance doctor={doctor} key={doctor.title} theme={theme} />
+              ))
+            ) : (
+              <EmptyPanelRow label="No doctors added yet." theme={theme} />
+            )}
           </div>
         </Panel>
         <Panel subtitle="Service demand and visibility" theme={theme} title="Most Requested Services">
           <div className="space-y-3">
-            {services.map((service) => (
-              <ServiceRow key={service[0]} service={service} theme={theme} />
-            ))}
+            {dashboardServices.length ? (
+              dashboardServices.map((service) => (
+                <ServiceRow key={service.title} service={service} theme={theme} />
+              ))
+            ) : (
+              <EmptyPanelRow label="No services or facilities added yet." theme={theme} />
+            )}
           </div>
         </Panel>
         <Panel subtitle="Presence management" theme={theme} title="Quick Actions">
@@ -328,20 +350,24 @@ export function RoleDashboardPage({
 
       <Panel subtitle="Marketplace listing updates" theme={theme} title="Recent Activity">
         <div className="space-y-3">
-          {activity.map((item, index) => (
-            <div className={`flex gap-4 rounded-2xl p-4 ${theme.soft}`} key={item[0]}>
-              <span
-                className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold shadow-sm dark:bg-white/[0.08]"
-                style={{ color: theme.accent }}
-              >
-                {index + 1}
-              </span>
-              <div>
-                <p className="font-bold text-slate-950 dark:text-white">{item[0]}</p>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{item[1]}</p>
+          {dashboardActivity.length ? (
+            dashboardActivity.map((item, index) => (
+              <div className={`flex gap-4 rounded-2xl p-4 ${theme.soft}`} key={item.id ?? `${item.title}-${index}`}>
+                <span
+                  className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold shadow-sm dark:bg-white/[0.08]"
+                  style={{ color: theme.accent }}
+                >
+                  {index + 1}
+                </span>
+                <div>
+                  <p className="font-bold text-slate-950 dark:text-white">{item.title}</p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{item.subtitle}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <EmptyPanelRow label="No recent activity yet." theme={theme} />
+          )}
         </div>
       </Panel>
     </DashboardPageShell>
@@ -461,24 +487,25 @@ function DoctorPerformance({
   doctor,
   theme,
 }: {
-  doctor: readonly [string, string, string, string, string];
+  doctor: RoleDashboardListItem;
   theme: ToneConfig;
 }) {
   return (
     <div className={`rounded-2xl p-4 ${theme.soft}`}>
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="font-bold text-slate-950 dark:text-white">{doctor[0]}</p>
-          <p className="mt-1 text-sm font-medium text-slate-500">{doctor[1]}</p>
+          <p className="font-bold text-slate-950 dark:text-white">{doctor.title}</p>
+          <p className="mt-1 text-sm font-medium text-slate-500">{doctor.subtitle}</p>
+          {doctor.meta ? <p className="mt-2 text-xs font-semibold text-slate-500">{doctor.meta}</p> : null}
         </div>
-        <span className="flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
-          <Star fill="currentColor" size={13} />
-          {doctor[4]}
-        </span>
-      </div>
-      <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-        <MiniStat label="Profile Views" value={doctor[2]} />
-        <MiniStat label="Requests" value={doctor[3]} />
+        {doctor.badge ? (
+          <span
+            className="rounded-full bg-white px-3 py-1 text-xs font-bold shadow-sm dark:bg-white/[0.08]"
+            style={{ color: theme.accent }}
+          >
+            {doctor.badge}
+          </span>
+        ) : null}
       </div>
     </div>
   );
@@ -488,25 +515,35 @@ function ServiceRow({
   service,
   theme,
 }: {
-  service: readonly [string, string, string];
+  service: RoleDashboardListItem;
   theme: ToneConfig;
 }) {
   return (
     <div className={`flex items-center justify-between gap-4 rounded-2xl p-4 ${theme.soft}`}>
       <div>
-        <p className="font-bold text-slate-950 dark:text-white">{service[0]}</p>
-        <p className="mt-1 text-sm font-medium text-slate-500">{service[1]}</p>
+        <p className="font-bold text-slate-950 dark:text-white">{service.title}</p>
+        <p className="mt-1 text-sm font-medium text-slate-500">{service.subtitle}</p>
+        {service.meta ? <p className="mt-2 text-xs font-semibold text-slate-500">{service.meta}</p> : null}
       </div>
-      <span
-        className="rounded-full bg-white px-3 py-1 text-xs font-bold shadow-sm dark:bg-white/[0.08]"
-        style={{ color: theme.accent }}
-      >
-        {service[2]}
-      </span>
+      {service.badge ? (
+        <span
+          className="rounded-full bg-white px-3 py-1 text-xs font-bold shadow-sm dark:bg-white/[0.08]"
+          style={{ color: theme.accent }}
+        >
+          {service.badge}
+        </span>
+      ) : null}
     </div>
   );
 }
 
+function EmptyPanelRow({ label, theme }: { label: string; theme: ToneConfig }) {
+  return (
+    <div className={`rounded-2xl p-4 text-sm font-semibold text-slate-500 ${theme.soft}`}>
+      {label}
+    </div>
+  );
+}
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-white p-3 dark:bg-white/[0.06]">
@@ -523,14 +560,12 @@ function findDashboardChart(charts: RoleDashboardChart[], title: string) {
 }
 
 function chartHeights(values?: number[]) {
-  const fallback = [42, 68, 54, 82, 72, 96, 88, 110, 104, 128];
   const cleanValues = values?.filter((value) => Number.isFinite(value)).slice(-10) ?? [];
-  if (cleanValues.length === 0) return fallback;
-  const max = Math.max(...cleanValues, 1);
-  return cleanValues.map((value) => Math.max(18, Math.round((value / max) * 128)));
+  const bars = cleanValues.length ? cleanValues : Array.from({ length: 10 }, () => 0);
+  const max = Math.max(...bars, 1);
+  return bars.map((value) => value <= 0 ? 4 : Math.max(18, Math.round((value / max) * 128)));
 }
 
 function capitalize(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
-

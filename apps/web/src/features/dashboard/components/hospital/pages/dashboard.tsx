@@ -16,8 +16,13 @@ import {
 import {
   virujBackend,
   type VirujAnalyticsChartWidget,
+  type VirujActivity,
   type VirujAnalyticsDashboard,
   type VirujAnalyticsSummaryWidget,
+  type VirujAppointment,
+  type VirujDoctor,
+  type VirujFacility,
+  type VirujHospitalGalleryItem,
 } from "@/lib/viruj-backend";
 import { storagePrefix } from "./onboarding/constants";
 import { getDefaultOnboardingState, getPersistableOnboardingState, mergeOnboardingState } from "./onboarding/state";
@@ -38,56 +43,75 @@ export function ErpDemoDashboard({
   const tone = organizationLabel.toLowerCase() === "clinic" ? "clinic" : "hospital";
   const analyticsEntityId = organizationId;
   const analyticsQuery = useQuery({
-    enabled: tone === "hospital" && Boolean(analyticsEntityId),
+    enabled: Boolean(analyticsEntityId),
     queryFn: () =>
       virujBackend.analytics.dashboard({
         entityId: analyticsEntityId as string,
-        role: "hospital",
+        role: tone,
       }),
     queryKey: virujBackend.analytics.key({
       entityId: analyticsEntityId,
-      role: "hospital",
+      role: tone,
     }),
     retry: 1,
     staleTime: 60_000,
   });
   const appointmentsQuery = useQuery({
-    enabled: tone === "hospital" && Boolean(organizationId),
+    enabled: Boolean(organizationId),
     queryFn: () => virujBackend.appointments.list({ organizationId }),
     queryKey: virujBackend.appointments.key({ organizationId }),
     retry: 1,
     staleTime: 30_000,
   });
   const doctorsQuery = useQuery({
-    enabled: tone === "hospital",
-    queryFn: virujBackend.doctors.list,
-    queryKey: virujBackend.doctors.key,
+    enabled: Boolean(organizationId),
+    queryFn: () => virujBackend.doctors.list({ organizationId }),
+    queryKey: virujBackend.doctors.key(organizationId),
     retry: 1,
     staleTime: 30_000,
   });
-  const facilitiesQuery = useQuery({
-    enabled: tone === "hospital" && Boolean(organizationId),
-    queryFn: () => virujBackend.facilities.list({ organizationId }),
-    queryKey: virujBackend.facilities.key({ organizationId }),
+  const servicesQuery = useQuery({
+    enabled: Boolean(organizationId),
+    queryFn: () => virujBackend.services.list({ organizationId }),
+    queryKey: virujBackend.services.key({ organizationId }),
     retry: 1,
     staleTime: 30_000,
   });
-  const liveCounts = useMemo(
-    () => ({
-      activeDoctors: doctorsQuery.data?.filter((doctor) => doctor.published).length,
-      activeServices: facilitiesQuery.data?.filter(
-        (facility) =>
-          facility.status === "active" &&
-          facility.isAvailable &&
-          facility.visibility === "public"
-      ).length,
-      appointments: appointmentsQuery.data?.length,
-    }),
-    [appointmentsQuery.data, doctorsQuery.data, facilitiesQuery.data]
+  const galleryQuery = useQuery({
+    enabled: Boolean(organizationId),
+    queryFn: () => virujBackend.hospitalGallery.list({ organizationId }),
+    queryKey: virujBackend.hospitalGallery.key(organizationId),
+    retry: 1,
+    staleTime: 30_000,
+  });
+  const activityFilters = useMemo(
+    () => ({ limit: 5, organizationId }),
+    [organizationId]
   );
+  const activityQuery = useQuery({
+    enabled: Boolean(organizationId),
+    queryFn: () => virujBackend.activity.list(activityFilters),
+    queryKey: virujBackend.activity.key(activityFilters),
+    retry: 1,
+    staleTime: 30_000,
+  });
   const analytics = useMemo(
-    () => buildHospitalDashboardAnalytics(analyticsQuery.data, liveCounts),
-    [analyticsQuery.data, liveCounts]
+    () => buildMarketplaceDashboardAnalytics({
+      activities: activityQuery.data?.data ?? [],
+      appointments: appointmentsQuery.data ?? [],
+      dashboard: analyticsQuery.data,
+      doctors: doctorsQuery.data ?? [],
+      facilities: servicesQuery.data ?? [],
+      gallery: galleryQuery.data ?? [],
+    }),
+    [
+      activityQuery.data,
+      analyticsQuery.data,
+      appointmentsQuery.data,
+      doctorsQuery.data,
+      servicesQuery.data,
+      galleryQuery.data,
+    ]
   );
   const onboardingStatus = useHospitalOnboardingStatus(organizationId);
   const profileVisibility = useHospitalProfileVisibility(organizationId, organizationName || organizationLabel);
@@ -99,10 +123,10 @@ export function ErpDemoDashboard({
         open={onboardingStatus.showWelcome}
       />
       <RoleDashboardPage
-        analytics={tone === "hospital" ? analytics : undefined}
+        analytics={analytics}
         tone={tone}
         userName={userName}
-        visibility={tone === "hospital" ? profileVisibility : undefined}
+        visibility={profileVisibility}
       />
     </>
   );
@@ -267,101 +291,131 @@ function WelcomeOnboardingModal({
   );
 }
 
-function buildHospitalDashboardAnalytics(
-  dashboard?: VirujAnalyticsDashboard,
-  liveCounts?: LiveDashboardCounts
-): RoleDashboardAnalytics | undefined {
-  if (!dashboard && !hasLiveCounts(liveCounts)) return undefined;
-
-  const summaries = new Map(dashboard?.summary.map((widget) => [widget.id, widget]) ?? []);
-  const appointments = summaries.get("hospital.appointments");
-  const activeDoctors = summaries.get("hospital.active-doctors");
-  const activeServices = summaries.get("hospital.active-services");
-  const newPatients = summaries.get("hospital.new-patients");
-  const appointmentSeries = findChart(
-    dashboard?.charts,
-    "hospital.appointments.volume"
-  );
-  const appointmentValue = liveOrSummaryValue(liveCounts?.appointments, appointments);
-  const activeDoctorValue = liveOrSummaryValue(liveCounts?.activeDoctors, activeDoctors);
-  const activeServiceValue = liveOrSummaryValue(liveCounts?.activeServices, activeServices);
-
-  const stats = [
-    {
-      label: "Profile Views",
-      note: newPatients
-        ? `${formatSummaryValue(newPatients)} new patients this period`
-        : "+18% this month",
-      value: formatSummaryValue(newPatients) || "48.2k",
-    },
-    {
-      label: "Appointment Requests",
-      note:
-        liveCountNote(liveCounts?.appointments, "appointment in ERP", "appointments in ERP") ??
-        comparisonNote(appointments) ??
-        "Last 30 days",
-      value: appointmentValue || "0",
-    },
-    {
-      label: "Active Doctors",
-      note:
-        liveCountNote(liveCounts?.activeDoctors, "published doctor", "published doctors") ??
-        "Current hospital roster",
-      value: activeDoctorValue || "0",
-    },
-    {
-      label: "Active Services",
-      note:
-        liveCountNote(liveCounts?.activeServices, "public active service", "public active services") ??
-        "Published hospital services",
-      value: activeServiceValue || "0",
-    },
-    {
-      label: "Average Rating",
-      note: "Marketplace rating data pending",
-      value: "4.8",
-    },
-    {
-      label: "Review Count",
-      note: "Marketplace review data pending",
-      value: "1,284",
-    },
-  ];
+function buildMarketplaceDashboardAnalytics({
+  activities,
+  appointments,
+  dashboard,
+  doctors,
+  facilities,
+  gallery,
+}: {
+  activities: VirujActivity[];
+  appointments: VirujAppointment[];
+  dashboard?: VirujAnalyticsDashboard;
+  doctors: VirujDoctor[];
+  facilities: VirujFacility[];
+  gallery: VirujHospitalGalleryItem[];
+}): RoleDashboardAnalytics {
+  const activeDoctors = doctors.filter((doctor) => doctor.published).length;
+  const pendingDoctors = doctors.length - activeDoctors;
+  const activeServices = facilities.filter(isPublicActiveFacility).length;
+  const draftServices = facilities.filter((facility) => facility.status === "draft").length;
+  const pendingAppointments = appointments.filter((appointment) => appointment.status === "pending_approval").length;
+  const completedAppointments = appointments.filter((appointment) => appointment.status === "completed").length;
+  const publishedGallery = gallery.filter((item) => item.isPublished);
+  const uniquePatients = new Set(appointments.map((appointment) => appointment.patientPhone || appointment.patientEmail || appointment.patientName)).size;
+  const appointmentSummary = summaryBySuffix(dashboard, ".appointments");
+  const ratingSummary = summaryBySuffix(dashboard, ".average-rating");
+  const appointmentValue = appointments.length || summaryNumber(appointmentSummary);
+  const ratingValue = summaryFormatted(ratingSummary) || "0.0";
+  const galleryCompleteness = Math.min(100, Math.round((publishedGallery.length / 8) * 100));
 
   return {
+    activity: activityRows(activities, appointments, doctors, facilities),
     charts: [
       {
         title: "Appointment Request Trend",
-        values: chartNumbers(appointmentSeries) ?? [],
+        values: chartNumbers(chartBySuffix(dashboard, ".appointments.volume")) ?? trendByDate(appointments, (item) => item.createdAt),
+      },
+      {
+        title: "Doctor Publish Trend",
+        values: trendByDate(doctors.filter((doctor) => doctor.published), (item) => item.publishedAt ?? item.createdAt),
+      },
+      {
+        title: "Service Publish Trend",
+        values: trendByDate(facilities.filter(isPublicActiveFacility), (item) => item.updatedAt ?? item.createdAt),
       },
     ],
+    doctors: doctors.slice(0, 5).map((doctor) => ({
+      badge: doctor.published ? "Shown in app" : "Draft",
+      meta: [doctor.availability, doctor.fee].filter(Boolean).join(" | "),
+      subtitle: [doctor.department, doctor.specialty].filter(Boolean).join(" | ") || "Doctor profile",
+      title: doctor.name,
+    })),
+    gallery: {
+      completeness: galleryCompleteness,
+      imageUrlsById: Object.fromEntries(publishedGallery.map((item) => [item.id, item.url])),
+      items: publishedGallery.slice(0, 5).map((item, index) => ({
+        featured: index === 0,
+        id: item.id,
+        subtitle: item.caption || item.mediaType.toLowerCase(),
+        title: item.altText || item.caption || `Gallery ${index + 1}`,
+      })),
+      liveCount: publishedGallery.length,
+    },
     heroStats: {
-      "Profile Views": formatSummaryValue(newPatients) || "48.2k",
-      Rating: "4.8",
-      Requests: appointmentValue || "0",
+      "Profile Views": formatMetricValue(uniquePatients),
+      Rating: ratingValue,
+      Requests: formatMetricValue(appointmentValue),
       Visibility: "Public",
     },
     listingScore: listingScoreFromStats({
-      activeDoctors: metricNumber(liveCounts?.activeDoctors, activeDoctors),
-      activeServices: metricNumber(liveCounts?.activeServices, activeServices),
-      appointments: metricNumber(liveCounts?.appointments, appointments),
+      activeDoctors,
+      activeServices,
+      appointments: appointmentValue,
+      galleryItems: publishedGallery.length,
     }),
-    stats,
+    services: facilities.slice(0, 5).map((facility) => ({
+      badge: facility.visibility === "public" ? "Public" : facility.status,
+      meta: facility.priceText || (typeof facility.startingPrice === "number" ? `${facility.currency} ${facility.startingPrice}` : undefined),
+      subtitle: [facility.category, facility.shortDescription].filter(Boolean).join(" | ") || "Service profile",
+      title: facility.name,
+    })),
+    stats: [
+      {
+        label: "Patients",
+        note: `${formatMetricValue(uniquePatients)} unique appointment requester${uniquePatients === 1 ? "" : "s"}`,
+        value: formatMetricValue(uniquePatients),
+      },
+      {
+        label: "Appointment Requests",
+        note: `${formatMetricValue(pendingAppointments)} pending, ${formatMetricValue(completedAppointments)} completed`,
+        value: formatMetricValue(appointmentValue),
+      },
+      {
+        label: "Active Doctors",
+        note: `${formatMetricValue(pendingDoctors)} waiting to publish`,
+        value: formatMetricValue(activeDoctors),
+      },
+      {
+        label: "Active Services",
+        note: `${formatMetricValue(draftServices)} draft services`,
+        value: formatMetricValue(activeServices),
+      },
+      {
+        label: "Average Rating",
+        note: ratingSummary ? "From analytics backend" : "Review backend has no rating yet",
+        value: ratingValue,
+      },
+      {
+        label: "Gallery Photos",
+        note: `${galleryCompleteness}% gallery completeness`,
+        value: formatMetricValue(publishedGallery.length),
+      },
+    ],
   };
 }
 
-type LiveDashboardCounts = {
-  activeDoctors?: number;
-  activeServices?: number;
-  appointments?: number;
-};
-
-function hasLiveCounts(liveCounts?: LiveDashboardCounts) {
-  return Object.values(liveCounts ?? {}).some((value) => typeof value === "number");
+function isPublicActiveFacility(facility: VirujFacility) {
+  return facility.status === "active" && facility.isAvailable && facility.visibility === "public";
 }
 
-function findChart(widgets: VirujAnalyticsChartWidget[] | undefined, id: string) {
-  return widgets?.find((widget) => widget.id === id || widget.id.startsWith(`${id}.`));
+function summaryBySuffix(dashboard: VirujAnalyticsDashboard | undefined, suffix: string) {
+  return dashboard?.summary.find((widget) => widget.id.endsWith(suffix));
+}
+
+function chartBySuffix(dashboard: VirujAnalyticsDashboard | undefined, suffix: string) {
+  return dashboard?.charts.find((widget) => widget.id.endsWith(suffix));
 }
 
 function chartNumbers(widget?: VirujAnalyticsChartWidget) {
@@ -374,9 +428,82 @@ function chartNumbers(widget?: VirujAnalyticsChartWidget) {
   return values.length ? values : undefined;
 }
 
-function formatSummaryValue(widget?: VirujAnalyticsSummaryWidget) {
-  const value = widget?.payload.formattedValue || formatMetricValue(widget?.payload.value);
-  return value || "";
+function summaryNumber(widget?: VirujAnalyticsSummaryWidget) {
+  const value = widget?.payload.value;
+  if (typeof value === "number") return value;
+  if (typeof value === "string") return Number(value) || 0;
+  return 0;
+}
+
+function summaryFormatted(widget?: VirujAnalyticsSummaryWidget) {
+  return widget?.payload.formattedValue || formatMetricValue(widget?.payload.value);
+}
+
+function trendByDate<T>(items: T[], dateFor: (item: T) => string | Date | null | undefined) {
+  const days = Array.from({ length: 10 }, (_, index) => startOfDay(addDays(new Date(), index - 9)));
+  const counts = new Map(days.map((date) => [date.toISOString().slice(0, 10), 0]));
+
+  for (const item of items) {
+    const dateValue = dateFor(item);
+    if (!dateValue) continue;
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) continue;
+    const key = startOfDay(date).toISOString().slice(0, 10);
+    if (counts.has(key)) counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  return [...counts.values()];
+}
+
+function activityRows(
+  activities: VirujActivity[],
+  appointments: VirujAppointment[],
+  doctors: VirujDoctor[],
+  facilities: VirujFacility[]
+) {
+  if (activities.length) {
+    return activities.slice(0, 5).map((activity) => ({
+      id: activity.id,
+      subtitle: activity.description || activity.display?.summary || activity.module,
+      title: activity.title,
+    }));
+  }
+
+  return [
+    ...appointments.map((appointment) => ({
+      date: appointment.createdAt,
+      id: `appointment-${appointment.id}`,
+      subtitle: `${appointment.patientName} requested ${appointment.appointmentDate} at ${appointment.appointmentTime}`,
+      title: "Appointment requested",
+    })),
+    ...doctors.map((doctor) => ({
+      date: doctor.createdAt,
+      id: `doctor-${doctor.id}`,
+      subtitle: `${doctor.name} ${doctor.published ? "is shown in app" : "is saved as draft"}`,
+      title: "Doctor profile added",
+    })),
+    ...facilities.map((facility) => ({
+      date: facility.createdAt,
+      id: `facility-${facility.id}`,
+      subtitle: `${facility.name} is ${facility.visibility === "public" ? "public" : facility.status}`,
+      title: "Service profile added",
+    })),
+  ]
+    .sort((a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime())
+    .slice(0, 5)
+    .map(({ id, subtitle, title }) => ({ id, subtitle, title }));
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function startOfDay(date: Date) {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
 }
 
 function formatMetricValue(value: unknown) {
@@ -384,42 +511,20 @@ function formatMetricValue(value: unknown) {
     return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 1 }).format(value);
   }
   if (typeof value === "string") return value;
-  return "";
-}
-
-function liveOrSummaryValue(liveValue?: number, widget?: VirujAnalyticsSummaryWidget) {
-  return typeof liveValue === "number"
-    ? formatMetricValue(liveValue)
-    : formatSummaryValue(widget);
-}
-
-function liveCountNote(value: number | undefined, singular: string, plural: string) {
-  if (typeof value !== "number") return undefined;
-  return `${formatMetricValue(value)} ${value === 1 ? singular : plural}`;
-}
-
-function comparisonNote(widget?: VirujAnalyticsSummaryWidget) {
-  const changePercentage = widget?.payload.comparison?.changePercentage;
-  if (typeof changePercentage !== "number") return undefined;
-  if (changePercentage === 0) return "Flat vs previous period";
-  const rounded = Math.round(changePercentage * 10) / 10;
-  return `${rounded > 0 ? "+" : ""}${rounded}% vs previous period`;
+  return "0";
 }
 
 function listingScoreFromStats({
   activeDoctors,
   activeServices,
   appointments,
+  galleryItems,
 }: {
   activeDoctors: number;
   activeServices: number;
   appointments: number;
+  galleryItems: number;
 }) {
-  const score = 62 + Math.min(activeDoctors, 8) * 2 + Math.min(activeServices, 8) * 2 + (appointments > 0 ? 8 : 0);
-  return Math.max(62, Math.min(96, Math.round(score)));
-}
-
-function metricNumber(liveValue?: number, widget?: VirujAnalyticsSummaryWidget) {
-  if (typeof liveValue === "number") return liveValue;
-  return typeof widget?.payload.value === "number" ? widget.payload.value : 0;
+  const score = Math.min(activeDoctors, 8) * 3 + Math.min(activeServices, 8) * 3 + Math.min(galleryItems, 8) * 2 + (appointments > 0 ? 12 : 0);
+  return Math.max(0, Math.min(100, Math.round(score)));
 }

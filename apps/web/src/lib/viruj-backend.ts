@@ -1000,36 +1000,45 @@ export const virujBackend = {
       ),
   },
   doctors: {
-    create: (input: VirujDoctorInput) =>
+    create: (input: VirujDoctorInput & { organizationId?: string }) =>
       request<VirujDoctor>("/doctors", {
         body: input,
         method: "POST",
+        organizationId: input.organizationId,
       }),
-    delete: (input: { id: string }) =>
+    delete: (input: { id: string; organizationId?: string }) =>
       request<{ success: true }>(`/doctors/${input.id}`, {
         method: "DELETE",
+        organizationId: input.organizationId,
       }),
-    key: ["viruj-backend", "erp", "doctors"] as const,
-    list: () => request<VirujDoctor[]>("/doctors"),
-    publish: (input: { id: string }) =>
+    key: (organizationId?: string) =>
+      ["viruj-backend", "erp", "doctors", organizationId ?? "none"] as const,
+    list: (input?: { organizationId?: string }) =>
+      request<VirujDoctor[]>("/doctors", { organizationId: input?.organizationId }),
+    publish: (input: { id: string; organizationId?: string }) =>
       request<VirujDoctor>(`/doctors/${input.id}/publish`, {
         method: "POST",
+        organizationId: input.organizationId,
       }),
-    publishAll: () =>
+    publishAll: (input?: { organizationId?: string }) =>
       request<{
         count: number;
         doctors: VirujDoctor[];
         message: string;
       }>("/doctors/publish", {
         method: "POST",
+        organizationId: input?.organizationId,
       }),
-    update: (input: { doctor: VirujDoctorInput; id: string }) =>
+    update: (input: { doctor: VirujDoctorInput; id: string; organizationId?: string }) =>
       request<VirujDoctor>(`/doctors/${input.id}`, {
         body: input.doctor,
         method: "PATCH",
+        organizationId: input.organizationId,
       }),
   },
-  patients: {    deleteAll: (input?: { organizationId?: string }) =>    request<{ deleted: number }>("/patients", {
+  patients: {
+    deleteAll: (input?: { organizationId?: string }) =>
+      request<{ deleted: number }>("/patients", {
         method: "DELETE",
         organizationId: input?.organizationId,
       }),

@@ -2,8 +2,6 @@
 
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import {
-  ClinicDashboardPage,
-  ClinicDoctorsPresencePage,
   ClinicGalleryPage,
   ClinicLocationsPage,
   ClinicOfferingsPage,
@@ -14,6 +12,8 @@ import {
   ClinicWorkingHoursPage,
 } from "@/features/dashboard/components/clinic/pages";
 import {
+  DoctorsManagementPage,
+  ErpDemoDashboard,
   ErpDemoAnalytics,
   ErpDemoCommunity,
   ErpDemoPatients,
@@ -396,7 +396,12 @@ function ClinicPageContent({
     case "patients":
       return <ClinicPatientsPage />;
     case "doctors":
-      return <ClinicDoctorsPresencePage />;
+      return (
+        <DoctorsManagementPage
+          organizationId={organizationId}
+          organizationLabel="Clinic"
+        />
+      );
     case "offerings":
       return <ClinicOfferingsPage />;
     case "services":
@@ -426,7 +431,14 @@ function ClinicPageContent({
       return <ErpUserProfilePage />;
     case "dashboard":
     default:
-      return <ClinicDashboardPage roleLabel={roleLabel} userName={userName} />;
+      return (
+        <ErpDemoDashboard
+          organizationId={organizationId}
+          organizationLabel="Clinic"
+          roleLabel={roleLabel}
+          userName={userName}
+        />
+      );
   }
 }
 

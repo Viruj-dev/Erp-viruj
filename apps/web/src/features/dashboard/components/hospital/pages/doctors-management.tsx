@@ -38,8 +38,10 @@ const emptyForm: VirujDoctorInput = {
 };
 
 export function DoctorsManagementPage({
+  organizationId,
   organizationLabel,
 }: {
+  organizationId?: string;
   organizationLabel: string;
 }) {
   const queryClient = useQueryClient();
@@ -53,15 +55,17 @@ export function DoctorsManagementPage({
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
 
   const doctorsQuery = useQuery({
-    queryFn: virujBackend.doctors.list,
-    queryKey: virujBackend.doctors.key,
+    enabled: Boolean(organizationId),
+    queryFn: () => virujBackend.doctors.list({ organizationId }),
+    queryKey: virujBackend.doctors.key(organizationId),
   });
 
   const invalidateDoctors = () =>
-    queryClient.invalidateQueries({ queryKey: virujBackend.doctors.key });
+    queryClient.invalidateQueries({ queryKey: virujBackend.doctors.key(organizationId) });
 
   const createDoctorMutation = useMutation({
-    mutationFn: virujBackend.doctors.create,
+    mutationFn: (input: VirujDoctorInput) =>
+      virujBackend.doctors.create({ ...input, organizationId }),
     onSuccess: async () => {
       setForm(emptyForm);
       setIsDialogOpen(false);
@@ -70,12 +74,14 @@ export function DoctorsManagementPage({
   });
 
   const publishDoctorMutation = useMutation({
-    mutationFn: virujBackend.doctors.publish,
+    mutationFn: (input: { id: string }) =>
+      virujBackend.doctors.publish({ ...input, organizationId }),
     onSuccess: invalidateDoctors,
   });
 
   const updateDoctorMutation = useMutation({
-    mutationFn: virujBackend.doctors.update,
+    mutationFn: (input: { doctor: VirujDoctorInput; id: string }) =>
+      virujBackend.doctors.update({ ...input, organizationId }),
     onSuccess: async () => {
       setEditingDoctor(null);
       setForm(emptyForm);
@@ -85,7 +91,8 @@ export function DoctorsManagementPage({
   });
 
   const deleteDoctorMutation = useMutation({
-    mutationFn: virujBackend.doctors.delete,
+    mutationFn: (input: { id: string }) =>
+      virujBackend.doctors.delete({ ...input, organizationId }),
     onSuccess: async () => {
       setDeletingDoctor(null);
       await invalidateDoctors();
@@ -93,7 +100,7 @@ export function DoctorsManagementPage({
   });
 
   const publishAllMutation = useMutation({
-    mutationFn: virujBackend.doctors.publishAll,
+    mutationFn: () => virujBackend.doctors.publishAll({ organizationId }),
     onSuccess: invalidateDoctors,
   });
 
@@ -101,7 +108,7 @@ export function DoctorsManagementPage({
     mutationFn: async (targetDoctors: VirujDoctor[]) => {
       await Promise.all(
         targetDoctors.map((doctorProfile) =>
-          virujBackend.doctors.delete({ id: doctorProfile.id })
+          virujBackend.doctors.delete({ id: doctorProfile.id, organizationId })
         )
       );
       return { deleted: targetDoctors.length };
@@ -222,7 +229,7 @@ export function DoctorsManagementPage({
       eyebrow="Doctors"
       framed
       subtitle={`Add doctors for ${organizationLabel}, review profile readiness, then publish live availability to patients.`}
-      title="Hospital-added Profiles"
+      title={`${organizationLabel}-added Profiles`}
     >
       <section className="flex min-h-full flex-1 flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#111418]">
         <div className="grid border-b border-slate-200 dark:border-white/[0.08] md:grid-cols-3">
@@ -298,7 +305,7 @@ export function DoctorsManagementPage({
                 <h3 className="mt-1 font-headline text-2xl font-semi-bold text-slate-950 dark:text-slate-100">
                   {editingDoctor
                     ? "Update doctor details"
-                    : "Add doctor to hospital list"}
+                    : `Add doctor to ${organizationLabel.toLowerCase()} list`}
                 </h3>
               </div>
               <button

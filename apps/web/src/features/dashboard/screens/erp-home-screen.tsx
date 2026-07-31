@@ -562,7 +562,7 @@ function PageContent({
     case "analytics":
       return <ErpDemoAnalytics organizationId={organizationId} />;
     case "doctors":
-      return <DoctorsManagementPage organizationLabel={organizationLabel} />;
+      return <DoctorsManagementPage organizationId={organizationId} organizationLabel={organizationLabel} />;
     case "facilities":
       return (
         <FacilitiesPage
