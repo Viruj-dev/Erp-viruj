@@ -25,7 +25,8 @@ export type DirectoryPatient = {
   initials: string;
   mode: string;
   name: string;
-  schedule: string;
+  scheduleDate: string;
+  scheduleTime: string;
   status: PatientStatus;
   tone: "blue" | "indigo" | "slate" | "rose" | "teal";
   appointmentId?: string;

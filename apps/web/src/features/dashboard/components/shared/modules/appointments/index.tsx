@@ -4,7 +4,6 @@ import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import { virujBackend } from "@/lib/viruj-backend";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { AppointmentDashboard } from "./options/dashboard";
 import { PatientDecisionHistory } from "./options/patients";
 import { ReviewQueue } from "./options/review";
 import { AppointmentSettings } from "./options/settings";
@@ -33,6 +32,7 @@ export function ErpDemoAppointments({
     enabled: Boolean(organizationId),
     queryFn: () => virujBackend.appointments.list({ organizationId }),
     queryKey: appointmentQueryKey,
+    retry: false,
   });
   const updateStatusMutation = useMutation({
     mutationFn: virujBackend.appointments.updateStatus,
@@ -85,18 +85,6 @@ export function ErpDemoAppointments({
         (appointment.departmentName || "General") === departmentFilter)
   );
 
-  const confirmedCount = appointments.filter(
-    (appointment) => appointment.status === "approved"
-  ).length;
-  const rejectedCount = appointments.filter(
-    (appointment) => appointment.status === "rejected"
-  ).length;
-  const completedCount = appointments.filter(
-    (appointment) => appointment.status === "completed"
-  ).length;
-  const approvalRate = appointments.length
-    ? Math.round((confirmedCount / appointments.length) * 100)
-    : 0;
 
   const handleDecision = (id: string, status: AppointmentStatus) => {
     updateStatusMutation.mutate({
@@ -123,18 +111,8 @@ export function ErpDemoAppointments({
 
   return (
     <div className="space-y-6 p-5 lg:p-8">
-      {section === "dashboard" ? (
-        <AppointmentDashboard
-          approvalRate={approvalRate}
-          appointments={appointments}
-          completedCount={completedCount}
-          confirmedCount={confirmedCount}
-          pendingCount={pendingAppointments.length}
-          rejectedCount={rejectedCount}
-        />
-      ) : null}
 
-      {section === "review" ? (
+      {(section === "review" || section === "dashboard") ? (
         <ReviewQueue
           appointment={selectedAppointment}
           appointments={filteredReviewAppointments}

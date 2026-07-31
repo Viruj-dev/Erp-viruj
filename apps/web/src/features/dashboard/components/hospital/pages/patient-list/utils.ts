@@ -20,7 +20,8 @@ export function mapAppointmentToPatient(appointment: VirujAppointment): Director
     initials: getInitials(appointment.patientName),
     mode: appointment.appointmentMode || "Clinic",
     name: appointment.patientName,
-    schedule: `${formatAppointmentDate(scheduleDate)}, ${appointment.appointmentTime}`,
+    scheduleDate: formatAppointmentDate(scheduleDate),
+    scheduleTime: appointment.appointmentTime,
     status,
     tone:
       status === "Rejected" || status === "Cancelled"
@@ -68,10 +69,9 @@ export function getColumnLabel(columnId: string) {
   const labels: Record<string, string> = {
     actions: "Actions",
     bookingAt: "Booking Date",
-    id: "ID",
-    mode: "Mode",
     name: "Name",
-    schedule: "Schedule",
+    scheduleDate: "Schedule Date",
+    scheduleTime: "Schedule Time",
     serial: "S.No",
     status: "Status",
   };
@@ -98,11 +98,7 @@ function formatAppointmentDate(value: Date) {
     return "Requested";
   }
 
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(value);
+  return formatShortDate(value);
 }
 
 function formatBookingDate(value: Date | null) {
@@ -110,12 +106,20 @@ function formatBookingDate(value: Date | null) {
     return "Request received";
   }
 
+  return `${formatShortDate(value)}, ${formatShortTime(value)}`;
+}
+
+function formatShortDate(value: Date) {
+  const day = String(value.getDate()).padStart(2, "0");
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const year = String(value.getFullYear()).slice(-2);
+  return `${day}/${month}/${year}`;
+}
+
+function formatShortTime(value: Date) {
   return new Intl.DateTimeFormat("en-IN", {
-    day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-    month: "short",
-    year: "numeric",
   }).format(value);
 }
 

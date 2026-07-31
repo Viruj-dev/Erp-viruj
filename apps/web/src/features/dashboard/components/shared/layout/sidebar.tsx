@@ -18,7 +18,6 @@ import {
   Database,
   FileBadge,
   FileText,
-  Gauge,
   HeartPulse,
   History,
   Image,
@@ -64,7 +63,7 @@ const clinicNavItems = [
   { id: "offerings", label: "Offerings", icon: PackageCheck },
   { id: "gallery", label: "Gallery", icon: Image },
   { id: "community", label: "Community", icon: MessagesSquare },
-  { id: "analytics", label: "Analytics", icon: BarChart3, pulse: true },
+  { id: "analytics", label: "Analytics", icon: BarChart3,},
   { id: "clinic-profile", label: "Clinic Profile", icon: Building2 },
 ] as const;
 
@@ -99,7 +98,6 @@ const operationsItems = [
 ] as const;
 
 const appointmentOptions = [
-  { id: "appointments-dashboard", label: "Dashboard", icon: Gauge },
   { id: "appointments-review", label: "Review", icon: ClipboardCheck },
   { id: "appointments-patients", label: "Patient Details", icon: FileText },
   { id: "appointments-settings", label: "Settings", icon: Settings },
@@ -281,7 +279,7 @@ export function ErpDemoSidebar({
             label="Main Menu"
             onAppointmentToggle={() => {
               if (isCollapsed) {
-                onPageChange("appointments-dashboard");
+                onPageChange("appointments-review");
                 return;
               }
 

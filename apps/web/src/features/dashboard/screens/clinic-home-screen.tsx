@@ -16,13 +16,13 @@ import {
 import {
   ErpDemoAnalytics,
   ErpDemoCommunity,
+  ErpDemoPatients,
   FacilitiesPage,
 } from "@/features/dashboard/components/hospital/pages";
 import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
 import { createErpTenantContext, type ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import { ErpUserProfilePage } from "@/features/dashboard/components/shared/profile";
-import { ErpDemoAppointments } from "@/features/dashboard/components/shared/modules";
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
 import {
   buildDashboardPath,
@@ -381,14 +381,12 @@ function ClinicPageContent({
 }) {
   switch (currentPage) {
     case "appointments":
-    case "appointments-dashboard":
-      return appointmentTenant ? <ErpDemoAppointments section="dashboard" tenant={appointmentTenant} /> : null;
     case "appointments-review":
-      return appointmentTenant ? <ErpDemoAppointments section="review" tenant={appointmentTenant} /> : null;
+    case "appointments-dashboard":
     case "appointments-patients":
-      return appointmentTenant ? <ErpDemoAppointments section="patients" tenant={appointmentTenant} /> : null;
+      return <ErpDemoPatients organizationId={organizationId} />;
     case "appointments-settings":
-      return appointmentTenant ? <ErpDemoAppointments section="settings" tenant={appointmentTenant} /> : null;
+      return <ErpDemoPatients organizationId={organizationId} />;
     case "clinic-profile":
       return <ClinicProfileManagementPage />;
     case "locations":

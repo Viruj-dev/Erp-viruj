@@ -8,14 +8,17 @@ import {
   signOutAfterCentralApiUnauthorized,
 } from "./central-api-token";
 
-const erpApiUrl =
+const directApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const sameOriginUrl =
   typeof window !== "undefined"
-    ? `${window.location.origin}/erp`
-    : `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002"}/erp`;
-const commonApiUrl =
-  typeof window !== "undefined"
-    ? `${window.location.origin}/common`
-    : `${process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002"}/common`;
+    ? window.location.origin
+    : process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3002";
+const useDirectLocalApi =
+  typeof window !== "undefined" && window.location.hostname === "localhost";
+const apiBaseUrl = useDirectLocalApi ? directApiUrl : sameOriginUrl;
+const apiPathPrefix = useDirectLocalApi ? "/api" : "";
+const erpApiUrl = `${apiBaseUrl.replace(/\/$/, "")}${apiPathPrefix}/erp`;
+const commonApiUrl = `${apiBaseUrl.replace(/\/$/, "")}${apiPathPrefix}/common`;
 
 type RequestOptions = {
   body?: unknown;
@@ -811,6 +814,11 @@ export const virujBackend = {
         method: "POST",
         organizationId: input.organizationId,
       }),
+    delete: (input: { id: string; organizationId?: string }) =>
+      request<{ deleted: number }>(`/appointments/${input.id}`, {
+        method: "DELETE",
+        organizationId: input.organizationId,
+      }),
     deleteAll: (input?: { organizationId?: string }) =>
       request<{ deleted: number }>("/appointments", {
         method: "DELETE",
@@ -819,6 +827,7 @@ export const virujBackend = {
     list: (input?: { organizationId?: string }) =>
       request<VirujAppointment[]>("/appointments", {
         organizationId: input?.organizationId,
+        suppressToast: true,
       }),
     updateStatus: (input: {
       approvalNotes?: string | null;
@@ -1020,12 +1029,12 @@ export const virujBackend = {
         method: "PATCH",
       }),
   },
-  patients: {
-    deleteAll: () =>
-      request<{ deleted: number }>("/patients", {
+  patients: {    deleteAll: (input?: { organizationId?: string }) =>    request<{ deleted: number }>("/patients", {
         method: "DELETE",
+        organizationId: input?.organizationId,
       }),
-    key: ["viruj-backend", "erp", "patients"] as const,
+    key: (organizationId?: string) =>
+      ["viruj-backend", "erp", "patients", organizationId ?? "none"] as const,
   },
   notifications: {
     archive: (input: { id: string; organizationId?: string }) =>

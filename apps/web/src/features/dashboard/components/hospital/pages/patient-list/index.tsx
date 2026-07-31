@@ -50,8 +50,23 @@ export function ErpDemoPatients({ organizationId }: { organizationId?: string })
       await queryClient.invalidateQueries({ queryKey: appointmentQueryKey });
     },
   });
-  const deleteAllMutation = useMutation({
-    mutationFn: virujBackend.patients.deleteAll,
+  const deleteAppointmentsMutation = useMutation({
+    mutationFn: async (patientsToDelete: DirectoryPatient[]) => {
+      const appointmentIds = patientsToDelete
+        .map((patient) => patient.appointmentId)
+        .filter((id): id is string => Boolean(id));
+
+      if (!appointmentIds.length) {
+        return virujBackend.patients.deleteAll({ organizationId });
+      }
+
+      const results = await Promise.all(
+        appointmentIds.map((id) =>
+          virujBackend.appointments.delete({ id, organizationId })
+        )
+      );
+      return { deleted: results.reduce((sum, result) => sum + result.deleted, 0) };
+    },
     onSuccess: async () => {
       setLastRequest(null);
       setPage(1);
@@ -117,13 +132,15 @@ export function ErpDemoPatients({ organizationId }: { organizationId?: string })
         : undefined,
     });
   };
-  const deleteAllAppointments = () => {
+  const deleteAppointments = (selectedPatients: DirectoryPatient[]) => {
     const confirmed = window.confirm(
-      "Delete all patients and their linked appointment data from the backend? This cannot be undone."
+      selectedPatients.length
+        ? `Delete ${selectedPatients.length === 1 ? "this appointment" : "these appointments"}? This cannot be undone.`
+        : "Delete all patients and their linked appointment data from the backend? This cannot be undone."
     );
     if (!confirmed) return;
 
-    deleteAllMutation.mutate();
+    deleteAppointmentsMutation.mutate(selectedPatients);
   };
 
   return (
@@ -134,11 +151,13 @@ export function ErpDemoPatients({ organizationId }: { organizationId?: string })
     >
       <PatientDataTable
         currentPage={currentPage}
-        isDeletingAll={deleteAllMutation.isPending}
+        isDeletingAll={deleteAppointmentsMutation.isPending}
+        isReloading={appointmentsQuery.isFetching}
         isUpdating={updateStatusMutation.isPending}
-        onDeleteAll={deleteAllAppointments}
+        onDeleteAppointments={deleteAppointments}
         onNextPage={() => setPage((value) => Math.min(pageCount, value + 1))}
         onPreviousPage={() => setPage((value) => Math.max(1, value - 1))}
+        onReload={() => void appointmentsQuery.refetch()}
         onSearchChange={(value) => {
           setPage(1);
           setSearch(value);
@@ -161,7 +180,7 @@ function filterPatients(patients: DirectoryPatient[], search: string) {
   }
 
   return patients.filter((patient) =>
-    [patient.name, patient.id, patient.doctor]
+    [patient.name, patient.doctor]
       .join(" ")
       .toLowerCase()
       .includes(value)

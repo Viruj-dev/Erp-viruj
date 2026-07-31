@@ -21,7 +21,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
 import type { DirectoryPatient } from "../types";
@@ -31,10 +31,12 @@ import { usePatientColumns } from "./patient-table-columns";
 export function PatientDataTable({
   currentPage,
   isDeletingAll,
+  isReloading,
   isUpdating,
-  onDeleteAll,
+  onDeleteAppointments,
   onNextPage,
   onPreviousPage,
+  onReload,
   onSearchChange,
   onUpdateAppointment,
   pageCount,
@@ -44,10 +46,12 @@ export function PatientDataTable({
 }: {
   currentPage: number;
   isDeletingAll: boolean;
+  isReloading: boolean;
   isUpdating: boolean;
-  onDeleteAll: () => void;
+  onDeleteAppointments: (patients: DirectoryPatient[]) => void;
   onNextPage: () => void;
   onPreviousPage: () => void;
+  onReload: () => void;
   onSearchChange: (value: string) => void;
   onUpdateAppointment: (
     patient: DirectoryPatient,
@@ -65,6 +69,16 @@ export function PatientDataTable({
     isUpdating,
     onUpdateAppointment,
   });
+  const columnWidths: Record<string, string> = {
+    actions: "220px",
+    bookingAt: "190px",
+    name: "250px",
+    scheduleDate: "140px",
+    scheduleTime: "140px",
+    select: "42px",
+    serial: "64px",
+    status: "170px",
+  };
   const table = useReactTable({
     columns,
     data: patients,
@@ -76,6 +90,9 @@ export function PatientDataTable({
       rowSelection,
     },
   });
+
+  const selectedPatients = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
+  const deleteLabel = selectedPatients.length === 1 ? "Delete" : "Delete all";
 
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-sm dark:border-white/[0.08] dark:bg-[#050505]">
@@ -91,19 +108,34 @@ export function PatientDataTable({
           value={search}
         />
         <Button
-          className="ml-auto h-10 border-rose-200 bg-white text-rose-600 shadow-none hover:bg-rose-50 hover:text-rose-700 disabled:text-rose-300 dark:border-rose-400/20 dark:bg-[#0b0b0c] dark:text-rose-300 dark:hover:bg-rose-400/[0.08]"
-          disabled={isDeletingAll}
-          onClick={onDeleteAll}
+          className="ml-auto h-10 border-slate-200 bg-white text-slate-700 shadow-none hover:bg-slate-50 disabled:text-slate-400 dark:border-white/[0.09] dark:bg-[#0b0b0c] dark:text-slate-300 dark:hover:bg-white/[0.06]"
+          disabled={isReloading}
+          onClick={onReload}
           type="button"
           variant="outline"
         >
-          {isDeletingAll ? "Deleting..." : "Delete all"}
+          <RefreshCw className={isReloading ? "animate-spin" : ""} size={16} />
+          Reload
+        </Button>
+        <Button
+          className="h-10 border-rose-200 bg-white text-rose-600 shadow-none hover:bg-rose-50 hover:text-rose-700 disabled:text-rose-300 dark:border-rose-400/20 dark:bg-[#0b0b0c] dark:text-rose-300 dark:hover:bg-rose-400/[0.08]"
+          disabled={isDeletingAll}
+          onClick={() => onDeleteAppointments(selectedPatients)}
+          type="button"
+          variant="outline"
+        >
+          {isDeletingAll ? "Deleting..." : deleteLabel}
         </Button>
         <ColumnVisibilityMenu table={table} />
       </div>
 
       <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-white/[0.09]">
-        <Table>
+        <Table className="min-w-[1216px] table-fixed">
+          <colgroup>
+            {table.getVisibleLeafColumns().map((column) => (
+              <col key={column.id} style={{ width: columnWidths[column.id] }} />
+            ))}
+          </colgroup>
           <TableHeader className="bg-slate-50/95 dark:bg-white/[0.035]">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
@@ -252,15 +284,14 @@ function PaginationButton({
 
 function headerClassName(columnId: string) {
   const widths: Record<string, string> = {
-    actions: "w-[72px] pr-3 text-right",
-    bookingAt: "min-w-[190px]",
-    id: "w-[180px]",
-    mode: "w-[120px]",
-    name: "min-w-[210px]",
-    schedule: "min-w-[160px]",
-    select: "w-10 pl-3 pr-2",
-    serial: "w-16",
-    status: "w-[140px]",
+    actions: "w-[220px] pr-3 text-right",
+    bookingAt: "w-[190px]",
+    name: "w-[250px]",
+    scheduleDate: "w-[140px]",
+    scheduleTime: "w-[140px]",
+    select: "w-[42px] pl-3 pr-2",
+    serial: "w-[64px]",
+    status: "w-[170px]",
   };
 
   return `text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-500 ${

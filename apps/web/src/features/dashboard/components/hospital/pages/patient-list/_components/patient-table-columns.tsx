@@ -1,4 +1,3 @@
-import { Badge } from "@/features/dashboard/components/ui/badge";
 import { Checkbox } from "@/features/dashboard/components/ui/checkbox";
 import type { VirujAppointmentStatus } from "@/lib/viruj-backend";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -59,15 +58,6 @@ export function usePatientColumns({
         size: 64,
       },
       {
-        accessorKey: "id",
-        cell: ({ row }) => (
-          <span className="block max-w-[190px] whitespace-normal break-all font-semibold leading-5 text-slate-800 dark:text-slate-300">
-            {row.original.id}
-          </span>
-        ),
-        header: "ID",
-      },
-      {
         accessorKey: "name",
         cell: ({ row }) => <PatientIdentity patient={row.original} />,
         header: "Name, Gender, Age",
@@ -87,25 +77,22 @@ export function usePatientColumns({
         header: "Booking Date & Time",
       },
       {
-        accessorKey: "schedule",
+        accessorKey: "scheduleDate",
         cell: ({ row }) => (
           <span className="font-semibold text-slate-700 dark:text-slate-400">
-            {row.original.schedule}
+            {row.original.scheduleDate}
           </span>
         ),
-        header: "Schedule",
+        header: "Schedule Date",
       },
       {
-        accessorKey: "mode",
+        accessorKey: "scheduleTime",
         cell: ({ row }) => (
-          <Badge
-            className="rounded-full border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300"
-            variant="outline"
-          >
-            {row.original.mode}
-          </Badge>
+          <span className="font-semibold text-slate-700 dark:text-slate-400">
+            {row.original.scheduleTime}
+          </span>
         ),
-        header: "Mode",
+        header: "Schedule Time",
       },
       {
         accessorKey: "status",

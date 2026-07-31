@@ -522,10 +522,10 @@ function PageContent({
     case "finance":
       return <ErpDemoBilling />;
     case "appointments":
-    case "appointments-dashboard":
-      return appointmentTenant ? <ErpDemoAppointments section="dashboard" tenant={appointmentTenant} /> : <ErpEnterpriseModule module="appointments" roleLabel={roleLabel} />;
     case "appointments-review":
       return appointmentTenant ? <ErpDemoAppointments section="review" tenant={appointmentTenant} /> : <ErpEnterpriseModule module="appointments" roleLabel={roleLabel} />;
+    case "appointments-dashboard":
+      return appointmentTenant ? <ErpDemoAppointments section="dashboard" tenant={appointmentTenant} /> : <ErpEnterpriseModule module="appointments" roleLabel={roleLabel} />;
     case "appointments-patients":
       return appointmentTenant ? <ErpDemoAppointments section="patients" tenant={appointmentTenant} /> : <ErpEnterpriseModule module="appointments" roleLabel={roleLabel} />;
     case "appointments-settings":
