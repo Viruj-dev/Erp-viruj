@@ -17,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import {
@@ -120,6 +120,11 @@ export function DoctorsManagementPage({
   });
 
   const doctors = useMemo(() => doctorsQuery.data ?? [], [doctorsQuery.data]);
+  const isClinicTone = organizationLabel.toLowerCase() === "clinic";
+  const clinicDepartmentOptions = useClinicDepartmentOptions(
+    organizationId,
+    isClinicTone
+  );
   const filteredDoctors = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
@@ -140,7 +145,6 @@ export function DoctorsManagementPage({
   const departmentCount = new Set(
     doctors.map((doctor) => doctor.department).filter(Boolean)
   ).size;
-  const isClinicTone = organizationLabel.toLowerCase() === "clinic";
   const addDoctorClass = isClinicTone
     ? "inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 text-sm font-semi-bold text-violet-800 transition hover:border-violet-300 hover:bg-violet-100 dark:border-violet-400/20 dark:bg-violet-400/10 dark:text-violet-200 dark:hover:bg-violet-400/15"
     : "inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semi-bold text-slate-900 transition hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-100 dark:hover:bg-white/[0.08]";
@@ -343,12 +347,21 @@ export function DoctorsManagementPage({
                 placeholder="Pediatric Neurologist"
                 value={form.specialty}
               />
-              <DoctorInput
-                label="Department"
-                onChange={(value) => updateField("department", value)}
-                placeholder="Neurology"
-                value={form.department}
-              />
+              {isClinicTone ? (
+                <DoctorDepartmentSelect
+                  label="Department"
+                  onChange={(value) => updateField("department", value)}
+                  options={clinicDepartmentOptions}
+                  value={form.department}
+                />
+              ) : (
+                <DoctorInput
+                  label="Department"
+                  onChange={(value) => updateField("department", value)}
+                  placeholder="Neurology"
+                  value={form.department}
+                />
+              )}
               <DoctorInput
                 label="Qualification"
                 onChange={(value) => updateField("qualification", value)}
@@ -525,6 +538,73 @@ function DoctorDialogPortal({ children }: { children: React.ReactNode }) {
   return createPortal(children, document.body);
 }
 
+
+function useClinicDepartmentOptions(
+  organizationId: string | undefined,
+  enabled: boolean
+) {
+  const [departmentOptions, setDepartmentOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!enabled || typeof window === "undefined") {
+      setDepartmentOptions([]);
+      return;
+    }
+
+    const storageIds = [organizationId, "workspace"].filter(
+      (value): value is string => Boolean(value)
+    );
+
+    for (const storageId of storageIds) {
+      const departments =
+        readClinicDepartments(`viruj:clinic-onboarding:completed:${storageId}`) ??
+        readClinicDepartments(`viruj:clinic-onboarding:draft:${storageId}`);
+
+      if (departments?.length) {
+        setDepartmentOptions(departments);
+        return;
+      }
+    }
+
+    setDepartmentOptions([]);
+  }, [enabled, organizationId]);
+
+  return departmentOptions;
+}
+
+function readClinicDepartments(key: string): string[] | null {
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as unknown;
+    const data =
+      parsed && typeof parsed === "object" && "data" in parsed
+        ? (parsed as { data?: unknown }).data
+        : parsed;
+    const departments =
+      data && typeof data === "object" && "departments" in data
+        ? (data as { departments?: unknown }).departments
+        : null;
+
+    if (!Array.isArray(departments)) return null;
+
+    return Array.from(
+      new Set(
+        departments
+          .map((department) =>
+            department && typeof department === "object" && "name" in department
+              ? String((department as { name?: unknown }).name ?? "").trim()
+              : ""
+          )
+          .filter(Boolean)
+      )
+    );
+  } catch {
+    return null;
+  }
+}
+
 function DoctorRow({
   doctor,
   isPublishing,
@@ -623,6 +703,44 @@ function DoctorRow({
   );
 }
 
+
+function DoctorDepartmentSelect({
+  label,
+  onChange,
+  options,
+  value,
+}: {
+  label: string;
+  onChange: (value: string) => void;
+  options: string[];
+  value: string;
+}) {
+  const hasSavedValue = Boolean(value && !options.includes(value));
+
+  return (
+    <label className="block">
+      <span className="text-[10px] font-semi-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-600">
+        {label}
+      </span>
+      <select
+        className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/[0.08] dark:bg-white/[0.055] dark:text-slate-100"
+        disabled={!options.length && !hasSavedValue}
+        onChange={(event) => onChange(event.target.value)}
+        value={value}
+      >
+        <option value="">
+          {options.length ? "Select department" : "Add a department first"}
+        </option>
+        {hasSavedValue ? <option value={value}>{value}</option> : null}
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
 function DoctorInput({
   label,
   onChange,

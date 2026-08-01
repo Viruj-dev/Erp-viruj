@@ -8,7 +8,9 @@ import {
 } from "@/features/dashboard/components/clinic/clinic-gallery-bento";
 import {
   Camera,
+  CheckCircle2,
   Clock,
+  Edit3,
   ImagePlus,
   MapPin,
   MessageSquareReply,
@@ -17,6 +19,8 @@ import {
   ShieldCheck,
   Sparkles,
   Stethoscope,
+  Trash2,
+  UploadCloud,
   Users,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -697,34 +701,33 @@ function formatCoordinates(latitude?: string, longitude?: string) {
     ? compactList([latitude, longitude])
     : "";
 }
+
+type ClinicDepartmentRow = OnboardingState["departments"][number] & {
+  published?: boolean;
+};
 export function ClinicDepartmentsPage({
   organizationId,
 }: {
   organizationId?: string;
 }) {
   const savedProfile = useClinicOnboardingData(organizationId);
-  const [departments, setDepartments] = useState<OnboardingState["departments"]>([]);
+  const [departments, setDepartments] = useState<ClinicDepartmentRow[]>([]);
+  const [isAddDepartmentOpen, setIsAddDepartmentOpen] = useState(false);
+  const [editingDepartmentIndex, setEditingDepartmentIndex] = useState<number | null>(null);
   const [draft, setDraft] = useState({ closeTime: "", description: "", name: "", openTime: "" });
 
   useEffect(() => {
     setDepartments(savedProfile?.data.departments ?? []);
   }, [savedProfile]);
 
-  const addDepartment = () => {
-    const name = draft.name.trim();
-    if (!name) return;
-
-    const nextDepartment = {
-      closeTime: draft.closeTime.trim(),
-      description: draft.description.trim(),
-      head: "",
-      name,
-      openTime: draft.openTime.trim(),
-    };
-    const nextDepartments = [...departments, nextDepartment];
-
-    setDepartments(nextDepartments);
+  const resetDepartmentDialog = () => {
     setDraft({ closeTime: "", description: "", name: "", openTime: "" });
+    setEditingDepartmentIndex(null);
+    setIsAddDepartmentOpen(false);
+  };
+
+  const persistDepartments = (nextDepartments: ClinicDepartmentRow[]) => {
+    setDepartments(nextDepartments);
 
     if (savedProfile) {
       writeClinicOnboardingStorage(
@@ -735,94 +738,213 @@ export function ClinicDepartmentsPage({
     }
   };
 
+  const saveDepartment = () => {
+    const name = draft.name.trim();
+    if (!name) return;
+
+    const nextDepartment: ClinicDepartmentRow = {
+      closeTime: draft.closeTime.trim(),
+      description: draft.description.trim(),
+      head: "",
+      name,
+      openTime: draft.openTime.trim(),
+      published: editingDepartmentIndex === null ? false : departments[editingDepartmentIndex]?.published,
+    };
+    const nextDepartments = editingDepartmentIndex === null
+      ? [...departments, nextDepartment]
+      : departments.map((department, index) => index === editingDepartmentIndex ? nextDepartment : department);
+
+    persistDepartments(nextDepartments);
+    resetDepartmentDialog();
+  };
+
+  const openAddDepartmentDialog = () => {
+    setDraft({ closeTime: "", description: "", name: "", openTime: "" });
+    setEditingDepartmentIndex(null);
+    setIsAddDepartmentOpen(true);
+  };
+
+  const editDepartment = (department: ClinicDepartmentRow, index: number) => {
+    setDraft({
+      closeTime: department.closeTime,
+      description: department.description,
+      name: department.name,
+      openTime: department.openTime,
+    });
+    setEditingDepartmentIndex(index);
+    setIsAddDepartmentOpen(true);
+  };
+
+  const deleteDepartment = (targetIndex: number) => {
+    persistDepartments(departments.filter((_, index) => index !== targetIndex));
+  };
+
+  const publishDepartment = (targetIndex: number) => {
+    persistDepartments(
+      departments.map((department, index) =>
+        index === targetIndex ? { ...department, published: true } : department
+      )
+    );
+  };
+
   return (
     <ClinicPageShell
-      actions={<PrimaryAction icon={<Plus size={16} />} label="Add Department" onClick={addDepartment} />}
+      actions={<PrimaryAction icon={<Plus size={16} />} label="Add Department" onClick={openAddDepartmentDialog} />}
       eyebrow="Clinic"
       title="Departments"
       subtitle="Manage clinic departments and specialties from onboarding."
     >
-      <section className="rounded-2xl border border-violet-100 bg-white p-4 shadow-sm dark:border-violet-400/[0.12] dark:bg-[#111018]">
-        <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)_140px_140px_auto]">
-          <label className="block">
-            <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Department</span>
-            <input
-              className="h-11 w-full rounded-xl border border-violet-100 bg-violet-50/60 px-3 text-sm font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-400/[0.12] dark:bg-violet-400/[0.08] dark:text-white"
-              onChange={(event) => setDraft((value) => ({ ...value, name: event.target.value }))}
-              placeholder="General Medicine"
-              value={draft.name}
-            />
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Description</span>
-            <input
-              className="h-11 w-full rounded-xl border border-violet-100 bg-violet-50/60 px-3 text-sm font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-400/[0.12] dark:bg-violet-400/[0.08] dark:text-white"
-              onChange={(event) => setDraft((value) => ({ ...value, description: event.target.value }))}
-              placeholder="Short department note"
-              value={draft.description}
-            />
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Opening</span>
-            <input
-              className="h-11 w-full rounded-xl border border-violet-100 bg-violet-50/60 px-3 text-sm font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-400/[0.12] dark:bg-violet-400/[0.08] dark:text-white"
-              onChange={(event) => setDraft((value) => ({ ...value, openTime: event.target.value }))}
-              placeholder="09:00 AM"
-              value={draft.openTime}
-            />
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Closing</span>
-            <input
-              className="h-11 w-full rounded-xl border border-violet-100 bg-violet-50/60 px-3 text-sm font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-400/[0.12] dark:bg-violet-400/[0.08] dark:text-white"
-              onChange={(event) => setDraft((value) => ({ ...value, closeTime: event.target.value }))}
-              placeholder="06:00 PM"
-              value={draft.closeTime}
-            />
-          </label>
-          <div className="flex items-end">
-            <button
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#6d28d9] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5b21b6]"
-              onClick={addDepartment}
-              type="button"
-            >
-              <Plus size={16} />
-              Add
-            </button>
-          </div>
-        </div>
-      </section>
-
       <section className="overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-sm dark:border-violet-400/[0.12] dark:bg-[#111018]">
-        <div className="grid grid-cols-[minmax(0,1fr)_150px_150px] gap-4 bg-violet-50 px-5 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:bg-violet-400/[0.08]">
-          <span>Department</span>
-          <span>Opening</span>
-          <span>Closing</span>
-        </div>
-        {departments.length ? (
-          <div className="divide-y divide-violet-100 dark:divide-violet-400/[0.10]">
-            {departments.map((department, index) => (
-              <div
-                className="grid grid-cols-[minmax(0,1fr)_150px_150px] gap-4 px-5 py-4 text-sm"
-                key={`${department.name}-${index}`}
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-bold text-slate-950 dark:text-white">{department.name || "Unnamed department"}</p>
-                  <p className="mt-1 line-clamp-2 text-xs font-medium leading-5 text-slate-500 dark:text-slate-400">
-                    {department.description || "No description provided"}
-                  </p>
-                </div>
-                <span className="font-semibold text-slate-700 dark:text-slate-300">{displayValue(department.openTime)}</span>
-                <span className="font-semibold text-slate-700 dark:text-slate-300">{displayValue(department.closeTime)}</span>
+        <div className="overflow-x-auto">
+          <div className="min-w-[860px]">
+            <div className="grid grid-cols-[minmax(0,1fr)_130px_130px_240px] gap-4 bg-violet-50 px-5 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:bg-violet-400/[0.08]">
+              <span>Department</span>
+              <span>Opening</span>
+              <span>Closing</span>
+              <span>Actions</span>
+            </div>
+            {departments.length ? (
+              <div className="divide-y divide-violet-100 dark:divide-violet-400/[0.10]">
+                {departments.map((department, index) => (
+                  <div
+                    className="grid grid-cols-[minmax(0,1fr)_130px_130px_240px] gap-4 px-5 py-4 text-sm"
+                    key={`${department.name}-${index}`}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <p className="truncate font-bold text-slate-950 dark:text-white">{department.name || "Unnamed department"}</p>
+                        {department.published ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-400/[0.12] dark:text-emerald-200">
+                            <CheckCircle2 size={12} /> Live
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-xs font-medium leading-5 text-slate-500 dark:text-slate-400">
+                        {department.description || "No description provided"}
+                      </p>
+                    </div>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">{displayValue(department.openTime)}</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">{displayValue(department.closeTime)}</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-violet-50 px-3 text-xs font-bold text-[#6d28d9] transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-55 dark:bg-violet-400/[0.12] dark:text-violet-200 dark:hover:bg-violet-400/[0.18]"
+                        disabled={Boolean(department.published)}
+                        onClick={() => publishDepartment(index)}
+                        type="button"
+                      >
+                        {department.published ? <CheckCircle2 size={14} /> : <UploadCloud size={14} />}
+                        {department.published ? "Published" : "Publish"}
+                      </button>
+                      <button
+                        className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-violet-100 px-3 text-xs font-bold text-slate-600 transition hover:bg-violet-50 dark:border-violet-400/[0.16] dark:text-slate-300 dark:hover:bg-violet-400/[0.08]"
+                        onClick={() => editDepartment(department, index)}
+                        type="button"
+                      >
+                        <Edit3 size={14} />
+                        Edit
+                      </button>
+                      <button
+                        className="inline-flex h-9 items-center justify-center gap-2 rounded-xl border border-red-100 px-3 text-xs font-bold text-red-600 transition hover:bg-red-50 dark:border-red-400/[0.18] dark:text-red-200 dark:hover:bg-red-400/[0.10]"
+                        onClick={() => deleteDepartment(index)}
+                        type="button"
+                      >
+                        <Trash2 size={14} />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <div className="p-5">
+                <EmptyProfileBlock label="No departments added yet." />
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="p-5">
-            <EmptyProfileBlock label="No departments added yet." />
-          </div>
-        )}
+        </div>
       </section>
+      {isAddDepartmentOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div className="fixed inset-0 z-[99] flex items-center justify-center bg-slate-950/50 p-5 backdrop-blur-sm">
+              <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-2xl dark:border-violet-400/[0.18] dark:bg-[#111018]">
+                <div className="flex items-start justify-between gap-4 border-b border-violet-100 px-5 py-4 dark:border-violet-400/[0.10]">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#6d28d9] dark:text-violet-200">
+                      Department
+                    </p>
+                    <h2 className="mt-1 font-headline text-xl font-semibold text-slate-950 dark:text-white">
+                      {editingDepartmentIndex === null ? "Add Department" : "Edit Department"}
+                    </h2>
+                  </div>
+                  <button
+                    className="rounded-xl border border-violet-100 px-3 py-2 text-xs font-bold text-slate-500 transition hover:bg-violet-50 dark:border-violet-400/[0.16] dark:text-slate-300 dark:hover:bg-violet-400/[0.08]"
+                    onClick={resetDepartmentDialog}
+                    type="button"
+                  >
+                    Close
+                  </button>
+                </div>
+                <div className="grid gap-4 p-5 md:grid-cols-2">
+                  <label className="block md:col-span-2">
+                    <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Department Name</span>
+                    <input
+                      autoFocus
+                      className="h-11 w-full rounded-xl border border-violet-100 bg-violet-50/60 px-3 text-sm font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-400/[0.12] dark:bg-violet-400/[0.08] dark:text-white"
+                      onChange={(event) => setDraft((value) => ({ ...value, name: event.target.value }))}
+                      placeholder="General Medicine"
+                      value={draft.name}
+                    />
+                  </label>
+                  <label className="block md:col-span-2">
+                    <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Description</span>
+                    <textarea
+                      className="min-h-24 w-full resize-none rounded-xl border border-violet-100 bg-violet-50/60 px-3 py-3 text-sm font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-400/[0.12] dark:bg-violet-400/[0.08] dark:text-white"
+                      onChange={(event) => setDraft((value) => ({ ...value, description: event.target.value }))}
+                      placeholder="Short department note"
+                      value={draft.description}
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Opening</span>
+                    <input
+                      className="h-11 w-full rounded-xl border border-violet-100 bg-violet-50/60 px-3 text-sm font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-400/[0.12] dark:bg-violet-400/[0.08] dark:text-white"
+                      onChange={(event) => setDraft((value) => ({ ...value, openTime: event.target.value }))}
+                      placeholder="09:00 AM"
+                      value={draft.openTime}
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Closing</span>
+                    <input
+                      className="h-11 w-full rounded-xl border border-violet-100 bg-violet-50/60 px-3 text-sm font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-400/[0.12] dark:bg-violet-400/[0.08] dark:text-white"
+                      onChange={(event) => setDraft((value) => ({ ...value, closeTime: event.target.value }))}
+                      placeholder="06:00 PM"
+                      value={draft.closeTime}
+                    />
+                  </label>
+                </div>
+                <div className="flex justify-end gap-2 border-t border-violet-100 px-5 py-4 dark:border-violet-400/[0.10]">
+                  <button
+                    className="inline-flex h-10 items-center justify-center rounded-xl border border-violet-100 px-4 text-sm font-semibold text-slate-600 transition hover:bg-violet-50 dark:border-violet-400/[0.16] dark:text-slate-300 dark:hover:bg-violet-400/[0.08]"
+                    onClick={resetDepartmentDialog}
+                    type="button"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#6d28d9] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5b21b6]"
+                    onClick={saveDepartment}
+                    type="button"
+                  >
+                    <Plus size={16} />
+                    {editingDepartmentIndex === null ? "Save Department" : "Update Department"}
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </ClinicPageShell>
   );
 }
@@ -1513,7 +1635,7 @@ export function ClinicReviewsPage() {
                   <p className="font-bold text-slate-950 dark:text-white">{review[0]}</p>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{review[2]}</p>
                 </div>
-                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">{review[1]} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¹ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</span>
+                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">{review[1]} stars</span>
               </div>
               <div className="mt-4 flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500">{review[3]}</span>

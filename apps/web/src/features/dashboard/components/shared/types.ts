@@ -35,6 +35,7 @@ export type ErpDemoPage =
   | "analytics"
   | "activity-logs"
   | "doctors"
+  | "departments"
   | "hospital-profile"
   | "radiology"
   | "pathology"
