@@ -77,18 +77,19 @@ export function ErpAuthScreen() {
       activeOrganizationType &&
       isDashboardOrganizationType(activeOrganizationType)
     ) {
+      const onboardingStoragePrefix = getOnboardingStoragePrefix(activeOrganizationType);
       const shouldStartOnboarding =
-        activeOrganizationType === "hospital" &&
+        Boolean(onboardingStoragePrefix) &&
         typeof window !== "undefined" &&
-        window.localStorage.getItem("viruj:hospital-onboarding:start") === "1";
+        window.localStorage.getItem(`${onboardingStoragePrefix}:start`) === "1";
 
-      if (shouldStartOnboarding) {
+      if (shouldStartOnboarding && onboardingStoragePrefix) {
         window.sessionStorage.setItem(
-          `viruj:hospital-onboarding:entry:${activeOrganization?.id ?? "workspace"}`,
+          `${onboardingStoragePrefix}:entry:${activeOrganization?.id ?? "workspace"}`,
           "1"
         );
         window.sessionStorage.setItem(
-          "viruj:hospital-onboarding:entry:workspace",
+          `${onboardingStoragePrefix}:entry:workspace`,
           "1"
         );
       }
@@ -128,6 +129,12 @@ export function ErpAuthScreen() {
   );
 }
 
+
+function getOnboardingStoragePrefix(organizationType: string) {
+  if (organizationType === "clinic") return "viruj:clinic-onboarding";
+  if (organizationType === "hospital") return "viruj:hospital-onboarding";
+  return null;
+}
 function getSessionOrganization(session: unknown) {
   if (
     session &&

@@ -144,13 +144,19 @@ export function ErpDemoLogin({
         return;
       }
 
-      if (onboardingForm.organizationType === "hospital") {
-        window.localStorage.setItem("viruj:hospital-onboarding:start", "1");
+      if (
+        onboardingForm.organizationType === "hospital" ||
+        onboardingForm.organizationType === "clinic"
+      ) {
+        window.localStorage.setItem(
+          `${getOnboardingStoragePrefix(onboardingForm.organizationType)}:start`,
+          "1"
+        );
       }
 
       setSuccessMessage(
         onboardingForm.organizationType === "clinic"
-          ? "Clinic workspace ready. Redirecting to the clinic dashboard."
+          ? "Clinic workspace ready. Redirecting to onboarding."
           : "Organization ready and OWNER session activated."
       );
       await onAuthenticated();
@@ -853,6 +859,12 @@ function buildOrganizationSlug(
   return normalized ? `${normalized}-${suffix}` : `${fallbackPrefix}-${suffix}`;
 }
 
+
+function getOnboardingStoragePrefix(organizationType: OrganizationType) {
+  return organizationType === "clinic"
+    ? "viruj:clinic-onboarding"
+    : "viruj:hospital-onboarding";
+}
 function hasError(result: unknown): result is BetterAuthResult & {
   error: {
     message?: string;

@@ -78,10 +78,10 @@ export function PublicProfileStep({
         <div className="border-b border-dashed border-[#d9dad3] bg-[linear-gradient(135deg,#ffffff,#eef5ef)] p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0284c7]">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--onboarding-accent)]">
                 Patient platform
               </p>
-              <h3 className="mt-1 text-xl font-semibold text-[#171916]">
+              <h3 className="mt-1 text-xl font-semibold text-[var(--onboarding-text)]">
                 Publish controls
               </h3>
               <p className="mt-2 max-w-xl text-sm font-medium leading-6 text-[#6f746c]">
@@ -92,7 +92,7 @@ export function PublicProfileStep({
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#7b7c73]">
                 Enabled
               </p>
-              <p className="mt-1 text-2xl font-semibold text-[#062d4f]">
+              <p className="mt-1 text-2xl font-semibold text-[var(--onboarding-accent-deep)]">
                 {enabledCount}/{publicOptions.length}
               </p>
             </div>
@@ -107,14 +107,14 @@ export function PublicProfileStep({
             >
               <div className="mb-3 flex items-start justify-between gap-3 px-1">
                 <div>
-                  <h4 className="text-sm font-bold text-[#171916]">
+                  <h4 className="text-sm font-bold text-[var(--onboarding-text)]">
                     {section.title}
                   </h4>
-                  <p className="mt-1 text-xs font-medium leading-5 text-[#77786f]">
+                  <p className="mt-1 text-xs font-medium leading-5 text-[var(--onboarding-muted)]">
                     {section.description}
                   </p>
                 </div>
-                <ShieldCheck className="mt-0.5 text-[#0284c7]" size={17} />
+                <ShieldCheck className="mt-0.5 text-[var(--onboarding-accent)]" size={17} />
               </div>
 
               <div className="grid gap-2 md:grid-cols-2">
@@ -125,8 +125,8 @@ export function PublicProfileStep({
                       className={cn(
                         "group flex min-h-16 items-center justify-between gap-3 rounded-2xl border px-3.5 py-3 text-left transition",
                         enabled
-                          ? "border-[#bae6fd] bg-[#e0f2fe] text-[#062d4f] shadow-[inset_3px_0_0_#0284c7]"
-                          : "border-[#e0e1da] bg-[#f6f6f1] text-[#65675f] hover:border-[#bae6fd] hover:bg-white"
+                          ? "border-[var(--onboarding-border-strong)] bg-[var(--onboarding-accent-soft)] text-[var(--onboarding-accent-deep)] shadow-[inset_3px_0_0_var(--onboarding-accent)]"
+                          : "border-[#e0e1da] bg-[#f6f6f1] text-[#65675f] hover:border-[var(--onboarding-border-strong)] hover:bg-white"
                       )}
                       key={key}
                       onClick={() => toggleOption(key)}
@@ -137,8 +137,8 @@ export function PublicProfileStep({
                           className={cn(
                             "flex size-9 shrink-0 items-center justify-center rounded-xl transition",
                             enabled
-                              ? "bg-[#0284c7] text-white"
-                              : "bg-[#e9ebe4] text-[#7b7c73] group-hover:bg-[#e0f2fe] group-hover:text-[#0284c7]"
+                              ? "bg-[var(--onboarding-accent)] text-white"
+                              : "bg-[#e9ebe4] text-[#7b7c73] group-hover:bg-[var(--onboarding-accent-soft)] group-hover:text-[var(--onboarding-accent)]"
                           )}
                         >
                           <Icon size={17} />
@@ -155,13 +155,13 @@ export function PublicProfileStep({
                       <span
                         className={cn(
                           "relative h-6 w-11 shrink-0 rounded-full transition",
-                          enabled ? "bg-[#0284c7]" : "bg-[#d9dad3]"
+                          enabled ? "bg-[var(--onboarding-accent)]" : "bg-[#d9dad3]"
                         )}
                       >
                         <span
                           className={cn(
                             "absolute top-1 flex size-4 items-center justify-center rounded-full bg-white text-[9px] transition",
-                            enabled ? "left-6 text-[#0284c7]" : "left-1 text-[#8a8b82]"
+                            enabled ? "left-6 text-[var(--onboarding-accent)]" : "left-1 text-[#8a8b82]"
                           )}
                         >
                           {enabled ? <Check size={11} /> : <X size={10} />}
@@ -180,14 +180,14 @@ export function PublicProfileStep({
         <div className="h-[560px] rounded-[34px] border border-[#0f2a3d] bg-[#071827] p-3 shadow-[0_30px_90px_rgba(7,89,133,0.25)]">
           <div className="flex h-full flex-col overflow-hidden rounded-[27px] bg-[#f7f8f3] text-[#101411]">
             <div className="flex items-center justify-between border-b border-[#e3e4dc] px-4 py-3">
-              <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#0284c7]">
+              <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--onboarding-accent)]">
                 Live preview
               </span>
               <span
                 className={cn(
                   "rounded-full px-2.5 py-1 text-[10px] font-bold",
                   data.publicProfile.showHospitalProfile
-                    ? "bg-[#e0f2fe] text-[#0284c7]"
+                    ? "bg-[var(--onboarding-accent-soft)] text-[var(--onboarding-accent)]"
                     : "bg-[#f2e8dc] text-[#875d2a]"
                 )}
               >
@@ -195,7 +195,7 @@ export function PublicProfileStep({
               </span>
             </div>
 
-            <div className="relative h-32 shrink-0 overflow-hidden bg-[linear-gradient(135deg,#dbeafe,#93c5fd_48%,#062d4f)]">
+            <div className="relative h-32 shrink-0 overflow-hidden vh-onboarding-gradient">
               {data.profile.coverPreviewUrl || data.profile.coverUrl ? (
                 <img
                   alt={`${data.profile.hospitalName || "Hospital"} cover`}
@@ -203,8 +203,8 @@ export function PublicProfileStep({
                   src={data.profile.coverPreviewUrl || data.profile.coverUrl}
                 />
               ) : null}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#062d4f]/45 to-transparent" />
-              <div className="absolute bottom-4 left-4 flex size-14 items-center justify-center overflow-hidden rounded-2xl bg-white text-[#062d4f] shadow-xl ring-1 ring-black/5">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
+              <div className="absolute bottom-4 left-4 flex size-14 items-center justify-center overflow-hidden rounded-2xl bg-white text-[var(--onboarding-accent-deep)] shadow-xl ring-1 ring-black/5">
                 {data.profile.logoPreviewUrl || data.profile.logoUrl ? (
                   <img
                     alt={`${data.profile.hospitalName || "Hospital"} logo`}
@@ -225,11 +225,11 @@ export function PublicProfileStep({
                       ? data.profile.hospitalName || "Hospital Preview"
                       : "Profile hidden"}
                   </h3>
-                  <p className="mt-1 text-xs font-bold text-[#0284c7]">
+                  <p className="mt-1 text-xs font-bold text-[var(--onboarding-accent)]">
                     {data.profile.hospitalType}
                   </p>
                 </div>
-                <Building2 className="shrink-0 text-[#0284c7]" size={21} />
+                <Building2 className="shrink-0 text-[var(--onboarding-accent)]" size={21} />
               </div>
 
               <p className="mt-3 line-clamp-3 text-xs font-medium leading-5 text-[#6f746c]">
@@ -246,11 +246,11 @@ export function PublicProfileStep({
                       key={String(item)}
                     >
                       <span>{item}</span>
-                      <Check className="text-[#0284c7]" size={13} />
+                      <Check className="text-[var(--onboarding-accent)]" size={13} />
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-[#d8d9d2] bg-[#f1f1eb] px-3 py-5 text-center text-xs font-bold text-[#77786f]">
+                  <div className="rounded-2xl border border-dashed border-[#d8d9d2] bg-[#f1f1eb] px-3 py-5 text-center text-xs font-bold text-[var(--onboarding-muted)]">
                     Enable public options to preview patient-facing features.
                   </div>
                 )}
@@ -262,7 +262,7 @@ export function PublicProfileStep({
                 className={cn(
                   "h-11 w-full rounded-2xl text-sm font-bold shadow-[0_16px_34px_rgba(7,89,133,0.16)] transition",
                   data.publicProfile.acceptOnlineAppointments
-                    ? "bg-[#062d4f] text-white"
+                    ? "bg-[var(--onboarding-accent-deep)] text-white"
                     : "bg-[#e8e9e1] text-[#7b7c73]"
                 )}
                 type="button"

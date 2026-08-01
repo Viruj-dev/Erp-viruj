@@ -3,17 +3,20 @@ import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
 import { TextField } from "../fields";
 import { getEmptyBranch } from "../state";
-import type { Branch, OnboardingState } from "../types";
+import type { Branch, OnboardingKind, OnboardingState } from "../types";
 
 export function LocationsStep({
   data,
+  kind = "hospital",
   setData,
 }: {
   data: OnboardingState;
+  kind?: OnboardingKind;
   setData: Dispatch<SetStateAction<OnboardingState>>;
 }) {
   const [locatingBranchId, setLocatingBranchId] = useState<string | null>(null);
   const [locationStatus, setLocationStatus] = useState<Record<string, string>>({});
+  const isClinic = kind === "clinic";
 
   const updateBranch = (id: string, key: keyof Branch, value: string) => {
     setData((current) => ({
@@ -104,16 +107,16 @@ export function LocationsStep({
           >
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0284c7]">
-                  {index === 0 ? "Main Branch" : `Branch ${index + 1}`}
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--onboarding-accent)]">
+                  {index === 0 ? (isClinic ? "Primary Location" : "Main Branch") : `Branch ${index + 1}`}
                 </p>
                 <h3 className="font-headline text-xl font-semibold">
-                  {branch.name || "Branch details"}
+                  {branch.name || (isClinic ? "Clinic address" : "Branch details")}
                 </h3>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <button
-                  className="inline-flex h-9 items-center gap-2 rounded-full border border-[#bae6fd] bg-[#e0f2fe] px-3 text-xs font-bold text-[#0284c7] transition hover:bg-[#f0f9ff] disabled:pointer-events-none disabled:opacity-60 dark:border-cyan-300/25 dark:bg-cyan-400/[0.08] dark:text-cyan-200"
+                  className="inline-flex h-9 items-center gap-2 rounded-full border border-[var(--onboarding-border-strong)] bg-[var(--onboarding-accent-soft)] px-3 text-xs font-bold text-[var(--onboarding-accent)] transition hover:bg-[var(--onboarding-panel)] disabled:pointer-events-none disabled:opacity-60 dark:border-cyan-300/25 dark:bg-cyan-400/[0.08] dark:text-cyan-200"
                   disabled={isLocating}
                   onClick={() => void handleUseCurrentLocation(branch)}
                   type="button"
@@ -142,7 +145,7 @@ export function LocationsStep({
             </div>
 
             {status ? (
-              <div className="mb-4 flex items-center gap-2 rounded-2xl border border-[#dbeafe] bg-[#f0f9ff] px-3 py-2 text-xs font-semibold text-[#075985] dark:border-cyan-300/15 dark:bg-cyan-400/[0.06] dark:text-cyan-100/80">
+              <div className="mb-4 flex items-center gap-2 rounded-2xl border border-[#dbeafe] bg-[#f0f9ff] px-3 py-2 text-xs font-semibold text-[var(--onboarding-accent-mid)] dark:border-cyan-300/15 dark:bg-cyan-400/[0.06] dark:text-cyan-100/80">
                 {isLocating ? <Loader2 className="animate-spin" size={14} /> : <MapPin size={14} />}
                 {status}
               </div>
@@ -150,9 +153,9 @@ export function LocationsStep({
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               <TextField
-                label="Branch Name"
+                label={isClinic ? "Location Name" : "Branch Name"}
                 onChange={(value) => updateBranch(branch.id, "name", value)}
-                placeholder="Main Campus"
+                placeholder={isClinic ? "Main Clinic" : "Main Campus"}
                 value={branch.name}
               />
               <TextField
@@ -160,6 +163,12 @@ export function LocationsStep({
                 onChange={(value) => updateBranch(branch.id, "address", value)}
                 placeholder="Block A, Ring Road"
                 value={branch.address}
+              />
+              <TextField
+                label="Landmark"
+                onChange={(value) => updateBranch(branch.id, "landmark", value)}
+                placeholder="Near metro station"
+                value={branch.landmark}
               />
               <TextField
                 label="City"
@@ -180,7 +189,7 @@ export function LocationsStep({
                 value={branch.country}
               />
               <TextField
-                label="Postal Code"
+                label={isClinic ? "Pincode" : "Postal Code"}
                 onChange={(value) => updateBranch(branch.id, "postalCode", value)}
                 placeholder="110001"
                 value={branch.postalCode}
@@ -211,17 +220,17 @@ export function LocationsStep({
       })}
 
       <button
-        className="flex h-14 w-full items-center justify-center gap-2 rounded-[22px] border border-dashed border-[#bae6fd] bg-[#e0f2fe] text-sm font-bold text-[#0284c7] transition hover:-translate-y-0.5 hover:bg-[#f0f9ff] dark:border-cyan-300/25 dark:bg-cyan-400/[0.08] dark:text-cyan-200"
+        className="flex h-14 w-full items-center justify-center gap-2 rounded-[22px] border border-dashed border-[var(--onboarding-border-strong)] bg-[var(--onboarding-accent-soft)] text-sm font-bold text-[var(--onboarding-accent)] transition hover:-translate-y-0.5 hover:bg-[var(--onboarding-panel)] dark:border-cyan-300/25 dark:bg-cyan-400/[0.08] dark:text-cyan-200"
         onClick={() =>
           setData((current) => ({
             ...current,
-            branches: [...current.branches, getEmptyBranch(false)],
+            branches: [...current.branches, getEmptyBranch(false, kind)],
           }))
         }
         type="button"
       >
         <Plus size={18} />
-        Add another branch
+        {isClinic ? "Add another location" : "Add another branch"}
       </button>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -231,11 +240,11 @@ export function LocationsStep({
             key={`${branch.id}-card`}
           >
             <div className="flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-xl bg-[#e0f2fe] text-[#0284c7] dark:bg-cyan-400/10 dark:text-cyan-300">
+              <span className="flex size-10 items-center justify-center rounded-xl bg-[var(--onboarding-accent-soft)] text-[var(--onboarding-accent)] dark:bg-cyan-400/10 dark:text-cyan-300">
                 <MapPin size={18} />
               </span>
               <div>
-                <p className="font-bold">{branch.name || "Unnamed branch"}</p>
+                <p className="font-bold">{branch.name || "Unnamed location"}</p>
                 <p className="text-xs font-semibold text-slate-500">
                   {[branch.city, branch.state].filter(Boolean).join(", ") ||
                     "Location pending"}
@@ -335,4 +344,3 @@ function locationErrorMessage(error: unknown) {
 
   return "Unable to fetch current location. Enter the address manually.";
 }
-

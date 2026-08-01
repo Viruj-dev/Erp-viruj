@@ -13,17 +13,18 @@ import {
 } from "@/features/dashboard/components/clinic/pages";
 import {
   DoctorsManagementPage,
-  ErpDemoDashboard,
   ErpDemoAnalytics,
   ErpDemoCommunity,
+  ErpDemoDashboard,
   ErpDemoPatients,
   FacilitiesPage,
+  OrganizationOnboardingPage,
 } from "@/features/dashboard/components/hospital/pages";
 import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
-import { createErpTenantContext, type ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import { ErpUserProfilePage } from "@/features/dashboard/components/shared/profile";
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
+import { createErpTenantContext, type ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import {
   buildDashboardPath,
   buildTenantDashboardPath,
@@ -33,16 +34,14 @@ import {
   organizationTypeLabels,
 } from "@/features/dashboard/lib/routing";
 import { LoadingScreen } from "@/features/shell/components/loading-screen";
-import {
-  activateOrganization,
-  authClient,
-} from "@/lib/auth-client";
+import { activateOrganization, authClient } from "@/lib/auth-client";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 
 const clinicSupportedPages: ErpDemoPage[] = [
   "dashboard",
+  "onboarding",
   "appointments",
   "appointments-dashboard",
   "appointments-review",
@@ -64,6 +63,8 @@ const clinicSupportedPages: ErpDemoPage[] = [
   "profile",
 ];
 
+const clinicOnboardingStoragePrefix = "viruj:clinic-onboarding";
+
 export function ClinicHomeScreen({
   currentPage: requestedPage,
   routeSegments,
@@ -77,6 +78,8 @@ export function ClinicHomeScreen({
     useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [canRenderSignupOnboarding, setCanRenderSignupOnboarding] =
+    useState(false);
   const isHydrated = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -91,9 +94,7 @@ export function ClinicHomeScreen({
   const activeOrganization =
     sessionOrganization ?? activeOrganizationState.data;
   const activeMember = sessionMember ?? activeMemberState.data;
-  const isAuthPending =
-    sessionState.isPending ||
-    organizationsState.isPending;
+  const isAuthPending = sessionState.isPending || organizationsState.isPending;
 
   useEffect(() => {
     const activeOrganizationId = activeOrganization?.id;
@@ -109,9 +110,7 @@ export function ClinicHomeScreen({
     }
 
     setIsActivatingOnlyOrganization(true);
-    void activateOrganization({
-      organizationId: organizations[0].id,
-    })
+    void activateOrganization({ organizationId: organizations[0].id })
       .then(() =>
         Promise.all([
           sessionState.refetch(),
@@ -130,9 +129,7 @@ export function ClinicHomeScreen({
     sessionState,
   ]);
 
-  const currentPage = isErpDemoPage(requestedPage)
-    ? requestedPage
-    : "dashboard";
+  const currentPage = isErpDemoPage(requestedPage) ? requestedPage : "dashboard";
   const activeOrganizationType =
     activeOrganization?.organizationType &&
     isDashboardOrganizationType(activeOrganization.organizationType)
@@ -168,6 +165,12 @@ export function ClinicHomeScreen({
     organizationLabel
   );
   const workspaceTheme = getWorkspaceTheme(organizationLabel);
+  const clinicDashboardPath = activeOrganizationSlug
+    ? buildTenantDashboardPath("clinic", activeOrganizationSlug)
+    : buildDashboardPath("clinic");
+  const clinicOnboardingPath = activeOrganizationSlug
+    ? buildTenantDashboardPath("clinic", activeOrganizationSlug, "onboarding")
+    : buildDashboardPath("clinic", "onboarding");
 
   useEffect(() => {
     if (!isHydrated || isAuthPending) {
@@ -178,6 +181,84 @@ export function ClinicHomeScreen({
       router.replace("/auth");
     }
   }, [isAuthPending, isHydrated, router, sessionState.data?.user]);
+
+  useEffect(() => {
+    if (
+      !isHydrated ||
+      isAuthPending ||
+      requestedPage !== "dashboard" ||
+      activeOrganizationType !== "clinic" ||
+      !activeOrganization?.id
+    ) {
+      return;
+    }
+
+    const completeKey = `${clinicOnboardingStoragePrefix}:completed:${activeOrganization.id}`;
+
+    if (
+      window.localStorage.getItem(completeKey) ||
+      !isRecentlyCreatedOrganization(activeOrganization)
+    ) {
+      return;
+    }
+
+    window.sessionStorage.setItem(
+      `${clinicOnboardingStoragePrefix}:entry:${activeOrganization.id}`,
+      "1"
+    );
+    router.replace(clinicOnboardingPath);
+  }, [
+    activeOrganization,
+    activeOrganization?.id,
+    activeOrganizationType,
+    clinicOnboardingPath,
+    isAuthPending,
+    isHydrated,
+    requestedPage,
+    router,
+  ]);
+
+  useEffect(() => {
+    if (
+      !isHydrated ||
+      isAuthPending ||
+      requestedPage !== "onboarding" ||
+      !activeOrganization?.id ||
+      activeOrganizationType !== "clinic"
+    ) {
+      return;
+    }
+
+    const entryKey = `${clinicOnboardingStoragePrefix}:entry:${activeOrganization.id}`;
+    const workspaceEntryKey = `${clinicOnboardingStoragePrefix}:entry:workspace`;
+    const draftKey = `${clinicOnboardingStoragePrefix}:draft:${activeOrganization.id}`;
+    const startKey = `${clinicOnboardingStoragePrefix}:start`;
+    const canEnter =
+      window.localStorage.getItem(startKey) === "1" ||
+      window.sessionStorage.getItem(entryKey) === "1" ||
+      window.sessionStorage.getItem(workspaceEntryKey) === "1" ||
+      Boolean(window.localStorage.getItem(draftKey));
+
+    if (canEnter) {
+      window.localStorage.removeItem(startKey);
+      window.sessionStorage.setItem(entryKey, "1");
+      window.sessionStorage.removeItem(workspaceEntryKey);
+    }
+
+    setCanRenderSignupOnboarding(canEnter);
+
+    if (!canEnter) {
+      router.replace(clinicDashboardPath);
+    }
+  }, [
+    activeOrganization?.id,
+    activeOrganizationType,
+    clinicDashboardPath,
+    isAuthPending,
+    isHydrated,
+    requestedPage,
+    router,
+  ]);
 
   useEffect(() => {
     if (!isHydrated || isAuthPending || !activeOrganization || !activeMember) {
@@ -267,6 +348,24 @@ export function ClinicHomeScreen({
     );
   }
 
+  if (resolvedPage === "onboarding") {
+    if (!canRenderSignupOnboarding) {
+      return <LoadingScreen />;
+    }
+
+    return (
+      <OrganizationOnboardingPage
+        dashboardPath={clinicDashboardPath}
+        organizationId={activeOrganization.id}
+        organizationLabel={organizationLabel}
+        organizationName={organizationName}
+        organizationType="clinic"
+        userEmail={sessionState.data.user.email}
+        userName={userName}
+      />
+    );
+  }
+
   return (
     <div
       className={`flex h-screen min-h-screen bg-surface text-on-surface transition-colors dark:bg-[#0b0d10] dark:text-slate-100 ${workspaceTheme.selection}`}
@@ -341,9 +440,9 @@ export function ClinicHomeScreen({
                 className={`flex min-h-full w-full flex-col overflow-hidden rounded-[2rem] border shadow-sm ring-1 backdrop-blur ${workspaceTheme.contentFrame}`}
               >
                 <ClinicPageContent
+                  appointmentTenant={appointmentTenant}
                   currentPage={resolvedPage}
                   organizationId={activeOrganization.id}
-                  appointmentTenant={appointmentTenant}
                   roleLabel={roleLabel}
                   routeBasePath={
                     activeOrganizationSlug
@@ -363,16 +462,16 @@ export function ClinicHomeScreen({
 }
 
 function ClinicPageContent({
-  currentPage,
   appointmentTenant,
+  currentPage,
   organizationId,
   roleLabel,
   routeBasePath,
   routeSegments,
   userName,
 }: {
-  currentPage: ErpDemoPage;
   appointmentTenant: ErpTenantContext | null;
+  currentPage: ErpDemoPage;
   organizationId?: string;
   roleLabel: string;
   routeBasePath: string;
@@ -380,6 +479,8 @@ function ClinicPageContent({
   userName: string;
 }) {
   switch (currentPage) {
+    case "onboarding":
+      return null;
     case "appointments":
     case "appointments-review":
     case "appointments-dashboard":
@@ -406,11 +507,21 @@ function ClinicPageContent({
       return <ClinicOfferingsPage />;
     case "services":
       return appointmentTenant ? (
-        <FacilitiesPage catalogKind="services" routeBasePath={routeBasePath} routeSegments={routeSegments} tenant={appointmentTenant} />
+        <FacilitiesPage
+          catalogKind="services"
+          routeBasePath={routeBasePath}
+          routeSegments={routeSegments}
+          tenant={appointmentTenant}
+        />
       ) : null;
     case "facilities":
       return appointmentTenant ? (
-        <FacilitiesPage catalogKind="facilities" routeBasePath={routeBasePath} routeSegments={routeSegments} tenant={appointmentTenant} />
+        <FacilitiesPage
+          catalogKind="facilities"
+          routeBasePath={routeBasePath}
+          routeSegments={routeSegments}
+          tenant={appointmentTenant}
+        />
       ) : null;
     case "gallery":
       return (
@@ -514,6 +625,7 @@ function getSessionOrganization(session: unknown) {
     typeof session.activeOrganization === "object"
   ) {
     return session.activeOrganization as {
+      createdAt?: string | Date;
       id?: string;
       organizationType?: string;
       slug?: string;
@@ -552,4 +664,28 @@ function getSessionMember(session: unknown) {
   }
 
   return null;
+}
+
+function isRecentlyCreatedOrganization(organization: unknown) {
+  if (
+    !organization ||
+    typeof organization !== "object" ||
+    !("createdAt" in organization)
+  ) {
+    return false;
+  }
+
+  const createdAt = organization.createdAt;
+  const createdTime =
+    createdAt instanceof Date
+      ? createdAt.getTime()
+      : typeof createdAt === "string"
+        ? new Date(createdAt).getTime()
+        : 0;
+
+  if (!Number.isFinite(createdTime) || createdTime <= 0) {
+    return false;
+  }
+
+  return Date.now() - createdTime < 2 * 60 * 60 * 1000;
 }

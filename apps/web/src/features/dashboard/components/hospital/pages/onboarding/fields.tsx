@@ -10,7 +10,7 @@ export function PreviewRow({
   value: string;
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
+    <div className="flex items-center gap-2 rounded-xl bg-[var(--onboarding-panel-soft)] px-3 py-2 text-xs font-bold text-[var(--onboarding-muted-strong)]">
       {icon}
       {value}
     </div>
@@ -95,7 +95,7 @@ export function UploadField({
   return (
     <label className="block">
       <FieldLabel>{label}</FieldLabel>
-      <div className="flex h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-[#d5d6cf] bg-[#eeeeea] px-3.5 text-sm font-medium text-[#6d6f66] shadow-sm transition hover:border-[#c6d7cc] hover:bg-white">
+      <div className="flex h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-[var(--onboarding-border-strong)] bg-[var(--onboarding-panel-muted)] px-3.5 text-sm font-medium text-[var(--onboarding-muted)] shadow-sm transition hover:border-[var(--onboarding-accent)] hover:bg-[var(--onboarding-panel)]">
         <span className="truncate">{name || "Choose image"}</span>
         <ImagePlus size={17} />
       </div>
@@ -111,7 +111,7 @@ export function UploadField({
 
 export function FieldLabel({ children }: { children: ReactNode }) {
   return (
-    <span className="mb-1.5 block px-0.5 text-xs font-semibold text-[#343731]">
+    <span className="mb-1.5 block px-0.5 text-xs font-semibold text-[var(--onboarding-heading)]">
       {children}
     </span>
   );
@@ -119,7 +119,7 @@ export function FieldLabel({ children }: { children: ReactNode }) {
 
 export function fieldClassName(extra?: string) {
   return cn(
-    "h-11 w-full rounded-lg border border-[#d5d6cf] bg-[#eeeeea] px-3.5 text-sm font-medium text-[#171916] shadow-sm outline-none transition placeholder:text-[#9a9b92] focus:border-[#aabeb0] focus:bg-white focus:ring-4 focus:ring-[#e1ebe4] disabled:cursor-not-allowed disabled:opacity-50",
+    "h-11 w-full rounded-lg border border-[var(--onboarding-border-strong)] bg-[var(--onboarding-panel-muted)] px-3.5 text-sm font-medium text-[var(--onboarding-text)] shadow-sm outline-none transition placeholder:text-[var(--onboarding-placeholder)] focus:border-[var(--onboarding-accent)] focus:bg-[var(--onboarding-panel)] focus:ring-4 focus:ring-[var(--onboarding-accent-ring)] disabled:cursor-not-allowed disabled:opacity-50",
     extra
   );
 }
