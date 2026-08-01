@@ -191,13 +191,13 @@ export function FacilitiesPage({
               </div>
             ) : null
           }
+          className="flex min-h-full flex-col"
           eyebrow={catalogLabel}
-          framed
           subtitle={catalogSubtitle}
           title={catalogLabel}
           tone={pageTone}
         >
-          <section className="space-y-5">
+          <section className="flex min-h-[calc(100vh-15rem)] flex-1 flex-col space-y-5">
             <Toolbar
               filters={filters}
               onFilterChange={setFilters}
@@ -212,7 +212,7 @@ export function FacilitiesPage({
                 <StatCard key={stat.label} tone={pageTone} {...stat} />
               ))}
             </div>
-            <section className="min-h-96 overflow-hidden rounded-[1.65rem] border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#111418]">
+            <section className="min-h-[calc(100vh-27rem)] flex-1 overflow-hidden rounded-[1.65rem] border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#111418]">
               {facilitiesQuery.isLoading ? (
                 <FacilitySkeletonGrid />
               ) : facilitiesQuery.isError ? (

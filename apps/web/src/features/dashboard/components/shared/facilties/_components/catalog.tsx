@@ -108,9 +108,7 @@ export function FacilityBentoCard({
     <article className="flex min-h-64 flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow-md dark:border-white/[0.08] dark:bg-[#15181d]">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
-          <span className={iconClass}>
-            <FileText size={20} />
-          </span>
+
           <div className="min-w-0">
             <h3 className="truncate font-headline text-lg font-semi-bold text-slate-950 dark:text-slate-100">{facility.name}</h3>
             <div className="mt-2 flex flex-wrap gap-2">

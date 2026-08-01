@@ -236,13 +236,13 @@ export function DoctorsManagementPage({
           </button>
         </>
       }
+      className="flex min-h-full flex-col"
       eyebrow="Doctors"
-      framed
       subtitle={`Add doctors for ${organizationLabel}, review profile readiness, then publish live availability to patients.`}
       title={`${organizationLabel}-added Profiles`}
       tone={isClinicTone ? "violet" : "blue"}
     >
-      <section className="flex min-h-full flex-1 flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#111418]">
+      <section className="flex min-h-[calc(100vh-15rem)] flex-1 flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#111418]">
         <div className="grid border-b border-slate-200 dark:border-white/[0.08] md:grid-cols-3">
           <HeroMetric label="Total doctors" value={doctors.length} />
           <HeroMetric label="Published in app" value={publishedCount} />
