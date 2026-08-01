@@ -62,7 +62,6 @@ const clinicNavItems = [
   { id: "gallery", label: "Gallery", icon: Image },
   { id: "community", label: "Community", icon: MessagesSquare },
   { id: "analytics", label: "Analytics", icon: BarChart3,},
-  { id: "clinic-profile", label: "Clinic Profile", icon: Building2 },
 ] as const;
 
 const doctorNavItems = [
@@ -109,6 +108,7 @@ const utilityItems = [
 const comingSoonNavItems = new Set<ErpDemoPage>([
   "gallery",
   "community",
+  "analytics",
   "activity-logs",
 ]);
 
@@ -294,12 +294,12 @@ export function ErpDemoSidebar({
             onPageChange={onPageChange}
             profileOptions={nestedProfileOptions}
             isDoctorProfileOpen={isDoctorProfileOpen}
-            showDoctorProfileDropdown={isDoctorWorkspace || isClinicWorkspace}
-            showAppointmentDropdown={!isOwnerOrAdmin}
+            showDoctorProfileDropdown={isDoctorWorkspace}
+            showAppointmentDropdown={!isOwnerOrAdmin && !isClinicWorkspace}
             theme={workspaceTheme}
           />
 
-          {!isOwnerOrAdmin && !isCollapsed && isAppointmentsOpen ? (
+          {!isClinicWorkspace && !isOwnerOrAdmin && !isCollapsed && isAppointmentsOpen ? (
             <div className="-mt-4 ml-5 space-y-1 border-l border-slate-200/80 pl-3 dark:border-white/[0.08]">
               {appointmentOptions.map((option) => {
                 const OptionIcon = option.icon;

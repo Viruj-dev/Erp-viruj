@@ -384,9 +384,9 @@ function ClinicPageContent({
     case "appointments-review":
     case "appointments-dashboard":
     case "appointments-patients":
-      return <ErpDemoPatients organizationId={organizationId} />;
+      return <ErpDemoPatients organizationId={organizationId} tone="violet" />;
     case "appointments-settings":
-      return <ErpDemoPatients organizationId={organizationId} />;
+      return <ErpDemoPatients organizationId={organizationId} tone="violet" />;
     case "clinic-profile":
       return <ClinicProfileManagementPage />;
     case "locations":

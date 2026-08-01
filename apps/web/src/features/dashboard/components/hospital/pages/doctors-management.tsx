@@ -140,6 +140,16 @@ export function DoctorsManagementPage({
   const departmentCount = new Set(
     doctors.map((doctor) => doctor.department).filter(Boolean)
   ).size;
+  const isClinicTone = organizationLabel.toLowerCase() === "clinic";
+  const addDoctorClass = isClinicTone
+    ? "inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 text-sm font-semi-bold text-violet-800 transition hover:border-violet-300 hover:bg-violet-100 dark:border-violet-400/20 dark:bg-violet-400/10 dark:text-violet-200 dark:hover:bg-violet-400/15"
+    : "inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semi-bold text-slate-900 transition hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-100 dark:hover:bg-white/[0.08]";
+  const publishAllClass = isClinicTone
+    ? "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-violet-500 dark:hover:bg-violet-400"
+    : "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200";
+  const searchClass = isClinicTone
+    ? "h-11 w-full rounded-xl border-none bg-violet-50/70 pl-10 pr-4 text-sm font-semibold text-slate-800 outline-none transition focus:ring-2 focus:ring-violet-200 dark:bg-violet-400/[0.08] dark:text-slate-100 dark:focus:ring-violet-400/25"
+    : "h-11 w-full rounded-xl border-none bg-slate-100 pl-10 pr-4 text-sm font-semibold text-slate-800 outline-none transition focus:ring-2 focus:ring-slate-300 dark:bg-white/[0.06] dark:text-slate-100 dark:focus:ring-white/20";
   const isSaving =
     createDoctorMutation.isPending || updateDoctorMutation.isPending;
   const canSubmit = Boolean(form.name.trim() && form.specialty.trim());
@@ -204,7 +214,7 @@ export function DoctorsManagementPage({
             Delete all
           </button>
           <button
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semi-bold text-slate-900 transition hover:border-slate-300 hover:bg-slate-50 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-100 dark:hover:bg-white/[0.08]"
+            className={addDoctorClass}
             onClick={openCreateDialog}
             type="button"
           >
@@ -212,7 +222,7 @@ export function DoctorsManagementPage({
             Add Doctor
           </button>
           <button
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+            className={publishAllClass}
             disabled={!doctors.length || publishAllMutation.isPending}
             onClick={() => publishAllMutation.mutate()}
             type="button"
@@ -230,6 +240,7 @@ export function DoctorsManagementPage({
       framed
       subtitle={`Add doctors for ${organizationLabel}, review profile readiness, then publish live availability to patients.`}
       title={`${organizationLabel}-added Profiles`}
+      tone={isClinicTone ? "violet" : "blue"}
     >
       <section className="flex min-h-full flex-1 flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#111418]">
         <div className="grid border-b border-slate-200 dark:border-white/[0.08] md:grid-cols-3">
@@ -253,7 +264,7 @@ export function DoctorsManagementPage({
               size={17}
             />
             <input
-              className="h-11 w-full rounded-xl border-none bg-slate-100 pl-10 pr-4 text-sm font-semibold text-slate-800 outline-none transition focus:ring-2 focus:ring-slate-300 dark:bg-white/[0.06] dark:text-slate-100 dark:focus:ring-white/20"
+              className={searchClass}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search doctor, department..."
               value={query}
@@ -280,6 +291,7 @@ export function DoctorsManagementPage({
                 onPublish={() =>
                   publishDoctorMutation.mutate({ id: doctor.id })
                 }
+                tone={isClinicTone ? "violet" : "blue"}
               />
             ))
           ) : (
@@ -519,17 +531,28 @@ function DoctorRow({
   onDelete,
   onEdit,
   onPublish,
+  tone = "blue",
 }: {
   doctor: VirujDoctor;
   isPublishing: boolean;
   onDelete: () => void;
   onEdit: () => void;
   onPublish: () => void;
+  tone?: "blue" | "violet";
 }) {
+  const iconClass =
+    tone === "violet"
+      ? "flex size-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-800 dark:bg-violet-400/15 dark:text-violet-200"
+      : "flex size-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-800 dark:bg-blue-400/15 dark:text-blue-200";
+  const publishClass =
+    tone === "violet"
+      ? "inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-violet-100 px-4 text-xs font-semi-bold text-violet-800 transition hover:bg-violet-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-violet-400/15 dark:text-violet-200 dark:hover:bg-violet-400/20"
+      : "inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 text-xs font-semi-bold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white/[0.08] dark:text-slate-200 dark:hover:bg-white/[0.12]";
+
   return (
     <div className="grid gap-4 p-5 lg:grid-cols-[1.25fr_0.85fr_0.9fr_auto] lg:items-center">
       <div className="flex items-center gap-4">
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-800 dark:bg-blue-400/15 dark:text-blue-200">
+        <span className={iconClass}>
           <Stethoscope size={20} />
         </span>
         <div>
@@ -566,7 +589,7 @@ function DoctorRow({
           </span>
         ) : (
           <button
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 text-xs font-semi-bold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white/[0.08] dark:text-slate-200 dark:hover:bg-white/[0.12]"
+            className={publishClass}
             disabled={isPublishing}
             onClick={onPublish}
             type="button"

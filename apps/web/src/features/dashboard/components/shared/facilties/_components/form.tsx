@@ -5,7 +5,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import type { VirujFacility, VirujFacilityCategory, VirujFacilityInput, VirujFacilityStatus } from "@/lib/viruj-backend";
 import { facilityCategories } from "../constants";
 import { slugify, validateFacilityForm } from "../utils";
-import { CategoryPill, SelectField, StatusPill, SwitchRow, TextAreaField, TextField } from "./primitives";
+import { CategoryPill, NumberField, SelectField, StatusPill, SwitchRow, TextAreaField, TextField } from "./primitives";
 
 export function FacilityForm({
   existingFacilities,
@@ -101,8 +101,9 @@ export function FacilityForm({
             value={form.shortDescription || form.description}
           />
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TextField label="Price Text" onChange={(value) => updateField("priceText", value)} placeholder="Contact Hospital" value={form.priceText} />
+          <div className="grid gap-4 sm:grid-cols-3">
+            <NumberField label="Price set by owner" onChange={(value) => updateField("startingPrice", value)} prefix="Rs" value={form.startingPrice} />
+            <TextField label="Custom Price Text" onChange={(value) => updateField("priceText", value)} placeholder="Contact Clinic" value={form.priceText} />
             <TextField
               label="Slug"
               onChange={(value) => {

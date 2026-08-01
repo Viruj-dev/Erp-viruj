@@ -62,6 +62,11 @@ export function FacilitiesPage({
   const organizationId = tenant?.organizationId;
   const catalogApi = catalogKind === "services" ? virujBackend.services : virujBackend.facilities;
   const catalogLabel = catalogKind === "services" ? "Services" : "Facilities";
+  const isClinicTone = tenant?.providerType === "clinic";
+  const pageTone = isClinicTone ? "violet" : "blue";
+  const publishAllClass = isClinicTone
+    ? "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-violet-500 dark:hover:bg-violet-400"
+    : "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50";
   const catalogSubtitle = catalogKind === "services"
     ? "A persisted service catalog for patient discovery and booking."
     : "A persisted facility catalog for infrastructure, amenities, and access.";
@@ -166,7 +171,7 @@ export function FacilitiesPage({
               <div className="flex flex-wrap gap-2">
                 {permissions.publish ? (
                   <button
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className={publishAllClass}
                     disabled={publishAllMutation.isPending || publishableFacilities.length === 0}
                     onClick={() => publishAllMutation.mutate(publishableFacilities)}
                     type="button"
@@ -180,6 +185,7 @@ export function FacilitiesPage({
                     icon={<Plus size={16} />}
                     label={`Add ${catalogKind === "services" ? "Service" : "Facility"}`}
                     onClick={() => router.push(`${routeBasePath}/${catalogKind}/new`)}
+                    tone={isClinicTone ? "violet" : "slate"}
                   />
                 ) : null}
               </div>
@@ -189,6 +195,7 @@ export function FacilitiesPage({
           framed
           subtitle={catalogSubtitle}
           title={catalogLabel}
+          tone={pageTone}
         >
           <section className="space-y-5">
             <Toolbar
@@ -198,10 +205,11 @@ export function FacilitiesPage({
               onSortChange={setSortKey}
               query={query}
               sortKey={sortKey}
+              tone={pageTone}
             />
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {stats.map((stat) => (
-                <StatCard key={stat.label} {...stat} />
+                <StatCard key={stat.label} tone={pageTone} {...stat} />
               ))}
             </div>
             <section className="min-h-96 overflow-hidden rounded-[1.65rem] border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#111418]">
@@ -217,6 +225,7 @@ export function FacilitiesPage({
                 <EmptyFacilities
                   onCreate={() => router.push(`${routeBasePath}/${catalogKind}/new`)}
                   permissions={permissions}
+                  tone={pageTone}
                 />
               ) : filteredFacilities.length === 0 ? (
                 <StatePanel
@@ -247,6 +256,7 @@ onEdit={() => router.push(`${routeBasePath}/${catalogKind}/${facility.id}/edit`)
                         })
                       }
                       permissions={permissions}
+                      tone={pageTone}
                     />
                   ))}
                 </div>
@@ -272,6 +282,7 @@ onEdit={() => router.push(`${routeBasePath}/${catalogKind}/${facility.id}/edit`)
           onClose={() => router.push(`${routeBasePath}/${catalogKind}`)}
           subtitle={`Create a ${catalogKind === "services" ? "service" : "facility"} card for this ${tenant?.terminology.organizationLabel.toLowerCase() ?? "workspace"}.`}
           title={`Add ${catalogKind === "services" ? "Service" : "Facility"}`}
+          tone={pageTone}
         >
           <FacilityForm
             existingFacilities={facilities}
@@ -298,6 +309,7 @@ onEdit={() => router.push(`${routeBasePath}/${catalogKind}/${facility.id}/edit`)
           onClose={() => router.push(`${routeBasePath}/${catalogKind}`)}
           subtitle={`Edit this ${catalogKind === "services" ? "service" : "facility"} card.`}
           title={`Edit ${catalogKind === "services" ? "Service" : "Facility"}`}
+          tone={pageTone}
         >
           <FacilityForm
             existingFacilities={facilities.filter((facility) => facility.id !== routeFacility.id)}
@@ -321,11 +333,13 @@ function FacilityEditorDialog({
   onClose,
   subtitle,
   title,
+  tone = "blue",
 }: {
   children: ReactNode;
   onClose: () => void;
   subtitle: string;
   title: string;
+  tone?: "blue" | "violet";
 }) {
   const [mounted, setMounted] = useState(false);
 
@@ -334,6 +348,11 @@ function FacilityEditorDialog({
   }, []);
 
   if (!mounted || typeof document === "undefined") return null;
+
+  const eyebrowClass =
+    tone === "violet"
+      ? "text-[10px] font-semi-bold uppercase tracking-[0.22em] text-violet-500"
+      : "text-[10px] font-semi-bold uppercase tracking-[0.22em] text-blue-500 dark:text-blue-400";
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/72 p-4 backdrop-blur-xl">
@@ -345,7 +364,7 @@ function FacilityEditorDialog({
         >
           <header className="flex items-start justify-between gap-4 px-2 pb-4 pt-1">
             <div>
-              <p className="text-[10px] font-semi-bold uppercase tracking-[0.22em] text-blue-500 dark:text-blue-400">Facilities & Services</p>
+              <p className={eyebrowClass}>Facilities & Services</p>
               <h2 className="mt-2 font-headline text-2xl font-semi-bold text-slate-950 dark:text-slate-100">{title}</h2>
               <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-500">{subtitle}</p>
             </div>

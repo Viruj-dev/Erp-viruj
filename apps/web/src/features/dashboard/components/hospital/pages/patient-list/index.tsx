@@ -14,7 +14,13 @@ import {
   mapAppointmentToPatient,
 } from "./utils";
 
-export function ErpDemoPatients({ organizationId }: { organizationId?: string }) {
+export function ErpDemoPatients({
+  organizationId,
+  tone = "blue",
+}: {
+  organizationId?: string;
+  tone?: "blue" | "violet";
+}) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -148,6 +154,7 @@ export function ErpDemoPatients({ organizationId }: { organizationId?: string })
       eyebrow="Patients"
       subtitle="Review patient requests, approval status, appointment movement, and backend patient records."
       title="Patient Directory"
+      tone={tone}
     >
       <PatientDataTable
         currentPage={currentPage}
@@ -166,6 +173,7 @@ export function ErpDemoPatients({ organizationId }: { organizationId?: string })
         pageCount={pageCount}
         patients={visiblePatients}
         search={search}
+        tone={tone}
         totalPatients={filteredPatients.length}
       />
     </DashboardPageShell>

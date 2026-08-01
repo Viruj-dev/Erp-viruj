@@ -42,6 +42,7 @@ export function PatientDataTable({
   pageCount,
   patients,
   search,
+  tone = "blue",
   totalPatients,
 }: {
   currentPage: number;
@@ -60,6 +61,7 @@ export function PatientDataTable({
   pageCount: number;
   patients: DirectoryPatient[];
   search: string;
+  tone?: "blue" | "violet";
   totalPatients: number;
 }) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -68,6 +70,7 @@ export function PatientDataTable({
     currentPage,
     isUpdating,
     onUpdateAppointment,
+    tone,
   });
   const columnWidths: Record<string, string> = {
     actions: "220px",

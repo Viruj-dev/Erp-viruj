@@ -22,14 +22,21 @@ export function PrimaryButton({
   icon,
   label,
   onClick,
+  tone = "slate",
 }: {
   icon: ReactNode;
   label: string;
   onClick: () => void;
+  tone?: "slate" | "violet";
 }) {
+  const className =
+    tone === "violet"
+      ? "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-violet-800 dark:bg-violet-500 dark:hover:bg-violet-400"
+      : "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200";
+
   return (
     <button
-      className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+      className={className}
       onClick={onClick}
       type="button"
     >
@@ -194,10 +201,12 @@ export function TextField({
 export function NumberField({
   label,
   onChange,
+  prefix,
   value,
 }: {
   label: string;
   onChange: (value: number | null) => void;
+  prefix?: string;
   value: number | null;
 }) {
   return (
@@ -205,8 +214,17 @@ export function NumberField({
       <span className="text-[10px] font-semi-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-600">
         {label}
       </span>
-      <input
-        className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-slate-400 dark:border-white/[0.08] dark:bg-white/[0.055] dark:text-slate-100"
+      <div className="relative mt-1">
+        {prefix ? (
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500 dark:text-slate-400">
+            {prefix}
+          </span>
+        ) : null}
+        <input
+        className={cn(
+          "h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-slate-400 dark:border-white/[0.08] dark:bg-white/[0.055] dark:text-slate-100",
+          prefix && "pl-10"
+        )}
         min={0}
         onChange={(event) =>
           onChange(
@@ -216,6 +234,7 @@ export function NumberField({
         type="number"
         value={value ?? ""}
       />
+      </div>
     </label>
   );
 }

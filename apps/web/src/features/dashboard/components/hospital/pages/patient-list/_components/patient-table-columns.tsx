@@ -15,6 +15,7 @@ export function usePatientColumns({
   currentPage,
   isUpdating,
   onUpdateAppointment,
+  tone = "blue",
 }: {
   currentPage: number;
   isUpdating: boolean;
@@ -22,6 +23,7 @@ export function usePatientColumns({
     patient: DirectoryPatient,
     status: VirujAppointmentStatus
   ) => void;
+  tone?: "blue" | "violet";
 }) {
   return useMemo<ColumnDef<DirectoryPatient>[]>(
     () => [
@@ -96,7 +98,7 @@ export function usePatientColumns({
       },
       {
         accessorKey: "status",
-        cell: ({ row }) => <StatusBadge status={row.original.status} />,
+        cell: ({ row }) => <StatusBadge status={row.original.status} tone={tone} />,
         header: "Status",
       },
       {
@@ -107,12 +109,13 @@ export function usePatientColumns({
             onReject={() => onUpdateAppointment(row.original, "rejected")}
             onReschedule={() => onUpdateAppointment(row.original, "rescheduled")}
             patient={row.original}
+            tone={tone}
           />
         ),
         header: "Actions",
         id: "actions",
       },
     ],
-    [currentPage, isUpdating, onUpdateAppointment]
+    [currentPage, isUpdating, onUpdateAppointment, tone]
   );
 }

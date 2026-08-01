@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CalendarCheck, CheckCircle2, Edit3, FileText, Plus, RadioTower, Search, Star, Trash2, Zap } from "lucide-react";
+import { AlertTriangle, CalendarCheck, CheckCircle2, Edit3, FileText, Plus, Search, Star, Trash2, Zap } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { VirujFacility } from "@/lib/viruj-backend";
@@ -9,6 +9,8 @@ import type { FacilityAction, FilterState, SortKey } from "../types";
 import { formatPrice } from "../utils";
 import { Badge, CategoryPill, Select, StatusPill } from "./primitives";
 
+type CatalogTone = "blue" | "violet";
+
 export function Toolbar({
   filters,
   onFilterChange,
@@ -16,6 +18,7 @@ export function Toolbar({
   onSortChange,
   query,
   sortKey,
+  tone = "blue",
 }: {
   filters: FilterState;
   onFilterChange: (filters: FilterState) => void;
@@ -23,7 +26,12 @@ export function Toolbar({
   onSortChange: (value: SortKey) => void;
   query: string;
   sortKey: SortKey;
+  tone?: CatalogTone;
 }) {
+  const inputClass =
+    tone === "violet"
+      ? "h-11 w-full rounded-xl border border-violet-200 bg-violet-50/70 pl-10 pr-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-violet-300 focus:bg-white dark:border-violet-400/20 dark:bg-violet-400/[0.08] dark:text-slate-100"
+      : "h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-slate-400 focus:bg-white dark:border-white/[0.08] dark:bg-white/[0.055] dark:text-slate-100";
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-white/[0.08] dark:bg-[#111418]">
       <div className="grid gap-3 lg:grid-cols-[minmax(240px,1fr)_170px_145px_165px]">
@@ -31,7 +39,7 @@ export function Toolbar({
           <span className="sr-only">Search services</span>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
           <input
-            className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-slate-400 focus:bg-white dark:border-white/[0.08] dark:bg-white/[0.055] dark:text-slate-100"
+            className={inputClass}
             onChange={(event) => onQueryChange(event.target.value)}
             placeholder="Search services"
             value={query}
@@ -69,6 +77,7 @@ export function FacilityBentoCard({
   onEdit,
   onPublish,
   permissions,
+  tone = "blue",
 }: {
   checked?: boolean;
   facility: VirujFacility;
@@ -86,15 +95,20 @@ export function FacilityBentoCard({
   onSelect?: (checked: boolean) => void;
   onView?: () => void;
   permissions: Record<FacilityAction, boolean>;
+  tone?: CatalogTone;
 }) {
   const active = facility.status === "active" && facility.isAvailable;
   const published = active && facility.visibility === "public";
+  const iconClass =
+    tone === "violet"
+      ? "flex size-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-800 dark:bg-violet-400/15 dark:text-violet-200"
+      : "flex size-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 dark:bg-white/[0.07] dark:text-slate-200";
 
   return (
     <article className="flex min-h-64 flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow-md dark:border-white/[0.08] dark:bg-[#15181d]">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 dark:bg-white/[0.07] dark:text-slate-200">
+          <span className={iconClass}>
             <FileText size={20} />
           </span>
           <div className="min-w-0">
@@ -127,7 +141,6 @@ export function FacilityBentoCard({
           <div className="flex flex-wrap justify-end gap-2">
             {permissions.update ? <CardButton icon={<Edit3 size={14} />} label="Edit" onClick={onEdit} /> : null}
             {permissions.publish && !active ? <CardButton disabled={isUpdating} label="Activate" onClick={onActivate} tone="success" /> : null}
-            {permissions.publish && !published ? <CardButton disabled={isUpdating} icon={<RadioTower size={14} />} label="Publish" onClick={onPublish} tone="publish" /> : null}
             {permissions.update && active ? <CardButton disabled={isUpdating} label="Deactivate" onClick={onDeactivate} /> : null}
             {permissions.delete ? <CardButton icon={<Trash2 size={14} />} label="Delete" onClick={onDelete} tone="danger" /> : null}
           </div>
@@ -148,7 +161,7 @@ function CardButton({
   icon?: ReactNode;
   label: string;
   onClick: () => void;
-  tone?: "danger" | "publish" | "success";
+  tone?: "danger" | "success";
 }) {
   return (
     <button
@@ -156,7 +169,6 @@ function CardButton({
         "inline-flex h-9 items-center justify-center gap-1.5 rounded-xl px-3 text-xs font-semi-bold transition disabled:cursor-not-allowed disabled:opacity-50",
         tone === "danger" && "bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-400/10 dark:text-red-200",
         tone === "success" && "bg-emerald-600 text-white hover:bg-emerald-700",
-        tone === "publish" && "bg-blue-600 text-white hover:bg-blue-700",
         !tone && "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/[0.07] dark:text-slate-200 dark:hover:bg-white/[0.12]"
       )}
       disabled={disabled}
@@ -169,11 +181,11 @@ function CardButton({
   );
 }
 
-export function StatCard({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+export function StatCard({ icon, label, tone = "blue", value }: { icon: ReactNode; label: string; tone?: CatalogTone; value: string }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/[0.08] dark:bg-[#111418]">
       <div className="flex items-center justify-between gap-3">
-        <span className="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-white/[0.07] dark:text-slate-200">{icon}</span>
+        <span className={tone === "violet" ? "flex size-10 items-center justify-center rounded-xl bg-violet-100 text-violet-800 dark:bg-violet-400/15 dark:text-violet-200" : "flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-white/[0.07] dark:text-slate-200"}>{icon}</span>
         <p className="font-headline text-2xl font-semi-bold text-slate-950 dark:text-slate-100">{value}</p>
       </div>
       <p className="mt-3 text-[10px] font-semi-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-500">{label}</p>
@@ -181,16 +193,16 @@ export function StatCard({ icon, label, value }: { icon: ReactNode; label: strin
   );
 }
 
-export function EmptyFacilities({ onCreate, permissions }: { onCreate: () => void; permissions: Record<FacilityAction, boolean> }) {
+export function EmptyFacilities({ onCreate, permissions, tone = "blue" }: { onCreate: () => void; permissions: Record<FacilityAction, boolean>; tone?: CatalogTone }) {
   return (
     <div className="flex min-h-[360px] flex-col items-center justify-center p-8 text-center">
-      <div className="flex size-20 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-100">
+      <div className={tone === "violet" ? "flex size-20 items-center justify-center rounded-2xl border border-violet-200 bg-violet-50 text-violet-800 shadow-sm dark:border-violet-400/20 dark:bg-violet-400/10 dark:text-violet-200" : "flex size-20 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 shadow-sm dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-100"}>
         <FileText size={30} />
       </div>
       <h3 className="mt-5 font-headline text-2xl font-semi-bold text-slate-950 dark:text-slate-100">No services have been added yet.</h3>
       <p className="mt-2 max-w-md text-sm font-medium leading-6 text-slate-500">Add a service card such as MRI Scan, ICU, Ambulance, Pharmacy, or Health Checkup.</p>
       {permissions.create ? (
-        <button className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semi-bold text-white dark:bg-white dark:text-slate-950" onClick={onCreate} type="button">
+        <button className={tone === "violet" ? "mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 text-sm font-semi-bold text-white hover:bg-violet-800 dark:bg-violet-500 dark:hover:bg-violet-400" : "mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semi-bold text-white dark:bg-white dark:text-slate-950"} onClick={onCreate} type="button">
           <Plus size={16} />
           Add Service
         </button>
