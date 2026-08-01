@@ -170,7 +170,7 @@ export function ErpDemoSidebar({
   const systemItems = [
     {
       id:
-        isDoctorWorkspace || isClinicWorkspace ? "profile" : "hospital-profile",
+        isClinicWorkspace ? "clinic-profile" : isDoctorWorkspace ? "profile" : "hospital-profile",
       label: "Profile",
       icon: UserRound,
     },

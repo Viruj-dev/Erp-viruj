@@ -127,86 +127,705 @@ const activity = [
   ["Clinic profile updated", "Cover image and description were refreshed.", "2 days ago"],
 ] as const;
 
-export function ClinicProfileManagementPage() {
+export function ClinicProfileManagementPage({
+  organizationId,
+}: {
+  organizationId?: string;
+}) {
+  const savedProfile = useClinicOnboardingData(organizationId);
+
+  if (!savedProfile) {
+    return (
+      <ClinicPageShell
+        eyebrow="Clinic"
+        title="Profile"
+        subtitle="Clinic profile details will appear here after onboarding is saved."
+      >
+        <section className="rounded-2xl border border-dashed border-violet-200 bg-violet-50/60 p-8 text-center dark:border-violet-400/20 dark:bg-violet-400/[0.06]">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-white text-[#6d28d9] shadow-sm dark:bg-white/[0.08] dark:text-violet-200">
+            <Stethoscope size={22} />
+          </div>
+          <h2 className="mt-4 font-headline text-xl font-semibold text-slate-950 dark:text-white">
+            No clinic onboarding data saved yet
+          </h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm font-medium leading-6 text-slate-500 dark:text-slate-400">
+            Complete clinic onboarding to populate identity, contact, location, schedule, specialties, and doctors here.
+          </p>
+        </section>
+      </ClinicPageShell>
+    );
+  }
+
+  const data = savedProfile.data;
+  const profileSource = savedProfile.source;
+  const profile = data.profile;
+  const primaryLocation = data.branches[0];
+  const openDays = data.workingHours.filter((hours) => hours.isOpen);
+  const completedFields = getClinicProfileCompleteness(data);
+  const logoUrl = profile.logoUrl || profile.logoPreviewUrl;
+  const coverUrl = profile.coverUrl || profile.coverPreviewUrl;
+  const clinicPhotoNames = Array.isArray(profile.clinicPhotosNames) ? profile.clinicPhotosNames : [];
+  const photoUrls = Array.isArray(profile.clinicPhotosPreviewUrls)
+    ? profile.clinicPhotosPreviewUrls.filter(hasValue)
+    : [];
+  const services = Array.isArray(data.services) ? data.services : [];
+  const profileSummary = compactList([
+    profile.hospitalType,
+    profile.hospitalOwnershipType,
+    formatLocationTitle(primaryLocation),
+  ]);
+  const sourceLabel = profileSource === "completed" ? "Completed onboarding" : "Saved draft";
+  const identityItems: ProfileDetailItem[] = [
+    { label: "Clinic Name", value: profile.hospitalName },
+    { label: "Legal Business Name", value: profile.legalBusinessName },
+    { label: "Clinic Type", value: profile.hospitalType },
+    { label: "Ownership Type", value: profile.hospitalOwnershipType },
+    { label: "Registration Number", value: profile.registrationNumber },
+    { label: "Year Established", value: profile.establishedYear },
+    { label: "GST Number", value: profile.gstNumber },
+    { label: "PAN", value: profile.panNumber },
+  ];
+  const contactItems: ProfileDetailItem[] = [
+    { label: "Primary Mobile", value: profile.phone },
+    { label: "Alternate Mobile", value: profile.alternateMobile },
+    { label: "Emergency Contact", value: profile.emergencyContact },
+    { label: "WhatsApp Number", value: profile.whatsappNumber },
+    { label: "Email", value: profile.email },
+    { label: "Website", value: profile.website },
+  ];
+  const locationItems: ProfileDetailItem[] = primaryLocation
+    ? [
+        { label: "Address", value: formatAddress(primaryLocation), wide: true },
+        { label: "Landmark", value: primaryLocation.landmark },
+        { label: "City", value: primaryLocation.city },
+        { label: "State", value: primaryLocation.state },
+        { label: "Country", value: primaryLocation.country },
+        { label: "Pincode", value: primaryLocation.postalCode },
+        { label: "Google Maps Location", value: primaryLocation.mapsLocation },
+        { label: "Latitude / Longitude", value: formatCoordinates(primaryLocation.latitude, primaryLocation.longitude) },
+      ]
+    : [];
+  const publicProfileItems: ProfileDetailItem[] = [
+    { label: "About Clinic", value: profile.description, wide: true },
+    { label: "Mission", value: profile.mission },
+    { label: "Vision", value: profile.vision },
+    { label: "Languages Spoken", value: profile.languagesSpoken, wide: true },
+  ];
+  const totalPhotos = Math.max(clinicPhotoNames.length, photoUrls.length);
+  const mediaItems = [
+    ["Logo", profile.logoName || (profile.logoUrl ? "Uploaded logo" : "")],
+    ["Cover image", profile.coverName || (profile.coverUrl ? "Uploaded cover image" : "")],
+    ["Clinic photos", clinicPhotoNames.join(", ")],
+  ].filter(([, value]) => hasValue(value));
+
   return (
     <ClinicPageShell
       eyebrow="Clinic"
-      title="Profile Management"
-      subtitle="Control the public clinic listing patients see across Viruj."
-      actions={<PrimaryAction icon={<Eye size={16} />} label="Preview Listing" />}
+      title="Profile"
+      subtitle={profileSource === "completed" ? "Built from completed onboarding data." : "Built from the latest saved onboarding draft."}
     >
+      <section className="overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-sm dark:border-violet-400/[0.14] dark:bg-[#0e0a14]">
+        <div className="relative min-h-[250px] bg-[#2e1065]">
+          {coverUrl ? (
+            <img
+              alt={`${profile.hospitalName || "Clinic"} cover`}
+              className="absolute inset-0 h-full w-full object-cover"
+              src={coverUrl}
+            />
+          ) : null}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(196,181,253,0.42),transparent_35%),linear-gradient(135deg,rgba(46,16,101,0.95),rgba(109,40,217,0.9)_52%,rgba(24,16,42,0.94))]" />
+          <div className="relative flex min-h-[250px] flex-col justify-between p-6 md:p-7">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/80 backdrop-blur">
+                <ShieldCheck size={14} />
+                {sourceLabel}
+              </span>
+              <span className="inline-flex w-fit rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/80 backdrop-blur">
+                {completedFields}% profile filled
+              </span>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-end">
+              <div className="flex min-w-0 items-end gap-4">
+                <div className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/20 bg-white text-[#6d28d9] shadow-2xl dark:bg-[#171021] dark:text-violet-200">
+                  {logoUrl ? (
+                    <img
+                      alt={`${profile.hospitalName || "Clinic"} logo`}
+                      className="h-full w-full object-cover"
+                      src={logoUrl}
+                    />
+                  ) : (
+                    <Stethoscope size={34} />
+                  )}
+                </div>
+                <div className="min-w-0 pb-1 text-white">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-100/80">
+                    {profile.hospitalType || "Clinic"}
+                  </p>
+                  <h2 className="mt-2 break-words font-headline text-3xl font-semibold tracking-tight md:text-4xl">
+                    {profile.hospitalName || "Unnamed clinic"}
+                  </h2>
+                  <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-violet-50/80">
+                    {profileSummary || "Onboarding details saved without a public summary yet."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-white/12 bg-white/10 text-white backdrop-blur sm:grid-cols-4 lg:grid-cols-2">
+                <ProfileHeroMetric label="Locations" value={data.branches.length.toString()} />
+                <ProfileHeroMetric label="Open Days" value={openDays.length.toString()} />
+                <ProfileHeroMetric label="Specialties" value={data.departments.length.toString()} />
+                <ProfileHeroMetric label="Doctors" value={data.doctors.length.toString()} />
+                <ProfileHeroMetric label="Services" value={services.length.toString()} />
+                <ProfileHeroMetric label="Photos" value={totalPhotos.toString()} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <section className="space-y-5">
-          <Panel title="Basic Information" subtitle="Marketplace identity">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Clinic Name" value="Viruj Advanced Clinic" />
-              <Field label="Listing Category" value="Multispeciality Clinic" />
-              <Field label="Public Slug" value="viruj-advanced-clinic" />
-              <Field label="Primary City" value="Mumbai" />
+          <ProfileSection icon={<ShieldCheck size={18} />} title="Clinic Identity">
+            <ProfileDetailGrid items={identityItems} />
+          </ProfileSection>
+
+          <ProfileSection icon={<MessageSquareReply size={18} />} title="Contact & Location">
+            <div className="space-y-6">
+              <ProfileDetailGrid items={contactItems} />
+              {locationItems.length ? <ProfileDetailGrid items={locationItems} /> : <EmptyProfileBlock label="No location added in onboarding." />}
             </div>
-          </Panel>
-          <Panel title="Contact Information" subtitle="Patient-facing contact details">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Phone" value="+91 98765 43210" />
-              <Field label="Email" value="hello@virujclinic.com" />
-              <Field label="Website" value="virujclinic.com" />
-              <Field label="Support Hours" value="9:00 AM - 8:00 PM" />
+          </ProfileSection>
+
+          <ProfileSection icon={<Stethoscope size={18} />} title="Patient-Facing Details">
+            <ProfileDetailGrid items={publicProfileItems} />
+          </ProfileSection>
+
+          <ProfileSection icon={<MapPin size={18} />} title="Locations">
+            {data.branches.length ? (
+              <div className="divide-y divide-violet-100 dark:divide-violet-400/[0.10]">
+                {data.branches.map((branch, index) => (
+                  <div className="grid gap-3 py-4 first:pt-0 last:pb-0 md:grid-cols-[minmax(0,1fr)_220px]" key={branch.id || `${branch.name}-${index}`}>
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-950 dark:text-white">{branch.name || `Location ${index + 1}`}</p>
+                      <p className="mt-1 break-words text-sm font-semibold leading-6 text-slate-600 dark:text-slate-300">
+                        {formatAddress(branch) || "Address not provided"}
+                      </p>
+                    </div>
+                    <div className="grid gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      <span>{branch.mapsLocation || "Map link not provided"}</span>
+                      <span>{formatCoordinates(branch.latitude, branch.longitude) || "Coordinates not provided"}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyProfileBlock label="No locations added in onboarding." />
+            )}
+          </ProfileSection>
+
+          <ProfileSection icon={<Clock size={18} />} title="Working Hours">
+            <div className="overflow-hidden rounded-xl border border-violet-100 dark:border-violet-400/[0.12]">
+              {data.workingHours.map((hours) => (
+                <div
+                  className="grid gap-2 border-b border-violet-100 px-4 py-3 text-sm last:border-b-0 dark:border-violet-400/[0.10] md:grid-cols-[120px_170px_minmax(0,1fr)]"
+                  key={hours.id || hours.day}
+                >
+                  <span className="font-bold text-slate-950 dark:text-white">{hours.day}</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">
+                    {hours.isOpen ? `${displayValue(hours.openingTime)} - ${displayValue(hours.closingTime)}` : "Closed"}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    {hours.isOpen ? compactList([hours.lunchBreak && `Lunch: ${hours.lunchBreak}`, hours.emergencyHours && `Emergency: ${hours.emergencyHours}`]) || "No break or emergency hours added" : "Not open for regular hours"}
+                  </span>
+                </div>
+              ))}
             </div>
-          </Panel>
-          <Panel title="Description" subtitle="The story shown on your public listing">
-            <textarea
-              className="min-h-32 w-full resize-none rounded-2xl border border-violet-100 bg-violet-50/70 p-4 text-sm font-medium leading-6 text-slate-700 outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-400/[0.12] dark:bg-violet-400/[0.08] dark:text-slate-200"
-              defaultValue="A modern neighbourhood clinic offering trusted specialists, transparent services, and a comfortable patient experience through the Viruj marketplace."
-            />
-          </Panel>
-          <Panel title="Media & Verification" subtitle="Logo, cover image, and registration">
-            <div className="grid gap-4 md:grid-cols-3">
-              <UploadTile label="Logo" />
-              <UploadTile label="Cover Image" wide />
-              <StatusTile label="Verification Status" value="Under Review" />
-              <StatusTile label="Registration Number" value="MH-CL-2041" />
-              <StatusTile label="Visibility" value="Public" />
-            </div>
-          </Panel>
+          </ProfileSection>
         </section>
 
         <aside className="space-y-5">
-          <Panel title="How patients see your clinic" subtitle="Public preview card">
-            <div className="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-sm dark:border-violet-400/[0.12] dark:bg-white/[0.04]">
-              <div className="h-32 bg-[linear-gradient(135deg,#6d28d9,#d946ef)]" />
-              <div className="p-5">
-                <div className="-mt-12 flex size-20 items-center justify-center rounded-2xl bg-white text-[#6d28d9] shadow-lg ring-1 ring-violet-100 dark:bg-[#17141f] dark:ring-violet-400/[0.18]">
-                  <Stethoscope size={30} />
+          <ProfileSection icon={<Sparkles size={18} />} title="Profile Readiness">
+            <div className="space-y-4">
+              <div>
+                <div className="mb-2 flex items-center justify-between text-sm">
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">Saved information</span>
+                  <strong className="text-slate-950 dark:text-white">{completedFields}%</strong>
                 </div>
-                <h3 className="mt-4 text-xl font-bold text-slate-950 dark:text-white">
-                  Viruj Advanced Clinic
-                </h3>
-                <p className="mt-1 text-sm font-medium text-slate-500">
-                  Multispeciality Clinic - Mumbai
-                </p>
-                <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-amber-600">
-                  <Star size={16} fill="currentColor" />
-                  4.8 - 1,284 reviews
+                <div className="h-2 rounded-full bg-violet-100 dark:bg-violet-400/[0.12]">
+                  <div className="h-2 rounded-full bg-[#6d28d9]" style={{ width: `${completedFields}%` }} />
                 </div>
-                <button className="mt-5 h-11 w-full rounded-xl bg-[#6d28d9] text-sm font-semibold text-white" type="button">
-                  Request Appointment
-                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <ProfileMiniMetric icon={<MapPin size={16} />} label="Locations" value={data.branches.length.toString()} />
+                <ProfileMiniMetric icon={<Clock size={16} />} label="Open Days" value={openDays.length.toString()} />
+                <ProfileMiniMetric icon={<Stethoscope size={16} />} label="Specialties" value={data.departments.length.toString()} />
+                <ProfileMiniMetric icon={<Users size={16} />} label="Doctors" value={data.doctors.length.toString()} />
+                <ProfileMiniMetric icon={<Plus size={16} />} label="Services" value={services.length.toString()} />
+                <ProfileMiniMetric icon={<Camera size={16} />} label="Photos" value={totalPhotos.toString()} />
               </div>
             </div>
-          </Panel>
-          <Panel title="Listing Health" subtitle="Profile completeness">
-            <div className="space-y-3">
-              <Progress label="Basic information" value="100%" width="100%" />
-              <Progress label="Gallery" value="72%" width="72%" />
-              <Progress label="Services" value="88%" width="88%" />
-            </div>
-          </Panel>
+          </ProfileSection>
+
+          <ProfileSection icon={<Stethoscope size={18} />} title="Specialties">
+            {data.departments.length ? (
+              <div className="divide-y divide-violet-100 dark:divide-violet-400/[0.10]">
+                {data.departments.map((department) => (
+                  <div className="py-3 first:pt-0 last:pb-0" key={department.name}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-bold text-slate-950 dark:text-white">{department.name}</p>
+                        <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                          {department.description || "No description provided"}
+                        </p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-bold text-[#6d28d9] dark:bg-violet-400/[0.12] dark:text-violet-200">
+                        {displayValue(department.openTime)} - {displayValue(department.closeTime)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyProfileBlock label="No specialties added in onboarding." />
+            )}
+          </ProfileSection>
+
+          <ProfileSection icon={<Plus size={18} />} title="Services">
+            {services.length ? (
+              <div className="divide-y divide-violet-100 dark:divide-violet-400/[0.10]">
+                {services.map((service, index) => (
+                  <div className="py-3 first:pt-0 last:pb-0" key={service.id || `${service.name}-${index}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-bold text-slate-950 dark:text-white">{service.name || "Unnamed service"}</p>
+                        <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          {compactList([service.category, service.duration, service.price && `Price: ${service.price}`]) || "Category, price, and duration not provided"}
+                        </p>
+                        {service.description ? (
+                          <p className="mt-1 text-xs font-medium leading-5 text-slate-500 dark:text-slate-400">{service.description}</p>
+                        ) : null}
+                      </div>
+                      <span className="shrink-0 rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-bold text-[#6d28d9] dark:bg-violet-400/[0.12] dark:text-violet-200">
+                        {service.availableOnline ? "Online" : "Clinic only"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyProfileBlock label="No services added in onboarding." />
+            )}
+          </ProfileSection>
+
+          <ProfileSection icon={<Users size={18} />} title="Doctors">
+            {data.doctors.length ? (
+              <div className="divide-y divide-violet-100 dark:divide-violet-400/[0.10]">
+                {data.doctors.map((doctor, index) => (
+                  <div className="py-3 first:pt-0 last:pb-0" key={doctor.id || `${doctor.name}-${index}`}>
+                    <p className="font-bold text-slate-950 dark:text-white">{doctor.name || "Unnamed doctor"}</p>
+                    <div className="mt-2 grid gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      <span>{displayValue(doctor.department)}</span>
+                      <span>{compactList([doctor.experience && `${doctor.experience} experience`, doctor.consultationFee && `Fee: ${doctor.consultationFee}`]) || "Experience and fee not provided"}</span>
+                      <span>{doctor.availability || "Availability not provided"}</span>
+                      {doctor.inviteEmail ? <span>{doctor.inviteEmail}</span> : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyProfileBlock label="No doctors added in onboarding." />
+            )}
+          </ProfileSection>
+
+          <ProfileSection icon={<Camera size={18} />} title="Media">
+            {photoUrls.length ? (
+              <div className="mb-4 grid grid-cols-3 gap-2">
+                {photoUrls.slice(0, 6).map((photoUrl, index) => (
+                  <img
+                    alt={`Clinic photo ${index + 1}`}
+                    className="aspect-square rounded-xl object-cover"
+                    key={photoUrl}
+                    src={photoUrl}
+                  />
+                ))}
+              </div>
+            ) : null}
+            {mediaItems.length ? (
+              <div className="divide-y divide-violet-100 dark:divide-violet-400/[0.10]">
+                {mediaItems.map(([label, value]) => (
+                  <ProfileInfoCell key={label} label={label} value={value} />
+                ))}
+              </div>
+            ) : (
+              <EmptyProfileBlock label="No media files saved in onboarding." />
+            )}
+          </ProfileSection>
         </aside>
       </div>
     </ClinicPageShell>
   );
 }
+function useClinicOnboardingData(organizationId?: string) {
+  const [savedProfile, setSavedProfile] = useState<{
+    data: OnboardingState;
+    source: "completed" | "draft";
+  } | null>(null);
 
+  useEffect(() => {
+    const storageIds = [organizationId, "workspace"].filter(
+      (value): value is string => Boolean(value)
+    );
+
+    for (const storageId of storageIds) {
+      const completed = readClinicOnboardingStorage(
+        `viruj:clinic-onboarding:completed:${storageId}`
+      );
+      if (completed) {
+        setSavedProfile({ data: completed, source: "completed" });
+        return;
+      }
+
+      const draft = readClinicOnboardingStorage(
+        `viruj:clinic-onboarding:draft:${storageId}`
+      );
+      if (draft) {
+        setSavedProfile({ data: draft, source: "draft" });
+        return;
+      }
+    }
+
+    setSavedProfile(null);
+  }, [organizationId]);
+
+  return savedProfile;
+}
+
+function readClinicOnboardingStorage(key: string): OnboardingState | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as unknown;
+    const data =
+      parsed && typeof parsed === "object" && "data" in parsed
+        ? (parsed as { data?: unknown }).data
+        : parsed;
+
+    return isOnboardingState(data) ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeClinicOnboardingStorage(
+  organizationId: string | undefined,
+  source: "completed" | "draft",
+  data: OnboardingState
+) {
+  if (typeof window === "undefined") return;
+
+  const storageId = organizationId || "workspace";
+  window.localStorage.setItem(
+    `viruj:clinic-onboarding:${source}:${storageId}`,
+    JSON.stringify(data)
+  );
+}
+function isOnboardingState(value: unknown): value is OnboardingState {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      "profile" in value &&
+      "branches" in value &&
+      "departments" in value &&
+      "doctors" in value &&
+      "workingHours" in value
+  );
+}
+
+type ProfileDetailItem = {
+  label: string;
+  value?: string;
+  wide?: boolean;
+};
+
+function ProfileSection({
+  children,
+  icon,
+  title,
+}: {
+  children: ReactNode;
+  icon: ReactNode;
+  title: string;
+}) {
+  return (
+    <section className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm dark:border-violet-400/[0.12] dark:bg-[#111018]">
+      <div className="mb-5 flex items-center gap-3">
+        <span className="flex size-9 items-center justify-center rounded-xl bg-violet-50 text-[#6d28d9] dark:bg-violet-400/[0.12] dark:text-violet-200">
+          {icon}
+        </span>
+        <h2 className="font-headline text-base font-semibold text-slate-950 dark:text-slate-100">{title}</h2>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function ProfileDetailGrid({ items }: { items: ProfileDetailItem[] }) {
+  return (
+    <div className="grid gap-x-6 gap-y-0 md:grid-cols-2">
+      {items.map((item) => (
+        <ProfileInfoCell
+          className={item.wide ? "md:col-span-2" : undefined}
+          key={item.label}
+          label={item.label}
+          value={item.value}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ProfileHeroMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border-b border-r border-white/10 px-4 py-3 last:border-r-0 sm:border-b-0">
+      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/60">{label}</p>
+      <p className="mt-1 text-xl font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function ProfileInfoCell({
+  className,
+  label,
+  value,
+}: {
+  className?: string;
+  label: string;
+  value?: string;
+}) {
+  return (
+    <div className={`grid gap-1 border-b border-violet-100 py-3 last:border-b-0 dark:border-violet-400/[0.10] ${className ?? ""}`}>
+      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-500">
+        {label}
+      </p>
+      <p className={`break-words text-sm font-semibold ${hasValue(value) ? "text-slate-900 dark:text-slate-100" : "text-slate-400 dark:text-slate-500"}`}>
+        {displayValue(value)}
+      </p>
+    </div>
+  );
+}
+
+function ProfileMiniMetric({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-violet-100 bg-violet-50/60 p-3 dark:border-violet-400/[0.10] dark:bg-violet-400/[0.07]">
+      <div className="flex items-center gap-2 text-[#6d28d9] dark:text-violet-200">
+        {icon}
+        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+          {label}
+        </span>
+      </div>
+      <p className="mt-2 text-xl font-semibold text-slate-950 dark:text-white">{value}</p>
+    </div>
+  );
+}
+
+function EmptyProfileBlock({ label }: { label: string }) {
+  return (
+    <div className="rounded-xl border border-dashed border-violet-200 bg-violet-50/40 px-4 py-5 text-sm font-semibold text-slate-500 dark:border-violet-400/20 dark:bg-violet-400/[0.05] dark:text-slate-400">
+      {label}
+    </div>
+  );
+}
+function getClinicProfileCompleteness(data: OnboardingState) {
+  const profile = data.profile;
+  const primaryLocation = data.branches[0];
+  const checks = [
+    profile.hospitalName,
+    profile.legalBusinessName,
+    profile.logoName || profile.logoUrl,
+    profile.hospitalType,
+    profile.hospitalOwnershipType,
+    profile.registrationNumber,
+    profile.establishedYear,
+    profile.phone,
+    profile.email,
+    primaryLocation?.address,
+    primaryLocation?.city,
+    primaryLocation?.state,
+    primaryLocation?.postalCode,
+    data.workingHours.some((hours) => hours.isOpen && hours.openingTime && hours.closingTime) ? "hours" : "",
+    data.departments.length ? "departments" : "",
+    data.doctors.length ? "doctors" : "",
+  ];
+
+  return Math.round((checks.filter(hasValue).length / checks.length) * 100);
+}
+
+function displayValue(value?: string) {
+  return hasValue(value) ? value.trim() : "Not provided";
+}
+
+function hasValue(value?: string): value is string {
+  return Boolean(value?.trim());
+}
+
+function compactList(values: Array<string | false | undefined>) {
+  return values.filter((value): value is string => typeof value === "string" && value.trim().length > 0).join(" | ");
+}
+
+function formatLocationTitle(location?: OnboardingState["branches"][number]) {
+  if (!location) return "Location not provided";
+  return compactList([location.city, location.state, location.country]) || "Location not provided";
+}
+
+function formatAddress(location: OnboardingState["branches"][number]) {
+  return compactList([
+    location.address,
+    location.landmark,
+    location.city,
+    location.state,
+    location.country,
+    location.postalCode,
+  ]);
+}
+
+function formatCoordinates(latitude?: string, longitude?: string) {
+  return hasValue(latitude) || hasValue(longitude)
+    ? compactList([latitude, longitude])
+    : "";
+}
+export function ClinicDepartmentsPage({
+  organizationId,
+}: {
+  organizationId?: string;
+}) {
+  const savedProfile = useClinicOnboardingData(organizationId);
+  const [departments, setDepartments] = useState<OnboardingState["departments"]>([]);
+  const [draft, setDraft] = useState({ closeTime: "", description: "", name: "", openTime: "" });
+
+  useEffect(() => {
+    setDepartments(savedProfile?.data.departments ?? []);
+  }, [savedProfile]);
+
+  const addDepartment = () => {
+    const name = draft.name.trim();
+    if (!name) return;
+
+    const nextDepartment = {
+      closeTime: draft.closeTime.trim(),
+      description: draft.description.trim(),
+      head: "",
+      name,
+      openTime: draft.openTime.trim(),
+    };
+    const nextDepartments = [...departments, nextDepartment];
+
+    setDepartments(nextDepartments);
+    setDraft({ closeTime: "", description: "", name: "", openTime: "" });
+
+    if (savedProfile) {
+      writeClinicOnboardingStorage(
+        organizationId,
+        savedProfile.source,
+        { ...savedProfile.data, departments: nextDepartments }
+      );
+    }
+  };
+
+  return (
+    <ClinicPageShell
+      actions={<PrimaryAction icon={<Plus size={16} />} label="Add Department" onClick={addDepartment} />}
+      eyebrow="Clinic"
+      title="Departments"
+      subtitle="Manage clinic departments and specialties from onboarding."
+    >
+      <section className="rounded-2xl border border-violet-100 bg-white p-4 shadow-sm dark:border-violet-400/[0.12] dark:bg-[#111018]">
+        <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)_140px_140px_auto]">
+          <label className="block">
+            <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Department</span>
+            <input
+              className="h-11 w-full rounded-xl border border-violet-100 bg-violet-50/60 px-3 text-sm font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-400/[0.12] dark:bg-violet-400/[0.08] dark:text-white"
+              onChange={(event) => setDraft((value) => ({ ...value, name: event.target.value }))}
+              placeholder="General Medicine"
+              value={draft.name}
+            />
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Description</span>
+            <input
+              className="h-11 w-full rounded-xl border border-violet-100 bg-violet-50/60 px-3 text-sm font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-400/[0.12] dark:bg-violet-400/[0.08] dark:text-white"
+              onChange={(event) => setDraft((value) => ({ ...value, description: event.target.value }))}
+              placeholder="Short department note"
+              value={draft.description}
+            />
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Opening</span>
+            <input
+              className="h-11 w-full rounded-xl border border-violet-100 bg-violet-50/60 px-3 text-sm font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-400/[0.12] dark:bg-violet-400/[0.08] dark:text-white"
+              onChange={(event) => setDraft((value) => ({ ...value, openTime: event.target.value }))}
+              placeholder="09:00 AM"
+              value={draft.openTime}
+            />
+          </label>
+          <label className="block">
+            <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">Closing</span>
+            <input
+              className="h-11 w-full rounded-xl border border-violet-100 bg-violet-50/60 px-3 text-sm font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-violet-200 dark:border-violet-400/[0.12] dark:bg-violet-400/[0.08] dark:text-white"
+              onChange={(event) => setDraft((value) => ({ ...value, closeTime: event.target.value }))}
+              placeholder="06:00 PM"
+              value={draft.closeTime}
+            />
+          </label>
+          <div className="flex items-end">
+            <button
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#6d28d9] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#5b21b6]"
+              onClick={addDepartment}
+              type="button"
+            >
+              <Plus size={16} />
+              Add
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-sm dark:border-violet-400/[0.12] dark:bg-[#111018]">
+        <div className="grid grid-cols-[minmax(0,1fr)_150px_150px] gap-4 bg-violet-50 px-5 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:bg-violet-400/[0.08]">
+          <span>Department</span>
+          <span>Opening</span>
+          <span>Closing</span>
+        </div>
+        {departments.length ? (
+          <div className="divide-y divide-violet-100 dark:divide-violet-400/[0.10]">
+            {departments.map((department, index) => (
+              <div
+                className="grid grid-cols-[minmax(0,1fr)_150px_150px] gap-4 px-5 py-4 text-sm"
+                key={`${department.name}-${index}`}
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-bold text-slate-950 dark:text-white">{department.name || "Unnamed department"}</p>
+                  <p className="mt-1 line-clamp-2 text-xs font-medium leading-5 text-slate-500 dark:text-slate-400">
+                    {department.description || "No description provided"}
+                  </p>
+                </div>
+                <span className="font-semibold text-slate-700 dark:text-slate-300">{displayValue(department.openTime)}</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-300">{displayValue(department.closeTime)}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-5">
+            <EmptyProfileBlock label="No departments added yet." />
+          </div>
+        )}
+      </section>
+    </ClinicPageShell>
+  );
+}
 export function ClinicLocationsPage() {
   return (
     <ClinicPageShell eyebrow="Clinic" title="Locations" subtitle="Manage addresses and map visibility for your clinic listing." actions={<PrimaryAction icon={<Plus size={16} />} label="Add Location" />}>
@@ -894,7 +1513,7 @@ export function ClinicReviewsPage() {
                   <p className="font-bold text-slate-950 dark:text-white">{review[0]}</p>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{review[2]}</p>
                 </div>
-                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">{review[1]} Ã¢Ëœâ€¦</span>
+                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">{review[1]} ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¹ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</span>
               </div>
               <div className="mt-4 flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500">{review[3]}</span>

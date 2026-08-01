@@ -2,6 +2,7 @@
 
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import {
+  ClinicDepartmentsPage,
   ClinicGalleryPage,
   ClinicLocationsPage,
   ClinicOfferingsPage,
@@ -22,7 +23,6 @@ import {
 } from "@/features/dashboard/components/hospital/pages";
 import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
-import { ErpUserProfilePage } from "@/features/dashboard/components/shared/profile";
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
 import { createErpTenantContext, type ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import {
@@ -52,6 +52,7 @@ const clinicSupportedPages: ErpDemoPage[] = [
   "working-hours",
   "patients",
   "doctors",
+  "departments",
   "offerings",
   "services",
   "facilities",
@@ -410,8 +411,8 @@ export function ClinicHomeScreen({
           onNavigateToProfile={() => {
             router.push(
               activeOrganizationSlug
-                ? buildTenantDashboardPath("clinic", activeOrganizationSlug, "profile")
-                : buildDashboardPath("clinic", "profile")
+                ? buildTenantDashboardPath("clinic", activeOrganizationSlug, "clinic-profile")
+                : buildDashboardPath("clinic", "clinic-profile")
             );
           }}
           onLogout={async () => {
@@ -489,7 +490,8 @@ function ClinicPageContent({
     case "appointments-settings":
       return <ErpDemoPatients organizationId={organizationId} tone="violet" />;
     case "clinic-profile":
-      return <ClinicProfileManagementPage />;
+    case "profile":
+      return <ClinicProfileManagementPage organizationId={organizationId} />;
     case "locations":
       return <ClinicLocationsPage />;
     case "working-hours":
@@ -503,6 +505,8 @@ function ClinicPageContent({
           organizationLabel="Clinic"
         />
       );
+    case "departments":
+      return <ClinicDepartmentsPage organizationId={organizationId} />;
     case "offerings":
       return <ClinicOfferingsPage />;
     case "services":
@@ -538,8 +542,6 @@ function ClinicPageContent({
       return <ErpDemoAnalytics />;
     case "settings":
       return <ClinicSettingsPage />;
-    case "profile":
-      return <ErpUserProfilePage />;
     case "dashboard":
     default:
       return (
