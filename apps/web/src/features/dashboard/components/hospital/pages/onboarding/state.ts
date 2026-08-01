@@ -83,11 +83,9 @@ export function validateStep(
       return "";
     case "departments":
       if (
-        data.departments.filter(
-          (department) => !data.disabledDepartments.includes(department.name)
-        ).length === 0
+        (kind === "clinic" ? data.departments : data.departments.filter((department) => !data.disabledDepartments.includes(department.name))).length === 0
       ) {
-        return "Enable at least one department.";
+        return kind === "clinic" ? "Add at least one specialty." : "Enable at least one department.";
       }
       if (
         data.departments.some(
@@ -258,11 +256,13 @@ export function mergeOnboardingState(
     ...state,
     branches: normalizeBranches(state.branches, kind),
     departments,
-    disabledDepartments: Array.isArray(state.disabledDepartments)
-      ? state.disabledDepartments.filter((department) =>
-          departments.some((item) => item.name === department)
-        )
-      : [],
+    disabledDepartments: kind === "clinic"
+      ? []
+      : Array.isArray(state.disabledDepartments)
+        ? state.disabledDepartments.filter((department) =>
+            departments.some((item) => item.name === department)
+          )
+        : [],
     doctors: normalizeDoctors(state.doctors),
     profile: {
       ...fallback.profile,

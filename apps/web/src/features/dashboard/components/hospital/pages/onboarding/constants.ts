@@ -12,11 +12,9 @@ export const clinicSteps: StepDefinition[] = [
   { id: "profile", label: "Basic Clinic Information", kicker: "Identity" },
   { id: "contact", label: "Contact Information", kicker: "Reachability" },
   { id: "locations", label: "Location", kicker: "Address" },
-  { id: "clinicProfile", label: "Clinic Profile", kicker: "Patient-facing" },
   { id: "workingHours", label: "Working Hours", kicker: "Schedule" },
   { id: "departments", label: "Departments / Specialties", kicker: "Care units" },
   { id: "doctors", label: "Doctors", kicker: "Clinical team" },
-  { id: "services", label: "Services", kicker: "Offerings" },
   { id: "review", label: "Review & Complete", kicker: "Launch" },
 ];
 
@@ -39,7 +37,7 @@ export const hospitalStepDescriptions: Record<StepId, string> = {
 export const clinicStepDescriptions: Record<StepId, string> = {
   clinicProfile: "Add about, languages, photos, and cover image",
   contact: "Add mobile, email, WhatsApp, and emergency contact",
-  departments: "Add specialties with descriptions and optional heads",
+  departments: "Add specialties with descriptions and hours",
   doctors: "Add existing doctors or invite new doctors",
   locations: "Add address, map link, and coordinates",
   profile: "Add clinic identity and registration details",

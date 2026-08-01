@@ -9,7 +9,6 @@ import {
 import {
   Camera,
   Clock,
-  Eye,
   ImagePlus,
   MapPin,
   MessageSquareReply,
@@ -17,16 +16,16 @@ import {
   Search,
   ShieldCheck,
   Sparkles,
-  Star,
   Stethoscope,
   Users,
 } from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
   type VirujHospitalGalleryInput,
   virujBackend,
 } from "@/lib/viruj-backend";
+import type { OnboardingState } from "@/features/dashboard/components/hospital/pages/onboarding/types";
 
 const doctors = [
   ["Dr. Aditi Rao", "Dermatology", "Live", "Skin Care, Hair Consults", "18.4k", "428", "4.8"],

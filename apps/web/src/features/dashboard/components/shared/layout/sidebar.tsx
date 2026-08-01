@@ -58,7 +58,6 @@ const clinicNavItems = [
   { id: "appointments", label: "Appointments", icon: ClipboardCheck },
   { id: "doctors", label: "Doctors", icon: Stethoscope },
   { id: "services", label: "Services", icon: HeartPulse },
-  { id: "offerings", label: "Offerings", icon: PackageCheck },
   { id: "gallery", label: "Gallery", icon: Image },
   { id: "community", label: "Community", icon: MessagesSquare },
   { id: "analytics", label: "Analytics", icon: BarChart3,},

@@ -25,7 +25,6 @@ import {
   mergeOnboardingState,
   validateStep,
 } from "./state";
-import { ClinicProfileStep } from "./steps/clinic-profile-step";
 import { ContactStep } from "./steps/contact-step";
 import { DepartmentsStep } from "./steps/departments-step";
 import { DoctorsStep } from "./steps/doctors-step";
@@ -33,7 +32,6 @@ import { LocationsStep } from "./steps/locations-step";
 import { ProfileStep } from "./steps/profile-step";
 import { PublicProfileStep } from "./steps/public-profile-step";
 import { ReviewStep } from "./steps/review-step";
-import { ServicesStep } from "./steps/services-step";
 import { WorkingHoursStep } from "./steps/working-hours-step";
 import type { OnboardingKind, OnboardingState, StepId } from "./types";
 
@@ -88,10 +86,10 @@ export function OrganizationOnboardingPage({
   const currentStep = steps[currentStepIndex] ?? steps[0];
   const progressCount = completedSteps.filter((step) => onboardingStepIds.has(step)).length;
   const completionPercentage = Math.round((progressCount / steps.length) * 100);
-  const enabledDepartments = data.departments.filter(
-    (department) => !data.disabledDepartments.includes(department.name)
-  );
-  const wideContent = ["departments", "public", "review", "workingHours", "doctors", "services"].includes(currentStep.id);
+  const enabledDepartments = kind === "clinic"
+    ? data.departments
+    : data.departments.filter((department) => !data.disabledDepartments.includes(department.name));
+  const wideContent = ["departments", "public", "review", "workingHours", "doctors"].includes(currentStep.id);
   const contentWidthClassName = wideContent ? "max-w-[960px]" : "max-w-[660px]";
   const entityLabel = kind === "clinic" ? "clinic" : "hospital";
 
@@ -160,7 +158,6 @@ export function OrganizationOnboardingPage({
         },
         { label: "Specialties", value: enabledDepartments.length.toString() },
         { label: "Doctors", value: data.doctors.length.toString() },
-        { label: "Services", value: data.services.length.toString() },
         {
           label: "Location",
           value: data.branches[0]?.city || data.branches[0]?.address || "Pending",
@@ -414,13 +411,6 @@ export function OrganizationOnboardingPage({
                         <LocationsStep data={data} kind={kind} setData={setData} />
                       ) : null}
 
-                      {currentStep.id === "clinicProfile" ? (
-                        <ClinicProfileStep
-                          data={data}
-                          organizationId={storageId}
-                          updateProfile={updateProfile}
-                        />
-                      ) : null}
 
                       {currentStep.id === "workingHours" ? (
                         <WorkingHoursStep data={data} setData={setData} />
@@ -441,9 +431,6 @@ export function OrganizationOnboardingPage({
                         <DoctorsStep data={data} setData={setData} />
                       ) : null}
 
-                      {currentStep.id === "services" ? (
-                        <ServicesStep data={data} setData={setData} />
-                      ) : null}
 
                       {currentStep.id === "public" ? (
                         <PublicProfileStep data={data} setData={setData} />

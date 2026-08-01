@@ -19,9 +19,11 @@ export function ReviewStep({
   const isClinic = kind === "clinic";
   const organizationName = data.profile.hospitalName || (isClinic ? "Your clinic" : "Your hospital");
   const primaryBranch = data.branches[0];
-  const enabledDepartments = data.departments.filter(
-    (department) => !data.disabledDepartments.includes(department.name)
-  );
+  const enabledDepartments = isClinic
+    ? data.departments
+    : data.departments.filter(
+        (department) => !data.disabledDepartments.includes(department.name)
+      );
   const launchChecks = [
     {
       label: "Organization identity",
@@ -39,19 +41,19 @@ export function ReviewStep({
       ready: enabledDepartments.length > 0,
     },
     {
-      label: isClinic ? "Clinic services" : "Patient app profile",
+      label: isClinic ? "Doctors" : "Patient app profile",
       meta: isClinic
-        ? `${data.services.length} services added`
+        ? `${data.doctors.length} doctors added`
         : data.publicProfile.showHospitalProfile
           ? "Visible on Viruj"
           : "Hidden from Viruj",
-      ready: isClinic ? data.services.length > 0 : data.publicProfile.showHospitalProfile,
+      ready: isClinic ? data.doctors.length > 0 : data.publicProfile.showHospitalProfile,
     },
   ];
   const visiblePatientFeatures = isClinic
     ? [
         `${data.doctors.length} doctors`,
-        `${data.services.length} services`,
+        `${enabledDepartments.length} specialties`,
         `${data.workingHours.filter((hours) => hours.isOpen).length} open days`,
       ]
     : publicOptions
@@ -155,14 +157,14 @@ export function ReviewStep({
             <Globe2 size={20} />
             <p className="mt-3 text-sm font-semibold">
               {isClinic
-                ? `${data.doctors.length} doctors / ${data.services.length} services`
+                ? `${data.doctors.length} doctors / ${enabledDepartments.length} specialties`
                 : data.publicProfile.showHospitalProfile
                   ? "Ready to publish"
                   : "Private workspace"}
             </p>
             <p className="mt-1 text-xs font-medium leading-5 text-white/80">
               {isClinic
-                ? "Clinic onboarding captures profile, schedule, doctors, services, and location details."
+                ? "Clinic onboarding captures identity, contact, location, schedule, specialties, and doctors."
                 : data.publicProfile.showHospitalProfile
                   ? "Patients will see the enabled profile sections in Viruj."
                   : "You can publish the hospital profile later from settings."}
