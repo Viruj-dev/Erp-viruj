@@ -17,6 +17,7 @@ const defaultOrganizationType = "hospital";
 
 export function registerAuthRoutes(app: Hono) {
   app.get("/auth/central-api-token", async (context) => {
+    context.header("Cache-Control", "no-store");
     try {
       const authSession = await auth.api.getSession({
         headers: context.req.raw.headers,
@@ -54,7 +55,10 @@ export function registerAuthRoutes(app: Hono) {
         .then((memberships) => memberships[0] ?? null);
 
       if (!activeMembership) {
-        return context.json({ error: "Active organization membership required" }, 403);
+        return context.json(
+          { error: "Active organization membership required" },
+          403
+        );
       }
 
       const now = Math.floor(Date.now() / 1000);
@@ -139,10 +143,7 @@ export function registerAuthRoutes(app: Hono) {
       console.error("[Auth] Organization activation failed:", error);
       return context.json(
         {
-          error:
-            error instanceof Error
-              ? error.message
-              : "Unable to activate organization.",
+          error: "Unable to activate organization.",
         },
         500
       );
@@ -184,47 +185,41 @@ export function registerAuthRoutes(app: Hono) {
       let selectedOrganization = existingMembership;
 
       if (!selectedOrganization) {
-        const existingOrganization = await db
-          .select({
-            organizationId: organization.id,
-            organizationType: organization.organizationType,
-          })
-          .from(organization)
-          .where(eq(organization.slug, requestedSlug))
-          .limit(1)
-          .then((organizations) => organizations[0] ?? null);
-
-        selectedOrganization =
-          existingOrganization ?? {
-            organizationId: randomUUID(),
-            organizationType,
-          };
-
-        if (!existingOrganization) {
-          await db
+        selectedOrganization = await db.transaction(async (tx) => {
+          // Only a newly inserted organization can grant ownership here.
+          const [created] = await tx
             .insert(organization)
             .values({
-              id: selectedOrganization.organizationId,
+              id: randomUUID(),
               name,
               organizationType,
               slug: requestedSlug,
             })
-            .onConflictDoNothing();
-        }
+            .onConflictDoNothing({ target: organization.slug })
+            .returning({
+              organizationId: organization.id,
+              organizationType: organization.organizationType,
+            });
 
-        await db
-          .insert(member)
-          .values({
+          if (!created) {
+            return null;
+          }
+
+          await tx.insert(member).values({
             id: randomUUID(),
-            organizationId: selectedOrganization.organizationId,
+            organizationId: created.organizationId,
             role: "OWNER",
             userId: authSession.user.id,
-          })
-          .onConflictDoNothing();
+          });
+          return created;
+        });
+      }
 
-        selectedOrganization =
-          (await findMembership(authSession.user.id, organizationType)) ??
-          selectedOrganization;
+      if (!selectedOrganization) {
+        return context.json(
+          { error: "Organization slug is unavailable." },
+          409
+        );
       }
 
       await setSessionActiveOrganization(
@@ -240,17 +235,16 @@ export function registerAuthRoutes(app: Hono) {
       console.error("[Auth] Organization bootstrap failed:", error);
       return context.json(
         {
-          error:
-            error instanceof Error
-              ? error.message
-              : "Unable to bootstrap organization.",
+          error: "Unable to bootstrap organization.",
         },
         500
       );
     }
   });
 
-  app.on(["POST", "GET"], "/auth/*", (context) => auth.handler(context.req.raw));
+  app.on(["POST", "GET"], "/auth/*", (context) =>
+    auth.handler(context.req.raw)
+  );
 }
 
 async function setSessionActiveOrganization(

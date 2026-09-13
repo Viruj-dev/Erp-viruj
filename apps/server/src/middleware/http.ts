@@ -5,20 +5,31 @@ import { logger } from "hono/logger";
 import { networkInterfaces } from "node:os";
 
 const allowedOrigins = buildAllowedOrigins();
-const defaultOrigin = allowedOrigins.values().next().value ?? "";
 
 export function registerHttpMiddleware(app: Hono) {
   app.use(logger());
   app.use(
     "/*",
     cors({
-      origin: (origin) =>
-        !origin || allowedOrigins.has(origin) ? origin : defaultOrigin,
+      origin: (origin) => (allowedOrigins.has(origin) ? origin : ""),
       allowMethods: ["DELETE", "GET", "PATCH", "POST", "OPTIONS"],
       allowHeaders: ["Content-Type", "Authorization", "Cookie"],
       credentials: true,
     })
   );
+  app.use("/*", async (context, next) => {
+    if (!["GET", "HEAD", "OPTIONS"].includes(context.req.method)) {
+      const origin = context.req.header("Origin");
+      // CORS does not stop simple requests from mutating cookie-authenticated data.
+      if (
+        (origin && !allowedOrigins.has(origin)) ||
+        (!origin && context.req.header("Cookie"))
+      ) {
+        return context.json({ error: "Untrusted request origin" }, 403);
+      }
+    }
+    await next();
+  });
 }
 
 function buildAllowedOrigins() {
@@ -27,6 +38,7 @@ function buildAllowedOrigins() {
       .map((origin) => origin.trim())
       .filter(Boolean)
   );
+  origins.add(new URL(env.BETTER_AUTH_URL).origin);
 
   if (env.NODE_ENV !== "production") {
     origins.add("http://localhost:3001");

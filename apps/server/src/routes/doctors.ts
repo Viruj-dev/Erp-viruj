@@ -1,4 +1,4 @@
-import { auth } from "@erp_virujhealth/auth";
+import { auth, hasOrganizationPermission } from "@erp_virujhealth/auth";
 import { db } from "@erp_virujhealth/db";
 import { doctor } from "@erp_virujhealth/db/schema/auth";
 import { and, desc, eq } from "drizzle-orm";
@@ -251,10 +251,23 @@ async function requireHospitalOrganizationId(context: Context) {
       response: context.json(
         {
           error: "hospital_workspace_required",
-          message: "Doctor directory management is only available in hospital workspaces.",
+          message:
+            "Doctor directory management is only available in hospital workspaces.",
         },
         403
       ),
+    };
+  }
+
+  const role = session.activeMember?.role;
+  const action = context.req.method === "GET" ? "read" : "manage";
+
+  if (
+    !role ||
+    !hasOrganizationPermission(role, { doctorDirectory: [action] })
+  ) {
+    return {
+      response: context.json({ error: "permission_denied" }, 403),
     };
   }
 

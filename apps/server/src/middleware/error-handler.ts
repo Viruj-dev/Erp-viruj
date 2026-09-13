@@ -6,8 +6,6 @@ export function handleServerError(error: Error, context: Context) {
   return context.json(
     {
       error: "Internal Server Error",
-      message: error.message,
-      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
     },
     500
   );
