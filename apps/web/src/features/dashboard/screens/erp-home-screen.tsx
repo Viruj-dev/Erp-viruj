@@ -1,5 +1,6 @@
 "use client";
 
+import { shouldStartOrganizationOnboarding } from "@/features/dashboard/lib/onboarding";
 import { ActivityLogsPage } from "@/features/dashboard/components/shared/activity";
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
@@ -78,7 +79,9 @@ export function ErpHomeScreen({
   const activeMember = sessionMember ?? activeMemberState.data;
   const isAuthPending =
     sessionState.isPending ||
-    organizationsState.isPending;
+    organizationsState.isPending ||
+    (!sessionOrganization && activeOrganizationState.isPending) ||
+    (!sessionMember && activeMemberState.isPending);
 
   useEffect(() => {
     const activeOrganizationId = activeOrganization?.id;
@@ -169,6 +172,11 @@ export function ErpHomeScreen({
       })
     : null;
   const workspaceTheme = getWorkspaceTheme(organizationLabel);
+  const shouldRedirectToOnboarding =
+    isHydrated &&
+    !isAuthPending &&
+    requestedPage === "dashboard" &&
+    shouldStartOrganizationOnboarding(activeOrganization, window.localStorage);
 
   useEffect(() => {
     if (!isHydrated || isAuthPending) {
@@ -182,26 +190,15 @@ export function ErpHomeScreen({
 
   useEffect(() => {
     if (
-      !isHydrated ||
-      isAuthPending ||
-      requestedPage !== "dashboard" ||
-      activeOrganizationType !== "hospital" ||
-      !activeOrganization?.id
-    ) {
-      return;
-    }
-
-    const completeKey = `viruj:hospital-onboarding:completed:${activeOrganization.id}`;
-
-    if (
-      window.localStorage.getItem(completeKey) ||
-      !isRecentlyCreatedOrganization(activeOrganization)
+      !shouldRedirectToOnboarding ||
+      !activeOrganization?.id ||
+      !activeOrganizationType
     ) {
       return;
     }
 
     window.sessionStorage.setItem(
-      `viruj:hospital-onboarding:entry:${activeOrganization.id}`,
+      `viruj:${activeOrganizationType}-onboarding:entry:${activeOrganization.id}`,
       "1"
     );
     router.replace(
@@ -222,6 +219,7 @@ export function ErpHomeScreen({
     isHydrated,
     requestedPage,
     router,
+    shouldRedirectToOnboarding,
   ]);
   useEffect(() => {
     if (
@@ -272,6 +270,7 @@ export function ErpHomeScreen({
     if (
       !isHydrated ||
       isAuthPending ||
+      shouldRedirectToOnboarding ||
       !activeOrganization ||
       !activeMember ||
       !activeOrganizationType
@@ -302,12 +301,13 @@ export function ErpHomeScreen({
     isHydrated,
     requestedPage,
     resolvedPage,
+    shouldRedirectToOnboarding,
     routeDashboardOrganizationType,
     routeOrganizationType,
     router,
   ]);
 
-  if (!isHydrated || isAuthPending) {
+  if (!isHydrated || isAuthPending || shouldRedirectToOnboarding) {
     return <LoadingScreen />;
   }
 
@@ -616,29 +616,6 @@ function getLockedPages(subscription: Awaited<ReturnType<typeof subscriptionBill
   return hasFeature(featureCodes, "advanced_analytics") ? [] : ["analytics"];
 }
 
-function isRecentlyCreatedOrganization(organization: unknown) {
-  if (
-    !organization ||
-    typeof organization !== "object" ||
-    !("createdAt" in organization)
-  ) {
-    return false;
-  }
-
-  const createdAt = organization.createdAt;
-  const createdTime =
-    createdAt instanceof Date
-      ? createdAt.getTime()
-      : typeof createdAt === "string"
-        ? new Date(createdAt).getTime()
-        : 0;
-
-  if (!Number.isFinite(createdTime) || createdTime <= 0) {
-    return false;
-  }
-
-  return Date.now() - createdTime < 2 * 60 * 60 * 1000;
-}
 function getOrganizationDisplayName(organization: unknown, fallback: string) {
   if (
     organization &&

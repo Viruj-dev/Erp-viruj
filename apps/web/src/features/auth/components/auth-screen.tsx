@@ -1,6 +1,7 @@
 "use client";
 
 import { ErpDemoLogin } from "@/features/auth/components/login-screen";
+import { shouldStartOrganizationOnboarding } from "@/features/dashboard/lib/onboarding";
 import {
   buildDashboardPath,
   getDefaultDashboardPage,
@@ -12,6 +13,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 
 export function ErpAuthScreen() {
   const router = useRouter();
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isActivatingOnlyOrganization, setIsActivatingOnlyOrganization] =
     useState(false);
   const isHydrated = useSyncExternalStore(
@@ -32,6 +34,7 @@ export function ErpAuthScreen() {
     const organizations = organizationsState.data ?? [];
 
     if (
+      isAuthenticating ||
       !sessionState.data?.user ||
       activeOrganization?.id ||
       organizations.length !== 1 ||
@@ -57,6 +60,7 @@ export function ErpAuthScreen() {
     activeOrganization?.id,
     activeOrganizationState,
     isActivatingOnlyOrganization,
+    isAuthenticating,
     organizationsState.data,
     sessionState.data?.user,
     sessionState,
@@ -66,6 +70,11 @@ export function ErpAuthScreen() {
     const activeOrganizationType = activeOrganization?.organizationType;
 
     if (
+      !isHydrated ||
+      isAuthenticating ||
+      isActivatingOnlyOrganization ||
+      sessionState.isPending ||
+      organizationsState.isPending ||
       !sessionState.data?.user ||
       activeOrganizationState.isPending ||
       activeMemberState.isPending
@@ -79,9 +88,7 @@ export function ErpAuthScreen() {
     ) {
       const onboardingStoragePrefix = getOnboardingStoragePrefix(activeOrganizationType);
       const shouldStartOnboarding =
-        Boolean(onboardingStoragePrefix) &&
-        typeof window !== "undefined" &&
-        window.localStorage.getItem(`${onboardingStoragePrefix}:start`) === "1";
+        shouldStartOrganizationOnboarding(activeOrganization, window.localStorage);
 
       if (shouldStartOnboarding && onboardingStoragePrefix) {
         window.sessionStorage.setItem(
@@ -111,13 +118,20 @@ export function ErpAuthScreen() {
     activeMemberState.isPending,
     activeOrganization?.id,
     activeOrganization?.organizationType,
+    activeOrganization?.createdAt,
     activeOrganizationState.isPending,
+    isAuthenticating,
+    isActivatingOnlyOrganization,
+    isHydrated,
+    sessionState.isPending,
+    organizationsState.isPending,
     router,
     sessionState.data?.user,
   ]);
 
   return (
     <ErpDemoLogin
+      onPendingChange={setIsAuthenticating}
       onAuthenticated={async () => {
         await Promise.all([
           sessionState.refetch(),
@@ -144,6 +158,7 @@ function getSessionOrganization(session: unknown) {
     typeof session.activeOrganization === "object"
   ) {
     return session.activeOrganization as {
+      createdAt?: string | Date;
       id?: string;
       
       organizationType?: string;

@@ -41,8 +41,10 @@ const organizationTypeOptions: Array<{
 
 export function ErpDemoLogin({
   onAuthenticated,
+  onPendingChange,
 }: {
   onAuthenticated: () => Promise<void> | void;
+  onPendingChange: (pending: boolean) => void;
 }) {
   const [step, setStep] = useState<Step>("login");
   const [isPending, setIsPending] = useState(false);
@@ -74,6 +76,7 @@ export function ErpDemoLogin({
   const handleLogin = async () => {
     clearMessages();
     setIsPending(true);
+    onPendingChange(true);
 
     try {
       const result = await authClient.signIn.email({
@@ -92,12 +95,14 @@ export function ErpDemoLogin({
       await onAuthenticated();
     } finally {
       setIsPending(false);
+      onPendingChange(false);
     }
   };
 
   const handleCreateOrganization = async () => {
     clearMessages();
     setIsPending(true);
+    onPendingChange(true);
 
     try {
       const signUpResult = await authClient.signUp.email({
@@ -162,12 +167,14 @@ export function ErpDemoLogin({
       await onAuthenticated();
     } finally {
       setIsPending(false);
+      onPendingChange(false);
     }
   };
 
   const handleAcceptInvitation = async () => {
     clearMessages();
     setIsPending(true);
+    onPendingChange(true);
 
     try {
       const signInResult = await authClient.signIn.email({
@@ -216,6 +223,7 @@ export function ErpDemoLogin({
       await onAuthenticated();
     } finally {
       setIsPending(false);
+      onPendingChange(false);
     }
   };
 

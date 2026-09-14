@@ -1,5 +1,6 @@
 "use client";
 
+import { shouldStartOrganizationOnboarding } from "@/features/dashboard/lib/onboarding";
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import {
   ClinicDepartmentsPage,
@@ -95,7 +96,11 @@ export function ClinicHomeScreen({
   const activeOrganization =
     sessionOrganization ?? activeOrganizationState.data;
   const activeMember = sessionMember ?? activeMemberState.data;
-  const isAuthPending = sessionState.isPending || organizationsState.isPending;
+  const isAuthPending =
+    sessionState.isPending ||
+    organizationsState.isPending ||
+    (!sessionOrganization && activeOrganizationState.isPending) ||
+    (!sessionMember && activeMemberState.isPending);
 
   useEffect(() => {
     const activeOrganizationId = activeOrganization?.id;
@@ -166,6 +171,13 @@ export function ClinicHomeScreen({
     organizationLabel
   );
   const workspaceTheme = getWorkspaceTheme(organizationLabel);
+  const shouldRedirectToOnboarding =
+    isHydrated &&
+    !isAuthPending &&
+    requestedPage === "dashboard" &&
+    activeOrganizationType === "clinic" &&
+    shouldStartOrganizationOnboarding(activeOrganization, window.localStorage);
+
   const clinicDashboardPath = activeOrganizationSlug
     ? buildTenantDashboardPath("clinic", activeOrganizationSlug)
     : buildDashboardPath("clinic");
@@ -184,22 +196,7 @@ export function ClinicHomeScreen({
   }, [isAuthPending, isHydrated, router, sessionState.data?.user]);
 
   useEffect(() => {
-    if (
-      !isHydrated ||
-      isAuthPending ||
-      requestedPage !== "dashboard" ||
-      activeOrganizationType !== "clinic" ||
-      !activeOrganization?.id
-    ) {
-      return;
-    }
-
-    const completeKey = `${clinicOnboardingStoragePrefix}:completed:${activeOrganization.id}`;
-
-    if (
-      window.localStorage.getItem(completeKey) ||
-      !isRecentlyCreatedOrganization(activeOrganization)
-    ) {
+    if (!shouldRedirectToOnboarding || !activeOrganization?.id) {
       return;
     }
 
@@ -217,6 +214,7 @@ export function ClinicHomeScreen({
     isHydrated,
     requestedPage,
     router,
+    shouldRedirectToOnboarding,
   ]);
 
   useEffect(() => {
@@ -262,7 +260,13 @@ export function ClinicHomeScreen({
   ]);
 
   useEffect(() => {
-    if (!isHydrated || isAuthPending || !activeOrganization || !activeMember) {
+    if (
+      !isHydrated ||
+      isAuthPending ||
+      shouldRedirectToOnboarding ||
+      !activeOrganization ||
+      !activeMember
+    ) {
       return;
     }
 
@@ -287,10 +291,11 @@ export function ClinicHomeScreen({
     isHydrated,
     requestedPage,
     resolvedPage,
+    shouldRedirectToOnboarding,
     router,
   ]);
 
-  if (!isHydrated || isAuthPending) {
+  if (!isHydrated || isAuthPending || shouldRedirectToOnboarding) {
     return <LoadingScreen />;
   }
 
@@ -666,28 +671,4 @@ function getSessionMember(session: unknown) {
   }
 
   return null;
-}
-
-function isRecentlyCreatedOrganization(organization: unknown) {
-  if (
-    !organization ||
-    typeof organization !== "object" ||
-    !("createdAt" in organization)
-  ) {
-    return false;
-  }
-
-  const createdAt = organization.createdAt;
-  const createdTime =
-    createdAt instanceof Date
-      ? createdAt.getTime()
-      : typeof createdAt === "string"
-        ? new Date(createdAt).getTime()
-        : 0;
-
-  if (!Number.isFinite(createdTime) || createdTime <= 0) {
-    return false;
-  }
-
-  return Date.now() - createdTime < 2 * 60 * 60 * 1000;
 }
