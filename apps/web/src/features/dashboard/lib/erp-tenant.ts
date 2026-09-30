@@ -1,7 +1,7 @@
 import type { DashboardOrganizationType, DashboardPage } from "./routing";
 import { buildDashboardPath, buildTenantDashboardPath } from "./routing";
 
-export type ErpProviderType = "clinic" | "hospital";
+export type ErpProviderType = "clinic" | "hospital" | "doctor";
 
 export type ProviderCapabilities = {
   appointments: {
@@ -49,6 +49,32 @@ export type ErpTenantContext = {
 };
 
 const providerCapabilities: Record<ErpProviderType, ProviderCapabilities> = {
+  doctor: {
+    appointments: {
+      enabled: true,
+      supportsBeds: false,
+      supportsDepartments: false,
+      supportsDoctorAssignment: false,
+      supportsMultipleLocations: true,
+      supportsWalkIns: true,
+    },
+    facilities: {
+      enabled: false,
+      supportsBeds: false,
+      supportsEmergencyInfrastructure: false,
+      supportsMultipleLocations: false,
+      supportsOperatingTheatres: false,
+      supportsWards: false,
+    },
+    services: {
+      enabled: true,
+      supportsConsultationModes: true,
+      supportsDepartmentAssignment: false,
+      supportsMultipleLocations: true,
+      supportsOfferings: true,
+      supportsPractitionerAssignment: false,
+    },
+  },
   clinic: {
     appointments: {
       enabled: true,
@@ -104,6 +130,12 @@ const providerCapabilities: Record<ErpProviderType, ProviderCapabilities> = {
 };
 
 const providerTerminology: Record<ErpProviderType, ProviderTerminology> = {
+  doctor: {
+    departmentLabel: "Specialty",
+    locationLabel: "Practice location",
+    organizationLabel: "Doctor practice",
+    practitionerLabel: "Doctor",
+  },
   clinic: {
     departmentLabel: "Specialty",
     locationLabel: "Clinic location",
@@ -121,7 +153,7 @@ const providerTerminology: Record<ErpProviderType, ProviderTerminology> = {
 export function isReusableErpProvider(
   value?: string | null
 ): value is ErpProviderType {
-  return value === "clinic" || value === "hospital";
+  return value === "clinic" || value === "hospital" || value === "doctor";
 }
 
 export function getProviderCapabilities(providerType: ErpProviderType) {

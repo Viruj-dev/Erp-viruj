@@ -33,6 +33,7 @@ export function ErpDemoAppointments({
     queryFn: () => virujBackend.appointments.list({ organizationId }),
     queryKey: appointmentQueryKey,
     retry: false,
+    refetchInterval: 15_000,
   });
   const updateStatusMutation = useMutation({
     mutationFn: virujBackend.appointments.updateStatus,
@@ -150,6 +151,7 @@ export function ErpDemoAppointments({
       {appointmentsQuery.isError ? (
         <div className="rounded-xl border border-error/20 bg-error-container/25 px-4 py-3 text-sm font-bold text-error">
           Unable to load appointments from the backend.
+          <button className="ml-3 underline" onClick={() => void appointmentsQuery.refetch()} type="button">Retry</button>
         </div>
       ) : null}
 

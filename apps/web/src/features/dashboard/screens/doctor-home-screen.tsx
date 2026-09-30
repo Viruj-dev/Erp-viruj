@@ -6,7 +6,6 @@ import { ClinicGalleryPage } from "@/features/dashboard/components/clinic/pages"
 import {
   DoctorAvailabilityPage,
   DoctorAppointmentDetailPage,
-  DoctorAppointmentsPage,
   DoctorConsultationDetailPage,
   DoctorConsultationsPage,
   DoctorDashboardPage,
@@ -23,6 +22,8 @@ import {
 import { ErpDemoCommunity } from "@/features/dashboard/components/hospital/pages";
 import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
+import { createErpTenantContext, type ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
+import { getBillingPermissionsFromMember } from "@/features/subscription/utils/subscription-access";
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
 import {
   buildDashboardPath,
@@ -331,6 +332,18 @@ export function DoctorHomeScreen({
                   detailId={detailId}
                   organizationId={activeOrganization.id}
                   roleLabel={roleLabel}
+                  tenant={
+                    activeOrganization.id
+                      ? (createErpTenantContext({
+                          organizationId: activeOrganization.id,
+                          organizationSlug: activeOrganizationSlug,
+                          providerType: "doctor",
+                          role: activeMember?.role,
+                          permissions:
+                            getBillingPermissionsFromMember(activeMember),
+                        }) ?? undefined)
+                      : undefined
+                  }
                 />
               </div>
             </motion.div>
@@ -346,18 +359,20 @@ function DoctorPageContent({
   detailId,
   organizationId,
   roleLabel,
+  tenant,
 }: {
   currentPage: ErpDemoPage;
   detailId?: string;
   organizationId?: string;
   roleLabel: string;
+  tenant?: ErpTenantContext;
 }) {
   switch (currentPage) {
     case "appointments":
     case "appointments-dashboard":
-      return detailId ? <DoctorAppointmentDetailPage id={detailId} /> : <DoctorAppointmentsPage />;
+      return detailId ? <DoctorAppointmentDetailPage id={detailId} /> : <ErpDemoAppointments key={organizationId} section="review" tenant={tenant} />;
     case "appointments-review":
-      return <ErpDemoAppointments section="review" />;
+      return <ErpDemoAppointments key={organizationId} section="review" tenant={tenant} />;
     case "patients":
       return detailId ? <DoctorPatientDetailPage id={detailId} /> : <DoctorPatientDirectoryPage />;
     case "gallery":
