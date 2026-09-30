@@ -10,8 +10,18 @@ export function availableAppointmentActions(
     Record<VirujAppointmentStatus, VirujAppointmentStatus[]>
   > = {
     pending_approval: ["approved", "rejected", "rescheduled", "cancelled"],
-    approved: ["rescheduled", "cancelled", "no_show"],
-    rescheduled: ["approved", "cancelled", "no_show"],
+    approved: [
+      "rescheduled",
+      "cancelled",
+      "no_show",
+      ...(appointment.bookingSource === "staff" ? ["completed" as const] : []),
+    ],
+    rescheduled: [
+      "approved",
+      "cancelled",
+      "no_show",
+      ...(appointment.bookingSource === "staff" ? ["completed" as const] : []),
+    ],
   };
   return (transitions[appointment.status] ?? []).filter((status) =>
     permissions.includes(

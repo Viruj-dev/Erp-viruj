@@ -1,18 +1,14 @@
 "use client";
 
-import { virujBackend, type VirujAppointment, type VirujAppointmentStatus } from "@/lib/viruj-backend";
+import { virujBackend } from "@/lib/viruj-backend";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
-
+import { useMemo, useState } from "react";
 import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
+import { AppointmentDetailDialog } from "@/features/dashboard/components/shared/modules/appointments/components/appointment-detail";
 import { PatientDataTable } from "./_components/patient-data-table";
 import { pageSize } from "./constants";
-import type { DirectoryPatient, PatientRequestForm } from "./types";
-import {
-  defaultRequestDateTime,
-  isFakeAppointment,
-  mapAppointmentToPatient,
-} from "./utils";
+import type { DirectoryPatient } from "./types";
+import { isFakeAppointment, mapAppointmentToPatient } from "./utils";
 
 export function ErpDemoPatients({
   organizationId,
@@ -21,210 +17,148 @@ export function ErpDemoPatients({
   organizationId?: string;
   tone?: "blue" | "violet";
 }) {
+  if (!organizationId)
+    return (
+      <p className="p-5">Select a provider workspace to view appointments.</p>
+    );
+  return (
+    <PatientAppointments
+      key={organizationId}
+      organizationId={organizationId}
+      tone={tone}
+    />
+  );
+}
+
+function PatientAppointments({
+  organizationId,
+  tone,
+}: {
+  organizationId: string;
+  tone: "blue" | "violet";
+}) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [requestForm, setRequestForm] = useState<PatientRequestForm>({
-    mobileUserId: "x-mobile-user",
-    patientAge: "29",
-    patientGender: "Female",
-    patientName: "Mobile App Patient",
-    patientPhone: "+919876543210",
-    reason: "Appointment request from mobile app.",
-    requestedAt: defaultRequestDateTime(),
-  });
-  const [lastRequest, setLastRequest] = useState<VirujAppointment | null>(null);
-
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const appointmentQueryKey = virujBackend.appointments.key({ organizationId });
-  const appointmentsQuery = useQuery({
-    enabled: Boolean(organizationId),
+  const appointments = useQuery({
     queryFn: () => virujBackend.appointments.list({ organizationId }),
     queryKey: appointmentQueryKey,
+    refetchInterval: 15_000,
+    retry: false,
   });
-  const createRequestMutation = useMutation({
-    mutationFn: virujBackend.appointments.createMobileRequest,
-    onSuccess: async (appointment) => {
-      setLastRequest(appointment);
-      setPage(1);
-      await queryClient.invalidateQueries({ queryKey: appointmentQueryKey });
-    },
+  const permissions = useQuery({
+    queryKey: [...appointmentQueryKey, "permissions"],
+    queryFn: () => virujBackend.appointments.permissions(organizationId),
+    retry: false,
   });
-  const updateStatusMutation = useMutation({
-    mutationFn: virujBackend.appointments.updateStatus,
-    onSuccess: async (appointment) => {
-      setLastRequest(appointment);
-      await queryClient.invalidateQueries({ queryKey: appointmentQueryKey });
-    },
-  });
-  const deleteAppointmentsMutation = useMutation({
+  const canDelete = permissions.data?.includes("appointments.write") ?? false;
+  const deletion = useMutation({
     mutationFn: async (patientsToDelete: DirectoryPatient[]) => {
+      if (!canDelete)
+        throw new Error("Appointment management permission is required.");
       const appointmentIds = patientsToDelete
         .map((patient) => patient.appointmentId)
         .filter((id): id is string => Boolean(id));
-
-      if (!appointmentIds.length) {
+      if (!appointmentIds.length)
         return virujBackend.patients.deleteAll({ organizationId });
-      }
-
       const results = await Promise.all(
         appointmentIds.map((id) =>
           virujBackend.appointments.delete({ id, organizationId })
         )
       );
-      return { deleted: results.reduce((sum, result) => sum + result.deleted, 0) };
+      return {
+        deleted: results.reduce((sum, result) => sum + result.deleted, 0),
+      };
     },
     onSuccess: async () => {
-      setLastRequest(null);
       setPage(1);
       await queryClient.invalidateQueries({ queryKey: appointmentQueryKey });
     },
   });
-
   const patients = useMemo(
     () =>
-      appointmentsQuery.data
-        ? appointmentsQuery.data
-            .filter((appointment) => !isFakeAppointment(appointment))
-            .map(mapAppointmentToPatient)
-        : [],
-    [appointmentsQuery.data]
+      (appointments.data ?? [])
+        .filter((appointment) => !isFakeAppointment(appointment))
+        .map(mapAppointmentToPatient),
+    [appointments.data]
   );
-  const filteredPatients = useMemo(
-    () => filterPatients(patients, search),
+  const filtered = useMemo(
+    () =>
+      patients.filter((patient) =>
+        [patient.name, patient.doctor]
+          .join(" ")
+          .toLowerCase()
+          .includes(search.trim().toLowerCase())
+      ),
     [patients, search]
   );
-  const pageCount = Math.max(1, Math.ceil(filteredPatients.length / pageSize));
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, pageCount);
-  const visiblePatients = filteredPatients.slice(
+  const visible = filtered.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-
-  const updateAppointment = useCallback(
-    (patient: DirectoryPatient, status: VirujAppointmentStatus) => {
-      if (!patient.appointmentId) {
-        return;
-      }
-
-      if (status === "rescheduled") {
-        rescheduleAppointment(patient, status, organizationId, updateStatusMutation.mutate);
-        return;
-      }
-
-      updateStatusMutation.mutate({
-        organizationId,
-        approvalNotes:
-          status === "approved"
-            ? "Approved by ERP user."
-            : "Rejected by ERP user.",
-        id: patient.appointmentId,
-        status,
-      });
-    },
-    [organizationId, updateStatusMutation]
-  );
-
-  const sendMobileRequest = () => {
-    createRequestMutation.mutate({
-      organizationId,
-      mobileUserId: requestForm.mobileUserId,
-      patientAge: Number(requestForm.patientAge) || null,
-      patientGender: requestForm.patientGender,
-      patientName: requestForm.patientName,
-      patientPhone: requestForm.patientPhone,
-      reason: requestForm.reason,
-      requestedAt: requestForm.requestedAt
-        ? new Date(requestForm.requestedAt).toISOString()
-        : undefined,
-    });
-  };
-  const deleteAppointments = (selectedPatients: DirectoryPatient[]) => {
+  const deleteAppointments = (selected: DirectoryPatient[]) => {
+    if (!canDelete || deletion.isPending) return;
     const confirmed = window.confirm(
-      selectedPatients.length
-        ? `Delete ${selectedPatients.length === 1 ? "this appointment" : "these appointments"}? This cannot be undone.`
+      selected.length
+        ? `Delete ${selected.length === 1 ? "this appointment" : "these appointments"}? This cannot be undone.`
         : "Delete all patients and their linked appointment data from the backend? This cannot be undone."
     );
-    if (!confirmed) return;
-
-    deleteAppointmentsMutation.mutate(selectedPatients);
+    if (confirmed) deletion.mutate(selected);
   };
-
   return (
     <DashboardPageShell
       eyebrow="Patients"
-      subtitle="Review patient requests, approval status, appointment movement, and backend patient records."
+      subtitle="Review appointment requests, provider decisions and verified arrivals."
       title="Patient Directory"
       tone={tone}
     >
+      {appointments.isPending ? (
+        <p role="status">Loading patient appointments...</p>
+      ) : null}
+      {appointments.isError ? (
+        <p role="alert" className="text-error">
+          {appointments.error.message} Use Reload to retry.
+        </p>
+      ) : null}
+      {deletion.isError ? (
+        <p role="alert" className="text-error">
+          {deletion.error.message}
+        </p>
+      ) : null}
       <PatientDataTable
+        canDelete={canDelete}
         currentPage={currentPage}
-        isDeletingAll={deleteAppointmentsMutation.isPending}
-        isReloading={appointmentsQuery.isFetching}
-        isUpdating={updateStatusMutation.isPending}
+        isDeletingAll={deletion.isPending}
+        isReloading={appointments.isFetching}
         onDeleteAppointments={deleteAppointments}
         onNextPage={() => setPage((value) => Math.min(pageCount, value + 1))}
         onPreviousPage={() => setPage((value) => Math.max(1, value - 1))}
-        onReload={() => void appointmentsQuery.refetch()}
+        onReload={() => void appointments.refetch()}
         onSearchChange={(value) => {
           setPage(1);
           setSearch(value);
         }}
-        onUpdateAppointment={updateAppointment}
+        onViewAppointment={(patient) =>
+          setSelectedId(patient.appointmentId ?? null)
+        }
         pageCount={pageCount}
-        patients={visiblePatients}
+        patients={visible}
         search={search}
         tone={tone}
-        totalPatients={filteredPatients.length}
+        totalPatients={filtered.length}
       />
+      {selectedId ? (
+        <AppointmentDetailDialog
+          appointmentId={selectedId}
+          key={`${organizationId}:${selectedId}`}
+          onClose={() => setSelectedId(null)}
+          organizationId={organizationId}
+        />
+      ) : null}
     </DashboardPageShell>
   );
 }
-
-function filterPatients(patients: DirectoryPatient[], search: string) {
-  const value = search.trim().toLowerCase();
-
-  if (!value) {
-    return patients;
-  }
-
-  return patients.filter((patient) =>
-    [patient.name, patient.doctor]
-      .join(" ")
-      .toLowerCase()
-      .includes(value)
-  );
-}
-
-function rescheduleAppointment(
-  patient: DirectoryPatient,
-  status: VirujAppointmentStatus,
-  organizationId: string | undefined,
-  mutate: (input: {
-    approvalNotes?: string | null;
-    endsAt?: string | null;
-    id: string;
-    organizationId?: string;
-    startsAt?: string | null;
-    status: VirujAppointmentStatus;
-  }) => void
-) {
-  const value = window.prompt("New appointment date/time", "");
-  if (!value || !patient.appointmentId) return;
-
-  const startsAt = new Date(value);
-  if (Number.isNaN(startsAt.getTime())) {
-    window.alert("Please enter a valid date/time.");
-    return;
-  }
-
-  const endsAt = new Date(startsAt.getTime() + 30 * 60 * 1000);
-  mutate({
-    approvalNotes: "Rescheduled by ERP user.",
-    organizationId,
-    endsAt: endsAt.toISOString(),
-    id: patient.appointmentId,
-    startsAt: startsAt.toISOString(),
-    status,
-  });
-}
-

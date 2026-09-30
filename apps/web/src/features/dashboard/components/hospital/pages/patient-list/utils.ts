@@ -15,12 +15,12 @@ export function mapAppointmentToPatient(appointment: VirujAppointment): Director
     bookingRelative: formatBookingLeadTime(bookingDate, scheduleDate),
     doctor: appointment.doctorName,
     doctorInitials: getInitials(appointment.doctorName),
-    gender: appointment.patientGender === "Male" ? "M" : "F",
+    gender: appointment.patientGender?.toLowerCase() === "male" ? "M" : "F",
     id: appointment.patientUserId ?? appointment.id,
     initials: getInitials(appointment.patientName),
     mode: appointment.appointmentMode || "Clinic",
     name: appointment.patientName,
-    scheduleDate: formatAppointmentDate(scheduleDate),
+    scheduleDate: formatAppointmentDate(scheduleDate, appointment.timezone),
     scheduleTime: appointment.appointmentTime,
     status,
     tone:
@@ -93,12 +93,12 @@ export function getInitials(value: string) {
   return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
 }
 
-function formatAppointmentDate(value: Date) {
+function formatAppointmentDate(value: Date, timezone = "Asia/Kolkata") {
   if (Number.isNaN(value.getTime())) {
     return "Requested";
   }
 
-  return formatShortDate(value);
+  return new Intl.DateTimeFormat("en-GB", { timeZone: timezone, day: "2-digit", month: "2-digit", year: "2-digit" }).format(value);
 }
 
 function formatBookingDate(value: Date | null) {

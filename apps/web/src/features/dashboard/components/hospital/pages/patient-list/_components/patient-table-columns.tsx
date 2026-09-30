@@ -1,28 +1,19 @@
 import { Checkbox } from "@/features/dashboard/components/ui/checkbox";
-import type { VirujAppointmentStatus } from "@/lib/viruj-backend";
+import { Button } from "@/components/ui/button";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 
 import { pageSize } from "../constants";
 import type { DirectoryPatient } from "../types";
-import {
-  AppointmentActions,
-  PatientIdentity,
-  StatusBadge,
-} from "./patient-table-cells";
+import { PatientIdentity, StatusBadge } from "./patient-table-cells";
 
 export function usePatientColumns({
   currentPage,
-  isUpdating,
-  onUpdateAppointment,
+  onViewAppointment,
   tone = "blue",
 }: {
   currentPage: number;
-  isUpdating: boolean;
-  onUpdateAppointment: (
-    patient: DirectoryPatient,
-    status: VirujAppointmentStatus
-  ) => void;
+  onViewAppointment: (patient: DirectoryPatient) => void;
   tone?: "blue" | "violet";
 }) {
   return useMemo<ColumnDef<DirectoryPatient>[]>(
@@ -44,7 +35,9 @@ export function usePatientColumns({
               table.getIsAllPageRowsSelected() ||
               (table.getIsSomePageRowsSelected() && "indeterminate")
             }
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
           />
         ),
         id: "select",
@@ -98,24 +91,27 @@ export function usePatientColumns({
       },
       {
         accessorKey: "status",
-        cell: ({ row }) => <StatusBadge status={row.original.status} tone={tone} />,
+        cell: ({ row }) => (
+          <StatusBadge status={row.original.status} tone={tone} />
+        ),
         header: "Status",
       },
       {
         cell: ({ row }) => (
-          <AppointmentActions
-            disabled={isUpdating}
-            onApprove={() => onUpdateAppointment(row.original, "approved")}
-            onReject={() => onUpdateAppointment(row.original, "rejected")}
-            onReschedule={() => onUpdateAppointment(row.original, "rescheduled")}
-            patient={row.original}
-            tone={tone}
-          />
+          <Button
+            onClick={() => onViewAppointment(row.original)}
+            size="sm"
+            variant="outline"
+          >
+            {row.original.appointmentStatus === "approved"
+              ? "Details / Verify arrival"
+              : "Review details"}
+          </Button>
         ),
         header: "Actions",
         id: "actions",
       },
     ],
-    [currentPage, isUpdating, onUpdateAppointment, tone]
+    [currentPage, onViewAppointment, tone]
   );
 }

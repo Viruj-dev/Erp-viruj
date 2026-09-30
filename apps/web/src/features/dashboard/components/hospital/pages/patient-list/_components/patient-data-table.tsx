@@ -13,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/features/dashboard/components/ui/table";
-import type { VirujAppointmentStatus } from "@/lib/viruj-backend";
 import {
   type RowSelectionState,
   type VisibilityState,
@@ -32,13 +31,13 @@ export function PatientDataTable({
   currentPage,
   isDeletingAll,
   isReloading,
-  isUpdating,
+  canDelete,
   onDeleteAppointments,
   onNextPage,
   onPreviousPage,
   onReload,
   onSearchChange,
-  onUpdateAppointment,
+  onViewAppointment,
   pageCount,
   patients,
   search,
@@ -48,16 +47,13 @@ export function PatientDataTable({
   currentPage: number;
   isDeletingAll: boolean;
   isReloading: boolean;
-  isUpdating: boolean;
+  canDelete: boolean;
   onDeleteAppointments: (patients: DirectoryPatient[]) => void;
   onNextPage: () => void;
   onPreviousPage: () => void;
   onReload: () => void;
   onSearchChange: (value: string) => void;
-  onUpdateAppointment: (
-    patient: DirectoryPatient,
-    status: VirujAppointmentStatus
-  ) => void;
+  onViewAppointment: (patient: DirectoryPatient) => void;
   pageCount: number;
   patients: DirectoryPatient[];
   search: string;
@@ -68,8 +64,7 @@ export function PatientDataTable({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const columns = usePatientColumns({
     currentPage,
-    isUpdating,
-    onUpdateAppointment,
+    onViewAppointment,
     tone,
   });
   const columnWidths: Record<string, string> = {
@@ -86,6 +81,7 @@ export function PatientDataTable({
     columns,
     data: patients,
     getCoreRowModel: getCoreRowModel(),
+    getRowId: (patient) => patient.appointmentId || patient.id,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     state: {
@@ -94,11 +90,16 @@ export function PatientDataTable({
     },
   });
 
-  const selectedPatients = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
+  const selectedPatients = table
+    .getFilteredSelectedRowModel()
+    .rows.map((row) => row.original);
   const deleteLabel = selectedPatients.length === 1 ? "Delete" : "Delete all";
 
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-sm dark:border-white/[0.08] dark:bg-[#050505]">
+      <p className="mb-3 text-sm text-muted-foreground">
+        {totalPatients} appointments
+      </p>
       <div className="mb-4 flex items-center gap-3">
         <input
           className="h-10 w-full max-w-sm rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-slate-300 focus:ring-2 focus:ring-slate-200/70 dark:border-white/[0.09] dark:bg-[#0b0b0c] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-white/[0.16] dark:focus:ring-white/[0.08]"
@@ -122,7 +123,7 @@ export function PatientDataTable({
         </Button>
         <Button
           className="h-10 border-rose-200 bg-white text-rose-600 shadow-none hover:bg-rose-50 hover:text-rose-700 disabled:text-rose-300 dark:border-rose-400/20 dark:bg-[#0b0b0c] dark:text-rose-300 dark:hover:bg-rose-400/[0.08]"
-          disabled={isDeletingAll}
+          disabled={isDeletingAll || !canDelete}
           onClick={() => onDeleteAppointments(selectedPatients)}
           type="button"
           variant="outline"
@@ -146,10 +147,16 @@ export function PatientDataTable({
                 key={headerGroup.id}
               >
                 {headerGroup.headers.map((header) => (
-                  <TableHead className={headerClassName(header.column.id)} key={header.id}>
+                  <TableHead
+                    className={headerClassName(header.column.id)}
+                    key={header.id}
+                  >
                     {header.isPlaceholder
                       ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -164,8 +171,14 @@ export function PatientDataTable({
                   key={row.id}
                 >
                   {row.getVisibleCells().map((cell, index) => (
-                    <TableCell className={cellClassName(cell.column.id, index)} key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    <TableCell
+                      className={cellClassName(cell.column.id, index)}
+                      key={cell.id}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -255,7 +268,10 @@ function DataTableFooter({
         <PaginationButton disabled={currentPage <= 1} onClick={onPreviousPage}>
           Previous
         </PaginationButton>
-        <PaginationButton disabled={currentPage >= pageCount} onClick={onNextPage}>
+        <PaginationButton
+          disabled={currentPage >= pageCount}
+          onClick={onNextPage}
+        >
           Next
         </PaginationButton>
       </div>

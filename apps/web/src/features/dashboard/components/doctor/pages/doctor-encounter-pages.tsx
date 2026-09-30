@@ -17,35 +17,15 @@ import {
   Timeline,
 } from "@/features/dashboard/components/doctor/_components/doctor-shared-ui";
 import { ErpDemoPatients } from "@/features/dashboard/components/hospital/pages/patients";
+import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import { ErpDemoAppointments } from "@/features/dashboard/components/shared/modules/appointments";
 
-export function DoctorAppointmentsPage() {
-  return <ErpDemoAppointments section="review" />;
+export function DoctorAppointmentsPage({ tenant }: { tenant?: ErpTenantContext }) {
+  return <ErpDemoAppointments section="dashboard" tenant={tenant} />;
 }
 
-export function DoctorAppointmentDetailPage({ id }: { id?: string }) {
-  return (
-    <DoctorPageShell eyebrow="Appointment Detail" title={id ?? "APT-1024"} subtitle="Appointment context, patient summary, previous visits, and action controls.">
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <HospitalPanel title="Appointment Information" subtitle="Current appointment state">
-          <DetailRows rows={[["Status", "Confirmed"], ["Date", "Today, 08:30 AM"], ["Type", "Clinic"], ["Reason", "Chest discomfort"]]} />
-        </HospitalPanel>
-        <HospitalPanel title="Actions" subtitle="Operational controls">
-          <div className="grid gap-2">
-            <PrimaryAction label="Start Consultation" />
-            <SecondaryAction label="Reschedule" />
-            <SecondaryAction label="Cancel Appointment" />
-          </div>
-        </HospitalPanel>
-        <HospitalPanel title="Patient Summary" subtitle="Core patient context">
-          <PatientRow initials="MS" meta="42 yrs | Female | #PA-2041" name="Margot Sterling" status="Checked-in" tone="blue" />
-        </HospitalPanel>
-        <HospitalPanel title="Previous Visits" subtitle="Recent clinical activity">
-          <Timeline items={["Oct 24, 2023 | Checked-in", "Sep 18, 2023 | Consultation completed", "Aug 03, 2023 | Report uploaded"]} />
-        </HospitalPanel>
-      </div>
-    </DoctorPageShell>
-  );
+export function DoctorAppointmentDetailPage({ id, tenant }: { id?: string; tenant?: ErpTenantContext }) {
+  return <ErpDemoAppointments initialAppointmentId={id} section="dashboard" tenant={tenant} />;
 }
 
 export function DoctorPatientDirectoryPage() {

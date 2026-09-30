@@ -189,6 +189,7 @@ export function AppointmentDetail({
   );
   const canVerifyArrival =
     appointment.status === "approved" &&
+    appointment.bookingSource !== "staff" &&
     Boolean(appointment.patientUserId) &&
     permissions.data?.includes("appointment.complete");
   const snapshot = appointment.patientDetails;
@@ -316,6 +317,7 @@ export function AppointmentDetail({
                         rejected: "Reject",
                         cancelled: "Cancel appointment",
                         no_show: "Mark no-show",
+                        completed: "Complete staff appointment",
                       } as Partial<Record<VirujAppointmentStatus, string>>
                     )[status]
                   }
