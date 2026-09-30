@@ -165,6 +165,14 @@ export type VirujAppointmentStatus =
   | "no_show";
 
 export type VirujAppointment = {
+  version?: number;
+  bookingSource?: string;
+  startsAt?: string;
+  endsAt?: string;
+  timezone?: string;
+  arrivalVerifiedAt?: string | null;
+  arrivalVerifiedBy?: string | null;
+  patientDetails?: { fullName?: string; phoneNumber?: string; age?: number | string; gender?: string; height?: number | string; weight?: number | string; complaintPhoto?: string } | null;
   approvalNotes?: string | null;
   appointmentDate: string;
   appointmentMode: string;
@@ -806,6 +814,15 @@ export const virujBackend = {
       }),
   },
   appointments: {
+    permissions: async (organizationId: string): Promise<string[]> => {
+      const token = await getCentralApiToken();
+      const claims = JSON.parse(atob(token.split(".")[1]!.replace(/-/g, "+").replace(/_/g, "/"))) as { tenant_id?: string; permissions?: unknown };
+      if (claims.tenant_id !== organizationId) throw new Error("Refresh your active workspace before managing appointments.");
+      return Array.isArray(claims.permissions) ? claims.permissions.filter((value): value is string => typeof value === "string") : [];
+    },
+    detail: (input: { id: string; organizationId: string }) => request<VirujAppointment>(`/appointments/${input.id}`, { organizationId: input.organizationId, suppressToast: true }),
+    generateArrivalOtp: (input: { id: string; organizationId: string; expectedVersion?: number }) => request<{ expiresAt: string }>(`/appointments/${input.id}/arrival-otp`, { body: { expectedVersion: input.expectedVersion }, method: "POST", organizationId: input.organizationId, successMessage: "Arrival code available in the patient's Viruj app" }),
+    verifyArrival: (input: { id: string; organizationId: string; otp: string; expectedVersion?: number }) => request<VirujAppointment>(`/appointments/${input.id}/arrival-verify`, { body: { otp: input.otp, expectedVersion: input.expectedVersion }, method: "POST", organizationId: input.organizationId, successMessage: "Attendance verified" }),
     key: (input?: { organizationId?: string }) =>
       ["viruj-backend", "erp", "appointments", input?.organizationId ?? "none"] as const,
     createMobileRequest: (input: VirujMobileAppointmentRequestInput) =>
@@ -830,6 +847,7 @@ export const virujBackend = {
         suppressToast: true,
       }),
     updateStatus: (input: {
+      expectedVersion?: number;
       approvalNotes?: string | null;
       endsAt?: string | null;
       id: string;
@@ -839,6 +857,7 @@ export const virujBackend = {
     }) =>
       request<VirujAppointment>(`/appointments/${input.id}/status`, {
         body: {
+          expectedVersion: input.expectedVersion,
           approvalNotes: input.approvalNotes,
           endsAt: input.endsAt,
           startsAt: input.startsAt,

@@ -5,7 +5,6 @@ import { ErpDemoAppointments, ErpEnterpriseModule } from "@/features/dashboard/c
 import { ClinicGalleryPage } from "@/features/dashboard/components/clinic/pages";
 import {
   DoctorAvailabilityPage,
-  DoctorAppointmentDetailPage,
   DoctorConsultationDetailPage,
   DoctorConsultationsPage,
   DoctorDashboardPage,
@@ -46,6 +45,7 @@ const doctorAllowedPages: ErpDemoPage[] = [
   "appointments",
   "appointments-dashboard",
   "appointments-review",
+  "appointments-patients",
   "patients",
   "gallery",
   "community",
@@ -370,7 +370,9 @@ function DoctorPageContent({
   switch (currentPage) {
     case "appointments":
     case "appointments-dashboard":
-      return detailId ? <DoctorAppointmentDetailPage id={detailId} /> : <ErpDemoAppointments key={organizationId} section="review" tenant={tenant} />;
+      return <ErpDemoAppointments initialAppointmentId={detailId} key={organizationId} section="dashboard" tenant={tenant} />;
+    case "appointments-patients":
+      return <ErpDemoAppointments key={organizationId} section="patients" tenant={tenant} />;
     case "appointments-review":
       return <ErpDemoAppointments key={organizationId} section="review" tenant={tenant} />;
     case "patients":

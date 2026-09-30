@@ -1,165 +1,167 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/features/dashboard/components/ui/input";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import { virujBackend } from "@/lib/viruj-backend";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { PatientDecisionHistory } from "./options/patients";
-import { ReviewQueue } from "./options/review";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { AppointmentDetailDialog } from "./components/appointment-detail";
 import { AppointmentSettings } from "./options/settings";
-import type { AppointmentStatus, AppointmentTab } from "./types";
-import { matchesAppointmentSearch } from "./utils";
+import type { AppointmentTab } from "./types";
+import {
+  formatDate,
+  getStatusLabel,
+  matchesAppointmentSearch,
+  statusClassName,
+} from "./utils";
 
 export function ErpDemoAppointments({
   section = "dashboard",
   tenant,
+  initialAppointmentId,
 }: {
   section?: AppointmentTab;
   tenant?: ErpTenantContext;
+  initialAppointmentId?: string;
 }) {
-  const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
-  const [departmentFilter, setDepartmentFilter] = useState("all");
-  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
-    string | null
-  >(null);
-  const [decisionReason, setDecisionReason] = useState("");
+  const [status, setStatus] = useState(
+    section === "review" ? "pending_approval" : "all"
+  );
+  const [selectedId, setSelectedId] = useState<string | null>(
+    initialAppointmentId ?? null
+  );
   const organizationId = tenant?.organizationId;
-  const appointmentQueryKey = virujBackend.appointments.key({ organizationId });
-  const departmentLabel = tenant?.terminology.departmentLabel ?? "Department";
-
-  const appointmentsQuery = useQuery({
+  const appointments = useQuery({
     enabled: Boolean(organizationId),
+    queryKey: virujBackend.appointments.key({ organizationId }),
     queryFn: () => virujBackend.appointments.list({ organizationId }),
-    queryKey: appointmentQueryKey,
-    retry: false,
     refetchInterval: 15_000,
+    retry: false,
   });
-  const updateStatusMutation = useMutation({
-    mutationFn: virujBackend.appointments.updateStatus,
-    onSuccess: async () => {
-      setDecisionReason("");
-      await queryClient.invalidateQueries({ queryKey: appointmentQueryKey });
-    },
-  });
-
-  const appointments = useMemo(
-    () => appointmentsQuery.data ?? [],
-    [appointmentsQuery.data]
-  );
-  const departments = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          appointments.map(
-            (appointment) => appointment.departmentName || "General"
-          )
-        )
-      ).sort(),
-    [appointments]
-  );
-  const pendingAppointments = appointments.filter(
-    (appointment) => appointment.status === "pending_approval"
-  );
-  const decisionHistory = appointments.filter((appointment) =>
-    ["approved", "rejected", "cancelled", "completed", "no_show"].includes(
-      appointment.status
-    )
-  );
-  const selectedAppointment =
-    appointments.find(
-      (appointment) => appointment.id === selectedAppointmentId
-    ) ??
-    pendingAppointments[0] ??
-    appointments[0] ??
-    null;
-  const filteredReviewAppointments = pendingAppointments.filter(
-    (appointment) =>
-      matchesAppointmentSearch(appointment, query) &&
-      (departmentFilter === "all" ||
-        (appointment.departmentName || "General") === departmentFilter)
-  );
-  const filteredHistory = decisionHistory.filter(
-    (appointment) =>
-      matchesAppointmentSearch(appointment, query) &&
-      (departmentFilter === "all" ||
-        (appointment.departmentName || "General") === departmentFilter)
-  );
-
-
-  const handleDecision = (id: string, status: AppointmentStatus) => {
-    updateStatusMutation.mutate({
-      approvalNotes:
-        decisionReason.trim() ||
-        (status === "approved"
-          ? "Confirmed by appointment handler."
-          : "Rejected by appointment handler."),
-      id,
-      organizationId,
-      status,
-    });
-  };
-
-  if (!tenant || !tenant.capabilities.appointments.enabled) {
+  if (!tenant?.capabilities.appointments.enabled)
     return (
-      <div className="p-5 lg:p-8">
-        <div className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm font-bold text-muted-foreground">
-          Appointments are not enabled for this workspace.
-        </div>
+      <p className="p-5">Appointments are not enabled for this workspace.</p>
+    );
+  if (section === "settings")
+    return (
+      <div className="p-5">
+        <AppointmentSettings />
       </div>
     );
-  }
-
+  const rows = (appointments.data ?? []).filter(
+    (appointment) =>
+      matchesAppointmentSearch(appointment, query) &&
+      (status === "all" || appointment.status === status)
+  );
+  const pending =
+    appointments.data?.filter(
+      (appointment) => appointment.status === "pending_approval"
+    ).length ?? 0;
   return (
-    <div className="space-y-6 p-5 lg:p-8">
-
-      {(section === "review" || section === "dashboard") ? (
-        <ReviewQueue
-          appointment={selectedAppointment}
-          appointments={filteredReviewAppointments}
-          departmentFilter={departmentFilter}
-          departmentLabel={departmentLabel}
-          departments={departments}
-          decisionReason={decisionReason}
-          isLoading={appointmentsQuery.isPending}
-          isUpdating={updateStatusMutation.isPending}
-          onDecision={handleDecision}
-          onDepartmentFilter={setDepartmentFilter}
-          onQuery={setQuery}
-          onReason={setDecisionReason}
-          onSelect={setSelectedAppointmentId}
-          query={query}
-          selectedAppointmentId={selectedAppointment?.id ?? null}
+    <div className="space-y-5 p-5 lg:p-8">
+      <div>
+        <h2 className="text-2xl font-bold">
+          {section === "review"
+            ? "Appointment requests"
+            : "Appointments and arrivals"}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          {pending} pending approval. Requested times are confirmed only after
+          provider review.
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <Input
+          aria-label="Search appointments"
+          className="max-w-sm"
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search patient, doctor or reason"
+          value={query}
         />
-      ) : null}
-
-      {section === "patients" ? (
-        <PatientDecisionHistory
-          appointments={filteredHistory}
-          departmentFilter={departmentFilter}
-          departmentLabel={departmentLabel}
-          departments={departments}
-          isLoading={appointmentsQuery.isPending}
-          onDepartmentFilter={setDepartmentFilter}
-          onQuery={setQuery}
-          query={query}
+        <select
+          aria-label="Appointment status"
+          className="rounded-md border bg-background px-3 py-2 text-sm"
+          onChange={(event) => setStatus(event.target.value)}
+          value={status}
+        >
+          <option value="all">All statuses</option>
+          {[
+            "pending_approval",
+            "approved",
+            "rescheduled",
+            "completed",
+            "rejected",
+            "cancelled",
+            "no_show",
+          ].map((value) => (
+            <option key={value} value={value}>
+              {getStatusLabel(value)}
+            </option>
+          ))}
+        </select>
+        <Button
+          disabled={appointments.isFetching}
+          onClick={() => void appointments.refetch()}
+          variant="outline"
+        >
+          Refresh
+        </Button>
+      </div>
+      {appointments.isPending ? (
+        <p role="status">Loading appointments...</p>
+      ) : appointments.isError ? (
+        <p role="alert" className="text-error">
+          {appointments.error.message} Use Refresh to retry.
+        </p>
+      ) : rows.length === 0 ? (
+        <p>No appointments match these filters.</p>
+      ) : (
+        <div className="space-y-3">
+          {rows.map((appointment) => (
+            <article
+              className="flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4"
+              key={appointment.id}
+            >
+              <div className="space-y-1">
+                <h3 className="font-semibold">{appointment.patientName}</h3>
+                <p className="text-sm">
+                  {appointment.doctorName} · {appointment.appointmentMode}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {formatDate(
+                    appointment.appointmentDate,
+                    appointment.timezone
+                  )}{" "}
+                  · {appointment.appointmentTime}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {appointment.approvalNotes || appointment.reason}
+                </p>
+              </div>
+              <span className={statusClassName(appointment.status)}>
+                {getStatusLabel(appointment.status)}
+              </span>
+              <Button
+                onClick={() => setSelectedId(appointment.id)}
+                variant="outline"
+              >
+                {appointment.status === "approved"
+                  ? "Details / Verify arrival"
+                  : "Review details"}
+              </Button>
+            </article>
+          ))}
+        </div>
+      )}
+      {selectedId ? (
+        <AppointmentDetailDialog
+          appointmentId={selectedId}
+          key={`${tenant.organizationId}:${selectedId}`}
+          onClose={() => setSelectedId(null)}
+          organizationId={tenant.organizationId}
         />
-      ) : null}
-
-      {section === "settings" ? <AppointmentSettings /> : null}
-
-      {appointmentsQuery.isError ? (
-        <div className="rounded-xl border border-error/20 bg-error-container/25 px-4 py-3 text-sm font-bold text-error">
-          Unable to load appointments from the backend.
-          <button className="ml-3 underline" onClick={() => void appointmentsQuery.refetch()} type="button">Retry</button>
-        </div>
-      ) : null}
-
-      {updateStatusMutation.isError ? (
-        <div className="rounded-xl border border-error/20 bg-error-container/25 px-4 py-3 text-sm font-bold text-error">
-          {updateStatusMutation.error.message ||
-            "Unable to update appointment status."}
-        </div>
       ) : null}
     </div>
   );

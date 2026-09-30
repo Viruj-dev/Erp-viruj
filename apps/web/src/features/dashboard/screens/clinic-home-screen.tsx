@@ -24,6 +24,7 @@ import {
 } from "@/features/dashboard/components/hospital/pages";
 import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
+import { ErpDemoAppointments } from "@/features/dashboard/components/shared/modules/appointments";
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
 import { createErpTenantContext, type ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import {
@@ -488,10 +489,12 @@ function ClinicPageContent({
     case "onboarding":
       return null;
     case "appointments":
-    case "appointments-review":
     case "appointments-dashboard":
+      return <ErpDemoAppointments key={organizationId} section="dashboard" tenant={appointmentTenant ?? undefined} />;
+    case "appointments-review":
+      return <ErpDemoAppointments key={organizationId} section="review" tenant={appointmentTenant ?? undefined} />;
     case "appointments-patients":
-      return <ErpDemoPatients organizationId={organizationId} tone="violet" />;
+      return <ErpDemoAppointments key={organizationId} section="patients" tenant={appointmentTenant ?? undefined} />;
     case "appointments-settings":
       return <ErpDemoPatients organizationId={organizationId} tone="violet" />;
     case "clinic-profile":
