@@ -726,6 +726,42 @@ function compactObject<T extends Record<string, unknown>>(value: T) {
   };
 }
 export const virujBackend = {
+  directory: {
+    facility: (organizationId?: string) =>
+      request<{
+        directoryHospitalId: number | null;
+        verificationStatus: string;
+        profile: {
+          name: string;
+          description?: string;
+          imageUrl?: string;
+          coverImageUrl?: string;
+          phone?: string;
+          email?: string;
+          website?: string;
+        };
+        settings: {
+          visibleOnPlatform: boolean;
+          allowOnlineBooking: boolean;
+        } | null;
+      }>("/directory/facility", { organizationId, suppressToast: true }),
+    saveOnboarding: (input: { data: unknown; organizationId?: string }) =>
+      request<{ saved: boolean; clinicId: string }>("/directory/onboarding", {
+        method: "PUT",
+        body: input.data,
+        organizationId: input.organizationId,
+        suppressToast: true,
+      }),
+    publishFacility: (input: {
+      visibleOnPlatform: boolean;
+      organizationId?: string;
+    }) =>
+      request<{ success: boolean }>("/directory/facility", {
+        method: "PATCH",
+        body: { visibleOnPlatform: input.visibleOnPlatform },
+        organizationId: input.organizationId,
+      }),
+  },
   activity: {
     key: (input: {
       action?: string;

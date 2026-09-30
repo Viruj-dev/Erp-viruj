@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { virujBackend } from "@/lib/viruj-backend";
 import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import {
   BadgeCheck,
@@ -22,8 +23,16 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { publicOptions, storagePrefix } from "./onboarding/constants";
-import { getDefaultOnboardingState, mergeOnboardingState } from "./onboarding/state";
-import type { Branch, Department, OnboardingState, ProfileDefaults } from "./onboarding/types";
+import {
+  getDefaultOnboardingState,
+  mergeOnboardingState,
+} from "./onboarding/state";
+import type {
+  Branch,
+  Department,
+  OnboardingState,
+  ProfileDefaults,
+} from "./onboarding/types";
 
 type StoredOnboardingPayload = {
   completedAt?: string;
@@ -67,6 +76,84 @@ export function HospitalProfilePage({
   );
   const [completedAt, setCompletedAt] = useState<string | undefined>();
   const [hasOnboardingData, setHasOnboardingData] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState("");
+  const [serverSaved, setServerSaved] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    void virujBackend.directory
+      .facility(organizationId)
+      .then((result) => {
+        if (!active) return;
+        setServerSaved(true);
+        setVerificationStatus(result.verificationStatus);
+        setData((current) => ({
+          ...current,
+          profile: {
+            ...current.profile,
+            hospitalName: result.profile.name,
+            description: result.profile.description || "",
+            phone: result.profile.phone || "",
+            email: result.profile.email || "",
+            website: result.profile.website || "",
+            logoUrl: result.profile.imageUrl || "",
+            coverUrl: result.profile.coverImageUrl || "",
+          },
+          publicProfile: {
+            ...current.publicProfile,
+            showHospitalProfile: result.settings?.visibleOnPlatform === true,
+            acceptOnlineAppointments:
+              result.settings?.allowOnlineBooking === true,
+          },
+        }));
+      })
+      .catch(() => {
+        /* A legacy browser draft can be saved with Publish profile. */
+      });
+    return () => {
+      active = false;
+    };
+  }, [organizationId]);
+
+  async function publishProfile() {
+    if (publishing) return;
+    setPublishing(true);
+    setPublishError("");
+    const visible = serverSaved
+      ? !data.publicProfile.showHospitalProfile
+      : true;
+    try {
+      if (!serverSaved)
+        await virujBackend.directory.saveOnboarding({
+          organizationId,
+          data: {
+            ...data,
+            publicProfile: { ...data.publicProfile, showHospitalProfile: true },
+          },
+        });
+      else
+        await virujBackend.directory.publishFacility({
+          organizationId,
+          visibleOnPlatform: visible,
+        });
+      setData((current) => ({
+        ...current,
+        publicProfile: {
+          ...current.publicProfile,
+          showHospitalProfile: visible,
+        },
+      }));
+      setServerSaved(true);
+    } catch (error) {
+      setPublishError(
+        error instanceof Error ? error.message : "Could not publish profile"
+      );
+    } finally {
+      setPublishing(false);
+    }
+  }
 
   useEffect(() => {
     const stored = readStoredOnboardingState(organizationId);
@@ -88,12 +175,14 @@ export function HospitalProfilePage({
     (department) => !data.disabledDepartments.includes(department.name)
   );
   const activeBranches = data.branches.filter(
-    (branch) => branch.name.trim() || branch.address.trim() || branch.city.trim()
+    (branch) =>
+      branch.name.trim() || branch.address.trim() || branch.city.trim()
   );
   const mainBranch = activeBranches[0];
   const coverImage = profile.coverPreviewUrl || profile.coverUrl;
   const logoImage = profile.logoPreviewUrl || profile.logoUrl;
-  const displayName = profile.hospitalName || organizationName || `${organizationLabel} Partner`;
+  const displayName =
+    profile.hospitalName || organizationName || `${organizationLabel} Partner`;
   const isPublic = Boolean(data.publicProfile.showHospitalProfile);
   const enabledFeatures = publicOptions
     .filter(([key]) => data.publicProfile[key])
@@ -103,9 +192,27 @@ export function HospitalProfilePage({
   return (
     <DashboardPageShell
       actions={
-        <div className="flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-bold text-[#00478d] dark:border-blue-400/15 dark:bg-blue-400/10 dark:text-blue-200">
-          <ShieldCheck size={14} />
-          {hasOnboardingData ? "Onboarding synced" : "Profile draft"}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={publishing}
+            onClick={() => void publishProfile()}
+            className="rounded-full bg-[#00478d] px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
+          >
+            {publishing
+              ? "Saving…"
+              : serverSaved && isPublic
+                ? "Unpublish profile"
+                : "Publish profile"}
+          </button>
+          <span className="flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-bold text-[#00478d] dark:border-blue-400/15 dark:bg-blue-400/10 dark:text-blue-200">
+            <ShieldCheck size={14} />
+            {serverSaved
+              ? verificationStatus === "VERIFIED" && isPublic
+                ? "Published"
+                : isPublic ? "Saved · verification required" : "Hidden"
+              : "Profile draft"}
+          </span>
         </div>
       }
       eyebrow="Hospital Profile"
@@ -113,6 +220,11 @@ export function HospitalProfilePage({
       title={displayName}
       tone="blue"
     >
+      {publishError && (
+        <p role="alert" className="mb-4 text-sm text-red-600">
+          {publishError}
+        </p>
+      )}
       <section className="overflow-hidden rounded-[2rem] border border-[#dbe4e0] bg-[#f7f8f3] shadow-sm dark:border-white/[0.08] dark:bg-[#12161a]">
         <div className="relative h-72 overflow-hidden bg-[linear-gradient(135deg,#e8f4ef_0%,#d7edf8_48%,#0b3c68_100%)]">
           {coverImage ? (
@@ -126,8 +238,14 @@ export function HospitalProfilePage({
           <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#f7f8f3] via-[#f7f8f3]/74 to-transparent dark:from-[#12161a] dark:via-[#12161a]/72" />
 
           <div className="absolute left-6 top-6 flex flex-wrap gap-2">
-            <ProfileBadge icon={<Eye size={14} />} label={isPublic ? "Public" : "Private"} />
-            <ProfileBadge icon={<BadgeCheck size={14} />} label={completedAt ? "Completed" : "Draft"} />
+            <ProfileBadge
+              icon={<Eye size={14} />}
+              label={isPublic ? "Public" : "Private"}
+            />
+            <ProfileBadge
+              icon={<BadgeCheck size={14} />}
+              label={completedAt ? "Completed" : "Draft"}
+            />
           </div>
 
           <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
@@ -151,17 +269,27 @@ export function HospitalProfilePage({
                   {displayName}
                 </h1>
                 <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold text-white/78">
-                  <span>{profile.hospitalOwnershipType || "Ownership pending"}</span>
+                  <span>
+                    {profile.hospitalOwnershipType || "Ownership pending"}
+                  </span>
                   <span className="hidden h-1 w-1 rounded-full bg-white/40 sm:inline-block" />
-                  <span>{formatBranchLine(mainBranch) || "Primary branch pending"}</span>
+                  <span>
+                    {formatBranchLine(mainBranch) || "Primary branch pending"}
+                  </span>
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:w-[460px]">
               <HeroMetric label="Beds" value={profile.numberOfBeds || "--"} />
-              <HeroMetric label="Branches" value={String(Math.max(activeBranches.length, 0))} />
-              <HeroMetric label="Departments" value={String(enabledDepartments.length)} />
+              <HeroMetric
+                label="Branches"
+                value={String(Math.max(activeBranches.length, 0))}
+              />
+              <HeroMetric
+                label="Departments"
+                value={String(enabledDepartments.length)}
+              />
               <HeroMetric label="Ready" value={`${completeness}%`} />
             </div>
           </div>
@@ -179,18 +307,45 @@ export function HospitalProfilePage({
                   "Add a hospital description in onboarding so patients can understand your specialties, infrastructure, and care experience."}
               </p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <DetailTile icon={<Building2 size={17} />} label="Category" value={profile.hospitalType || "Pending"} />
-                <DetailTile icon={<Users size={17} />} label="Ownership" value={profile.hospitalOwnershipType || "Pending"} />
-                <DetailTile icon={<BedDouble size={17} />} label="Capacity" value={profile.numberOfBeds ? `${profile.numberOfBeds} beds` : "Pending"} />
-                <DetailTile icon={<Clock3 size={17} />} label="Established" value={profile.establishedYear || "Pending"} />
+                <DetailTile
+                  icon={<Building2 size={17} />}
+                  label="Category"
+                  value={profile.hospitalType || "Pending"}
+                />
+                <DetailTile
+                  icon={<Users size={17} />}
+                  label="Ownership"
+                  value={profile.hospitalOwnershipType || "Pending"}
+                />
+                <DetailTile
+                  icon={<BedDouble size={17} />}
+                  label="Capacity"
+                  value={
+                    profile.numberOfBeds
+                      ? `${profile.numberOfBeds} beds`
+                      : "Pending"
+                  }
+                />
+                <DetailTile
+                  icon={<Clock3 size={17} />}
+                  label="Established"
+                  value={profile.establishedYear || "Pending"}
+                />
               </div>
             </Panel>
 
-            <Panel eyebrow="Care Network" icon={<Stethoscope size={17} />} title="Departments">
+            <Panel
+              eyebrow="Care Network"
+              icon={<Stethoscope size={17} />}
+              title="Departments"
+            >
               {enabledDepartments.length ? (
                 <div className="grid gap-3 md:grid-cols-2">
                   {enabledDepartments.map((department) => (
-                    <DepartmentRow department={department} key={department.name} />
+                    <DepartmentRow
+                      department={department}
+                      key={department.name}
+                    />
                   ))}
                 </div>
               ) : (
@@ -201,11 +356,19 @@ export function HospitalProfilePage({
               )}
             </Panel>
 
-            <Panel eyebrow="Locations" icon={<MapPin size={17} />} title="Branches">
+            <Panel
+              eyebrow="Locations"
+              icon={<MapPin size={17} />}
+              title="Branches"
+            >
               {activeBranches.length ? (
                 <div className="grid gap-3 lg:grid-cols-2">
                   {activeBranches.map((branch, index) => (
-                    <BranchCard branch={branch} index={index} key={branch.id || `${branch.name}-${index}`} />
+                    <BranchCard
+                      branch={branch}
+                      index={index}
+                      key={branch.id || `${branch.name}-${index}`}
+                    />
                   ))}
                 </div>
               ) : (
@@ -218,7 +381,11 @@ export function HospitalProfilePage({
           </div>
 
           <aside className="space-y-5 xl:sticky xl:top-5 xl:self-start">
-            <Panel eyebrow="Visibility" icon={<ShieldCheck size={17} />} title="Publishing status">
+            <Panel
+              eyebrow="Visibility"
+              icon={<ShieldCheck size={17} />}
+              title="Publishing status"
+            >
               <div className="rounded-2xl border border-[#d7e3df] bg-[#eef6f2] p-4 dark:border-white/10 dark:bg-white/[0.04]">
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -226,7 +393,8 @@ export function HospitalProfilePage({
                       {isPublic ? "Visible on Viruj" : "Hidden from patients"}
                     </p>
                     <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-500">
-                      {enabledFeatures.length}/{publicOptions.length} profile switches enabled
+                      {enabledFeatures.length}/{publicOptions.length} profile
+                      switches enabled
                     </p>
                   </div>
                   <span
@@ -275,17 +443,45 @@ export function HospitalProfilePage({
               </div>
             </Panel>
 
-            <Panel eyebrow="Contact" icon={<Phone size={17} />} title="Patient contact">
+            <Panel
+              eyebrow="Contact"
+              icon={<Phone size={17} />}
+              title="Patient contact"
+            >
               <div className="space-y-3">
-                <ContactRow icon={<Phone size={16} />} label="Phone" value={profile.phone || "Pending"} />
-                <ContactRow icon={<Mail size={16} />} label="Email" value={profile.email || "Pending"} />
-                <ContactRow icon={<Globe2 size={16} />} label="Website" value={formatWebsite(profile.website) || "Pending"} />
-                <ContactRow icon={<BadgeCheck size={16} />} label="Registration" value={profile.registrationNumber || "Pending"} />
-                <ContactRow icon={<ShieldCheck size={16} />} label="GST" value={profile.gstNumber || "Pending"} />
+                <ContactRow
+                  icon={<Phone size={16} />}
+                  label="Phone"
+                  value={profile.phone || "Pending"}
+                />
+                <ContactRow
+                  icon={<Mail size={16} />}
+                  label="Email"
+                  value={profile.email || "Pending"}
+                />
+                <ContactRow
+                  icon={<Globe2 size={16} />}
+                  label="Website"
+                  value={formatWebsite(profile.website) || "Pending"}
+                />
+                <ContactRow
+                  icon={<BadgeCheck size={16} />}
+                  label="Registration"
+                  value={profile.registrationNumber || "Pending"}
+                />
+                <ContactRow
+                  icon={<ShieldCheck size={16} />}
+                  label="GST"
+                  value={profile.gstNumber || "Pending"}
+                />
               </div>
             </Panel>
 
-            <Panel eyebrow="Media" icon={<ImageIcon size={17} />} title="Brand assets">
+            <Panel
+              eyebrow="Media"
+              icon={<ImageIcon size={17} />}
+              title="Brand assets"
+            >
               <div className="grid grid-cols-2 gap-3">
                 <MediaCheck label="Logo" ready={Boolean(logoImage)} />
                 <MediaCheck label="Cover" ready={Boolean(coverImage)} />
@@ -296,7 +492,10 @@ export function HospitalProfilePage({
                     className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600 dark:bg-white/[0.05] dark:text-slate-300"
                     key={facility}
                   >
-                    <Check size={13} className="text-[#00478d] dark:text-blue-300" />
+                    <Check
+                      size={13}
+                      className="text-[#00478d] dark:text-blue-300"
+                    />
                     {facility}
                   </div>
                 ))}
@@ -309,7 +508,9 @@ export function HospitalProfilePage({
   );
 }
 
-function readStoredOnboardingState(organizationId?: string): StoredOnboardingPayload | null {
+function readStoredOnboardingState(
+  organizationId?: string
+): StoredOnboardingPayload | null {
   if (typeof window === "undefined") return null;
 
   const keys = [
@@ -343,7 +544,9 @@ function calculateCompleteness(data: OnboardingState) {
     data.profile.logoUrl || data.profile.logoPreviewUrl,
     data.profile.coverUrl || data.profile.coverPreviewUrl,
     data.branches.some((branch) => branch.address.trim() && branch.city.trim()),
-    data.departments.some((department) => !data.disabledDepartments.includes(department.name)),
+    data.departments.some(
+      (department) => !data.disabledDepartments.includes(department.name)
+    ),
     data.publicProfile.showHospitalProfile,
   ];
 
@@ -356,7 +559,13 @@ function formatBranchLine(branch?: Branch) {
 }
 
 function formatBranchAddress(branch: Branch) {
-  return [branch.address, branch.city, branch.state, branch.postalCode, branch.country]
+  return [
+    branch.address,
+    branch.city,
+    branch.state,
+    branch.postalCode,
+    branch.country,
+  ]
     .filter(Boolean)
     .join(", ");
 }
@@ -375,7 +584,13 @@ function formatTime(value: string) {
   return `${displayHour}:${String(minute).padStart(2, "0")} ${suffix}`;
 }
 
-function ProfileBadge({ icon, label }: { icon: React.ReactNode; label: string }) {
+function ProfileBadge({
+  icon,
+  label,
+}: {
+  icon: React.ReactNode;
+  label: string;
+}) {
   return (
     <span className="inline-flex h-8 items-center gap-2 rounded-full border border-white/20 bg-white/14 px-3 text-xs font-bold text-white shadow-sm backdrop-blur">
       {icon}
@@ -462,7 +677,10 @@ function DepartmentRow({ department }: { department: Department }) {
             {department.description || "Department description pending"}
           </p>
         </div>
-        <Stethoscope className="shrink-0 text-[#00478d] dark:text-blue-300" size={18} />
+        <Stethoscope
+          className="shrink-0 text-[#00478d] dark:text-blue-300"
+          size={18}
+        />
       </div>
       <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm dark:bg-white/10 dark:text-slate-300">
         <Clock3 size={13} />

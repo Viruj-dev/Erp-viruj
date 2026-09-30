@@ -14,6 +14,22 @@ afterEach(() => {
   globalThis.fetch = originalFetch;
 });
 
+test("publication requests use authenticated tenant context and persist onboarding before publishing", async () => {
+  const requests: { url: string; options?: RequestInit }[] = [];
+  globalThis.fetch = mock(async (url: string | URL | Request, options?: RequestInit) => {
+    requests.push({ url: String(url), options });
+    return Response.json({ success: true });
+  }) as unknown as typeof fetch;
+  const data = { profile: { hospitalName: "Hospital" }, publicProfile: { showHospitalProfile: true } };
+  await virujBackend.directory.saveOnboarding({ organizationId: "hospital-x", data });
+  await virujBackend.directory.publishFacility({ organizationId: "hospital-x", visibleOnPlatform: false });
+  expect(requests[0]?.url.endsWith("/directory/onboarding")).toBe(true);
+  expect(requests[0]?.options?.method).toBe("PUT");
+  expect(JSON.parse(String(requests[0]?.options?.body))).toEqual(data);
+  expect(JSON.parse(String(requests[1]?.options?.body))).toEqual({ visibleOnPlatform: false });
+  for (const request of requests) expect(new Headers(request.options?.headers).get("X-Erp-Organization-Id")).toBe("hospital-x");
+});
+
 test("staff appointment requests preserve tenant, optimistic version and zero-prefixed OTP", async () => {
   const requests: { url: string; options?: RequestInit }[] = [];
   globalThis.fetch = mock(

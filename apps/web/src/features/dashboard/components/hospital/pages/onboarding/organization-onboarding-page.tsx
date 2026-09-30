@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { virujBackend } from "@/lib/viruj-backend";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -16,7 +17,11 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { getOnboardingSteps, getStepDescriptions, getStoragePrefix } from "./constants";
+import {
+  getOnboardingSteps,
+  getStepDescriptions,
+  getStoragePrefix,
+} from "./constants";
 import { OnboardingSuccessScreen } from "./onboarding-success-screen";
 import {
   getDefaultOnboardingState,
@@ -78,18 +83,33 @@ export function OrganizationOnboardingPage({
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<StepId[]>([]);
   const [customDepartment, setCustomDepartment] = useState("");
-  const [customDepartmentDescription, setCustomDepartmentDescription] = useState("");
+  const [customDepartmentDescription, setCustomDepartmentDescription] =
+    useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [showCompletionScreen, setShowCompletionScreen] = useState(false);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
+    "idle"
+  );
+  const [launching, setLaunching] = useState(false);
 
   const currentStep = steps[currentStepIndex] ?? steps[0];
-  const progressCount = completedSteps.filter((step) => onboardingStepIds.has(step)).length;
+  const progressCount = completedSteps.filter((step) =>
+    onboardingStepIds.has(step)
+  ).length;
   const completionPercentage = Math.round((progressCount / steps.length) * 100);
-  const enabledDepartments = kind === "clinic"
-    ? data.departments
-    : data.departments.filter((department) => !data.disabledDepartments.includes(department.name));
-  const wideContent = ["departments", "public", "review", "workingHours", "doctors"].includes(currentStep.id);
+  const enabledDepartments =
+    kind === "clinic"
+      ? data.departments
+      : data.departments.filter(
+          (department) => !data.disabledDepartments.includes(department.name)
+        );
+  const wideContent = [
+    "departments",
+    "public",
+    "review",
+    "workingHours",
+    "doctors",
+  ].includes(currentStep.id);
   const contentWidthClassName = wideContent ? "max-w-[960px]" : "max-w-[660px]";
   const entityLabel = kind === "clinic" ? "clinic" : "hospital";
 
@@ -160,7 +180,8 @@ export function OrganizationOnboardingPage({
         { label: "Doctors", value: data.doctors.length.toString() },
         {
           label: "Location",
-          value: data.branches[0]?.city || data.branches[0]?.address || "Pending",
+          value:
+            data.branches[0]?.city || data.branches[0]?.address || "Pending",
         },
       ];
     }
@@ -210,13 +231,29 @@ export function OrganizationOnboardingPage({
     }
   };
 
-  const handleLaunch = () => {
+  const handleLaunch = async () => {
     const validationMessage = validateStep(currentStep.id, data, kind);
     if (validationMessage) {
       setErrorMessage(validationMessage);
       return;
     }
 
+    if (launching) return;
+    setLaunching(true);
+    try {
+      await virujBackend.directory.saveOnboarding({
+        organizationId: organizationId ?? hospitalId,
+        data: getPersistableOnboardingState(data),
+      });
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not save onboarding details"
+      );
+      setLaunching(false);
+      return;
+    }
     markComplete("review");
     window.localStorage.setItem(
       completeKey,
@@ -236,7 +273,9 @@ export function OrganizationOnboardingPage({
     return (
       <OnboardingSuccessScreen
         completionPercentage={100}
-        hospitalName={data.profile.hospitalName || organizationLabel || "Your organization"}
+        hospitalName={
+          data.profile.hospitalName || organizationLabel || "Your organization"
+        }
         kind={kind}
         onContinue={() => router.push(launchDashboardPath)}
         summary={summary}
@@ -245,13 +284,22 @@ export function OrganizationOnboardingPage({
   }
 
   return (
-    <div className={cn("vh-onboarding min-h-screen bg-[var(--onboarding-page)] p-2 text-[var(--onboarding-text)] md:p-3", kind === "clinic" && "vh-onboarding--clinic")}>
+    <div
+      className={cn(
+        "vh-onboarding min-h-screen bg-[var(--onboarding-page)] p-2 text-[var(--onboarding-text)] md:p-3",
+        kind === "clinic" && "vh-onboarding--clinic"
+      )}
+    >
       <div className="relative min-h-[calc(100vh-1rem)] overflow-hidden rounded-[24px] border border-black/5 bg-[var(--onboarding-shell)] shadow-[0_28px_110px_rgba(0,0,0,0.22)] md:min-h-[calc(100vh-1.5rem)]">
         <div className="relative flex min-h-[calc(100vh-1rem)] w-full flex-col md:min-h-[calc(100vh-1.5rem)]">
           <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-dashed border-[var(--onboarding-border)] px-6 md:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--onboarding-accent-deep)] text-white shadow-[0_10px_24px_var(--onboarding-accent-shadow)]">
-                {kind === "clinic" ? <Building2 size={17} /> : <Hospital size={17} />}
+                {kind === "clinic" ? (
+                  <Building2 size={17} />
+                ) : (
+                  <Hospital size={17} />
+                )}
               </div>
               <div className="min-w-0">
                 <h1 className="truncate text-sm font-semibold tracking-tight text-[var(--onboarding-text)]">
@@ -265,7 +313,10 @@ export function OrganizationOnboardingPage({
 
             <div className="hidden h-8 items-center gap-2 rounded-full border border-[var(--onboarding-border-strong)] bg-[var(--onboarding-panel-muted)] px-3 text-[11px] font-semibold text-[var(--onboarding-muted)] sm:inline-flex">
               {saveState === "saving" ? (
-                <Loader2 className="animate-spin text-[var(--onboarding-accent)]" size={13} />
+                <Loader2
+                  className="animate-spin text-[var(--onboarding-accent)]"
+                  size={13}
+                />
               ) : (
                 <Cloud className="text-[var(--onboarding-accent)]" size={13} />
               )}
@@ -281,7 +332,9 @@ export function OrganizationOnboardingPage({
                   Set up your account
                 </div>
                 <div className="mt-5 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--onboarding-muted)]">
-                  <span>Step {currentStepIndex + 1} of {steps.length}</span>
+                  <span>
+                    Step {currentStepIndex + 1} of {steps.length}
+                  </span>
                   <span>{completionPercentage}%</span>
                 </div>
                 <div className="mt-3 h-1.5 rounded-full bg-[var(--onboarding-panel-muted)]">
@@ -365,7 +418,12 @@ export function OrganizationOnboardingPage({
 
             <main className="min-w-0 bg-[var(--onboarding-shell)]">
               <div className="flex min-h-full flex-col">
-                <div className={cn("mx-auto w-full px-6 pb-6 pt-12 md:px-0", contentWidthClassName)}>
+                <div
+                  className={cn(
+                    "mx-auto w-full px-6 pb-6 pt-12 md:px-0",
+                    contentWidthClassName
+                  )}
+                >
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--onboarding-muted)]">
                     {currentStep.kicker}
                   </p>
@@ -385,7 +443,12 @@ export function OrganizationOnboardingPage({
                   </div>
                 </div>
 
-                <div className={cn("mx-auto min-h-0 w-full flex-1 overflow-y-auto px-6 pb-8 md:px-0", contentWidthClassName)}>
+                <div
+                  className={cn(
+                    "mx-auto min-h-0 w-full flex-1 overflow-y-auto px-6 pb-8 md:px-0",
+                    contentWidthClassName
+                  )}
+                >
                   <AnimatePresence mode="wait">
                     <motion.div
                       animate={{ opacity: 1, y: 0 }}
@@ -404,13 +467,19 @@ export function OrganizationOnboardingPage({
                       ) : null}
 
                       {currentStep.id === "contact" ? (
-                        <ContactStep data={data} updateProfile={updateProfile} />
+                        <ContactStep
+                          data={data}
+                          updateProfile={updateProfile}
+                        />
                       ) : null}
 
                       {currentStep.id === "locations" ? (
-                        <LocationsStep data={data} kind={kind} setData={setData} />
+                        <LocationsStep
+                          data={data}
+                          kind={kind}
+                          setData={setData}
+                        />
                       ) : null}
-
 
                       {currentStep.id === "workingHours" ? (
                         <WorkingHoursStep data={data} setData={setData} />
@@ -419,10 +488,14 @@ export function OrganizationOnboardingPage({
                       {currentStep.id === "departments" ? (
                         <DepartmentsStep
                           customDepartment={customDepartment}
-                          customDepartmentDescription={customDepartmentDescription}
+                          customDepartmentDescription={
+                            customDepartmentDescription
+                          }
                           data={data}
                           setCustomDepartment={setCustomDepartment}
-                          setCustomDepartmentDescription={setCustomDepartmentDescription}
+                          setCustomDepartmentDescription={
+                            setCustomDepartmentDescription
+                          }
                           setData={setData}
                         />
                       ) : null}
@@ -430,7 +503,6 @@ export function OrganizationOnboardingPage({
                       {currentStep.id === "doctors" ? (
                         <DoctorsStep data={data} setData={setData} />
                       ) : null}
-
 
                       {currentStep.id === "public" ? (
                         <PublicProfileStep data={data} setData={setData} />
@@ -448,7 +520,12 @@ export function OrganizationOnboardingPage({
                   </AnimatePresence>
                 </div>
 
-                <footer className={cn("mx-auto w-full border-t border-dashed border-[var(--onboarding-border)] px-6 py-4 md:px-0", contentWidthClassName)}>
+                <footer
+                  className={cn(
+                    "mx-auto w-full border-t border-dashed border-[var(--onboarding-border)] px-6 py-4 md:px-0",
+                    contentWidthClassName
+                  )}
+                >
                   {errorMessage ? (
                     <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
                       {errorMessage}
@@ -458,7 +535,9 @@ export function OrganizationOnboardingPage({
                     <button
                       className="inline-flex h-10 items-center gap-2 rounded-lg border border-[var(--onboarding-border)] bg-[var(--onboarding-panel-muted)] px-4 text-sm font-semibold text-[var(--onboarding-muted-strong)] shadow-sm transition hover:bg-[var(--onboarding-panel)] disabled:pointer-events-none disabled:opacity-40"
                       disabled={currentStepIndex === 0}
-                      onClick={() => setCurrentStepIndex((value) => Math.max(0, value - 1))}
+                      onClick={() =>
+                        setCurrentStepIndex((value) => Math.max(0, value - 1))
+                      }
                       type="button"
                     >
                       <ArrowLeft size={15} />
@@ -469,6 +548,7 @@ export function OrganizationOnboardingPage({
                       <button
                         className="inline-flex h-11 items-center gap-2 rounded-lg bg-[var(--onboarding-accent-deep)] px-5 text-sm font-semibold text-white shadow-[0_16px_34px_var(--onboarding-accent-shadow)] transition hover:-translate-y-0.5 hover:bg-[var(--onboarding-accent-mid)]"
                         onClick={handleLaunch}
+                        disabled={launching}
                         type="button"
                       >
                         Launch ERP
