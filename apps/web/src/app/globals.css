@@ -113,6 +113,24 @@
     box-sizing: border-box;
     @apply border-border outline-ring/50;
   }
+
+  :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid #005eb8;
+    outline-offset: 3px;
+  }
+
+  .dark :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline-color: #93c5fd;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer utilities {

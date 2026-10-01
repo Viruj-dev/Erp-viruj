@@ -6,7 +6,7 @@ import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme-provider";
-import { ChevronDown, Grid, Moon, Search, Sun } from "lucide-react";
+import { ChevronDown, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 
 export function ErpDemoTopBar({
@@ -34,55 +34,41 @@ export function ErpDemoTopBar({
   const title = organizationName?.trim() || organizationLabel;
 
   return (
-    <header className="sticky top-0 z-30 flex w-full items-center justify-between border-b border-slate-200 px-6 py-5 transition-colors dark:border-white/[0.08]  lg:px-10">
-      <div className="flex items-center gap-8">
-        <h2 className="font-headline text-2xl font-bold tracking-tight text-on-surface dark:text-slate-100">
+    <header className="sticky top-0 z-30 flex w-full items-center justify-between gap-4 border-b border-slate-200/80 bg-white/90 px-4 py-4 backdrop-blur-xl transition-colors dark:border-white/[0.08] dark:bg-[#111418]/90 sm:px-6 lg:px-10">
+      <div className="min-w-0">
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Viruj · {organizationLabel} workspace</p>
+        <h2 className="truncate font-headline text-xl font-bold tracking-tight text-on-surface dark:text-slate-100 sm:text-2xl">
           {title}
         </h2>
-        <div className="relative hidden lg:block">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-outline"
-            size={18}
-          />
-          <input
-            className="w-80 rounded-lg border-none bg-surface-container-low py-2 pl-10 pr-4 text-sm text-slate-800 transition-colors placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 dark:bg-white/[0.07] dark:text-slate-100 dark:placeholder:text-slate-500"
-            placeholder="Search patients, records, doctors..."
-            type="text"
-          />
-        </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         <button
           aria-label={
             theme === "dark" ? "Switch to light theme" : "Switch to dark theme"
           }
-          className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-200/50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
+          className="flex size-10 items-center justify-center rounded-xl border border-slate-200/80 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
           onClick={toggleTheme}
           type="button"
         >
           {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
         </button>
         <NotificationCenter organizationId={organizationId} />
-        <button
-          className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-200/50 dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
-          type="button"
-        >
-          <Grid size={20} />
-        </button>
-        <div className="h-8 w-px bg-slate-200 dark:bg-white/[0.08]" />
+        <div className="mx-1 h-8 w-px bg-slate-200 dark:bg-white/[0.08]" />
 
         {/* Profile button ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ opens dropdown */}
         <div className="relative">
           <button
             id="top-bar-profile-button"
+            aria-label="Open account menu"
+            aria-expanded={isProfileOpen}
             type="button"
             onClick={() => setIsProfileOpen((v) => !v)}
             className="flex cursor-pointer items-center gap-3 rounded-lg p-1.5 transition-colors hover:bg-slate-200/50 dark:hover:bg-white/[0.08]"
           >
               <div className="hidden text-right sm:block">
               <p className="text-xs font-bold text-on-surface dark:text-slate-100">
-                {userName || "Dr. Sarah Chen"}
+                {userName || "Viruj User"}
               </p>
               <p className="text-[10px] text-outline dark:text-slate-500">
                 {formatRole(roleLabel)} | {organizationLabel}

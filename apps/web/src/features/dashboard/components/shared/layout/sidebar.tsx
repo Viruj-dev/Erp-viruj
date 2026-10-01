@@ -9,7 +9,6 @@ import {
   BarChart3,
   BadgeCheck,
   BadgeIndianRupee,
-  Bot,
   BriefcaseMedical,
   Building2,
   ChevronDown,
@@ -21,15 +20,12 @@ import {
   HeartPulse,
   History,
   Image,
-  Keyboard,
   LayoutDashboard,
   Lock,
   LogOut,
   MapPin,
   MessagesSquare,
   MapPinned,
-  PackageCheck,
-  Search,
   Settings,
   Sparkles,
   Star,
@@ -98,11 +94,6 @@ const appointmentOptions = [
   { id: "appointments-review", label: "Review", icon: ClipboardCheck },
   { id: "appointments-patients", label: "Patient Details", icon: FileText },
   { id: "appointments-settings", label: "Settings", icon: Settings },
-] as const;
-
-const utilityItems = [
-  { label: "Search", icon: Search, shortcut: "K" },
-  { label: "Ask AI", icon: Bot, shortcut: "D" },
 ] as const;
 
 const comingSoonNavItems = new Set<ErpDemoPage>([
@@ -191,7 +182,7 @@ export function ErpDemoSidebar({
   return (
     <aside
       className={cn(
-        "fixed bottom-4 left-4 top-4 z-40 flex flex-col rounded-[22px] border border-slate-200/80 bg-[#f3f4f4] text-slate-700 shadow-[0_24px_80px_rgba(30,41,59,0.14)] transition-all duration-300 ease-in-out dark:border-white/[0.10] dark:bg-[#141618] dark:text-slate-200 dark:shadow-[0_24px_80px_rgba(0,0,0,0.32)]",
+        "fixed bottom-4 left-4 top-4 z-40 flex flex-col rounded-[22px] border border-slate-200/80 bg-[#f3f4f4] text-slate-700 shadow-[0_12px_40px_rgba(30,41,59,0.08)] transition-all duration-300 ease-in-out dark:border-white/[0.10] dark:bg-[#141618] dark:text-slate-200 dark:shadow-[0_24px_80px_rgba(0,0,0,0.32)]",
         "before:pointer-events-none before:absolute before:inset-0 before:bg-white/[0.42] dark:before:bg-white/[0.03]",
         isCollapsed ? "w-20 overflow-visible" : "w-60 overflow-hidden"
       )}
@@ -228,7 +219,8 @@ export function ErpDemoSidebar({
           ) : null}
 
           <button
-            aria-label="Toggle sidebar"
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!isCollapsed}
             className={cn(
               "flex size-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white hover:text-slate-950 dark:text-slate-500 dark:hover:bg-white/[0.08] dark:hover:text-white",
               isCollapsed &&
@@ -241,33 +233,7 @@ export function ErpDemoSidebar({
           </button>
         </div>
 
-        <div
-          className={cn(
-            "space-y-1 border-b border-slate-200/80 pb-3 dark:border-white/[0.07]",
-            isCollapsed && "hidden"
-          )}
-        >
-          {utilityItems.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <button
-                className="flex h-9 w-full items-center gap-3 rounded-lg px-2.5 text-left text-[13px] font-medium text-slate-600 transition hover:bg-white hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-100"
-                key={item.label}
-                type="button"
-              >
-                <Icon size={16} />
-                <span className="flex-1">{item.label}</span>
-                <span className="inline-flex items-center gap-0.5 text-[10px] text-slate-400 dark:text-slate-600">
-                  <Keyboard size={11} />
-                  {item.shortcut}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        <nav className="no-scrollbar mt-4 min-h-0 flex-1 space-y-5 overflow-y-auto pr-1">
+        <nav aria-label="Workspace navigation" className="no-scrollbar mt-2 min-h-0 flex-1 space-y-5 overflow-y-auto border-t border-slate-200/80 pt-4 pr-1 dark:border-white/[0.07]">
           <SidebarSection
             allowedPages={allowedPages}
             currentPage={currentPage}
@@ -353,10 +319,8 @@ export function ErpDemoSidebar({
               "flex items-center rounded-xl bg-white/80 ring-1 ring-slate-200/90 dark:bg-white/[0.055] dark:ring-white/[0.07] cursor-pointer transition hover:bg-white hover:ring-slate-300 dark:hover:bg-white/[0.08] dark:hover:ring-white/[0.12]",
               isCollapsed ? "justify-center p-2" : "gap-3 p-2"
             )}
-            onClick={() => onPageChange("profile")}
-            title="View profile"
-            role="button"
           >
+            <button type="button" aria-label="View profile" onClick={() => onPageChange(isClinicWorkspace ? "clinic-profile" : isDoctorWorkspace ? "profile" : "hospital-profile")} className={cn("flex min-w-0 items-center gap-3 text-left", isCollapsed ? "justify-center" : "flex-1")}>
             <div
               className={cn(
                 "flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-semi-bold",
@@ -375,6 +339,10 @@ export function ErpDemoSidebar({
                     {userEmail}
                   </p>
                 </div>
+              </>
+            ) : null}
+            </button>
+            {!isCollapsed ? (
                 <button
                   aria-label="Logout"
                   className="flex size-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:text-slate-500 dark:hover:bg-red-500/[0.12] dark:hover:text-red-300"
@@ -383,7 +351,6 @@ export function ErpDemoSidebar({
                 >
                   <LogOut size={15} />
                 </button>
-              </>
             ) : null}
           </div>
 
@@ -579,7 +546,7 @@ function NavButton({
   return (
     <button
       className={cn(
-        "group relative flex h-9 w-full items-center rounded-lg text-[13px] font-semibold transition-all duration-200",
+        "group relative flex min-h-10 w-full items-center rounded-xl text-[13px] font-semibold transition-all duration-200",
         isCollapsed ? "justify-center px-0" : "gap-3 px-2.5",
         isComingSoon && "cursor-not-allowed",
         active
@@ -589,6 +556,9 @@ function NavButton({
             : "text-slate-600 hover:bg-white hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.055] dark:hover:text-slate-100"
       )}
       aria-disabled={isComingSoon}
+      aria-current={active ? "page" : undefined}
+      aria-label={isCollapsed ? label : undefined}
+      aria-expanded={showChevron ? isOpen : undefined}
       onClick={onClick}
       title={
         isComingSoon
