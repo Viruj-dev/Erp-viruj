@@ -25,6 +25,39 @@ const expectedBillingPermissions = [
 ] as const satisfies readonly SubscriptionBillingPermissionName[];
 
 describe("subscription billing RBAC", () => {
+  test("clinic location permissions follow existing organization management roles", async () => {
+    const { getCentralApiPermissions, hasOrganizationPermission } =
+      await authModule;
+    for (const role of [
+      "OWNER",
+      "CLINIC_OWNER",
+      "ADMIN",
+      "CLINIC_ADMIN",
+      "ORG_ADMIN",
+      "owner",
+      "admin",
+      "MANAGER",
+      "CLINIC_STAFF",
+      "STAFF",
+      "RECEPTIONIST",
+      "DOCTOR",
+      "TECHNICIAN",
+      "billing",
+      "unknown",
+    ]) {
+      const permissions = getCentralApiPermissions(role);
+      for (const action of ["create", "update", "delete"]) {
+        expect(
+          permissions.includes(
+            `clinic.location.${action}` as (typeof permissions)[number]
+          )
+        ).toBe(hasOrganizationPermission(role, { organization: ["update"] }));
+      }
+      expect(permissions.includes("clinic.location.read")).toBe(
+        hasOrganizationPermission(role, { organization: ["read"] })
+      );
+    }
+  });
   test("owner and super-admin roles receive subscription permissions", async () => {
     const { getOrganizationPermissions, hasOrganizationPermission } =
       await authModule;
