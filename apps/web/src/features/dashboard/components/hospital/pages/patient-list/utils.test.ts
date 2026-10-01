@@ -1,7 +1,60 @@
 import { expect, test } from "bun:test";
 import { availableAppointmentActions } from "@/features/dashboard/components/shared/modules/appointments/utils";
-import { mapAppointmentToPatient } from "./utils";
+import {
+  appointmentViews,
+  appointmentsForView,
+  mapAppointmentToPatient,
+} from "./utils";
 import type { VirujAppointment } from "@/lib/viruj-backend";
+
+test("status queues stay separate and sort requests by booking time and visits by schedule", () => {
+  const make = (
+    id: string,
+    status: VirujAppointment["status"],
+    day: number,
+    booked: number
+  ) =>
+    ({
+      id,
+      status,
+      patientName: "Patient",
+      doctorName: "Doctor",
+      appointmentDate: `2026-10-${String(day).padStart(2, "0")}T10:00:00Z`,
+      createdAt: `2026-10-01T${String(booked).padStart(2, "0")}:00:00Z`,
+    }) as VirujAppointment;
+  const records = [
+    make("older-request", "pending_approval", 4, 9),
+    make("newer-request", "pending_approval", 3, 10),
+    make("later-visit", "approved", 5, 9),
+    make("earlier-visit", "approved", 2, 10),
+    ...appointmentViews
+      .filter(
+        (view) => !["all", "approved", "pending_approval"].includes(view.value)
+      )
+      .map((view) =>
+        make(view.value, view.value as VirujAppointment["status"], 3, 9)
+      ),
+  ];
+  expect(
+    appointmentsForView(records, "pending_approval", "").map(
+      (record) => record.id
+    )
+  ).toEqual(["newer-request", "older-request"]);
+  expect(
+    appointmentsForView(records, "approved", "").map((record) => record.id)
+  ).toEqual(["earlier-visit", "later-visit"]);
+  for (const view of appointmentViews.filter((view) => view.value !== "all"))
+    expect(
+      appointmentsForView(records, view.value, "").every(
+        (record) => record.status === view.value
+      )
+    ).toBe(true);
+  expect(appointmentsForView(records, "all", "  DOCTOR ")).toHaveLength(
+    records.length
+  );
+  expect(appointmentsForView(records, "all", "missing")).toEqual([]);
+  expect(records[0]!.id).toBe("older-request");
+});
 
 test("patient queue preserves appointment identity, lower-case gender and provider date", () => {
   const appointment: VirujAppointment = {

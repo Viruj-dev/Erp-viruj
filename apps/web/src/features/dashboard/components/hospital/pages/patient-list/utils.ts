@@ -1,11 +1,61 @@
-import type { VirujAppointment, VirujAppointmentStatus } from "@/lib/viruj-backend";
+import type {
+  VirujAppointment,
+  VirujAppointmentStatus,
+} from "@/lib/viruj-backend";
 
 import type { DirectoryPatient, PatientStatus } from "./types";
 
-export function mapAppointmentToPatient(appointment: VirujAppointment): DirectoryPatient {
+export const appointmentViews = [
+  { value: "all", label: "All" },
+  { value: "pending_approval", label: "Pending Approval" },
+  { value: "approved", label: "Approved" },
+  { value: "rescheduled", label: "Rescheduled" },
+  { value: "completed", label: "Completed" },
+  { value: "cancelled", label: "Cancelled" },
+  { value: "rejected", label: "Rejected" },
+  { value: "no_show", label: "No Show" },
+] as const;
+export type AppointmentView = VirujAppointmentStatus | "all";
+
+export function appointmentsForView(
+  appointments: VirujAppointment[],
+  view: AppointmentView,
+  search: string
+) {
+  const query = search.trim().toLowerCase();
+  const byBooking = view === "pending_approval" || view === "all";
+  const upcoming = view === "approved" || view === "rescheduled";
+  const timestamp = (appointment: VirujAppointment) =>
+    new Date(
+      byBooking
+        ? (appointment.createdAt ?? appointment.appointmentDate)
+        : (appointment.startsAt ?? appointment.appointmentDate)
+    ).getTime();
+  return appointments
+    .filter(
+      (appointment) =>
+        (view === "all" || appointment.status === view) &&
+        [appointment.patientName, appointment.doctorName]
+          .join(" ")
+          .toLowerCase()
+          .includes(query)
+    )
+    .sort(
+      (a, b) =>
+        (upcoming
+          ? timestamp(a) - timestamp(b)
+          : timestamp(b) - timestamp(a)) || a.id.localeCompare(b.id)
+    );
+}
+
+export function mapAppointmentToPatient(
+  appointment: VirujAppointment
+): DirectoryPatient {
   const status = appointmentStatusLabel(appointment.status);
   const scheduleDate = new Date(appointment.appointmentDate);
-  const bookingDate = appointment.createdAt ? new Date(appointment.createdAt) : null;
+  const bookingDate = appointment.createdAt
+    ? new Date(appointment.createdAt)
+    : null;
 
   return {
     age: appointment.patientAge ?? 0,
@@ -38,7 +88,9 @@ export function isFakeAppointment(appointment: VirujAppointment) {
     .some((value) => value?.toLowerCase().startsWith("fake-"));
 }
 
-export function appointmentStatusLabel(status: VirujAppointmentStatus): PatientStatus {
+export function appointmentStatusLabel(
+  status: VirujAppointmentStatus
+): PatientStatus {
   switch (status) {
     case "approved":
       return "Approved";
@@ -98,7 +150,12 @@ function formatAppointmentDate(value: Date, timezone = "Asia/Kolkata") {
     return "Requested";
   }
 
-  return new Intl.DateTimeFormat("en-GB", { timeZone: timezone, day: "2-digit", month: "2-digit", year: "2-digit" }).format(value);
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone,
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  }).format(value);
 }
 
 function formatBookingDate(value: Date | null) {
