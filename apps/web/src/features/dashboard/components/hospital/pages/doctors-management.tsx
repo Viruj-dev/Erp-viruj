@@ -150,6 +150,11 @@ export function DoctorsManagementPage({
   const isFacilityVerified = facility?.verificationStatus === "VERIFIED" ||
     facility?.verificationStatus === "APPROVED";
   const canPublish = Boolean(isFacilityVerified && facility?.settings?.visibleOnPlatform);
+  const blockedLabel = facilityQuery.isError
+    ? "Hidden — publication status unavailable"
+    : !isFacilityVerified
+      ? "Hidden — hospital verification required"
+      : "Hidden — hospital profile not published";
   const isVisible = (doctor: VirujDoctor) => doctor.visibleInApp ?? (canPublish && doctor.published);
   const publishedCount = doctors.filter(isVisible).length;
   const draftCount = doctors.filter((doctor) => !doctor.published).length;
@@ -308,6 +313,7 @@ export function DoctorsManagementPage({
               <DoctorRow
                 doctor={doctor}
                 canPublish={canPublish}
+                blockedLabel={blockedLabel}
                 isVisible={isVisible(doctor)}
                 isPublishing={
                   publishDoctorMutation.isPending &&
@@ -632,6 +638,7 @@ function readClinicDepartments(key: string): string[] | null {
 function DoctorRow({
   doctor,
   canPublish,
+  blockedLabel,
   isVisible,
   isPublishing,
   onDelete,
@@ -641,6 +648,7 @@ function DoctorRow({
 }: {
   doctor: VirujDoctor;
   canPublish: boolean;
+  blockedLabel: string;
   isVisible: boolean;
   isPublishing: boolean;
   onDelete: () => void;
@@ -697,7 +705,7 @@ function DoctorRow({
           </span>
         ) : doctor.published ? (
           <span className="inline-flex h-10 items-center justify-center rounded-xl bg-amber-100 px-4 text-xs font-semi-bold text-amber-800 dark:bg-amber-400/14 dark:text-amber-200">
-            Waiting for hospital publication
+            {blockedLabel}
           </span>
         ) : (
           <button
