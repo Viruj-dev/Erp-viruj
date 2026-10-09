@@ -149,7 +149,9 @@ export function DoctorsManagementPage({
   const facility = facilityQuery.data;
   const isFacilityVerified = facility?.verificationStatus === "VERIFIED" ||
     facility?.verificationStatus === "APPROVED";
-  const canPublish = Boolean(isFacilityVerified && facility?.settings?.visibleOnPlatform);
+  const isDemoHospital = Boolean(facility?.directoryHospitalId &&
+    /^Viruj TEST Hospital (0[1-9]|10)$/.test(facility?.profile.name || ""));
+  const canPublish = Boolean((isFacilityVerified || isDemoHospital) && facility?.settings?.visibleOnPlatform);
   const blockedLabel = facilityQuery.isError
     ? "Hidden — publication status unavailable"
     : !isFacilityVerified
@@ -282,6 +284,8 @@ export function DoctorsManagementPage({
                 ? "Checking hospital publication status..."
                 : facilityQuery.isError
                   ? "Cannot check hospital publication status right now."
+                  : isDemoHospital && canPublish
+                    ? "Fictional test listing visible in the patient app; do not use for medical care."
                   : !isFacilityVerified
                     ? "Hospital verification is required before doctors can appear in the app."
                     : !facility?.settings?.visibleOnPlatform

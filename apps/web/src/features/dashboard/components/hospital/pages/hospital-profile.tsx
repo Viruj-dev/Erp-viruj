@@ -80,6 +80,7 @@ export function HospitalProfilePage({
   const [publishError, setPublishError] = useState("");
   const [serverSaved, setServerSaved] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState("");
+  const [isDemoListing, setIsDemoListing] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -89,6 +90,8 @@ export function HospitalProfilePage({
         if (!active) return;
         setServerSaved(true);
         setVerificationStatus(result.verificationStatus);
+        setIsDemoListing(Boolean(result.directoryHospitalId &&
+          /^Viruj TEST Hospital (0[1-9]|10)$/.test(result.profile.name)));
         setData((current) => ({
           ...current,
           profile: {
@@ -208,7 +211,9 @@ export function HospitalProfilePage({
           <span className="flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-bold text-[#00478d] dark:border-blue-400/15 dark:bg-blue-400/10 dark:text-blue-200">
             <ShieldCheck size={14} />
             {serverSaved
-              ? verificationStatus === "VERIFIED" && isPublic
+              ? isDemoListing && isPublic
+                ? "Test listing visible in app"
+                : verificationStatus === "VERIFIED" && isPublic
                 ? "Published"
                 : isPublic ? "Saved · verification required" : "Hidden"
               : "Profile draft"}
