@@ -10,7 +10,7 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-} from "@/features/dashboard/components/ui/tabs";
+} from "@/components/ui/erp/tabs";
 import { PatientDataTable } from "./_components/patient-data-table";
 import { pageSize } from "./constants";
 import type { DirectoryPatient } from "./types";

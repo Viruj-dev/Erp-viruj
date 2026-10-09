@@ -1,5 +1,5 @@
-import { Badge } from "@/features/dashboard/components/ui/badge";
-import { Button } from "@/features/dashboard/components/ui/button";
+import { Badge } from "@/components/ui/erp/badge";
+import { Button } from "@/components/ui/erp/button";
 import type { DirectoryPatient, PatientStatus } from "../types";
 
 export function PatientIdentity({ patient }: { patient: DirectoryPatient }) {

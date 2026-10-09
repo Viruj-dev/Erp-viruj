@@ -5,6 +5,7 @@
 - `apps/web/src/app`: Next.js route entrypoints only.
 - `apps/web/src/features/auth`: login and organization access UI.
 - `apps/web/src/features/dashboard`: dashboard screens and ERP frontend components.
+- `apps/web/src/components/ui/erp`: shared ERP UI primitives used by dashboard and notifications. The few files directly in `components/ui` are separate variants; check which one a caller uses before combining them.
 - `apps/web/src/features/shell`: shared app shell states like loading UI.
 - `apps/server/src/routes`: Hono HTTP route registration.
 - `apps/server/src/middleware`: server middleware and error handling.
@@ -21,6 +22,7 @@
 - Org chooser: `apps/web/src/features/auth/components/organization-access-screen.tsx`
 - Main ERP screen: `apps/web/src/features/dashboard/screens/erp-home-screen.tsx`
 - Dashboard widgets: `apps/web/src/features/dashboard/components/*`
+- Shared facility forms and helpers: `apps/web/src/features/dashboard/components/shared/facilities`
 
 ### Backend
 

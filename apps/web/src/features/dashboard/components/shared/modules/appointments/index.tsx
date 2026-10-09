@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/features/dashboard/components/ui/input";
+import { Input } from "@/components/ui/erp/input";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import { virujBackend } from "@/lib/viruj-backend";
 import { useQuery } from "@tanstack/react-query";

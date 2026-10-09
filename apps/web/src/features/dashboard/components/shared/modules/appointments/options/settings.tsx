@@ -7,12 +7,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/features/dashboard/components/ui/card";
-import { Button } from "@/features/dashboard/components/ui/button";
-import { Input } from "@/features/dashboard/components/ui/input";
-import { Label } from "@/features/dashboard/components/ui/label";
-import { Switch } from "@/features/dashboard/components/ui/switch";
-import { Textarea } from "@/features/dashboard/components/ui/textarea";
+} from "@/components/ui/erp/card";
+import { Button } from "@/components/ui/erp/button";
+import { Input } from "@/components/ui/erp/input";
+import { Label } from "@/components/ui/erp/label";
+import { Switch } from "@/components/ui/erp/switch";
+import { Textarea } from "@/components/ui/erp/textarea";
 import {
   Bell,
   Clock,

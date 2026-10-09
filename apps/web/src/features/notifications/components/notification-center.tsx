@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/features/dashboard/components/ui/button";
+import { Button } from "@/components/ui/erp/button";
 import {
   Sheet,
   SheetContent,
@@ -8,7 +8,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/features/dashboard/components/ui/sheet";
+} from "@/components/ui/erp/sheet";
 import { cn } from "@/lib/utils";
 import {
   Archive,

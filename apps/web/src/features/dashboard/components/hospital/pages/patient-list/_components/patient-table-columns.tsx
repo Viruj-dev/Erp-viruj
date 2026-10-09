@@ -1,4 +1,4 @@
-import { Checkbox } from "@/features/dashboard/components/ui/checkbox";
+import { Checkbox } from "@/components/ui/erp/checkbox";
 import { Button } from "@/components/ui/button";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";

@@ -28,7 +28,7 @@ import {
   toFacilityInput,
   type FilterState,
   type SortKey,
-} from "@/features/dashboard/components/shared/facilties";
+} from "@/features/dashboard/components/shared/facilities";
 import { authClient } from "@/lib/auth-client";
 import { virujBackend, type VirujFacility, type VirujFacilityInput } from "@/lib/viruj-backend";
 

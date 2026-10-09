@@ -9,8 +9,8 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { Badge } from "@/features/dashboard/components/ui/badge";
-import { Card, CardContent } from "@/features/dashboard/components/ui/card";
+import { Badge } from "@/components/ui/erp/badge";
+import { Card, CardContent } from "@/components/ui/erp/card";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,8 +18,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/features/dashboard/components/ui/dialog";
-import { Input } from "@/features/dashboard/components/ui/input";
+} from "@/components/ui/erp/dialog";
+import { Input } from "@/components/ui/erp/input";
 
 import type { AppointmentRecord, AppointmentStatus } from "../types";
 import { formatDate } from "../utils";

@@ -1,10 +1,10 @@
-import { Button } from "@/features/dashboard/components/ui/button";
+import { Button } from "@/components/ui/erp/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/features/dashboard/components/ui/dropdown-menu";
+} from "@/components/ui/erp/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -12,7 +12,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/features/dashboard/components/ui/table";
+} from "@/components/ui/erp/table";
 import {
   type RowSelectionState,
   type VisibilityState,

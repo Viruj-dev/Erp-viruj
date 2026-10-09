@@ -2,7 +2,7 @@
 
 import { ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
-import { Switch } from "@/features/dashboard/components/ui/switch";
+import { Switch } from "@/components/ui/erp/switch";
 import { cn } from "@/lib/utils";
 import type { VirujFacilityCategory, VirujFacilityStatus } from "@/lib/viruj-backend";
 export function BackButton({ onClick }: { onClick: () => void }) {

@@ -52,27 +52,27 @@ export function OrganizationAccessScreen({
           </button>
         </div>
 
-        <div className="mt-10 grid gap-4">
+        <div className="mt-8 grid gap-2.5">
           {organizations.map((organization) => (
             <button
-              className="group flex items-center justify-between rounded-[1.75rem] border border-outline-variant/25 bg-surface px-6 py-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-xl"
+              className="group flex min-h-20 items-center justify-between gap-4 rounded-2xl border border-outline-variant/25 bg-surface px-5 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md"
               key={organization.id}
               onClick={() => void onSelectOrganization(organization.id)}
               type="button"
             >
               <div>
-                <p className="text-xs font-semi-bold uppercase tracking-[0.28em] text-primary">
+                <p className="text-[10px] font-semi-bold uppercase tracking-[0.2em] text-primary">
                   {organization.organizationType ?? "organization"}
                 </p>
-                <h2 className="mt-2 font-headline text-2xl font-bold text-on-surface">
+                <h2 className="mt-1 font-headline text-lg font-bold leading-tight text-on-surface">
                   {organization.name}
                 </h2>
-                <p className="mt-1 text-sm text-on-surface-variant">
+                <p className="mt-0.5 text-xs text-on-surface-variant">
                   @{organization.slug}
                 </p>
               </div>
-              <div className="rounded-full bg-primary/10 p-3 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
-                <ArrowRight size={20} />
+              <div className="shrink-0 rounded-full bg-primary/10 p-2 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                <ArrowRight size={18} />
               </div>
             </button>
           ))}

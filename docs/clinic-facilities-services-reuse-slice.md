@@ -2,7 +2,7 @@
 
 ## 1. Existing architecture found
 
-- Hospital facilities UI lived at `apps/web/src/features/dashboard/components/hospital/pages/facilities.tsx` and already used the shared `components/shared/facilties` forms, cards, filters, drawers, and helpers.
+- Hospital facilities UI lived at `apps/web/src/features/dashboard/components/hospital/pages/facilities.tsx` and already used the shared `components/shared/facilities` forms, cards, filters, drawers, and helpers.
 - Clinic facilities and services routes were static clinic pages, so clinic catalog records did not persist through the shared backend flow.
 - The web API client still targeted provider-shaped service paths for parts of the catalog surface.
 - The central backend already had hospital service endpoints and clinic service/facility Prisma models, but no canonical ERP route that served both hospital and clinic.

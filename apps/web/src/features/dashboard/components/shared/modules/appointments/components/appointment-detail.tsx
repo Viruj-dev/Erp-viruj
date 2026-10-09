@@ -1,14 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/features/dashboard/components/ui/input";
+import { Input } from "@/components/ui/erp/input";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/features/dashboard/components/ui/dialog";
+} from "@/components/ui/erp/dialog";
 import { virujBackend, type VirujAppointmentStatus } from "@/lib/viruj-backend";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
