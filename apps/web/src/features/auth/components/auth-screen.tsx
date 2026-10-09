@@ -135,6 +135,7 @@ export function ErpAuthScreen() {
       onAuthenticated={async () => {
         await Promise.all([
           sessionState.refetch(),
+          organizationsState.refetch(),
           activeOrganizationState.refetch(),
           activeMemberState.refetch(),
         ]);
