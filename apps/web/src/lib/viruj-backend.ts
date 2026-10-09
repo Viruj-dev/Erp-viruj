@@ -311,6 +311,7 @@ export type VirujDoctorInput = {
 
 export type VirujDoctor = VirujDoctorInput & {
   appVisibility: "hidden" | "visible";
+    visibleInApp?: boolean;
   createdAt: string;
   id: string;
   organizationId: string;

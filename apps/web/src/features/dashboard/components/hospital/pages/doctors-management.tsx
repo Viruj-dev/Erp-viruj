@@ -59,6 +59,12 @@ export function DoctorsManagementPage({
     queryFn: () => virujBackend.doctors.list({ organizationId }),
     queryKey: virujBackend.doctors.key(organizationId),
   });
+  const facilityQuery = useQuery({
+    enabled: Boolean(organizationId),
+    queryFn: () => virujBackend.directory.facility(organizationId),
+    queryKey: ["viruj-backend", "directory-facility", organizationId],
+    retry: false,
+  });
 
   const invalidateDoctors = () =>
     queryClient.invalidateQueries({ queryKey: virujBackend.doctors.key(organizationId) });
@@ -140,8 +146,14 @@ export function DoctorsManagementPage({
     );
   }, [doctors, query]);
 
-  const publishedCount = doctors.filter((doctor) => doctor.published).length;
-  const draftCount = Math.max(doctors.length - publishedCount, 0);
+  const facility = facilityQuery.data;
+  const isFacilityVerified = facility?.verificationStatus === "VERIFIED" ||
+    facility?.verificationStatus === "APPROVED";
+  const canPublish = Boolean(isFacilityVerified && facility?.settings?.visibleOnPlatform);
+  const isVisible = (doctor: VirujDoctor) => doctor.visibleInApp ?? (canPublish && doctor.published);
+  const publishedCount = doctors.filter(isVisible).length;
+  const draftCount = doctors.filter((doctor) => !doctor.published).length;
+  const blockedCount = doctors.filter((doctor) => doctor.published && !isVisible(doctor)).length;
   const departmentCount = new Set(
     doctors.map((doctor) => doctor.department).filter(Boolean)
   ).size;
@@ -227,7 +239,7 @@ export function DoctorsManagementPage({
           </button>
           <button
             className={publishAllClass}
-            disabled={!doctors.length || publishAllMutation.isPending}
+            disabled={!doctors.length || !canPublish || publishAllMutation.isPending}
             onClick={() => publishAllMutation.mutate()}
             type="button"
           >
@@ -256,10 +268,20 @@ export function DoctorsManagementPage({
         <div className="flex flex-wrap items-center justify-between gap-4 p-5">
           <div>
             <p className="text-sm font-semi-bold text-slate-950 dark:text-slate-100">
-              {draftCount} draft profiles waiting for publish
+              {blockedCount > 0
+                ? `${blockedCount} doctor profiles are marked for publishing but are not visible to patients`
+                : `${draftCount} draft profiles waiting for publish`}
             </p>
             <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-500">
-              Patients only see records marked as shown in app.
+              {facilityQuery.isLoading
+                ? "Checking hospital publication status..."
+                : facilityQuery.isError
+                  ? "Cannot check hospital publication status right now."
+                  : !isFacilityVerified
+                    ? "Hospital verification is required before doctors can appear in the app."
+                    : !facility?.settings?.visibleOnPlatform
+                      ? "Publish the hospital profile before publishing doctors."
+                      : "Patients can see doctors marked as shown in app."}
             </p>
           </div>
           <div className="relative w-full sm:w-80">
@@ -285,6 +307,8 @@ export function DoctorsManagementPage({
             filteredDoctors.map((doctor) => (
               <DoctorRow
                 doctor={doctor}
+                canPublish={canPublish}
+                isVisible={isVisible(doctor)}
                 isPublishing={
                   publishDoctorMutation.isPending &&
                   publishDoctorMutation.variables?.id === doctor.id
@@ -607,6 +631,8 @@ function readClinicDepartments(key: string): string[] | null {
 
 function DoctorRow({
   doctor,
+  canPublish,
+  isVisible,
   isPublishing,
   onDelete,
   onEdit,
@@ -614,6 +640,8 @@ function DoctorRow({
   tone = "blue",
 }: {
   doctor: VirujDoctor;
+  canPublish: boolean;
+  isVisible: boolean;
   isPublishing: boolean;
   onDelete: () => void;
   onEdit: () => void;
@@ -662,15 +690,19 @@ function DoctorRow({
         <p>Fee: Rs {doctor.fee || "0"}</p>
       </div>
       <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-        {doctor.published ? (
+        {isVisible ? (
           <span className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-teal-100 px-4 text-xs font-semi-bold text-teal-800 dark:bg-teal-400/14 dark:text-teal-200">
             <CheckCircle2 size={15} />
             Shown in app
           </span>
+        ) : doctor.published ? (
+          <span className="inline-flex h-10 items-center justify-center rounded-xl bg-amber-100 px-4 text-xs font-semi-bold text-amber-800 dark:bg-amber-400/14 dark:text-amber-200">
+            Waiting for hospital publication
+          </span>
         ) : (
           <button
             className={publishClass}
-            disabled={isPublishing}
+            disabled={isPublishing || !canPublish}
             onClick={onPublish}
             type="button"
           >
