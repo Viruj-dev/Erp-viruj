@@ -17,7 +17,8 @@ export function ReviewStep({
   summary: Array<{ label: string; value: string }>;
 }) {
   const isClinic = kind === "clinic";
-  const organizationName = data.profile.hospitalName || (isClinic ? "Your clinic" : "Your hospital");
+  const organizationName =
+    data.profile.hospitalName || (isClinic ? "Your clinic" : "Your hospital");
   const primaryBranch = data.branches[0];
   const enabledDepartments = isClinic
     ? data.departments
@@ -45,9 +46,11 @@ export function ReviewStep({
       meta: isClinic
         ? `${data.doctors.length} doctors added`
         : data.publicProfile.showHospitalProfile
-          ? "Visible on Viruj"
+          ? "Verification required"
           : "Hidden from Viruj",
-      ready: isClinic ? data.doctors.length > 0 : data.publicProfile.showHospitalProfile,
+      ready: isClinic
+        ? data.doctors.length > 0
+        : data.publicProfile.showHospitalProfile,
     },
   ];
   const visiblePatientFeatures = isClinic
@@ -74,7 +77,8 @@ export function ReviewStep({
               {organizationName} is ready for day one.
             </h3>
             <p className="mt-3 max-w-lg text-sm font-medium leading-6 text-white/80">
-              Every required setup section is saved. Launch ERP now to start managing day-to-day {isClinic ? "clinic" : "hospital"} operations.
+              Every required setup section is saved. Launch ERP now to start
+              managing day-to-day {isClinic ? "clinic" : "hospital"} operations.
             </p>
             <div className="mt-6">
               <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.16em] text-white/80">
@@ -159,14 +163,14 @@ export function ReviewStep({
               {isClinic
                 ? `${data.doctors.length} doctors / ${enabledDepartments.length} specialties`
                 : data.publicProfile.showHospitalProfile
-                  ? "Ready to publish"
+                  ? "Ready for review"
                   : "Private workspace"}
             </p>
             <p className="mt-1 text-xs font-medium leading-5 text-white/80">
               {isClinic
                 ? "Clinic onboarding captures identity, contact, location, schedule, specialties, and doctors."
                 : data.publicProfile.showHospitalProfile
-                  ? "Patients will see the enabled profile sections in Viruj."
+                  ? "Patients can find this hospital after profile verification and directory publication."
                   : "You can publish the hospital profile later from settings."}
             </p>
           </div>
@@ -184,7 +188,8 @@ export function ReviewStep({
             </h4>
           </div>
           <span className="text-xs font-semibold text-[var(--onboarding-muted)]">
-            {launchChecks.filter((check) => check.ready).length}/{launchChecks.length} ready
+            {launchChecks.filter((check) => check.ready).length}/
+            {launchChecks.length} ready
           </span>
         </div>
         <div className="grid gap-2 md:grid-cols-2">
@@ -196,7 +201,9 @@ export function ReviewStep({
               <span
                 className={cn(
                   "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full",
-                  check.ready ? "bg-[var(--onboarding-accent-soft)] text-[var(--onboarding-accent)]" : "bg-[#f1e7d8] text-[#8a652d]"
+                  check.ready
+                    ? "bg-[var(--onboarding-accent-soft)] text-[var(--onboarding-accent)]"
+                    : "bg-[#f1e7d8] text-[#8a652d]"
                 )}
               >
                 {check.ready ? <Check size={15} /> : <Clock3 size={14} />}

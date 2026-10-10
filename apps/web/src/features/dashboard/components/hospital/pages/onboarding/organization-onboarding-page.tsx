@@ -245,6 +245,16 @@ export function OrganizationOnboardingPage({
         organizationId: organizationId ?? hospitalId,
         data: getPersistableOnboardingState(data),
       });
+      if (kind === "hospital" && data.publicProfile.showHospitalProfile) {
+        const activeId = organizationId ?? hospitalId;
+        const facility = await virujBackend.directory.facility(activeId);
+        if (
+          facility.verificationStatus === "DRAFT" ||
+          facility.verificationStatus === "REJECTED"
+        ) {
+          await virujBackend.directory.submitVerification(activeId);
+        }
+      }
     } catch (error) {
       setErrorMessage(
         error instanceof Error

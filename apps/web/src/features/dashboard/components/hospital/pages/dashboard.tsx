@@ -24,9 +24,6 @@ import {
   type VirujFacility,
   type VirujHospitalGalleryItem,
 } from "@/lib/viruj-backend";
-import { storagePrefix } from "./onboarding/constants";
-import { getDefaultOnboardingState, getPersistableOnboardingState, mergeOnboardingState } from "./onboarding/state";
-import type { OnboardingState } from "./onboarding/types";
 
 export function ErpDemoDashboard({
   organizationId,
@@ -40,7 +37,8 @@ export function ErpDemoDashboard({
   roleLabel: string;
   userName: string;
 }) {
-  const tone = organizationLabel.toLowerCase() === "clinic" ? "clinic" : "hospital";
+  const tone =
+    organizationLabel.toLowerCase() === "clinic" ? "clinic" : "hospital";
   const analyticsEntityId = organizationId;
   const analyticsQuery = useQuery({
     enabled: Boolean(analyticsEntityId),
@@ -96,14 +94,15 @@ export function ErpDemoDashboard({
     staleTime: 30_000,
   });
   const analytics = useMemo(
-    () => buildMarketplaceDashboardAnalytics({
-      activities: activityQuery.data?.data ?? [],
-      appointments: appointmentsQuery.data ?? [],
-      dashboard: analyticsQuery.data,
-      doctors: doctorsQuery.data ?? [],
-      facilities: servicesQuery.data ?? [],
-      gallery: galleryQuery.data ?? [],
-    }),
+    () =>
+      buildMarketplaceDashboardAnalytics({
+        activities: activityQuery.data?.data ?? [],
+        appointments: appointmentsQuery.data ?? [],
+        dashboard: analyticsQuery.data,
+        doctors: doctorsQuery.data ?? [],
+        facilities: servicesQuery.data ?? [],
+        gallery: galleryQuery.data ?? [],
+      }),
     [
       activityQuery.data,
       analyticsQuery.data,
@@ -114,7 +113,7 @@ export function ErpDemoDashboard({
     ]
   );
   const onboardingStatus = useHospitalOnboardingStatus(organizationId);
-  const profileVisibility = useHospitalProfileVisibility(organizationId, organizationName || organizationLabel);
+  const profileVisibility = useHospitalProfileVisibility(organizationId);
 
   return (
     <>
@@ -151,107 +150,52 @@ function useHospitalOnboardingStatus(organizationId?: string) {
   return { setShowWelcome, showWelcome };
 }
 
-
-type StoredOnboardingPayload = {
-  completedAt?: string;
-  completedSteps?: string[];
-  currentStepIndex?: number;
-  data?: OnboardingState;
-  summary?: Array<{ label: string; value: string }>;
-};
-
-function useHospitalProfileVisibility(organizationId: string | undefined, hospitalName: string) {
-  const storageId = organizationId ?? "workspace";
-  const defaults = useMemo(() => ({ hospitalName }), [hospitalName]);
-  const [isPublic, setIsPublic] = useState(true);
+function useHospitalProfileVisibility(organizationId: string | undefined) {
+  const facilityQuery = useQuery({
+    enabled: Boolean(organizationId),
+    queryFn: () => virujBackend.directory.facility(organizationId),
+    queryKey: ["directory", "facility", organizationId],
+    retry: 1,
+  });
   const [isUpdating, setIsUpdating] = useState(false);
+  const isPublic = facilityQuery.data?.settings?.visibleOnPlatform === true;
+  const verificationStatus = facilityQuery.data?.verificationStatus;
+  const statusLabel = facilityQuery.isError
+    ? "Unavailable"
+    : facilityQuery.isLoading
+      ? "Loading"
+      : !isPublic
+        ? "Private"
+        : verificationStatus !== "VERIFIED"
+          ? "Pending verification"
+          : facilityQuery.data?.directoryHospitalId
+            ? "Public"
+            : "Pending directory sync";
 
-  useEffect(() => {
-    setIsPublic(readHospitalProfileVisibility(storageId, defaults));
-  }, [defaults, storageId]);
-
-  const onToggle = () => {
-    const next = !isPublic;
+  const onToggle = async () => {
+    if (!organizationId || !facilityQuery.data) return;
     setIsUpdating(true);
-    setIsPublic(next);
-    window.setTimeout(() => {
-      writeHospitalProfileVisibility(storageId, defaults, next);
+    try {
+      await virujBackend.directory.publishFacility({
+        organizationId,
+        visibleOnPlatform: !isPublic,
+      });
+    } catch {
+      // The API request displays its error. Refresh to keep the switch in sync.
+    } finally {
+      await facilityQuery.refetch();
       setIsUpdating(false);
-    }, 120);
+    }
   };
 
-  return { isPublic, isUpdating, onToggle };
-}
-
-function onboardingKeys(storageId: string) {
-  return [
-    `${storagePrefix}:draft:${storageId}`,
-    `${storagePrefix}:completed:${storageId}`,
-    `${storagePrefix}:draft:workspace`,
-    `${storagePrefix}:completed:workspace`,
-  ];
-}
-
-function readHospitalProfileVisibility(storageId: string, defaults: { hospitalName: string }) {
-  if (typeof window === "undefined") return true;
-
-  for (const key of onboardingKeys(storageId)) {
-    const payload = readOnboardingPayload(key, defaults);
-    if (payload?.data) return Boolean(payload.data.publicProfile.showHospitalProfile);
-  }
-
-  return true;
-}
-
-function writeHospitalProfileVisibility(storageId: string, defaults: { hospitalName: string }, isPublic: boolean) {
-  if (typeof window === "undefined") return;
-
-  const keys = onboardingKeys(storageId);
-  let wroteExisting = false;
-
-  for (const key of keys) {
-    const payload = readOnboardingPayload(key, defaults);
-    if (!payload?.data) continue;
-    window.localStorage.setItem(key, JSON.stringify(patchVisibility(payload, defaults, isPublic)));
-    wroteExisting = true;
-  }
-
-  if (!wroteExisting) {
-    const data = getDefaultOnboardingState(defaults);
-    data.publicProfile.showHospitalProfile = isPublic;
-    window.localStorage.setItem(
-      `${storagePrefix}:draft:${storageId}`,
-      JSON.stringify({ currentStepIndex: 0, data: getPersistableOnboardingState(data) })
-    );
-  }
-}
-
-function readOnboardingPayload(key: string, defaults: { hospitalName: string }) {
-  const raw = window.localStorage.getItem(key);
-  if (!raw) return null;
-
-  try {
-    const payload = JSON.parse(raw) as StoredOnboardingPayload;
-    if (!payload.data) return payload;
-    return { ...payload, data: mergeOnboardingState(payload.data, defaults) };
-  } catch {
-    window.localStorage.removeItem(key);
-    return null;
-  }
-}
-
-function patchVisibility(payload: StoredOnboardingPayload, defaults: { hospitalName: string }, isPublic: boolean) {
-  const data = mergeOnboardingState(payload.data ?? getDefaultOnboardingState(defaults), defaults);
-  data.publicProfile.showHospitalProfile = isPublic;
-  const summary = payload.summary?.map((item) =>
-    item.label === "Public Profile" ? { ...item, value: isPublic ? "Enabled" : "Hidden" } : item
-  );
   return {
-    ...payload,
-    data: getPersistableOnboardingState(data),
-    ...(summary ? { summary } : {}),
+    isPublic,
+    isUpdating: isUpdating || facilityQuery.isLoading,
+    onToggle: facilityQuery.data ? onToggle : undefined,
+    statusLabel,
   };
 }
+
 function WelcomeOnboardingModal({
   onOpenChange,
   open,
@@ -269,10 +213,12 @@ function WelcomeOnboardingModal({
             </div>
             <DialogHeader className="mt-5">
               <DialogTitle className="font-headline text-2xl font-semibold text-white">
-                <span className="mr-2">{"\u{1F389}"}</span>Your organization has been successfully configured.
+                <span className="mr-2">{"\u{1F389}"}</span>Your organization has
+                been successfully configured.
               </DialogTitle>
               <DialogDescription className="text-sm font-medium text-cyan-50/80">
-                Viruj Health ERP is ready for daily operations. Continue to the dashboard to manage your hospital workspace.
+                Viruj Health ERP is ready for daily operations. Continue to the
+                dashboard to manage your hospital workspace.
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -309,42 +255,71 @@ function buildMarketplaceDashboardAnalytics({
   const activeDoctors = doctors.filter((doctor) => doctor.published).length;
   const pendingDoctors = doctors.length - activeDoctors;
   const activeServices = facilities.filter(isPublicActiveFacility).length;
-  const draftServices = facilities.filter((facility) => facility.status === "draft").length;
-  const pendingAppointments = appointments.filter((appointment) => appointment.status === "pending_approval").length;
-  const completedAppointments = appointments.filter((appointment) => appointment.status === "completed").length;
+  const draftServices = facilities.filter(
+    (facility) => facility.status === "draft"
+  ).length;
+  const pendingAppointments = appointments.filter(
+    (appointment) => appointment.status === "pending_approval"
+  ).length;
+  const completedAppointments = appointments.filter(
+    (appointment) => appointment.status === "completed"
+  ).length;
   const publishedGallery = gallery.filter((item) => item.isPublished);
-  const uniquePatients = new Set(appointments.map((appointment) => appointment.patientPhone || appointment.patientEmail || appointment.patientName)).size;
+  const uniquePatients = new Set(
+    appointments.map(
+      (appointment) =>
+        appointment.patientPhone ||
+        appointment.patientEmail ||
+        appointment.patientName
+    )
+  ).size;
   const appointmentSummary = summaryBySuffix(dashboard, ".appointments");
   const ratingSummary = summaryBySuffix(dashboard, ".average-rating");
-  const appointmentValue = appointments.length || summaryNumber(appointmentSummary);
+  const appointmentValue =
+    appointments.length || summaryNumber(appointmentSummary);
   const ratingValue = summaryFormatted(ratingSummary) || "0.0";
-  const galleryCompleteness = Math.min(100, Math.round((publishedGallery.length / 8) * 100));
+  const galleryCompleteness = Math.min(
+    100,
+    Math.round((publishedGallery.length / 8) * 100)
+  );
 
   return {
     activity: activityRows(activities, appointments, doctors, facilities),
     charts: [
       {
         title: "Appointment Request Trend",
-        values: chartNumbers(chartBySuffix(dashboard, ".appointments.volume")) ?? trendByDate(appointments, (item) => item.createdAt),
+        values:
+          chartNumbers(chartBySuffix(dashboard, ".appointments.volume")) ??
+          trendByDate(appointments, (item) => item.createdAt),
       },
       {
         title: "Doctor Publish Trend",
-        values: trendByDate(doctors.filter((doctor) => doctor.published), (item) => item.publishedAt ?? item.createdAt),
+        values: trendByDate(
+          doctors.filter((doctor) => doctor.published),
+          (item) => item.publishedAt ?? item.createdAt
+        ),
       },
       {
         title: "Service Publish Trend",
-        values: trendByDate(facilities.filter(isPublicActiveFacility), (item) => item.updatedAt ?? item.createdAt),
+        values: trendByDate(
+          facilities.filter(isPublicActiveFacility),
+          (item) => item.updatedAt ?? item.createdAt
+        ),
       },
     ],
     doctors: doctors.slice(0, 5).map((doctor) => ({
       badge: doctor.published ? "Shown in app" : "Draft",
       meta: [doctor.availability, doctor.fee].filter(Boolean).join(" | "),
-      subtitle: [doctor.department, doctor.specialty].filter(Boolean).join(" | ") || "Doctor profile",
+      subtitle:
+        [doctor.department, doctor.specialty].filter(Boolean).join(" | ") ||
+        "Doctor profile",
       title: doctor.name,
     })),
     gallery: {
       completeness: galleryCompleteness,
-      imageUrlsById: Object.fromEntries(publishedGallery.map((item) => [item.id, item.url])),
+      imageUrlsById: Object.fromEntries(
+        publishedGallery.map((item) => [item.id, item.url])
+      ),
       items: publishedGallery.slice(0, 5).map((item, index) => ({
         featured: index === 0,
         id: item.id,
@@ -367,8 +342,15 @@ function buildMarketplaceDashboardAnalytics({
     }),
     services: facilities.slice(0, 5).map((facility) => ({
       badge: facility.visibility === "public" ? "Public" : facility.status,
-      meta: facility.priceText || (typeof facility.startingPrice === "number" ? `${facility.currency} ${facility.startingPrice}` : undefined),
-      subtitle: [facility.category, facility.shortDescription].filter(Boolean).join(" | ") || "Service profile",
+      meta:
+        facility.priceText ||
+        (typeof facility.startingPrice === "number"
+          ? `${facility.currency} ${facility.startingPrice}`
+          : undefined),
+      subtitle:
+        [facility.category, facility.shortDescription]
+          .filter(Boolean)
+          .join(" | ") || "Service profile",
       title: facility.name,
     })),
     stats: [
@@ -394,7 +376,9 @@ function buildMarketplaceDashboardAnalytics({
       },
       {
         label: "Average Rating",
-        note: ratingSummary ? "From analytics backend" : "Review backend has no rating yet",
+        note: ratingSummary
+          ? "From analytics backend"
+          : "Review backend has no rating yet",
         value: ratingValue,
       },
       {
@@ -407,14 +391,24 @@ function buildMarketplaceDashboardAnalytics({
 }
 
 function isPublicActiveFacility(facility: VirujFacility) {
-  return facility.status === "active" && facility.isAvailable && facility.visibility === "public";
+  return (
+    facility.status === "active" &&
+    facility.isAvailable &&
+    facility.visibility === "public"
+  );
 }
 
-function summaryBySuffix(dashboard: VirujAnalyticsDashboard | undefined, suffix: string) {
+function summaryBySuffix(
+  dashboard: VirujAnalyticsDashboard | undefined,
+  suffix: string
+) {
   return dashboard?.summary.find((widget) => widget.id.endsWith(suffix));
 }
 
-function chartBySuffix(dashboard: VirujAnalyticsDashboard | undefined, suffix: string) {
+function chartBySuffix(
+  dashboard: VirujAnalyticsDashboard | undefined,
+  suffix: string
+) {
   return dashboard?.charts.find((widget) => widget.id.endsWith(suffix));
 }
 
@@ -436,12 +430,21 @@ function summaryNumber(widget?: VirujAnalyticsSummaryWidget) {
 }
 
 function summaryFormatted(widget?: VirujAnalyticsSummaryWidget) {
-  return widget?.payload.formattedValue || formatMetricValue(widget?.payload.value);
+  return (
+    widget?.payload.formattedValue || formatMetricValue(widget?.payload.value)
+  );
 }
 
-function trendByDate<T>(items: T[], dateFor: (item: T) => string | Date | null | undefined) {
-  const days = Array.from({ length: 10 }, (_, index) => startOfDay(addDays(new Date(), index - 9)));
-  const counts = new Map(days.map((date) => [date.toISOString().slice(0, 10), 0]));
+function trendByDate<T>(
+  items: T[],
+  dateFor: (item: T) => string | Date | null | undefined
+) {
+  const days = Array.from({ length: 10 }, (_, index) =>
+    startOfDay(addDays(new Date(), index - 9))
+  );
+  const counts = new Map(
+    days.map((date) => [date.toISOString().slice(0, 10), 0])
+  );
 
   for (const item of items) {
     const dateValue = dateFor(item);
@@ -464,7 +467,8 @@ function activityRows(
   if (activities.length) {
     return activities.slice(0, 5).map((activity) => ({
       id: activity.id,
-      subtitle: activity.description || activity.display?.summary || activity.module,
+      subtitle:
+        activity.description || activity.display?.summary || activity.module,
       title: activity.title,
     }));
   }
@@ -489,7 +493,10 @@ function activityRows(
       title: "Service profile added",
     })),
   ]
-    .sort((a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()
+    )
     .slice(0, 5)
     .map(({ id, subtitle, title }) => ({ id, subtitle, title }));
 }
@@ -508,7 +515,9 @@ function startOfDay(date: Date) {
 
 function formatMetricValue(value: unknown) {
   if (typeof value === "number") {
-    return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 1 }).format(value);
+    return new Intl.NumberFormat("en-IN", { maximumFractionDigits: 1 }).format(
+      value
+    );
   }
   if (typeof value === "string") return value;
   return "0";
@@ -525,6 +534,10 @@ function listingScoreFromStats({
   appointments: number;
   galleryItems: number;
 }) {
-  const score = Math.min(activeDoctors, 8) * 3 + Math.min(activeServices, 8) * 3 + Math.min(galleryItems, 8) * 2 + (appointments > 0 ? 12 : 0);
+  const score =
+    Math.min(activeDoctors, 8) * 3 +
+    Math.min(activeServices, 8) * 3 +
+    Math.min(galleryItems, 8) * 2 +
+    (appointments > 0 ? 12 : 0);
   return Math.max(0, Math.min(100, Math.round(score)));
 }

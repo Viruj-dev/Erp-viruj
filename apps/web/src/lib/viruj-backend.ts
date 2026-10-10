@@ -2,7 +2,10 @@
 
 import { shouldShowApiSuccess } from "@/features/notifications/lib/api-feedback";
 import { notificationEvents } from "@/features/notifications/lib/notification-events";
-import type { ErpNotification, NotificationListResponse } from "@/features/notifications";
+import type {
+  ErpNotification,
+  NotificationListResponse,
+} from "@/features/notifications";
 import {
   getCentralApiToken,
   signOutAfterCentralApiUnauthorized,
@@ -37,7 +40,11 @@ async function request<T>(path: string, options: RequestOptions = {}) {
   });
 }
 
-async function formRequest<T>(path: string, formData: FormData, options: RequestOptions = {}) {
+async function formRequest<T>(
+  path: string,
+  formData: FormData,
+  options: RequestOptions = {}
+) {
   return centralApiRequest<T>(`${erpApiUrl}${path}`, path, options, {
     body: formData,
     fallbackMessage: "Viruj backend request failed",
@@ -52,7 +59,6 @@ async function commonRequest<T>(path: string, options: RequestOptions = {}) {
   });
 }
 
-
 async function centralApiRequest<T>(
   url: string,
   path: string,
@@ -62,12 +68,17 @@ async function centralApiRequest<T>(
     fallbackMessage: string;
     json?: boolean;
     organizationId?: string;
-  },
+  }
 ) {
   const response = await fetchWithCentralApiToken(url, options, requestOptions);
 
   if (response.status === 401) {
-    const retry = await fetchWithCentralApiToken(url, options, requestOptions, true);
+    const retry = await fetchWithCentralApiToken(
+      url,
+      options,
+      requestOptions,
+      true
+    );
 
     if (retry.ok) {
       emitApiSuccess(path, options);
@@ -76,14 +87,20 @@ async function centralApiRequest<T>(
 
     await signOutAfterCentralApiUnauthorized();
     const payload = await retry.json().catch(() => null);
-    const message = responseErrorMessage(payload, `${requestOptions.fallbackMessage} (${retry.status})`);
+    const message = responseErrorMessage(
+      payload,
+      `${requestOptions.fallbackMessage} (${retry.status})`
+    );
     emitApiError(path, options, retry.status, message);
     throw new Error(message);
   }
 
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
-    const message = responseErrorMessage(payload, `${requestOptions.fallbackMessage} (${response.status})`);
+    const message = responseErrorMessage(
+      payload,
+      `${requestOptions.fallbackMessage} (${response.status})`
+    );
     emitApiError(path, options, response.status, message);
     throw new Error(message);
   }
@@ -100,10 +117,13 @@ async function fetchWithCentralApiToken(
     json?: boolean;
     organizationId?: string;
   },
-  forceRefresh = false,
+  forceRefresh = false
 ) {
   const headers = new Headers();
-  headers.set("Authorization", `Bearer ${await getCentralApiToken(forceRefresh)}`);
+  headers.set(
+    "Authorization",
+    `Bearer ${await getCentralApiToken(forceRefresh)}`
+  );
 
   if (requestOptions.json) {
     headers.set("Content-Type", "application/json");
@@ -114,7 +134,9 @@ async function fetchWithCentralApiToken(
   }
 
   return fetch(url, {
-    body: requestOptions.body ?? (options.body ? JSON.stringify(options.body) : undefined),
+    body:
+      requestOptions.body ??
+      (options.body ? JSON.stringify(options.body) : undefined),
     credentials: "include",
     headers,
     method: options.method ?? "GET",
@@ -132,7 +154,12 @@ function emitApiSuccess(path: string, options: RequestOptions) {
   });
 }
 
-function emitApiError(path: string, options: RequestOptions, status: number, description: string) {
+function emitApiError(
+  path: string,
+  options: RequestOptions,
+  status: number,
+  description: string
+) {
   if (options.suppressToast) return;
   notificationEvents.emit("api.error", {
     description: options.errorMessage ?? description,
@@ -172,7 +199,15 @@ export type VirujAppointment = {
   timezone?: string;
   arrivalVerifiedAt?: string | null;
   arrivalVerifiedBy?: string | null;
-  patientDetails?: { fullName?: string; phoneNumber?: string; age?: number | string; gender?: string; height?: number | string; weight?: number | string; complaintPhoto?: string } | null;
+  patientDetails?: {
+    fullName?: string;
+    phoneNumber?: string;
+    age?: number | string;
+    gender?: string;
+    height?: number | string;
+    weight?: number | string;
+    complaintPhoto?: string;
+  } | null;
   approvalNotes?: string | null;
   appointmentDate: string;
   appointmentMode: string;
@@ -311,7 +346,7 @@ export type VirujDoctorInput = {
 
 export type VirujDoctor = VirujDoctorInput & {
   appVisibility: "hidden" | "visible";
-    visibleInApp?: boolean;
+  visibleInApp?: boolean;
   createdAt: string;
   id: string;
   organizationId: string;
@@ -319,7 +354,6 @@ export type VirujDoctor = VirujDoctorInput & {
   publishedAt: string | null;
   updatedAt: string;
 };
-
 
 export type VirujFacilityCategory =
   | "Diagnostic"
@@ -382,8 +416,15 @@ export type VirujFacility = VirujFacilityInput & {
   updatedBy: string;
 };
 type VirujHospitalServiceStatus = "ACTIVE" | "ARCHIVED" | "INACTIVE";
-type VirujHospitalServiceVisibility = "HIDDEN" | "INTERNAL" | "PUBLIC_REFERENCE";
-type VirujHospitalServiceAvailabilityStatus = "AVAILABLE" | "BY_APPOINTMENT" | "LIMITED" | "TEMPORARILY_UNAVAILABLE";
+type VirujHospitalServiceVisibility =
+  | "HIDDEN"
+  | "INTERNAL"
+  | "PUBLIC_REFERENCE";
+type VirujHospitalServiceAvailabilityStatus =
+  | "AVAILABLE"
+  | "BY_APPOINTMENT"
+  | "LIMITED"
+  | "TEMPORARILY_UNAVAILABLE";
 
 type VirujHospitalService = {
   availabilityStatus: VirujHospitalServiceAvailabilityStatus;
@@ -544,9 +585,22 @@ export type VirujAnalyticsDashboard = {
   trends: unknown[];
 };
 
-
-export type VirujWeekDay = "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
-export type VirujSettingsEnvelope<TSettings> = { data: { settings: TSettings; updatedAt?: string; updatedBy?: { id: string }; version: number } };
+export type VirujWeekDay =
+  | "MONDAY"
+  | "TUESDAY"
+  | "WEDNESDAY"
+  | "THURSDAY"
+  | "FRIDAY"
+  | "SATURDAY"
+  | "SUNDAY";
+export type VirujSettingsEnvelope<TSettings> = {
+  data: {
+    settings: TSettings;
+    updatedAt?: string;
+    updatedBy?: { id: string };
+    version: number;
+  };
+};
 export type VirujOperationalSettings = {
   admissionNumberPattern: string;
   appointmentNumberPattern: string;
@@ -560,7 +614,12 @@ export type VirujOperationalSettings = {
   locale: string;
   maximumAdvanceBookingDays: number;
   minimumBookingNoticeMinutes: number;
-  operatingHours: Partial<Record<VirujWeekDay, { closed: boolean; closeTime?: string; openTime?: string }>>;
+  operatingHours: Partial<
+    Record<
+      VirujWeekDay,
+      { closed: boolean; closeTime?: string; openTime?: string }
+    >
+  >;
   patientIdPattern: string;
   prescriptionNumberPattern: string;
   queueEnabled: boolean;
@@ -572,7 +631,12 @@ export type VirujOperationalSettings = {
   weekStartsOn: VirujWeekDay;
   workingDays: VirujWeekDay[];
 };
-export type VirujNotificationChannel = "EMAIL" | "IN_APP" | "PUSH" | "SMS" | "WHATSAPP";
+export type VirujNotificationChannel =
+  | "EMAIL"
+  | "IN_APP"
+  | "PUSH"
+  | "SMS"
+  | "WHATSAPP";
 export type VirujNotificationSettings = {
   defaultReminderMinutes: number[];
   enabledChannels: VirujNotificationChannel[];
@@ -601,7 +665,9 @@ export type VirujNotificationRule = {
 export type VirujSecuritySettings = {
   accountLockoutMinutes: number;
   allowedIpRanges: string[];
-  allowedLoginSchedule: Partial<Record<VirujWeekDay, Array<{ end: string; start: string }>>>;
+  allowedLoginSchedule: Partial<
+    Record<VirujWeekDay, Array<{ end: string; start: string }>>
+  >;
   emergencyAccessEnabled: boolean;
   emergencyAccessRequiresReason: boolean;
   emergencyAccessSessionMinutes: number;
@@ -632,13 +698,18 @@ export type VirujSecurityPolicyHistoryEntry = {
   reason?: string;
   requestId?: string;
 };
-function facilityToHospitalService(input: VirujFacilityInput, create: boolean): VirujHospitalServiceInput {
-  const availabilityStatus: VirujHospitalServiceAvailabilityStatus | undefined = input.isAvailable === false
-    ? "TEMPORARILY_UNAVAILABLE"
-    : input.onlineBooking
-      ? "BY_APPOINTMENT"
-      : undefined;
-  const visibility: VirujHospitalServiceVisibility = input.visibility === "public" ? "PUBLIC_REFERENCE" : "HIDDEN";
+function facilityToHospitalService(
+  input: VirujFacilityInput,
+  create: boolean
+): VirujHospitalServiceInput {
+  const availabilityStatus: VirujHospitalServiceAvailabilityStatus | undefined =
+    input.isAvailable === false
+      ? "TEMPORARILY_UNAVAILABLE"
+      : input.onlineBooking
+        ? "BY_APPOINTMENT"
+        : undefined;
+  const visibility: VirujHospitalServiceVisibility =
+    input.visibility === "public" ? "PUBLIC_REFERENCE" : "HIDDEN";
 
   return compactObject({
     availabilityStatus,
@@ -657,18 +728,21 @@ function facilityStatusToHospitalService(input: {
   isAvailable?: boolean;
   status: VirujFacilityStatus;
 }): VirujHospitalServiceInput {
-  const availabilityStatus: VirujHospitalServiceAvailabilityStatus | undefined = input.isAvailable === undefined
-    ? undefined
-    : input.isAvailable
-      ? "AVAILABLE"
-      : "TEMPORARILY_UNAVAILABLE";
+  const availabilityStatus: VirujHospitalServiceAvailabilityStatus | undefined =
+    input.isAvailable === undefined
+      ? undefined
+      : input.isAvailable
+        ? "AVAILABLE"
+        : "TEMPORARILY_UNAVAILABLE";
 
   return compactObject({
     availabilityStatus,
     status: hospitalServiceStatus(input.status),
   });
 }
-function hospitalServiceToFacility(service: VirujHospitalService): VirujFacility {
+function hospitalServiceToFacility(
+  service: VirujHospitalService
+): VirujFacility {
   return {
     appointmentRequired: service.availabilityStatus === "BY_APPOINTMENT",
     available247: false,
@@ -682,7 +756,9 @@ function hospitalServiceToFacility(service: VirujHospitalService): VirujFacility
     emergencyService: service.serviceType === "EMERGENCY",
     galleryImages: [],
     id: service.id,
-    isAvailable: service.availabilityStatus === "AVAILABLE" || service.availabilityStatus === "BY_APPOINTMENT",
+    isAvailable:
+      service.availabilityStatus === "AVAILABLE" ||
+      service.availabilityStatus === "BY_APPOINTMENT",
     isFeatured: false,
     keywords: [],
     name: service.name,
@@ -694,14 +770,21 @@ function hospitalServiceToFacility(service: VirujHospitalService): VirujFacility
     shortDescription: service.description ?? "",
     slug: service.slug,
     startingPrice: service.basePrice ?? null,
-    status: service.status === "ACTIVE" ? "active" : service.status === "ARCHIVED" ? "archived" : "draft",
+    status:
+      service.status === "ACTIVE"
+        ? "active"
+        : service.status === "ARCHIVED"
+          ? "archived"
+          : "draft",
     updatedAt: service.updatedAt,
     updatedBy: "central-api",
     visibility: service.visibility === "PUBLIC_REFERENCE" ? "public" : "hidden",
   };
 }
 
-function hospitalServiceStatus(status: VirujFacilityStatus): VirujHospitalServiceStatus {
+function hospitalServiceStatus(
+  status: VirujFacilityStatus
+): VirujHospitalServiceStatus {
   if (status === "active") return "ACTIVE";
   if (status === "archived") return "ARCHIVED";
   return "INACTIVE";
@@ -709,21 +792,38 @@ function hospitalServiceStatus(status: VirujFacilityStatus): VirujHospitalServic
 
 function serviceTypeForFacilityCategory(category: string) {
   const value = category.toLowerCase();
-  if (value.includes("diagnostic") || value.includes("laboratory") || value.includes("imaging")) return "DIAGNOSTIC";
+  if (
+    value.includes("diagnostic") ||
+    value.includes("laboratory") ||
+    value.includes("imaging")
+  )
+    return "DIAGNOSTIC";
   if (value.includes("emergency")) return "EMERGENCY";
   if (value.includes("intensive")) return "CRITICAL_CARE";
   if (value.includes("transport")) return "TRANSPORT";
-  if (value.includes("surgery") || value.includes("treatment")) return "INPATIENT";
+  if (value.includes("surgery") || value.includes("treatment"))
+    return "INPATIENT";
   return "OUTPATIENT";
 }
 
 function slugValue(value: string) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || undefined;
+  return (
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || undefined
+  );
 }
 
 function compactObject<T extends Record<string, unknown>>(value: T) {
-  return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined)) as {
-    [K in keyof T as T[K] extends undefined ? never : K]: Exclude<T[K], undefined>;
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entry]) => entry !== undefined)
+  ) as {
+    [K in keyof T as T[K] extends undefined ? never : K]: Exclude<
+      T[K],
+      undefined
+    >;
   };
 }
 export const virujBackend = {
@@ -762,6 +862,15 @@ export const virujBackend = {
         body: { visibleOnPlatform: input.visibleOnPlatform },
         organizationId: input.organizationId,
       }),
+    submitVerification: (organizationId?: string) =>
+      request<{ verificationStatus: string }>(
+        "/hospital/profile/submit-verification",
+        {
+          method: "POST",
+          organizationId,
+          suppressToast: true,
+        }
+      ),
   },
   activity: {
     key: (input: {
@@ -844,7 +953,13 @@ export const virujBackend = {
   },
   audit: {
     key: (organizationId?: string) =>
-      ["viruj-backend", "erp", "audit", "recent", organizationId ?? "none"] as const,
+      [
+        "viruj-backend",
+        "erp",
+        "audit",
+        "recent",
+        organizationId ?? "none",
+      ] as const,
     recent: (input?: { organizationId?: string }) =>
       request<VirujAuditLog[]>("/audit/recent", {
         organizationId: input?.organizationId,
@@ -853,15 +968,54 @@ export const virujBackend = {
   appointments: {
     permissions: async (organizationId: string): Promise<string[]> => {
       const token = await getCentralApiToken();
-      const claims = JSON.parse(atob(token.split(".")[1]!.replace(/-/g, "+").replace(/_/g, "/"))) as { tenant_id?: string; permissions?: unknown };
-      if (claims.tenant_id !== organizationId) throw new Error("Refresh your active workspace before managing appointments.");
-      return Array.isArray(claims.permissions) ? claims.permissions.filter((value): value is string => typeof value === "string") : [];
+      const claims = JSON.parse(
+        atob(token.split(".")[1]!.replace(/-/g, "+").replace(/_/g, "/"))
+      ) as { tenant_id?: string; permissions?: unknown };
+      if (claims.tenant_id !== organizationId)
+        throw new Error(
+          "Refresh your active workspace before managing appointments."
+        );
+      return Array.isArray(claims.permissions)
+        ? claims.permissions.filter(
+            (value): value is string => typeof value === "string"
+          )
+        : [];
     },
-    detail: (input: { id: string; organizationId: string }) => request<VirujAppointment>(`/appointments/${input.id}`, { organizationId: input.organizationId, suppressToast: true }),
-    generateArrivalOtp: (input: { id: string; organizationId: string; expectedVersion?: number }) => request<{ expiresAt: string }>(`/appointments/${input.id}/arrival-otp`, { body: { expectedVersion: input.expectedVersion }, method: "POST", organizationId: input.organizationId, successMessage: "Arrival code available in the patient's Viruj app" }),
-    verifyArrival: (input: { id: string; organizationId: string; otp: string; expectedVersion?: number }) => request<VirujAppointment>(`/appointments/${input.id}/arrival-verify`, { body: { otp: input.otp, expectedVersion: input.expectedVersion }, method: "POST", organizationId: input.organizationId, successMessage: "Attendance verified" }),
+    detail: (input: { id: string; organizationId: string }) =>
+      request<VirujAppointment>(`/appointments/${input.id}`, {
+        organizationId: input.organizationId,
+        suppressToast: true,
+      }),
+    generateArrivalOtp: (input: {
+      id: string;
+      organizationId: string;
+      expectedVersion?: number;
+    }) =>
+      request<{ expiresAt: string }>(`/appointments/${input.id}/arrival-otp`, {
+        body: { expectedVersion: input.expectedVersion },
+        method: "POST",
+        organizationId: input.organizationId,
+        successMessage: "Arrival code available in the patient's Viruj app",
+      }),
+    verifyArrival: (input: {
+      id: string;
+      organizationId: string;
+      otp: string;
+      expectedVersion?: number;
+    }) =>
+      request<VirujAppointment>(`/appointments/${input.id}/arrival-verify`, {
+        body: { otp: input.otp, expectedVersion: input.expectedVersion },
+        method: "POST",
+        organizationId: input.organizationId,
+        successMessage: "Attendance verified",
+      }),
     key: (input?: { organizationId?: string }) =>
-      ["viruj-backend", "erp", "appointments", input?.organizationId ?? "none"] as const,
+      [
+        "viruj-backend",
+        "erp",
+        "appointments",
+        input?.organizationId ?? "none",
+      ] as const,
     createMobileRequest: (input: VirujMobileAppointmentRequestInput) =>
       request<VirujAppointment>("/appointments/mobile-request", {
         body: input,
@@ -905,7 +1059,11 @@ export const virujBackend = {
       }),
   },
   organizationProfile: {
-    uploadMedia: (input: { file: File; kind: "cover" | "logo"; organizationId?: string }) => {
+    uploadMedia: (input: {
+      file: File;
+      kind: "cover" | "logo";
+      organizationId?: string;
+    }) => {
       const formData = new FormData();
       formData.set("kind", input.kind);
       formData.set("file", input.file);
@@ -921,16 +1079,99 @@ export const virujBackend = {
     },
   },
   hospitalSettings: {
-    key: (section: "notifications" | "operational" | "security", organizationId?: string) => ["viruj-backend", "erp", "hospital", "settings", section, organizationId ?? "none"] as const,
-    notificationRulesKey: (organizationId?: string) => ["viruj-backend", "erp", "hospital", "settings", "notifications", "rules", organizationId ?? "none"] as const,
-    securityHistoryKey: (organizationId?: string) => ["viruj-backend", "erp", "hospital", "settings", "security", "history", organizationId ?? "none"] as const,
-    getOperational: (input?: { organizationId?: string }) => request<VirujSettingsEnvelope<VirujOperationalSettings>>("/hospital/settings/operational", { organizationId: input?.organizationId, suppressToast: true }),
-    updateOperational: (input: { organizationId?: string; settings: VirujOperationalSettings; version: number }) => request<VirujSettingsEnvelope<VirujOperationalSettings>>("/hospital/settings/operational", { body: { ...input.settings, version: input.version }, method: "PUT", organizationId: input.organizationId, successMessage: "Operational settings saved" }),
-    getNotifications: (input?: { organizationId?: string }) => request<VirujSettingsEnvelope<VirujNotificationSettings>>("/hospital/settings/notifications", { organizationId: input?.organizationId, suppressToast: true }),
-    updateNotifications: (input: { organizationId?: string; settings: VirujNotificationSettings; version: number }) => request<VirujSettingsEnvelope<VirujNotificationSettings>>("/hospital/settings/notifications", { body: { ...input.settings, version: input.version }, method: "PUT", organizationId: input.organizationId, successMessage: "Notification settings saved" }),
-    getNotificationRules: (input?: { organizationId?: string }) => request<{ data: { limit: number; page: number; rules: VirujNotificationRule[] } }>("/hospital/settings/notifications/rules?limit=50&page=1", { organizationId: input?.organizationId, suppressToast: true }),
-    getSecurity: (input?: { organizationId?: string }) => request<VirujSettingsEnvelope<VirujSecuritySettings>>("/hospital/settings/security", { organizationId: input?.organizationId, suppressToast: true }),
-    getSecurityHistory: (input?: { organizationId?: string }) => request<{ data: { entries: VirujSecurityPolicyHistoryEntry[]; limit: number; page: number } }>("/hospital/settings/security/policy-history?limit=50&page=1", { organizationId: input?.organizationId, suppressToast: true }),
+    key: (
+      section: "notifications" | "operational" | "security",
+      organizationId?: string
+    ) =>
+      [
+        "viruj-backend",
+        "erp",
+        "hospital",
+        "settings",
+        section,
+        organizationId ?? "none",
+      ] as const,
+    notificationRulesKey: (organizationId?: string) =>
+      [
+        "viruj-backend",
+        "erp",
+        "hospital",
+        "settings",
+        "notifications",
+        "rules",
+        organizationId ?? "none",
+      ] as const,
+    securityHistoryKey: (organizationId?: string) =>
+      [
+        "viruj-backend",
+        "erp",
+        "hospital",
+        "settings",
+        "security",
+        "history",
+        organizationId ?? "none",
+      ] as const,
+    getOperational: (input?: { organizationId?: string }) =>
+      request<VirujSettingsEnvelope<VirujOperationalSettings>>(
+        "/hospital/settings/operational",
+        { organizationId: input?.organizationId, suppressToast: true }
+      ),
+    updateOperational: (input: {
+      organizationId?: string;
+      settings: VirujOperationalSettings;
+      version: number;
+    }) =>
+      request<VirujSettingsEnvelope<VirujOperationalSettings>>(
+        "/hospital/settings/operational",
+        {
+          body: { ...input.settings, version: input.version },
+          method: "PUT",
+          organizationId: input.organizationId,
+          successMessage: "Operational settings saved",
+        }
+      ),
+    getNotifications: (input?: { organizationId?: string }) =>
+      request<VirujSettingsEnvelope<VirujNotificationSettings>>(
+        "/hospital/settings/notifications",
+        { organizationId: input?.organizationId, suppressToast: true }
+      ),
+    updateNotifications: (input: {
+      organizationId?: string;
+      settings: VirujNotificationSettings;
+      version: number;
+    }) =>
+      request<VirujSettingsEnvelope<VirujNotificationSettings>>(
+        "/hospital/settings/notifications",
+        {
+          body: { ...input.settings, version: input.version },
+          method: "PUT",
+          organizationId: input.organizationId,
+          successMessage: "Notification settings saved",
+        }
+      ),
+    getNotificationRules: (input?: { organizationId?: string }) =>
+      request<{
+        data: { limit: number; page: number; rules: VirujNotificationRule[] };
+      }>("/hospital/settings/notifications/rules?limit=50&page=1", {
+        organizationId: input?.organizationId,
+        suppressToast: true,
+      }),
+    getSecurity: (input?: { organizationId?: string }) =>
+      request<VirujSettingsEnvelope<VirujSecuritySettings>>(
+        "/hospital/settings/security",
+        { organizationId: input?.organizationId, suppressToast: true }
+      ),
+    getSecurityHistory: (input?: { organizationId?: string }) =>
+      request<{
+        data: {
+          entries: VirujSecurityPolicyHistoryEntry[];
+          limit: number;
+          page: number;
+        };
+      }>("/hospital/settings/security/policy-history?limit=50&page=1", {
+        organizationId: input?.organizationId,
+        suppressToast: true,
+      }),
   },
   facilities: {
     create: (input: VirujFacilityInput & { organizationId?: string }) =>
@@ -949,13 +1190,25 @@ export const virujBackend = {
         organizationId: input.organizationId,
       }),
     key: (input?: { organizationId?: string }) =>
-      ["viruj-backend", "erp", "facilities", input?.organizationId ?? "none"] as const,
+      [
+        "viruj-backend",
+        "erp",
+        "facilities",
+        input?.organizationId ?? "none",
+      ] as const,
     list: (input?: { organizationId?: string }) =>
       request<VirujFacility[]>("/facilities", {
         organizationId: input?.organizationId,
       }),
-    reorder: async (_input: { items: Array<{ displayOrder: number; id: string }>; organizationId?: string }) => ({ success: true as const }),
-    update: (input: { facility: VirujFacilityInput; id: string; organizationId?: string }) =>
+    reorder: async (_input: {
+      items: Array<{ displayOrder: number; id: string }>;
+      organizationId?: string;
+    }) => ({ success: true as const }),
+    update: (input: {
+      facility: VirujFacilityInput;
+      id: string;
+      organizationId?: string;
+    }) =>
       request<VirujFacility>(`/facilities/${input.id}`, {
         body: input.facility,
         method: "PATCH",
@@ -993,13 +1246,27 @@ export const virujBackend = {
         organizationId: input.organizationId,
       }),
     key: (input?: { organizationId?: string }) =>
-      ["viruj-backend", "erp", "services", input?.organizationId ?? "none"] as const,
+      [
+        "viruj-backend",
+        "erp",
+        "services",
+        input?.organizationId ?? "none",
+      ] as const,
     list: (input?: { organizationId?: string }) =>
       request<VirujFacility[] | { data: VirujFacility[] }>("/services", {
         organizationId: input?.organizationId,
-      }).then((response) => Array.isArray(response) ? response : response.data),
-    reorder: async (_input: { items: Array<{ displayOrder: number; id: string }>; organizationId?: string }) => ({ success: true as const }),
-    update: (input: { facility: VirujFacilityInput; id: string; organizationId?: string }) =>
+      }).then((response) =>
+        Array.isArray(response) ? response : response.data
+      ),
+    reorder: async (_input: {
+      items: Array<{ displayOrder: number; id: string }>;
+      organizationId?: string;
+    }) => ({ success: true as const }),
+    update: (input: {
+      facility: VirujFacilityInput;
+      id: string;
+      organizationId?: string;
+    }) =>
       request<VirujFacility>(`/services/${input.id}`, {
         body: input.facility,
         method: "PATCH",
@@ -1021,7 +1288,10 @@ export const virujBackend = {
       }),
   },
   hospitalGallery: {
-    create: (input: { gallery: VirujHospitalGalleryInput; organizationId?: string }) =>
+    create: (input: {
+      gallery: VirujHospitalGalleryInput;
+      organizationId?: string;
+    }) =>
       request<VirujHospitalGalleryItem>("/hospital/profile/gallery", {
         body: input.gallery,
         method: "POST",
@@ -1036,7 +1306,13 @@ export const virujBackend = {
         }
       ),
     key: (organizationId?: string) =>
-      ["viruj-backend", "erp", "hospital", "gallery", organizationId ?? "none"] as const,
+      [
+        "viruj-backend",
+        "erp",
+        "hospital",
+        "gallery",
+        organizationId ?? "none",
+      ] as const,
     list: (input?: { organizationId?: string }) =>
       request<VirujHospitalGalleryItem[]>("/hospital/profile/gallery", {
         organizationId: input?.organizationId,
@@ -1070,7 +1346,9 @@ export const virujBackend = {
     key: (organizationId?: string) =>
       ["viruj-backend", "erp", "doctors", organizationId ?? "none"] as const,
     list: (input?: { organizationId?: string }) =>
-      request<VirujDoctor[]>("/doctors", { organizationId: input?.organizationId }),
+      request<VirujDoctor[]>("/doctors", {
+        organizationId: input?.organizationId,
+      }),
     publish: (input: { id: string; organizationId?: string }) =>
       request<VirujDoctor>(`/doctors/${input.id}/publish`, {
         method: "POST",
@@ -1085,7 +1363,11 @@ export const virujBackend = {
         method: "POST",
         organizationId: input?.organizationId,
       }),
-    update: (input: { doctor: VirujDoctorInput; id: string; organizationId?: string }) =>
+    update: (input: {
+      doctor: VirujDoctorInput;
+      id: string;
+      organizationId?: string;
+    }) =>
       request<VirujDoctor>(`/doctors/${input.id}`, {
         body: input.doctor,
         method: "PATCH",
@@ -1115,15 +1397,27 @@ export const virujBackend = {
         suppressToast: true,
       }),
     key: (organizationId?: string) =>
-      ["viruj-backend", "erp", "notifications", organizationId ?? "none"] as const,
-    list: (input?: { limit?: number; organizationId?: string; page?: number }) => {
+      [
+        "viruj-backend",
+        "erp",
+        "notifications",
+        organizationId ?? "none",
+      ] as const,
+    list: (input?: {
+      limit?: number;
+      organizationId?: string;
+      page?: number;
+    }) => {
       const params = new URLSearchParams();
       params.set("limit", String(input?.limit ?? 30));
       params.set("page", String(input?.page ?? 1));
-      return request<NotificationListResponse>(`/notifications?${params.toString()}`, {
-        organizationId: input?.organizationId,
-        suppressToast: true,
-      });
+      return request<NotificationListResponse>(
+        `/notifications?${params.toString()}`,
+        {
+          organizationId: input?.organizationId,
+          suppressToast: true,
+        }
+      );
     },
     markAllRead: (input?: { organizationId?: string }) =>
       request<{ updated: number }>("/notifications/read-all", {
@@ -1150,7 +1444,10 @@ export const virujBackend = {
       request<VirujModuleSummary>(`/modules/${module}/summary`),
   },
   staff: {
-    cancelInvitation: (input: { invitationId: string; organizationId?: string }) =>
+    cancelInvitation: (input: {
+      invitationId: string;
+      organizationId?: string;
+    }) =>
       request<VirujStaffInvitation>(
         `/staff/invitations/${input.invitationId}/cancel`,
         {
@@ -1168,8 +1465,19 @@ export const virujBackend = {
         method: "POST",
       }),
     invitationsKey: (organizationId?: string) =>
-      ["viruj-backend", "erp", "staff", "invitations", organizationId ?? "none"] as const,
-    invite: (input: { email: string; name?: string; organizationId?: string; role: VirujStaffRole }) =>
+      [
+        "viruj-backend",
+        "erp",
+        "staff",
+        "invitations",
+        organizationId ?? "none",
+      ] as const,
+    invite: (input: {
+      email: string;
+      name?: string;
+      organizationId?: string;
+      role: VirujStaffRole;
+    }) =>
       request<VirujStaffInviteResult>("/staff/invitations", {
         body: input,
         method: "POST",
@@ -1184,13 +1492,23 @@ export const virujBackend = {
         organizationId: input?.organizationId,
       }),
     membersKey: (organizationId?: string) =>
-      ["viruj-backend", "erp", "staff", "members", organizationId ?? "none"] as const,
+      [
+        "viruj-backend",
+        "erp",
+        "staff",
+        "members",
+        organizationId ?? "none",
+      ] as const,
     remove: (input: { memberId: string; organizationId?: string }) =>
       request<{ success: true }>(`/staff/members/${input.memberId}`, {
         method: "DELETE",
         organizationId: input.organizationId,
       }),
-    updateRole: (input: { memberId: string; organizationId?: string; role: VirujStaffRole }) =>
+    updateRole: (input: {
+      memberId: string;
+      organizationId?: string;
+      role: VirujStaffRole;
+    }) =>
       request<VirujStaffMember>(`/staff/members/${input.memberId}/role`, {
         body: { role: input.role },
         method: "PATCH",

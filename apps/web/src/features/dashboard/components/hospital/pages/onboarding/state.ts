@@ -21,6 +21,18 @@ const defaultDepartmentHours = {
   openTime: "09:00",
 };
 
+function hasValidCoordinates(branch?: Branch) {
+  if (!branch?.latitude.trim() || !branch.longitude.trim()) return false;
+  const latitude = Number(branch.latitude);
+  const longitude = Number(branch.longitude);
+  return (
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    Math.abs(latitude) <= 90 &&
+    Math.abs(longitude) <= 180
+  );
+}
+
 export function validateStep(
   stepId: StepId,
   data: OnboardingState,
@@ -29,7 +41,9 @@ export function validateStep(
   switch (stepId) {
     case "profile":
       if (!data.profile.hospitalName.trim()) {
-        return kind === "clinic" ? "Add the clinic name." : "Add the hospital name.";
+        return kind === "clinic"
+          ? "Add the clinic name."
+          : "Add the hospital name.";
       }
       if (kind === "clinic" && !data.profile.legalBusinessName.trim()) {
         return "Add the legal business name.";
@@ -37,7 +51,10 @@ export function validateStep(
       if (kind === "clinic" && !data.profile.hospitalType.trim()) {
         return "Select the clinic type.";
       }
-      if (kind === "clinic" && !(data.profile.logoName || data.profile.logoUrl)) {
+      if (
+        kind === "clinic" &&
+        !(data.profile.logoName || data.profile.logoUrl)
+      ) {
         return "Upload the clinic logo.";
       }
       if (kind === "clinic" && !data.profile.registrationNumber.trim()) {
@@ -49,8 +66,10 @@ export function validateStep(
       if (kind === "clinic" && !data.profile.hospitalOwnershipType.trim()) {
         return "Select the ownership type.";
       }
-      if (kind === "hospital" && !data.profile.email.trim()) return "Add the hospital email.";
-      if (kind === "hospital" && !data.profile.phone.trim()) return "Add the hospital phone number.";
+      if (kind === "hospital" && !data.profile.email.trim())
+        return "Add the hospital email.";
+      if (kind === "hospital" && !data.profile.phone.trim())
+        return "Add the hospital phone number.";
       return "";
     case "contact":
       if (!data.profile.phone.trim()) return "Add the primary mobile number.";
@@ -60,22 +79,36 @@ export function validateStep(
       if (
         data.branches.some(
           (branch) =>
-            !branch.address.trim() || !branch.city.trim() || !branch.state.trim() || !branch.postalCode.trim()
+            !branch.address.trim() ||
+            !branch.city.trim() ||
+            !branch.state.trim() ||
+            !branch.postalCode.trim()
         )
       ) {
         return kind === "clinic"
           ? "Add address, city, state, and pincode."
           : "Each branch needs a name, address, and city.";
       }
+      if (
+        data.publicProfile.showHospitalProfile &&
+        !hasValidCoordinates(data.branches[0])
+      ) {
+        return "Add valid coordinates for the primary branch so nearby patients can find it.";
+      }
       return "";
+    case "review":
+      return validateStep("locations", data, kind);
     case "clinicProfile":
-      if (!data.profile.description.trim()) return "Add the About Clinic details.";
+      if (!data.profile.description.trim())
+        return "Add the About Clinic details.";
       if (!data.profile.languagesSpoken.trim()) return "Add languages spoken.";
       return "";
     case "workingHours":
       if (
         data.workingHours.some(
-          (hours) => hours.isOpen && (!hours.openingTime.trim() || !hours.closingTime.trim())
+          (hours) =>
+            hours.isOpen &&
+            (!hours.openingTime.trim() || !hours.closingTime.trim())
         )
       ) {
         return "Each open day needs opening and closing time.";
@@ -83,14 +116,24 @@ export function validateStep(
       return "";
     case "departments":
       if (
-        (kind === "clinic" ? data.departments : data.departments.filter((department) => !data.disabledDepartments.includes(department.name))).length === 0
+        (kind === "clinic"
+          ? data.departments
+          : data.departments.filter(
+              (department) =>
+                !data.disabledDepartments.includes(department.name)
+            )
+        ).length === 0
       ) {
-        return kind === "clinic" ? "Add at least one specialty." : "Enable at least one department.";
+        return kind === "clinic"
+          ? "Add at least one specialty."
+          : "Enable at least one department.";
       }
       if (
         data.departments.some(
           (department) =>
-            !department.name.trim() || !department.openTime.trim() || !department.closeTime.trim()
+            !department.name.trim() ||
+            !department.openTime.trim() ||
+            !department.closeTime.trim()
         )
       ) {
         return "Each department needs a name, opening time, and closing time.";
@@ -180,7 +223,9 @@ export function getDefaultOnboardingState(
   };
 }
 
-export function getPersistableOnboardingState(state: OnboardingState): OnboardingState {
+export function getPersistableOnboardingState(
+  state: OnboardingState
+): OnboardingState {
   return {
     ...state,
     profile: {
@@ -195,7 +240,8 @@ export function getPersistableOnboardingState(state: OnboardingState): Onboardin
 export function isQuotaExceededError(error: unknown) {
   return (
     error instanceof DOMException &&
-    (error.name === "QuotaExceededError" || error.name === "NS_ERROR_DOM_QUOTA_REACHED")
+    (error.name === "QuotaExceededError" ||
+      error.name === "NS_ERROR_DOM_QUOTA_REACHED")
   );
 }
 
@@ -203,7 +249,8 @@ export function normalizeDepartments(
   value: unknown,
   kind: OnboardingKind = "hospital"
 ): Department[] {
-  if (!Array.isArray(value)) return kind === "clinic" ? defaultClinicDepartments() : [];
+  if (!Array.isArray(value))
+    return kind === "clinic" ? defaultClinicDepartments() : [];
 
   const departments = value
     .map((item) => {
@@ -219,23 +266,28 @@ export function normalizeDepartments(
       if (item && typeof item === "object" && "name" in item) {
         const department = item as Partial<Department>;
         return {
-          closeTime: department.closeTime?.trim() ?? defaultDepartmentHours.closeTime,
+          closeTime:
+            department.closeTime?.trim() ?? defaultDepartmentHours.closeTime,
           description: department.description?.trim() ?? "",
           head: department.head?.trim() ?? "",
           name: department.name?.trim() ?? "",
-          openTime: department.openTime?.trim() ?? defaultDepartmentHours.openTime,
+          openTime:
+            department.openTime?.trim() ?? defaultDepartmentHours.openTime,
         };
       }
 
       return null;
     })
-    .filter((department): department is Department => Boolean(department?.name));
+    .filter((department): department is Department =>
+      Boolean(department?.name)
+    );
 
   if (kind === "hospital") {
     return departments.filter(
       (department) =>
         !legacyDepartmentNames.some(
-          (legacyDepartment) => legacyDepartment.toLowerCase() === department.name.toLowerCase()
+          (legacyDepartment) =>
+            legacyDepartment.toLowerCase() === department.name.toLowerCase()
         )
     );
   }
@@ -249,25 +301,32 @@ export function mergeOnboardingState(
   kind: OnboardingKind = "hospital"
 ) {
   const fallback = getDefaultOnboardingState(defaults, kind);
-  const persistedProfile = getPersistableOnboardingState({ ...fallback, ...state, profile: { ...fallback.profile, ...state.profile } }).profile;
+  const persistedProfile = getPersistableOnboardingState({
+    ...fallback,
+    ...state,
+    profile: { ...fallback.profile, ...state.profile },
+  }).profile;
   const departments = normalizeDepartments(state.departments, kind);
   return {
     ...fallback,
     ...state,
     branches: normalizeBranches(state.branches, kind),
     departments,
-    disabledDepartments: kind === "clinic"
-      ? []
-      : Array.isArray(state.disabledDepartments)
-        ? state.disabledDepartments.filter((department) =>
-            departments.some((item) => item.name === department)
-          )
-        : [],
+    disabledDepartments:
+      kind === "clinic"
+        ? []
+        : Array.isArray(state.disabledDepartments)
+          ? state.disabledDepartments.filter((department) =>
+              departments.some((item) => item.name === department)
+            )
+          : [],
     doctors: normalizeDoctors(state.doctors),
     profile: {
       ...fallback.profile,
       ...persistedProfile,
-      email: persistedProfile.email?.trim() ? persistedProfile.email : fallback.profile.email,
+      email: persistedProfile.email?.trim()
+        ? persistedProfile.email
+        : fallback.profile.email,
       hospitalName: persistedProfile.hospitalName?.trim()
         ? persistedProfile.hospitalName
         : fallback.profile.hospitalName,
@@ -278,7 +337,10 @@ export function mergeOnboardingState(
   };
 }
 
-export function getEmptyBranch(main: boolean, kind: OnboardingKind = "hospital"): Branch {
+export function getEmptyBranch(
+  main: boolean,
+  kind: OnboardingKind = "hospital"
+): Branch {
   return {
     address: "",
     city: "",
@@ -317,10 +379,12 @@ function getDefaultWorkingHours(): WorkingHour[] {
 }
 
 function normalizeBranches(value: unknown, kind: OnboardingKind): Branch[] {
-  if (!Array.isArray(value) || value.length === 0) return [getEmptyBranch(true, kind)];
+  if (!Array.isArray(value) || value.length === 0)
+    return [getEmptyBranch(true, kind)];
 
   return value.map((item, index) => {
-    const branch = item && typeof item === "object" ? (item as Partial<Branch>) : {};
+    const branch =
+      item && typeof item === "object" ? (item as Partial<Branch>) : {};
     return {
       ...getEmptyBranch(index === 0, kind),
       ...branch,
@@ -352,7 +416,10 @@ function normalizeDoctors(value: unknown): OnboardingDoctor[] {
 
   return value
     .map((item) => {
-      const doctor = item && typeof item === "object" ? (item as Partial<OnboardingDoctor>) : null;
+      const doctor =
+        item && typeof item === "object"
+          ? (item as Partial<OnboardingDoctor>)
+          : null;
       if (!doctor) return null;
       return {
         availability: doctor.availability?.trim() ?? "",
@@ -372,7 +439,10 @@ function normalizeServices(value: unknown): OnboardingService[] {
 
   const services = value
     .map((item) => {
-      const service = item && typeof item === "object" ? (item as Partial<OnboardingService>) : null;
+      const service =
+        item && typeof item === "object"
+          ? (item as Partial<OnboardingService>)
+          : null;
       if (!service) return null;
       return {
         availableOnline: Boolean(service.availableOnline),

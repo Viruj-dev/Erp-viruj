@@ -59,6 +59,7 @@ type ProfileVisibilityControl = {
   isPublic: boolean;
   isUpdating?: boolean;
   onToggle?: () => void;
+  statusLabel?: string;
 };
 
 type ToneConfig = {
@@ -86,8 +87,7 @@ const tones: Record<DashboardTone, ToneConfig> = {
     chart: "bg-[linear-gradient(180deg,#d946ef,#6d28d9)]",
     glowA: "bg-fuchsia-200/28",
     glowB: "bg-indigo-200/20",
-    hero:
-      "bg-[linear-gradient(135deg,#39106d_0%,#6d28d9_48%,#d946ef_100%)]",
+    hero: "bg-[linear-gradient(135deg,#39106d_0%,#6d28d9_48%,#d946ef_100%)]",
     hoverSoft: "hover:bg-violet-100",
     name: "clinic",
     shadow: "shadow-[0_28px_90px_rgba(109,40,217,0.34)]",
@@ -102,8 +102,7 @@ const tones: Record<DashboardTone, ToneConfig> = {
     chart: "bg-[linear-gradient(180deg,#38bdf8,#00478d)]",
     glowA: "bg-sky-200/28",
     glowB: "bg-blue-200/20",
-    hero:
-      "bg-[linear-gradient(135deg,#082f66_0%,#00478d_48%,#38bdf8_100%)]",
+    hero: "bg-[linear-gradient(135deg,#082f66_0%,#00478d_48%,#38bdf8_100%)]",
     hoverSoft: "hover:bg-blue-100",
     name: "hospital",
     shadow: "shadow-[0_28px_90px_rgba(0,71,141,0.34)]",
@@ -118,8 +117,7 @@ const tones: Record<DashboardTone, ToneConfig> = {
     chart: "bg-[linear-gradient(180deg,#34d399,#0f766e)]",
     glowA: "bg-emerald-200/28",
     glowB: "bg-teal-200/20",
-    hero:
-      "bg-[linear-gradient(135deg,#064e3b_0%,#0f766e_48%,#34d399_100%)]",
+    hero: "bg-[linear-gradient(135deg,#064e3b_0%,#0f766e_48%,#34d399_100%)]",
     hoverSoft: "hover:bg-emerald-100",
     name: "doctor",
     shadow: "shadow-[0_28px_90px_rgba(15,118,110,0.34)]",
@@ -150,7 +148,8 @@ export function RoleDashboardPage({
 }) {
   const theme = tones[tone];
   const displayName =
-    userName || (tone === "doctor" ? "Doctor" : `${capitalize(theme.name)} Owner`);
+    userName ||
+    (tone === "doctor" ? "Doctor" : `${capitalize(theme.name)} Owner`);
   const subject =
     tone === "doctor"
       ? "practice profile"
@@ -164,11 +163,20 @@ export function RoleDashboardPage({
         ? "Add Department"
         : "Add Doctor";
   const PrimaryIcon =
-    tone === "doctor" ? CalendarDays : tone === "hospital" ? Building2 : Stethoscope;
+    tone === "doctor"
+      ? CalendarDays
+      : tone === "hospital"
+        ? Building2
+        : Stethoscope;
   const listingScore = analytics?.listingScore ?? 0;
-  const isProfilePublic = visibility?.isPublic ?? (analytics?.heroStats?.Visibility ?? "Public") !== "Private";
-  const visibilityLabel = isProfilePublic ? "Public" : "Private";
-  const dashboardStats = analytics?.stats ?? baseStats.map(([label, value, note]) => ({ label, note, value }));
+  const isProfilePublic =
+    visibility?.isPublic ??
+    (analytics?.heroStats?.Visibility ?? "Public") !== "Private";
+  const visibilityLabel =
+    visibility?.statusLabel ?? (isProfilePublic ? "Public" : "Private");
+  const dashboardStats =
+    analytics?.stats ??
+    baseStats.map(([label, value, note]) => ({ label, note, value }));
   const dashboardCharts = analytics?.charts ?? [];
   const chartPanels = [
     "Appointment Request Trend",
@@ -191,19 +199,27 @@ export function RoleDashboardPage({
         className={`relative overflow-hidden rounded-[2rem] p-6 text-white ${theme.hero} ${theme.shadow} lg:p-8`}
       >
         <div className="pointer-events-none absolute inset-0">
-          <div className={`absolute -right-20 -top-24 h-72 w-72 rounded-full ${theme.glowA} blur-3xl`} />
-          <div className={`absolute -bottom-28 left-1/3 h-72 w-72 rounded-full ${theme.glowB} blur-3xl`} />
+          <div
+            className={`absolute -right-20 -top-24 h-72 w-72 rounded-full ${theme.glowA} blur-3xl`}
+          />
+          <div
+            className={`absolute -bottom-28 left-1/3 h-72 w-72 rounded-full ${theme.glowB} blur-3xl`}
+          />
           <div className="absolute inset-x-0 top-0 h-px bg-white/35" />
         </div>
         <div className="relative grid gap-8 xl:grid-cols-[minmax(0,1fr)_390px]">
           <div className="min-w-0">
-            <p className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${theme.textSoft}`}>
+            <p
+              className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${theme.textSoft}`}
+            >
               Viruj Marketplace Presence
             </p>
             <h1 className="mt-4 max-w-3xl font-headline text-3xl font-semibold leading-tight tracking-tight lg:text-5xl">
               {displayName}, your {subject} is ready to grow on Viruj.
             </h1>
-            <p className={`mt-4 max-w-2xl text-sm font-medium leading-6 ${theme.textSoft}`}>
+            <p
+              className={`mt-4 max-w-2xl text-sm font-medium leading-6 ${theme.textSoft}`}
+            >
               Manage public profile quality, doctors, services, facilities,
               gallery, reviews, and visibility from one marketplace command
               center.
@@ -216,15 +232,23 @@ export function RoleDashboardPage({
                 label={primaryAction}
                 primary
               />
-              <HeroAction icon={<Sparkles size={16} />} label="Create Service" />
-              <HeroAction icon={<ImagePlus size={16} />} label="Upload Photos" />
+              <HeroAction
+                icon={<Sparkles size={16} />}
+                label="Create Service"
+              />
+              <HeroAction
+                icon={<ImagePlus size={16} />}
+                label="Upload Photos"
+              />
             </div>
           </div>
 
           <div className="rounded-3xl bg-white/12 p-5 ring-1 ring-white/18 backdrop-blur">
             <div className="flex items-center justify-between">
               <div>
-                <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${theme.accentSoft}`}>
+                <p
+                  className={`text-xs font-semibold uppercase tracking-[0.18em] ${theme.accentSoft}`}
+                >
                   Listing Score
                 </p>
                 <p className="mt-2 text-4xl font-bold">{listingScore}%</p>
@@ -237,7 +261,10 @@ export function RoleDashboardPage({
               </span>
             </div>
             <div className="mt-6 h-3 rounded-full bg-white/20">
-              <div className="h-3 rounded-full bg-white" style={{ width: `${listingScore}%` }} />
+              <div
+                className="h-3 rounded-full bg-white"
+                style={{ width: `${listingScore}%` }}
+              />
             </div>
             {visibility?.onToggle ? (
               <button
@@ -248,14 +275,34 @@ export function RoleDashboardPage({
                 type="button"
               >
                 {isProfilePublic ? <EyeOff size={16} /> : <Eye size={16} />}
-                {visibility.isUpdating ? "Updating..." : isProfilePublic ? "Make Private" : "Make Public"}
+                {visibility.isUpdating
+                  ? "Updating..."
+                  : isProfilePublic
+                    ? "Make Private"
+                    : "Make Public"}
               </button>
             ) : null}
             <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-              <HeroStat label="Profile Views" theme={theme} value={analytics?.heroStats?.["Profile Views"] ?? "0"} />
-              <HeroStat label="Requests" theme={theme} value={analytics?.heroStats?.Requests ?? "0"} />
-              <HeroStat label="Rating" theme={theme} value={analytics?.heroStats?.Rating ?? "0.0"} />
-              <HeroStat label="Visibility" theme={theme} value={visibilityLabel} />
+              <HeroStat
+                label="Profile Views"
+                theme={theme}
+                value={analytics?.heroStats?.["Profile Views"] ?? "0"}
+              />
+              <HeroStat
+                label="Requests"
+                theme={theme}
+                value={analytics?.heroStats?.Requests ?? "0"}
+              />
+              <HeroStat
+                label="Rating"
+                theme={theme}
+                value={analytics?.heroStats?.Rating ?? "0.0"}
+              />
+              <HeroStat
+                label="Visibility"
+                theme={theme}
+                value={visibilityLabel}
+              />
             </div>
           </div>
         </div>
@@ -263,7 +310,13 @@ export function RoleDashboardPage({
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         {dashboardStats.map((kpi) => (
-          <KpiCard key={kpi.label} label={kpi.label} note={kpi.note} theme={theme} value={kpi.value} />
+          <KpiCard
+            key={kpi.label}
+            label={kpi.label}
+            note={kpi.note}
+            theme={theme}
+            value={kpi.value}
+          />
         ))}
       </section>
 
@@ -278,10 +331,15 @@ export function RoleDashboardPage({
         ))}
       </section>
 
-      <Panel subtitle="Bento preview of photos patients see on your listing" theme={theme} title="Public Gallery">
+      <Panel
+        subtitle="Bento preview of photos patients see on your listing"
+        theme={theme}
+        title="Public Gallery"
+      >
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-            {gallery?.liveCount ?? 0} photos live - {gallery?.completeness ?? 0}% gallery completeness
+            {gallery?.liveCount ?? 0} photos live - {gallery?.completeness ?? 0}
+            % gallery completeness
           </p>
           <button
             className="inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-semibold text-white transition"
@@ -294,41 +352,69 @@ export function RoleDashboardPage({
         </div>
         <ClinicGalleryBento
           imageUrlsById={gallery?.imageUrlsById}
-          items={gallery?.items?.length ? gallery.items : defaultClinicGalleryItems}
+          items={
+            gallery?.items?.length ? gallery.items : defaultClinicGalleryItems
+          }
         />
       </Panel>
 
       <section className="grid gap-5 xl:grid-cols-[1fr_1fr_360px]">
-        <Panel subtitle="Doctor marketplace performance" theme={theme} title="Most Viewed Doctors">
+        <Panel
+          subtitle="Doctor marketplace performance"
+          theme={theme}
+          title="Most Viewed Doctors"
+        >
           <div className="space-y-3">
             {dashboardDoctors.length ? (
               dashboardDoctors.map((doctor) => (
-                <DoctorPerformance doctor={doctor} key={doctor.title} theme={theme} />
+                <DoctorPerformance
+                  doctor={doctor}
+                  key={doctor.title}
+                  theme={theme}
+                />
               ))
             ) : (
               <EmptyPanelRow label="No doctors added yet." theme={theme} />
             )}
           </div>
         </Panel>
-        <Panel subtitle="Service demand and visibility" theme={theme} title="Most Requested Services">
+        <Panel
+          subtitle="Service demand and visibility"
+          theme={theme}
+          title="Most Requested Services"
+        >
           <div className="space-y-3">
             {dashboardServices.length ? (
               dashboardServices.map((service) => (
-                <ServiceRow key={service.title} service={service} theme={theme} />
+                <ServiceRow
+                  key={service.title}
+                  service={service}
+                  theme={theme}
+                />
               ))
             ) : (
-              <EmptyPanelRow label="No services or facilities added yet." theme={theme} />
+              <EmptyPanelRow
+                label="No services or facilities added yet."
+                theme={theme}
+              />
             )}
           </div>
         </Panel>
-        <Panel subtitle="Presence management" theme={theme} title="Quick Actions">
+        <Panel
+          subtitle="Presence management"
+          theme={theme}
+          title="Quick Actions"
+        >
           <div className="grid gap-3">
             {[
               { label: primaryAction, icon: <PrimaryIcon size={16} /> },
               { label: "Create Service", icon: <Sparkles size={16} /> },
               { label: "Add Facility", icon: <Plus size={16} /> },
               { label: "Upload Photos", icon: <Camera size={16} /> },
-              { label: `Edit ${capitalize(theme.name)} Profile`, icon: <Eye size={16} /> },
+              {
+                label: `Edit ${capitalize(theme.name)} Profile`,
+                icon: <Eye size={16} />,
+              },
             ].map((action) => (
               <button
                 className={`flex h-14 items-center gap-3 rounded-xl px-4 text-left text-sm font-semibold text-slate-800 transition ${theme.soft} ${theme.hoverSoft} dark:text-slate-100`}
@@ -348,11 +434,18 @@ export function RoleDashboardPage({
         </Panel>
       </section>
 
-      <Panel subtitle="Marketplace listing updates" theme={theme} title="Recent Activity">
+      <Panel
+        subtitle="Marketplace listing updates"
+        theme={theme}
+        title="Recent Activity"
+      >
         <div className="space-y-3">
           {dashboardActivity.length ? (
             dashboardActivity.map((item, index) => (
-              <div className={`flex gap-4 rounded-2xl p-4 ${theme.soft}`} key={item.id ?? `${item.title}-${index}`}>
+              <div
+                className={`flex gap-4 rounded-2xl p-4 ${theme.soft}`}
+                key={item.id ?? `${item.title}-${index}`}
+              >
                 <span
                   className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold shadow-sm dark:bg-white/[0.08]"
                   style={{ color: theme.accent }}
@@ -360,8 +453,12 @@ export function RoleDashboardPage({
                   {index + 1}
                 </span>
                 <div>
-                  <p className="font-bold text-slate-950 dark:text-white">{item.title}</p>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{item.subtitle}</p>
+                  <p className="font-bold text-slate-950 dark:text-white">
+                    {item.title}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                    {item.subtitle}
+                  </p>
                 </div>
               </div>
             ))
@@ -414,7 +511,9 @@ function HeroStat({
 }) {
   return (
     <div className="rounded-2xl bg-white/10 p-3 ring-1 ring-white/15">
-      <p className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${theme.accentSoft}`}>
+      <p
+        className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${theme.accentSoft}`}
+      >
         {label}
       </p>
       <p className="mt-1 text-lg font-bold text-white">{value}</p>
@@ -434,7 +533,9 @@ function KpiCard({
   value: string;
 }) {
   return (
-    <section className={`rounded-2xl border bg-white/88 p-5 shadow-sm ${theme.border} dark:bg-[#14171b]`}>
+    <section
+      className={`rounded-2xl border bg-white/88 p-5 shadow-sm ${theme.border} dark:bg-[#14171b]`}
+    >
       <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
         {label}
       </p>
@@ -458,7 +559,9 @@ function Panel({
   title: string;
 }) {
   return (
-    <section className={`rounded-2xl border bg-white/88 p-5 shadow-sm ${theme.border} dark:bg-[#14171b]`}>
+    <section
+      className={`rounded-2xl border bg-white/88 p-5 shadow-sm ${theme.border} dark:bg-[#14171b]`}
+    >
       <h2 className="font-headline text-base font-semibold text-slate-950 dark:text-slate-100">
         {title}
       </h2>
@@ -468,14 +571,25 @@ function Panel({
   );
 }
 
-function ChartPanel({ theme, title, values }: { theme: ToneConfig; title: string; values?: number[] }) {
+function ChartPanel({
+  theme,
+  title,
+  values,
+}: {
+  theme: ToneConfig;
+  title: string;
+  values?: number[];
+}) {
   const bars = chartHeights(values);
   return (
     <Panel subtitle="Last 30 days" theme={theme} title={title}>
       <div className="flex h-44 items-end gap-3">
         {bars.map((height, index) => (
           <div className="flex flex-1 items-end" key={index}>
-            <div className={`w-full rounded-t-xl ${theme.chart}`} style={{ height }} />
+            <div
+              className={`w-full rounded-t-xl ${theme.chart}`}
+              style={{ height }}
+            />
           </div>
         ))}
       </div>
@@ -494,9 +608,17 @@ function DoctorPerformance({
     <div className={`rounded-2xl p-4 ${theme.soft}`}>
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="font-bold text-slate-950 dark:text-white">{doctor.title}</p>
-          <p className="mt-1 text-sm font-medium text-slate-500">{doctor.subtitle}</p>
-          {doctor.meta ? <p className="mt-2 text-xs font-semibold text-slate-500">{doctor.meta}</p> : null}
+          <p className="font-bold text-slate-950 dark:text-white">
+            {doctor.title}
+          </p>
+          <p className="mt-1 text-sm font-medium text-slate-500">
+            {doctor.subtitle}
+          </p>
+          {doctor.meta ? (
+            <p className="mt-2 text-xs font-semibold text-slate-500">
+              {doctor.meta}
+            </p>
+          ) : null}
         </div>
         {doctor.badge ? (
           <span
@@ -519,11 +641,21 @@ function ServiceRow({
   theme: ToneConfig;
 }) {
   return (
-    <div className={`flex items-center justify-between gap-4 rounded-2xl p-4 ${theme.soft}`}>
+    <div
+      className={`flex items-center justify-between gap-4 rounded-2xl p-4 ${theme.soft}`}
+    >
       <div>
-        <p className="font-bold text-slate-950 dark:text-white">{service.title}</p>
-        <p className="mt-1 text-sm font-medium text-slate-500">{service.subtitle}</p>
-        {service.meta ? <p className="mt-2 text-xs font-semibold text-slate-500">{service.meta}</p> : null}
+        <p className="font-bold text-slate-950 dark:text-white">
+          {service.title}
+        </p>
+        <p className="mt-1 text-sm font-medium text-slate-500">
+          {service.subtitle}
+        </p>
+        {service.meta ? (
+          <p className="mt-2 text-xs font-semibold text-slate-500">
+            {service.meta}
+          </p>
+        ) : null}
       </div>
       {service.badge ? (
         <span
@@ -539,7 +671,9 @@ function ServiceRow({
 
 function EmptyPanelRow({ label, theme }: { label: string; theme: ToneConfig }) {
   return (
-    <div className={`rounded-2xl p-4 text-sm font-semibold text-slate-500 ${theme.soft}`}>
+    <div
+      className={`rounded-2xl p-4 text-sm font-semibold text-slate-500 ${theme.soft}`}
+    >
       {label}
     </div>
   );
@@ -560,10 +694,15 @@ function findDashboardChart(charts: RoleDashboardChart[], title: string) {
 }
 
 function chartHeights(values?: number[]) {
-  const cleanValues = values?.filter((value) => Number.isFinite(value)).slice(-10) ?? [];
-  const bars = cleanValues.length ? cleanValues : Array.from({ length: 10 }, () => 0);
+  const cleanValues =
+    values?.filter((value) => Number.isFinite(value)).slice(-10) ?? [];
+  const bars = cleanValues.length
+    ? cleanValues
+    : Array.from({ length: 10 }, () => 0);
   const max = Math.max(...bars, 1);
-  return bars.map((value) => value <= 0 ? 4 : Math.max(18, Math.round((value / max) * 128)));
+  return bars.map((value) =>
+    value <= 0 ? 4 : Math.max(18, Math.round((value / max) * 128))
+  );
 }
 
 function capitalize(value: string) {
