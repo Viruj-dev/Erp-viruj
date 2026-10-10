@@ -159,18 +159,15 @@ function useHospitalProfileVisibility(organizationId: string | undefined) {
   });
   const [isUpdating, setIsUpdating] = useState(false);
   const isPublic = facilityQuery.data?.settings?.visibleOnPlatform === true;
-  const verificationStatus = facilityQuery.data?.verificationStatus;
   const statusLabel = facilityQuery.isError
     ? "Unavailable"
     : facilityQuery.isLoading
       ? "Loading"
       : !isPublic
         ? "Private"
-        : verificationStatus !== "VERIFIED"
-          ? "Pending verification"
-          : facilityQuery.data?.directoryHospitalId
-            ? "Public"
-            : "Pending directory sync";
+        : facilityQuery.data?.directoryHospitalId
+          ? "Public"
+          : "Pending directory sync";
 
   const onToggle = async () => {
     if (!organizationId || !facilityQuery.data) return;
