@@ -11,6 +11,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
 import {
   acceptInvitation,
   authClient,
@@ -327,12 +328,12 @@ export function ErpDemoLogin({
                           />
                           Keep me logged in
                         </label>
-                        <button
+                        <Link
                           className="underline underline-offset-4"
-                          type="button"
+                          href="/forgot-password"
                         >
                           Forgot password?
-                        </button>
+                        </Link>
                       </div>
                       <StatusBlock
                         errorMessage={errorMessage}
@@ -866,8 +867,6 @@ function buildOrganizationSlug(
         : "viruj-org";
   return normalized ? `${normalized}-${suffix}` : `${fallbackPrefix}-${suffix}`;
 }
-
-
 function getOnboardingStoragePrefix(organizationType: OrganizationType) {
   return organizationType === "clinic"
     ? "viruj:clinic-onboarding"

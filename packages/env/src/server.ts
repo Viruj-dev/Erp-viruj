@@ -11,7 +11,7 @@ export const env = createEnv({
     CENTRAL_API_JWT_SECRET: z.string().min(32),
     ERP_FROM_EMAIL: z
       .string()
-      .default("Viruj Health ERP <noreply@virujhealth.com>"),
+      .default("Viruj Health ERP <support@virujhealth.com>"),
     RESEND_API_KEY: z.string().optional(),
     NODE_ENV: z
       .enum(["development", "production", "test"])

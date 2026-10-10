@@ -16,6 +16,7 @@ import {
 } from "./roles";
 import { networkInterfaces } from "node:os";
 import { z } from "zod";
+import { sendPasswordResetEmail } from "./password-reset-email";
 
 export {
   organizationTypes,
@@ -667,6 +668,11 @@ export const auth = betterAuth({
   trustedOrigins,
   emailAndPassword: {
     enabled: true,
+    resetPasswordTokenExpiresIn: 60 * 60,
+    revokeSessionsOnPasswordReset: true,
+    sendResetPassword: async ({ user, url }) => {
+      await sendPasswordResetEmail({ email: user.email, url });
+    },
   },
   advanced: {
     defaultCookieAttributes: {

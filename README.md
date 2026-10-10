@@ -76,8 +76,12 @@ Host `apps/server` behind `https://auth.virujhealth.com` and set these environme
 BETTER_AUTH_URL=https://auth.virujhealth.com
 CORS_ORIGIN=https://erp.virujhealth.com
 CENTRAL_API_JWT_SECRET=replace-with-32-plus-byte-shared-secret
+RESEND_API_KEY=replace-with-resend-api-key
+ERP_FROM_EMAIL="Viruj Health ERP <support@virujhealth.com>"
 NEXT_PUBLIC_AUTH_URL=https://auth.virujhealth.com
 NEXT_PUBLIC_API_URL=https://api.virujhealth.com
 ```
 
 `NEXT_PUBLIC_SERVER_URL` can stay pointed at the ERP API host. If the same `apps/server` deployment also serves `/erp`, set it to `https://auth.virujhealth.com`. Set `NEXT_PUBLIC_AUTH_URL` only in production; local development should leave it unset so browser requests use the normal same-origin `/auth` path. Keep `http://localhost:3001` in `CORS_ORIGIN` as an additional comma-separated origin.
+
+Password recovery uses `RESEND_API_KEY` on `apps/server` to email a one-hour reset link to the registered account address. Set `ERP_FROM_EMAIL` to a sender verified in Resend. The link returns to the ERP web origin, which must be included in `CORS_ORIGIN`.
