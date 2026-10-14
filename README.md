@@ -85,3 +85,7 @@ NEXT_PUBLIC_API_URL=https://api.virujhealth.com
 `NEXT_PUBLIC_SERVER_URL` can stay pointed at the ERP API host. If the same `apps/server` deployment also serves `/erp`, set it to `https://auth.virujhealth.com`. Set `NEXT_PUBLIC_AUTH_URL` only in production; local development should leave it unset so browser requests use the normal same-origin `/auth` path. Keep `http://localhost:3001` in `CORS_ORIGIN` as an additional comma-separated origin.
 
 Password recovery uses `RESEND_API_KEY` on `apps/server` to email a one-hour reset link to the registered account address. Set `ERP_FROM_EMAIL` to a sender verified in Resend. The link returns to the ERP web origin, which must be included in `CORS_ORIGIN`.
+
+## Automated EC2 deployments
+
+GitHub Actions checks `main` and pull requests, then deploys this service over SSH after checks pass. See [the setup and rollback guide](docs/github-actions-ec2.md) to configure the `production` environment and enable deployment.

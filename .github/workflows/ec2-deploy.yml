@@ -1,0 +1,72 @@
+name: auth CI and EC2 deployment
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never interrupt an active production deployment. The server also rejects stale runs.
+concurrency:
+  group: auth-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/viruj_ci
+      ERP_AUTH_DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/viruj_ci
+      WEB_DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/viruj_ci
+      DIRECTORY_DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/viruj_ci
+      BETTER_AUTH_SECRET: ci-only-secret-with-at-least-32-characters
+      BETTER_AUTH_URL: http://localhost:3002
+      CORS_ORIGIN: http://localhost:3001
+      CENTRAL_API_JWT_SECRET: ci-only-jwt-secret-with-at-least-32-characters
+      RUN_DB_INTEGRATION: 'false'
+      COMMUNITY_DATABASE_TEST: 'false'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.2'
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile --filter server
+      - name: Check auth types
+        run: bun run --cwd apps/server check-types
+      - name: Build auth server
+        run: bun run --cwd apps/server build
+      - name: Run service regression tests
+        run: bash scripts/test-ci.sh
+      - name: Validate deployment scripts
+        run: |
+          for script in scripts/deploy/*.sh scripts/test-ci.sh; do bash -n "$script"; done
+          shellcheck -x -P SCRIPTDIR scripts/deploy/deploy-ec2.sh scripts/deploy/send-release.sh scripts/test-ci.sh
+          python3 -m py_compile scripts/deploy/package-release.py
+      - name: Test deployment success and rollback
+        run: python3 scripts/deploy/test_deployment.py
+
+  deploy:
+    needs: check
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.EC2_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Transfer tested commit and deploy over SSH
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_KNOWN_HOSTS: ${{ secrets.EC2_KNOWN_HOSTS }}
+        run: bash scripts/deploy/send-release.sh
