@@ -59,7 +59,7 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.EC2_DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 25
-    environment: production
+    environment: ec2-production
     steps:
       - uses: actions/checkout@v4
         with:
