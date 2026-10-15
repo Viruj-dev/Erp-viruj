@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/erp/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/erp/tabs";
 import { Textarea } from "@/components/ui/erp/textarea";
 import { subscriptionBillingApi, type BillingCycle, type BillingProfile, type CheckoutResult, type Invoice, type PaymentMethod, type Subscription, type SubscriptionPlan } from "@/features/subscription/api/subscription.api";
+import { billingQueryOptions } from "@/features/subscription/utils/billing-query-options";
 import { labelFeatureCode } from "@/features/subscription/utils/feature-labels";
 import { annualEquivalentMonthly, billingCycleLabel, cycleNoun, formatMinorMoney, hasAnnualSavings, priceForCycle } from "@/features/subscription/utils/money";
 import { getBillingPermissionsFromMember, hasBillingPermission } from "@/features/subscription/utils/subscription-access";
@@ -64,14 +65,8 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
   const canUpdateProfile = hasBillingPermission(billingPermissions, "billing.profile.update");
   const canReadInvoices = hasBillingPermission(billingPermissions, "billing.invoices.read");
 
-  const plansQuery = useQuery({ queryFn: subscriptionBillingApi.plans, queryKey: subscriptionBillingApi.plansKey, retry: 1, staleTime: 60_000 });
-  const subscriptionQuery = useQuery({ enabled: canRead, queryFn: subscriptionBillingApi.current, queryKey: subscriptionBillingApi.currentKey, retry: false, staleTime: 30_000 });
-  const invoicesQuery = useQuery({ enabled: canReadInvoices, queryFn: subscriptionBillingApi.invoices, queryKey: subscriptionBillingApi.invoicesKey, retry: 1, staleTime: 30_000 });
-  const paymentMethodsQuery = useQuery({ enabled: hasBillingPermission(billingPermissions, "billing.payment_methods.read"), queryFn: subscriptionBillingApi.paymentMethods, queryKey: subscriptionBillingApi.paymentMethodsKey, retry: 1, staleTime: 30_000 });
-  const paymentsQuery = useQuery({ enabled: canReadInvoices, queryFn: subscriptionBillingApi.payments, queryKey: subscriptionBillingApi.paymentsKey, retry: 1, staleTime: 15_000 });
-  const billingProfileQuery = useQuery({ enabled: canRead, queryFn: subscriptionBillingApi.getBillingProfile, queryKey: subscriptionBillingApi.billingProfileKey, retry: false, staleTime: 60_000 });
-  const invoiceDetailQuery = useQuery({ enabled: Boolean(selectedInvoiceId), queryFn: () => subscriptionBillingApi.getInvoice(selectedInvoiceId as string), queryKey: subscriptionBillingApi.invoiceKey(selectedInvoiceId ?? undefined) });
-
+  const plansQuery = useQuery({ ...billingQueryOptions, enabled: canRead, queryFn: subscriptionBillingApi.plans, queryKey: subscriptionBillingApi.plansKey });
+  const subscriptionQuery = useQuery({ ...billingQueryOptions, enabled: canRead, queryFn: subscriptionBillingApi.current, queryKey: subscriptionBillingApi.currentKey });
   const subscription = subscriptionQuery.data ?? null;
   const plans = plansQuery.data ?? [];
   const currentPlan = subscription ? plans.find((plan) => plan.id === subscription.planId) ?? null : null;
@@ -79,9 +74,18 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
   const requestedTab = searchParams.get("tab") as SubscriptionTab | null;
   const activeTab: SubscriptionTab = requestedTab && requestedTab in tabLabels ? requestedTab : defaultTab;
   const activeTabIndex = Math.max(tabOrder.indexOf(activeTab), 0);
+  const invoicesQuery = useQuery({ ...billingQueryOptions, enabled: canRead && canReadInvoices && (activeTab !== "plans" || Boolean(selectedPlan)), queryFn: subscriptionBillingApi.invoices, queryKey: subscriptionBillingApi.invoicesKey });
+  const paymentMethodsQuery = useQuery({ ...billingQueryOptions, enabled: canRead && activeTab === "current" && hasBillingPermission(billingPermissions, "billing.payment_methods.read"), queryFn: subscriptionBillingApi.paymentMethods, queryKey: subscriptionBillingApi.paymentMethodsKey });
+  const invoiceDetailQuery = useQuery({ ...billingQueryOptions, enabled: canRead && canReadInvoices && Boolean(selectedInvoiceId), queryFn: () => subscriptionBillingApi.getInvoice(selectedInvoiceId as string), queryKey: subscriptionBillingApi.invoiceKey(selectedInvoiceId ?? undefined) });
+
   const latestInvoice = useMemo(() => newestInvoice(invoicesQuery.data ?? []), [invoicesQuery.data]);
-  const latestPayment = useMemo(() => newestPayment(paymentsQuery.data ?? []), [paymentsQuery.data]);
   const defaultPaymentMethod = (paymentMethodsQuery.data ?? []).find((method) => method.defaultMethod) ?? paymentMethodsQuery.data?.[0] ?? null;
+
+  function setTab(value: SubscriptionTab) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", value);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
 
   const invalidateBilling = async () => {
     await queryClient.invalidateQueries({ queryKey: ["viruj-payment"] });
@@ -102,7 +106,12 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
     onSuccess: async (checkout) => {
       setVerification({ paymentId: checkout.payment.id, startedAt: Date.now(), state: "initiated" });
       setSelectedPlan(null);
-      await openCheckout(checkout, organizationName, billingProfileQuery.data, {
+      const billingProfile = await queryClient.fetchQuery({
+        ...billingQueryOptions,
+        queryFn: subscriptionBillingApi.getBillingProfile,
+        queryKey: subscriptionBillingApi.billingProfileKey,
+      }).catch(() => undefined);
+      await openCheckout(checkout, organizationName, billingProfile, {
         onDismissed: () => {
           setVerification({ paymentId: checkout.payment.id, startedAt: Date.now(), state: "dismissed" });
           notificationEvents.emit("toast.show", { title: "Checkout dismissed", description: "No subscription changes are made until Razorpay sends verified confirmation.", tone: "warning" });
@@ -135,6 +144,12 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
         return "scheduled" as const;
       }
       if (targetPrice > currentPrice) {
+        // Recovery history is needed only when an upgrade is actually confirmed.
+        const [payments, invoices] = canReadInvoices
+          ? await Promise.all([subscriptionBillingApi.payments(), subscriptionBillingApi.invoices()])
+          : [[], []];
+        const latestPayment = newestPayment(payments);
+        const latestInvoice = newestInvoice(invoices);
         const recoverableUpgradePayment = latestPayment
           && latestInvoice
           && latestPayment.subscriptionId === subscription.id
@@ -226,12 +241,6 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
     return () => window.clearInterval(interval);
   }, [queryClient, verification.paymentId, verification.startedAt, verification.state]);
 
-  function setTab(value: SubscriptionTab) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", value);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }
-
   if (!canRead) {
     return (
       <DashboardPageShell eyebrow="Subscription" subtitle="Billing access is permission-controlled." title="Plans & Subscription">
@@ -253,7 +262,6 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
         currentPlan={currentPlan}
         invoice={latestInvoice}
         paymentMethod={defaultPaymentMethod}
-        paymentStatus={latestPayment?.status}
         subscription={subscription}
       />
       <Tabs value={activeTab} onValueChange={(value) => setTab(value as SubscriptionTab)}>
@@ -299,7 +307,6 @@ export default function PricingPage({ organizationName = "Viruj Health" }: { org
       <InvoiceDetailSheet invoice={invoiceDetailQuery.data ?? null} isLoading={invoiceDetailQuery.isLoading} onOpenChange={(open) => !open && setSelectedInvoiceId(null)} onPayNow={() => checkoutMutation.mutate()} open={Boolean(selectedInvoiceId)} />
       <CancellationSheet canCancel={canCancel} isPending={cancelMutation.isPending} onConfirm={() => cancelMutation.mutate()} onOpenChange={setCancelOpen} open={cancelOpen} reason={cancelReason} setReason={setCancelReason} subscription={subscription} />
       <span className="sr-only">{canUpdateProfile ? "Billing profile updates available" : "Billing profile is read only"}</span>
-      <span className="sr-only">Latest payment state: {latestPayment?.status ?? "none"}</span>
     </DashboardPageShell>
   );
 }

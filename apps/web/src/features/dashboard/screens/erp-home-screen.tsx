@@ -34,6 +34,7 @@ import {
   resolveAccessibleDashboardPage,
 } from "@/features/dashboard/lib/routing";
 import { LoadingScreen } from "@/features/shell/components/loading-screen";
+import { billingQueryOptions, needsAnalyticsSubscription } from "@/features/subscription/utils/billing-query-options";
 import { subscriptionBillingApi } from "@/features/subscription/api/subscription.api";
 import { getBillingPermissionsFromMember, hasBillingPermission, hasFeature } from "@/features/subscription/utils/subscription-access";
 import {
@@ -138,13 +139,16 @@ export function ErpHomeScreen({
   const activeMemberRole = activeMember?.role;
   const activeMemberPermissions = getBillingPermissionsFromMember(activeMember);
   const canReadSubscription = hasBillingPermission(activeMemberPermissions, "subscription.read");
-  const subscriptionQuery = useQuery({ enabled: canReadSubscription && activeOrganizationType === "hospital", queryFn: subscriptionBillingApi.current, queryKey: subscriptionBillingApi.currentKey, retry: false, staleTime: 30_000 });
-  const plansQuery = useQuery({ enabled: canReadSubscription && activeOrganizationType === "hospital", queryFn: subscriptionBillingApi.plans, queryKey: subscriptionBillingApi.plansKey, retry: false, staleTime: 60_000 });
+  const checkAnalyticsSubscription = needsAnalyticsSubscription(currentPage, activeOrganizationType, canReadSubscription);
+  const subscriptionQuery = useQuery({ ...billingQueryOptions, enabled: checkAnalyticsSubscription, queryFn: subscriptionBillingApi.current, queryKey: subscriptionBillingApi.currentKey });
+  const plansQuery = useQuery({ ...billingQueryOptions, enabled: checkAnalyticsSubscription, queryFn: subscriptionBillingApi.plans, queryKey: subscriptionBillingApi.plansKey });
+  const checkingAnalyticsAccess = checkAnalyticsSubscription && (subscriptionQuery.isLoading || plansQuery.isLoading);
   const allowedPages = getAllowedDashboardPages(
     activeMemberRole,
     activeMemberPermissions
   );
-  const lockedPages = activeOrganizationType === "hospital"
+  // Resolve paid access on entry; opening unrelated pages must not call billing.
+  const lockedPages = activeOrganizationType === "hospital" && currentPage === "analytics" && !checkingAnalyticsAccess
     ? getLockedPages(subscriptionQuery.data, plansQuery.data)
     : [];
   const routablePages = allowedPages.filter((page) => !lockedPages.includes(page));
@@ -465,7 +469,7 @@ export function ErpHomeScreen({
                     : `flex min-h-full w-full flex-col overflow-hidden rounded-[2rem] border shadow-sm ring-1 backdrop-blur ${workspaceTheme.contentFrame}`
                 }
               >
-                <PageContent
+                {checkingAnalyticsAccess ? <LoadingScreen /> : <PageContent
                   currentPage={resolvedPage}
                   organizationLabel={organizationLabel}
                   roleLabel={roleLabel}
@@ -479,7 +483,7 @@ export function ErpHomeScreen({
                       : `/${activeOrganizationType}`
                   }
                   routeSegments={routeSegments}
-                />
+                />}
               </div>
             </motion.div>
           </AnimatePresence>
