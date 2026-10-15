@@ -450,6 +450,7 @@ export function ClinicHomeScreen({
                   appointmentTenant={appointmentTenant}
                   currentPage={resolvedPage}
                   organizationId={activeOrganization.id}
+                  organizationName={organizationName}
                   roleLabel={roleLabel}
                   routeBasePath={
                     activeOrganizationSlug
@@ -472,6 +473,7 @@ function ClinicPageContent({
   appointmentTenant,
   currentPage,
   organizationId,
+  organizationName,
   roleLabel,
   routeBasePath,
   routeSegments,
@@ -480,6 +482,7 @@ function ClinicPageContent({
   appointmentTenant: ErpTenantContext | null;
   currentPage: ErpDemoPage;
   organizationId?: string;
+  organizationName?: string;
   roleLabel: string;
   routeBasePath: string;
   routeSegments: string[];
@@ -554,6 +557,7 @@ function ClinicPageContent({
     default:
       return (
         <ErpDemoDashboard
+          organizationName={organizationName}
           organizationId={organizationId}
           organizationLabel="Clinic"
           roleLabel={roleLabel}

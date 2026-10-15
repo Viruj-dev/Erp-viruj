@@ -601,6 +601,7 @@ function PageContent({
     default:
       return (
         <ErpDemoDashboard
+          organizationName={organizationName}
           organizationLabel={organizationLabel}
           roleLabel={roleLabel}
           userName={userName}

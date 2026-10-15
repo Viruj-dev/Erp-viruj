@@ -123,6 +123,40 @@ export function ErpDemoDashboard({
       />
       <RoleDashboardPage
         analytics={analytics}
+        organizationName={organizationName}
+        loading={[
+          appointmentsQuery,
+          doctorsQuery,
+          servicesQuery,
+          galleryQuery,
+          activityQuery,
+        ].some((query) => query.isLoading)}
+        refreshing={[
+          analyticsQuery,
+          appointmentsQuery,
+          doctorsQuery,
+          servicesQuery,
+          galleryQuery,
+          activityQuery,
+        ].some((query) => query.isFetching)}
+        unavailable={[
+          ...(analyticsQuery.isError ? ["analytics"] : []),
+          ...(appointmentsQuery.isError ? ["appointments"] : []),
+          ...(doctorsQuery.isError ? ["doctors"] : []),
+          ...(servicesQuery.isError ? ["services"] : []),
+          ...(galleryQuery.isError ? ["gallery"] : []),
+          ...(activityQuery.isError ? ["recent activity"] : []),
+        ]}
+        onRefresh={() => {
+          void Promise.all([
+            analyticsQuery.refetch(),
+            appointmentsQuery.refetch(),
+            doctorsQuery.refetch(),
+            servicesQuery.refetch(),
+            galleryQuery.refetch(),
+            activityQuery.refetch(),
+          ]);
+        }}
         tone={tone}
         userName={userName}
         visibility={profileVisibility}
@@ -142,8 +176,12 @@ function useHospitalOnboardingStatus(organizationId?: string) {
     const shouldWelcome = window.sessionStorage.getItem(welcomeKey) === "1";
 
     if (shouldWelcome) {
-      setShowWelcome(true);
-      window.sessionStorage.removeItem(welcomeKey);
+      // Read the one-time browser handoff after hydration, then open the dialog.
+      const frame = window.requestAnimationFrame(() => {
+        setShowWelcome(true);
+        window.sessionStorage.removeItem(welcomeKey);
+      });
+      return () => window.cancelAnimationFrame(frame);
     }
   }, [storageId]);
 
@@ -280,17 +318,56 @@ function buildMarketplaceDashboardAnalytics({
     Math.round((publishedGallery.length / 8) * 100)
   );
 
+  const appointmentChart = chartBySuffix(dashboard, ".appointments.volume");
+  const appointmentChartValues = chartNumbers(appointmentChart);
+  const dayLabels = Array.from({ length: 10 }, (_, index) =>
+    addDays(new Date(), index - 9).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+    })
+  );
+
   return {
+    appointmentStatuses: [
+      {
+        label: "Awaiting approval",
+        value: pendingAppointments,
+        color: "#d9a441",
+      },
+      {
+        label: "Scheduled",
+        value: appointments.filter((item) =>
+          ["approved", "rescheduled"].includes(item.status)
+        ).length,
+        color: "#7399ba",
+      },
+      { label: "Completed", value: completedAppointments, color: "#278b7b" },
+      {
+        label: "Cancelled / declined / no-show",
+        value: appointments.filter((item) =>
+          ["cancelled", "rejected", "no_show"].includes(item.status)
+        ).length,
+        color: "#b2b9c4",
+      },
+    ],
     activity: activityRows(activities, appointments, doctors, facilities),
     charts: [
       {
         title: "Appointment Request Trend",
         values:
-          chartNumbers(chartBySuffix(dashboard, ".appointments.volume")) ??
+          appointmentChartValues ??
           trendByDate(appointments, (item) => item.createdAt),
+        labels: appointmentChartValues
+          ? appointmentChart?.payload.labels
+          : dayLabels,
+        period: appointmentChartValues
+          ? appointmentChart?.payload.period.replaceAll("_", " ").toLowerCase()
+          : "Last 10 days · Daily requests",
       },
       {
         title: "Doctor Publish Trend",
+        labels: dayLabels,
+        period: "Last 10 days · Daily publications",
         values: trendByDate(
           doctors.filter((doctor) => doctor.published),
           (item) => item.publishedAt ?? item.createdAt
@@ -298,6 +375,8 @@ function buildMarketplaceDashboardAnalytics({
       },
       {
         title: "Service Publish Trend",
+        labels: dayLabels,
+        period: "Last 10 days · Daily publications",
         values: trendByDate(
           facilities.filter(isPublicActiveFacility),
           (item) => item.updatedAt ?? item.createdAt
