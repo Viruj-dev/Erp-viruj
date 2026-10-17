@@ -22,11 +22,17 @@ import {
   FacilitiesPage,
   OrganizationOnboardingPage,
 } from "@/features/dashboard/components/hospital/pages";
-import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
+import {
+  ErpDemoSidebar,
+  ErpDemoTopBar,
+} from "@/features/dashboard/components/shared/layout";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
 import { ErpDemoAppointments } from "@/features/dashboard/components/shared/modules/appointments";
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
-import { createErpTenantContext, type ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
+import {
+  createErpTenantContext,
+  type ErpTenantContext,
+} from "@/features/dashboard/lib/erp-tenant";
 import {
   buildDashboardPath,
   buildTenantDashboardPath,
@@ -136,7 +142,9 @@ export function ClinicHomeScreen({
     sessionState,
   ]);
 
-  const currentPage = isErpDemoPage(requestedPage) ? requestedPage : "dashboard";
+  const currentPage = isErpDemoPage(requestedPage)
+    ? requestedPage
+    : "dashboard";
   const activeOrganizationType =
     activeOrganization?.organizationType &&
     isDashboardOrganizationType(activeOrganization.organizationType)
@@ -396,7 +404,11 @@ export function ClinicHomeScreen({
           const clinicPage = resolveClinicPage(page, allowedPages);
           router.push(
             activeOrganizationSlug
-              ? buildTenantDashboardPath("clinic", activeOrganizationSlug, clinicPage)
+              ? buildTenantDashboardPath(
+                  "clinic",
+                  activeOrganizationSlug,
+                  clinicPage
+                )
               : buildDashboardPath("clinic", clinicPage)
           );
         }}
@@ -417,7 +429,11 @@ export function ClinicHomeScreen({
           onNavigateToProfile={() => {
             router.push(
               activeOrganizationSlug
-                ? buildTenantDashboardPath("clinic", activeOrganizationSlug, "clinic-profile")
+                ? buildTenantDashboardPath(
+                    "clinic",
+                    activeOrganizationSlug,
+                    "clinic-profile"
+                  )
                 : buildDashboardPath("clinic", "clinic-profile")
             );
           }}
@@ -492,21 +508,52 @@ function ClinicPageContent({
     case "onboarding":
       return null;
     case "appointments":
+      return (
+        <ErpDemoAppointments
+          key={organizationId}
+          section="review"
+          tenant={appointmentTenant ?? undefined}
+        />
+      );
     case "appointments-dashboard":
-      return <ErpDemoAppointments key={organizationId} section="dashboard" tenant={appointmentTenant ?? undefined} />;
+      return (
+        <ErpDemoAppointments
+          key={organizationId}
+          section="dashboard"
+          tenant={appointmentTenant ?? undefined}
+        />
+      );
     case "appointments-review":
-      return <ErpDemoAppointments key={organizationId} section="review" tenant={appointmentTenant ?? undefined} />;
+      return (
+        <ErpDemoAppointments
+          key={organizationId}
+          section="review"
+          tenant={appointmentTenant ?? undefined}
+        />
+      );
     case "appointments-patients":
-      return <ErpDemoAppointments key={organizationId} section="patients" tenant={appointmentTenant ?? undefined} />;
+      return (
+        <ErpDemoAppointments
+          key={organizationId}
+          section="patients"
+          tenant={appointmentTenant ?? undefined}
+        />
+      );
     case "appointments-settings":
-      return <ErpDemoPatients organizationId={organizationId} tone="violet" />;
+      return (
+        <ErpDemoAppointments
+          key={organizationId}
+          section="settings"
+          tenant={appointmentTenant ?? undefined}
+        />
+      );
     case "clinic-profile":
     case "profile":
       return <ClinicProfileManagementPage organizationId={organizationId} />;
     case "locations":
-      return <ClinicLocationsPage />;
+      return <ClinicLocationsPage organizationId={organizationId} />;
     case "working-hours":
-      return <ClinicWorkingHoursPage />;
+      return <ClinicWorkingHoursPage organizationId={organizationId} />;
     case "patients":
       return <ClinicPatientsPage />;
     case "doctors":
@@ -572,7 +619,9 @@ function resolveClinicPage(page: ErpDemoPage, allowedPages: ErpDemoPage[]) {
     return page;
   }
 
-  return allowedPages.includes("dashboard") ? "dashboard" : allowedPages[0] ?? "dashboard";
+  return allowedPages.includes("dashboard")
+    ? "dashboard"
+    : (allowedPages[0] ?? "dashboard");
 }
 
 function getClinicAllowedPages(role?: string | null): ErpDemoPage[] {

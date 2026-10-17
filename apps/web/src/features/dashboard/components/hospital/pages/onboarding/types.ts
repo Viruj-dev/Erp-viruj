@@ -27,6 +27,7 @@ export type Branch = {
 };
 
 export type Department = {
+  published?: boolean;
   name: string;
   description: string;
   openTime: string;
@@ -45,6 +46,8 @@ export type WorkingHour = {
 };
 
 export type OnboardingDoctor = {
+  imageUrl?: string;
+  gender?: string;
   id: string;
   name: string;
   inviteEmail: string;

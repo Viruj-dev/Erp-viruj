@@ -1,3 +1,4 @@
+import { DoctorPhotoField } from "../../../../shared/workspace/doctor-photo-field";
 import { Plus, Trash2, UserPlus } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import { weekDays } from "../constants";
@@ -22,8 +23,10 @@ const emptyDoctor = (): OnboardingDoctor => ({
 export function DoctorsStep({
   data,
   setData,
+  organizationId,
 }: {
   data: OnboardingState;
+  organizationId?: string;
   setData: Dispatch<SetStateAction<OnboardingState>>;
 }) {
   const enabledDepartments = data.departments.filter(
@@ -97,6 +100,13 @@ export function DoctorsStep({
               </div>
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <DoctorPhotoField
+                  name={doctor.name}
+                  imageUrl={doctor.imageUrl}
+                  gender={doctor.gender}
+                  organizationId={organizationId}
+                  onChange={(patch) => updateDoctor(doctor.id, patch)}
+                />
                 <TextField
                   required
                   label="Doctor Name"

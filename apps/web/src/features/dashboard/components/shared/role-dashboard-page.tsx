@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useId, useState, type ReactNode } from "react";
+import { useId, useState, type CSSProperties, type ReactNode } from "react";
 import {
   ArrowDownRight,
   ArrowRight,
@@ -75,7 +75,7 @@ type ProfileVisibilityControl = {
 const card =
   "rounded-xl border border-slate-200/90 bg-white dark:border-white/10 dark:bg-[#151b22]";
 const actionClass =
-  "inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-600 dark:border-white/15 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10";
+  "inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--dashboard-accent)] dark:border-white/15 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10";
 const metricIcons = [Users, CalendarDays, Stethoscope, Layers3];
 
 export function RoleDashboardPage({
@@ -135,11 +135,29 @@ export function RoleDashboardPage({
   const dataAvailable = Boolean(analytics) && !loading;
 
   return (
-    <div className="min-w-0 space-y-6 bg-[#f6f8fa] p-4 text-slate-900 dark:bg-[#10151b] dark:text-slate-100 dark:[&_.text-slate-500]:text-slate-400 sm:p-6 xl:p-8">
+    <div
+      style={
+        {
+          "--dashboard-accent":
+            tone === "clinic"
+              ? "#7c3aed"
+              : tone === "hospital"
+                ? "#2563eb"
+                : "#15803d",
+          "--dashboard-soft":
+            tone === "clinic"
+              ? "#ede9fe"
+              : tone === "hospital"
+                ? "#dbeafe"
+                : "#dcfce7",
+        } as CSSProperties
+      }
+      className="min-w-0 space-y-6 bg-[#f6f8fa] p-4 text-slate-900 dark:bg-[#10151b] dark:text-slate-100 dark:[&_.text-slate-500]:text-slate-400 sm:p-6 xl:p-8"
+    >
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-500">
-            <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--dashboard-accent)]" />
             {organizationName ||
               `${tone.charAt(0).toUpperCase() + tone.slice(1)} workspace`}
             <span className="text-slate-300">/</span>Overview
@@ -169,7 +187,7 @@ export function RoleDashboardPage({
             </button>
           )}
           <Link
-            className="inline-flex items-center gap-2 rounded-lg bg-[#173e39] px-4 py-2.5 text-xs font-medium text-white transition hover:bg-[#24564e] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-600"
+            className="inline-flex items-center gap-2 rounded-lg bg-[var(--dashboard-accent)] px-4 py-2.5 text-xs font-medium text-white transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--dashboard-accent)]"
             href={href("appointments-review")}
           >
             <CalendarDays size={15} />
@@ -179,6 +197,67 @@ export function RoleDashboardPage({
         </div>
       </header>
 
+      <section className="relative flex items-center justify-between gap-5 overflow-hidden rounded-3xl bg-[var(--dashboard-accent)] px-6 py-6 text-white sm:px-8">
+        <div className="relative z-10 max-w-lg">
+          <p className="text-xs font-semibold uppercase tracking-widest text-white/70">
+            Care starts here
+          </p>
+          <h2 className="mt-2 text-xl font-semibold sm:text-2xl">
+            A little preparation. Better care.
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-white/80">
+            Review appointment requests, keep your team’s details current, and
+            help patients find your practice.
+          </p>
+          <Link
+            href={href(profilePage)}
+            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-[var(--dashboard-accent)]"
+          >
+            Manage your profile <ArrowRight size={15} />
+          </Link>
+        </div>
+        <svg
+          viewBox="0 0 280 180"
+          aria-hidden="true"
+          className="hidden h-44 w-64 shrink-0 sm:block"
+          fill="none"
+        >
+          <circle cx="160" cy="92" r="85" fill="white" opacity=".1" />
+          <rect x="55" y="33" width="150" height="120" rx="18" fill="white" />
+          <path
+            d="M55 51a18 18 0 0 1 18-18h114a18 18 0 0 1 18 18v20H55Z"
+            fill="var(--dashboard-soft)"
+          />
+          <path
+            d="M88 24v23M172 24v23"
+            stroke="white"
+            strokeWidth="9"
+            strokeLinecap="round"
+          />
+          <path
+            d="M79 91h19m18 0h19m18 0h19M79 114h19m18 0h19"
+            stroke="var(--dashboard-accent)"
+            strokeWidth="8"
+            strokeLinecap="round"
+            opacity=".45"
+          />
+          <circle cx="206" cy="132" r="35" fill="#34d399" />
+          <path
+            d="m190 132 11 11 21-23"
+            stroke="#064e3b"
+            strokeWidth="6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M25 67h18m-9-9v18M229 48h18m-9-9v18"
+            stroke="white"
+            strokeWidth="4"
+            strokeLinecap="round"
+            opacity=".65"
+          />
+        </svg>
+      </section>
       {unavailable.length > 0 && (
         <div
           className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200"
@@ -223,7 +302,7 @@ export function RoleDashboardPage({
                 <Icon className="text-slate-400" size={17} strokeWidth={1.6} />
               </div>
               <p
-                className={`mt-4 text-[34px] font-semibold leading-none tracking-tight tabular-nums ${loading ? "animate-pulse text-slate-300" : ""}`}
+                className={`mt-4 text-[28px] font-semibold leading-none tracking-tight tabular-nums ${loading ? "animate-pulse text-slate-300" : ""}`}
               >
                 {dataAvailable && !metricUnavailable
                   ? (stat?.value ?? "—")
@@ -306,10 +385,14 @@ export function RoleDashboardPage({
                 >
                   <defs>
                     <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#278b7b" stopOpacity={0.2} />
+                      <stop
+                        offset="0%"
+                        stopColor="var(--dashboard-accent)"
+                        stopOpacity={0.2}
+                      />
                       <stop
                         offset="100%"
-                        stopColor="#278b7b"
+                        stopColor="var(--dashboard-accent)"
                         stopOpacity={0.01}
                       />
                     </linearGradient>
@@ -352,7 +435,7 @@ export function RoleDashboardPage({
                         chartIndex
                       ]
                     }
-                    stroke="#278b7b"
+                    stroke="var(--dashboard-accent)"
                     strokeWidth={2.5}
                     type="monotone"
                     activeDot={{ r: 5, stroke: "white", strokeWidth: 2 }}
@@ -364,7 +447,7 @@ export function RoleDashboardPage({
             )}
           </div>
           <div className="flex items-center gap-2 border-t border-slate-100 px-6 py-3 text-[11px] text-slate-500 dark:border-white/5">
-            <span className="h-2 w-2 rounded-full bg-[#278b7b]" />
+            <span className="h-2 w-2 rounded-full bg-[var(--dashboard-accent)]" />
             {chart?.title ?? "Organization activity"}
             {dataAvailable && total === 0 && (
               <span className="ml-auto">
@@ -385,7 +468,7 @@ export function RoleDashboardPage({
               className="relative grid h-[112px] w-[112px] shrink-0 place-items-center rounded-full"
               role="img"
               style={{
-                background: `conic-gradient(#278b7b ${completedPercent}%, var(--border, #e2e8f0) 0)`,
+                background: `conic-gradient(var(--dashboard-accent) ${completedPercent}%, var(--border, #e2e8f0) 0)`,
               }}
             >
               <div className="absolute inset-[9px] rounded-full bg-white dark:bg-[#151b22]" />
@@ -402,7 +485,7 @@ export function RoleDashboardPage({
               </p>
               <p className="mt-1 text-xs text-slate-500">total requests</p>
               <Link
-                className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-teal-700 dark:text-teal-400"
+                className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-[var(--dashboard-accent)] dark:text-[var(--dashboard-soft)]"
                 href={href("appointments-dashboard")}
               >
                 View breakdown
@@ -455,7 +538,7 @@ export function RoleDashboardPage({
         aria-label="Organization presence"
       >
         <div className="flex items-center gap-3 p-4">
-          <span className="rounded-lg bg-teal-50 p-2 text-teal-700 dark:bg-teal-950">
+          <span className="rounded-lg bg-[var(--dashboard-soft)] p-2 text-[var(--dashboard-accent)] dark:bg-teal-950">
             <Eye size={18} />
           </span>
           <div className="min-w-0 flex-1">
@@ -467,7 +550,7 @@ export function RoleDashboardPage({
           <button
             aria-label="Show organization in patient directory"
             aria-checked={visibility?.isPublic ?? false}
-            className={`relative h-5 w-9 shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:opacity-40 ${visibility?.isPublic ? "bg-teal-700" : "bg-slate-300 dark:bg-slate-600"}`}
+            className={`relative h-5 w-9 shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:opacity-40 ${visibility?.isPublic ? "bg-[var(--dashboard-accent)]" : "bg-slate-300 dark:bg-slate-600"}`}
             disabled={!visibility?.onToggle || visibility.isUpdating}
             onClick={visibility?.onToggle}
             role="switch"
@@ -606,7 +689,7 @@ function PeoplePanel({
           <p className="mt-1 text-xs text-slate-500">{subtitle}</p>
         </div>
         <Link
-          className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-teal-700 dark:text-teal-400"
+          className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-[var(--dashboard-accent)] dark:text-[var(--dashboard-soft)]"
           href={href}
         >
           Manage
@@ -641,7 +724,7 @@ function PeoplePanel({
               </div>
               {item.badge && (
                 <span
-                  className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-medium ${["Shown in app", "Public"].includes(item.badge) ? "bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300" : "bg-slate-100 text-slate-500 dark:bg-white/5"}`}
+                  className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-medium ${["Shown in app", "Public"].includes(item.badge) ? "bg-[var(--dashboard-soft)] text-[var(--dashboard-accent)] dark:bg-teal-950 dark:text-teal-300" : "bg-slate-100 text-slate-500 dark:bg-white/5"}`}
                 >
                   {item.badge === "Shown in app" ? "Published" : item.badge}
                 </span>
@@ -654,7 +737,7 @@ function PeoplePanel({
           {icon}
           <p className="text-xs">{empty}</p>
           <Link
-            className="text-xs font-medium text-teal-700 dark:text-teal-400"
+            className="text-xs font-medium text-[var(--dashboard-accent)] dark:text-[var(--dashboard-soft)]"
             href={href}
           >
             Get started

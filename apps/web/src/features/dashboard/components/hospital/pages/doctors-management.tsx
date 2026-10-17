@@ -1,4 +1,7 @@
 "use client";
+import { DoctorAvatar } from "../../shared/workspace/doctor-avatar";
+import { DoctorPhotoField } from "../../shared/workspace/doctor-photo-field";
+import { useWorkspaceProfile } from "../../shared/workspace/use-workspace-profile";
 
 import {
   BadgeCheck,
@@ -27,6 +30,9 @@ import {
 } from "@/lib/viruj-backend";
 
 const emptyForm: VirujDoctorInput = {
+  imageUrl: "",
+  gender: "unspecified",
+  registrationNumber: "",
   availability: "",
   department: "",
   experience: "",
@@ -67,7 +73,14 @@ export function DoctorsManagementPage({
   });
 
   const invalidateDoctors = () =>
-    queryClient.invalidateQueries({ queryKey: virujBackend.doctors.key(organizationId) });
+    Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: virujBackend.doctors.key(organizationId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["viruj-backend", "workspace-profile", organizationId],
+      }),
+    ]);
 
   const createDoctorMutation = useMutation({
     mutationFn: (input: VirujDoctorInput) =>
@@ -147,16 +160,21 @@ export function DoctorsManagementPage({
   }, [doctors, query]);
 
   const facility = facilityQuery.data;
-  const isDemoHospital = Boolean(facility?.directoryHospitalId &&
-    /^Viruj TEST Hospital (0[1-9]|10)$/.test(facility?.profile.name || ""));
+  const isDemoHospital = Boolean(
+    facility?.directoryHospitalId &&
+    /^Viruj TEST Hospital (0[1-9]|10)$/.test(facility?.profile.name || "")
+  );
   const canPublish = facility?.settings?.visibleOnPlatform === true;
   const blockedLabel = facilityQuery.isError
     ? "Hidden — publication status unavailable"
     : "Hidden — hospital profile not published";
-  const isVisible = (doctor: VirujDoctor) => doctor.visibleInApp ?? (canPublish && doctor.published);
+  const isVisible = (doctor: VirujDoctor) =>
+    doctor.visibleInApp ?? (canPublish && doctor.published);
   const publishedCount = doctors.filter(isVisible).length;
   const draftCount = doctors.filter((doctor) => !doctor.published).length;
-  const blockedCount = doctors.filter((doctor) => doctor.published && !isVisible(doctor)).length;
+  const blockedCount = doctors.filter(
+    (doctor) => doctor.published && !isVisible(doctor)
+  ).length;
   const departmentCount = new Set(
     doctors.map((doctor) => doctor.department).filter(Boolean)
   ).size;
@@ -171,7 +189,12 @@ export function DoctorsManagementPage({
     : "h-11 w-full rounded-xl border-none bg-slate-100 pl-10 pr-4 text-sm font-semibold text-slate-800 outline-none transition focus:ring-2 focus:ring-slate-300 dark:bg-white/[0.06] dark:text-slate-100 dark:focus:ring-white/20";
   const isSaving =
     createDoctorMutation.isPending || updateDoctorMutation.isPending;
-  const canSubmit = Boolean(form.name.trim() && form.specialty.trim());
+  const canSubmit = Boolean(
+    form.name.trim() &&
+    form.specialty.trim() &&
+    (!isClinicTone ||
+      (form.registrationNumber?.trim() && form.department.trim()))
+  );
 
   function updateField(field: keyof VirujDoctorInput, value: string) {
     setForm((currentForm) => ({ ...currentForm, [field]: value }));
@@ -201,6 +224,9 @@ export function DoctorsManagementPage({
   function openEditDialog(doctor: VirujDoctor) {
     setEditingDoctor(doctor);
     setForm({
+      imageUrl: doctor.imageUrl || "",
+      gender: doctor.gender || "unspecified",
+      registrationNumber: doctor.registrationNumber || "",
       availability: doctor.availability,
       department: doctor.department,
       experience: doctor.experience,
@@ -242,7 +268,9 @@ export function DoctorsManagementPage({
           </button>
           <button
             className={publishAllClass}
-            disabled={!doctors.length || !canPublish || publishAllMutation.isPending}
+            disabled={
+              !doctors.length || !canPublish || publishAllMutation.isPending
+            }
             onClick={() => publishAllMutation.mutate()}
             type="button"
           >
@@ -282,7 +310,7 @@ export function DoctorsManagementPage({
                   ? "Cannot check hospital publication status right now."
                   : isDemoHospital && canPublish
                     ? "Fictional test listing visible in the patient app; do not use for medical care."
-                  : !facility?.settings?.visibleOnPlatform
+                    : !facility?.settings?.visibleOnPlatform
                       ? "Publish the hospital profile before publishing doctors."
                       : "Patients can see doctors marked as shown in app."}
             </p>
@@ -335,172 +363,191 @@ export function DoctorsManagementPage({
       {isDialogOpen ? (
         <DoctorDialogPortal>
           <div className="erp-dialog-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <form
-            className="w-full max-w-3xl overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-2xl dark:border-white/[0.1] dark:bg-[#111418]"
-            onSubmit={handleCreateDoctor}
-            role="dialog"
-            aria-modal="true"
-          >
-            <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-5 dark:border-white/[0.08]">
-              <div>
-                <p className="text-[10px] font-semi-bold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-600">
-                  {editingDoctor ? "Edit doctor profile" : "New doctor profile"}
-                </p>
-                <h3 className="mt-1 font-headline text-2xl font-semi-bold text-slate-950 dark:text-slate-100">
-                  {editingDoctor
-                    ? "Update doctor details"
-                    : `Add doctor to ${organizationLabel.toLowerCase()} list`}
-                </h3>
+            <form
+              className="w-full max-w-3xl overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-2xl dark:border-white/[0.1] dark:bg-[#111418]"
+              onSubmit={handleCreateDoctor}
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-5 dark:border-white/[0.08]">
+                <div>
+                  <p className="text-[10px] font-semi-bold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-600">
+                    {editingDoctor
+                      ? "Edit doctor profile"
+                      : "New doctor profile"}
+                  </p>
+                  <h3 className="mt-1 font-headline text-2xl font-semi-bold text-slate-950 dark:text-slate-100">
+                    {editingDoctor
+                      ? "Update doctor details"
+                      : `Add doctor to ${organizationLabel.toLowerCase()} list`}
+                  </h3>
+                </div>
+                <button
+                  aria-label="Close doctor dialog"
+                  className="inline-flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 dark:bg-white/[0.06] dark:text-slate-300 dark:hover:bg-white/[0.1]"
+                  onClick={closeDialog}
+                  type="button"
+                >
+                  <X size={17} />
+                </button>
               </div>
-              <button
-                aria-label="Close doctor dialog"
-                className="inline-flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 dark:bg-white/[0.06] dark:text-slate-300 dark:hover:bg-white/[0.1]"
-                onClick={closeDialog}
-                type="button"
-              >
-                <X size={17} />
-              </button>
-            </div>
 
-            <div className="grid gap-4 p-5 md:grid-cols-2">
-              <DoctorInput
-                label="Doctor name"
-                onChange={(value) => updateField("name", value)}
-                placeholder="Dr. Neha Rao"
-                value={form.name}
-              />
-              <DoctorInput
-                label="Specialty"
-                onChange={(value) => updateField("specialty", value)}
-                placeholder="Pediatric Neurologist"
-                value={form.specialty}
-              />
-              {isClinicTone ? (
-                <DoctorDepartmentSelect
-                  label="Department"
-                  onChange={(value) => updateField("department", value)}
-                  options={clinicDepartmentOptions}
-                  value={form.department}
+              <div className="grid max-h-[65vh] gap-4 overflow-y-auto p-5 md:grid-cols-2">
+                <DoctorPhotoField
+                  name={form.name}
+                  imageUrl={form.imageUrl}
+                  gender={form.gender}
+                  organizationId={organizationId}
+                  tone={isClinicTone ? "clinic" : "hospital"}
+                  onChange={(patch) =>
+                    setForm((current) => ({ ...current, ...patch }))
+                  }
                 />
-              ) : (
                 <DoctorInput
-                  label="Department"
-                  onChange={(value) => updateField("department", value)}
-                  placeholder="Neurology"
-                  value={form.department}
+                  label="Registration number"
+                  required={isClinicTone}
+                  value={form.registrationNumber || ""}
+                  onChange={(value) => updateField("registrationNumber", value)}
+                  placeholder="Medical council registration number"
                 />
-              )}
-              <DoctorInput
-                label="Qualification"
-                onChange={(value) => updateField("qualification", value)}
-                placeholder="MD, DM Neurology"
-                value={form.qualification}
-              />
-              <DoctorInput
-                label="Experience"
-                onChange={(value) => updateField("experience", value)}
-                placeholder="8 years"
-                value={form.experience}
-              />
-              <DoctorInput
-                label="Consultation fee"
-                onChange={(value) => updateField("fee", value)}
-                placeholder="800"
-                value={form.fee}
-              />
-              <DoctorInput
-                label="Phone"
-                onChange={(value) => updateField("phone", value)}
-                placeholder="+91 98110 22004"
-                value={form.phone}
-              />
-              <DoctorInput
-                label="Availability"
-                onChange={(value) => updateField("availability", value)}
-                placeholder="Mon-Fri, 09:00 AM - 03:00 PM"
-                value={form.availability}
-              />
-            </div>
-
-            {createDoctorMutation.isError || updateDoctorMutation.isError ? (
-              <p className="px-5 text-sm font-semi-bold text-red-600 dark:text-red-300">
-                Could not save this doctor. Check the backend and try again.
-              </p>
-            ) : null}
-
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 p-5 dark:border-white/[0.08]">
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-500">
-                {editingDoctor
-                  ? "Published doctors update in the app feed after saving."
-                  : "New doctors are saved as drafts until you publish them to the app."}
-              </p>
-              <button
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 text-sm font-semi-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950"
-                disabled={!canSubmit || isSaving}
-                type="submit"
-              >
-                {isSaving ? (
-                  <Loader2 className="animate-spin" size={16} />
+                <DoctorInput
+                  label="Doctor name"
+                  onChange={(value) => updateField("name", value)}
+                  placeholder="Dr. Neha Rao"
+                  value={form.name}
+                />
+                <DoctorInput
+                  label="Specialty"
+                  onChange={(value) => updateField("specialty", value)}
+                  placeholder="Pediatric Neurologist"
+                  value={form.specialty}
+                />
+                {isClinicTone ? (
+                  <DoctorDepartmentSelect
+                    label="Department"
+                    onChange={(value) => updateField("department", value)}
+                    options={clinicDepartmentOptions}
+                    value={form.department}
+                  />
                 ) : (
-                  <Send size={16} />
+                  <DoctorInput
+                    label="Department"
+                    onChange={(value) => updateField("department", value)}
+                    placeholder="Neurology"
+                    value={form.department}
+                  />
                 )}
-                {editingDoctor ? "Update doctor" : "Save doctor"}
-              </button>
-            </div>
-          </form>
-        </div>
+                <DoctorInput
+                  label="Qualification"
+                  onChange={(value) => updateField("qualification", value)}
+                  placeholder="MD, DM Neurology"
+                  value={form.qualification}
+                />
+                <DoctorInput
+                  label="Experience"
+                  onChange={(value) => updateField("experience", value)}
+                  placeholder="8"
+                  value={form.experience}
+                />
+                <DoctorInput
+                  label="Consultation fee"
+                  onChange={(value) => updateField("fee", value)}
+                  placeholder="800"
+                  value={form.fee}
+                />
+                <DoctorInput
+                  label="Phone"
+                  onChange={(value) => updateField("phone", value)}
+                  placeholder="+91 98110 22004"
+                  value={form.phone}
+                />
+                <DoctorInput
+                  label="Availability"
+                  onChange={(value) => updateField("availability", value)}
+                  placeholder="Mon-Fri, 09:00 AM - 03:00 PM"
+                  value={form.availability}
+                />
+              </div>
+
+              {createDoctorMutation.isError || updateDoctorMutation.isError ? (
+                <p className="px-5 text-sm font-semi-bold text-red-600 dark:text-red-300">
+                  Could not save this doctor. Check the backend and try again.
+                </p>
+              ) : null}
+
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 p-5 dark:border-white/[0.08]">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-500">
+                  {editingDoctor
+                    ? "Published doctors update in the app feed after saving."
+                    : "New doctors are saved as drafts until you publish them to the app."}
+                </p>
+                <button
+                  className={`inline-flex h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semi-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${isClinicTone ? "bg-violet-600 hover:bg-violet-700" : "bg-blue-600 hover:bg-blue-700"}`}
+                  disabled={!canSubmit || isSaving}
+                  type="submit"
+                >
+                  {isSaving ? (
+                    <Loader2 className="animate-spin" size={16} />
+                  ) : (
+                    <Send size={16} />
+                  )}
+                  {editingDoctor ? "Update doctor" : "Save doctor"}
+                </button>
+              </div>
+            </form>
+          </div>
         </DoctorDialogPortal>
       ) : null}
 
       {deletingDoctor ? (
         <DoctorDialogPortal>
           <div className="erp-dialog-backdrop fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div
-            aria-modal="true"
-            className="w-full max-w-md rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-2xl dark:border-white/[0.1] dark:bg-[#111418]"
-            role="dialog"
-          >
-            <div className="flex size-11 items-center justify-center rounded-2xl bg-red-100 text-red-700 dark:bg-red-400/15 dark:text-red-200">
-              <Trash2 size={18} />
-            </div>
-            <h3 className="mt-4 font-headline text-xl font-semi-bold text-slate-950 dark:text-slate-100">
-              Delete {deletingDoctor.name}?
-            </h3>
-            <p className="mt-2 text-sm font-medium leading-6 text-slate-500 dark:text-slate-400">
-              This removes the doctor from the ERP list and the published app
-              directory.
-            </p>
-            {deleteDoctorMutation.isError ? (
-              <p className="mt-3 text-sm font-semi-bold text-red-600 dark:text-red-300">
-                Could not delete this doctor. Try again.
+            <div
+              aria-modal="true"
+              className="w-full max-w-md rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-2xl dark:border-white/[0.1] dark:bg-[#111418]"
+              role="dialog"
+            >
+              <div className="flex size-11 items-center justify-center rounded-2xl bg-red-100 text-red-700 dark:bg-red-400/15 dark:text-red-200">
+                <Trash2 size={18} />
+              </div>
+              <h3 className="mt-4 font-headline text-xl font-semi-bold text-slate-950 dark:text-slate-100">
+                Delete {deletingDoctor.name}?
+              </h3>
+              <p className="mt-2 text-sm font-medium leading-6 text-slate-500 dark:text-slate-400">
+                This removes the doctor from the ERP list and the published app
+                directory.
               </p>
-            ) : null}
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-semi-bold text-slate-700 transition hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-200 dark:hover:bg-white/[0.06]"
-                onClick={() => setDeletingDoctor(null)}
-                type="button"
-              >
-                Cancel
-              </button>
-              <button
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-sm font-semi-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={deleteDoctorMutation.isPending}
-                onClick={() =>
-                  deleteDoctorMutation.mutate({ id: deletingDoctor.id })
-                }
-                type="button"
-              >
-                {deleteDoctorMutation.isPending ? (
-                  <Loader2 className="animate-spin" size={15} />
-                ) : (
-                  <Trash2 size={15} />
-                )}
-                Delete
-              </button>
+              {deleteDoctorMutation.isError ? (
+                <p className="mt-3 text-sm font-semi-bold text-red-600 dark:text-red-300">
+                  Could not delete this doctor. Try again.
+                </p>
+              ) : null}
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-semi-bold text-slate-700 transition hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                  onClick={() => setDeletingDoctor(null)}
+                  type="button"
+                >
+                  Cancel
+                </button>
+                <button
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-sm font-semi-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={deleteDoctorMutation.isPending}
+                  onClick={() =>
+                    deleteDoctorMutation.mutate({ id: deletingDoctor.id })
+                  }
+                  type="button"
+                >
+                  {deleteDoctorMutation.isPending ? (
+                    <Loader2 className="animate-spin" size={15} />
+                  ) : (
+                    <Trash2 size={15} />
+                  )}
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
-        </div>
         </DoctorDialogPortal>
       ) : null}
 
@@ -538,7 +585,9 @@ export function DoctorsManagementPage({
                 </button>
                 <button
                   className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-sm font-semi-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!doctors.length || deleteAllDoctorsMutation.isPending}
+                  disabled={
+                    !doctors.length || deleteAllDoctorsMutation.isPending
+                  }
                   onClick={() => deleteAllDoctorsMutation.mutate(doctors)}
                   type="button"
                 >
@@ -566,71 +615,15 @@ function DoctorDialogPortal({ children }: { children: React.ReactNode }) {
   return createPortal(children, document.body);
 }
 
-
 function useClinicDepartmentOptions(
   organizationId: string | undefined,
   enabled: boolean
 ) {
-  const [departmentOptions, setDepartmentOptions] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (!enabled || typeof window === "undefined") {
-      setDepartmentOptions([]);
-      return;
-    }
-
-    const storageIds = [organizationId, "workspace"].filter(
-      (value): value is string => Boolean(value)
-    );
-
-    for (const storageId of storageIds) {
-      const departments =
-        readClinicDepartments(`viruj:clinic-onboarding:completed:${storageId}`) ??
-        readClinicDepartments(`viruj:clinic-onboarding:draft:${storageId}`);
-
-      if (departments?.length) {
-        setDepartmentOptions(departments);
-        return;
-      }
-    }
-
-    setDepartmentOptions([]);
-  }, [enabled, organizationId]);
-
-  return departmentOptions;
-}
-
-function readClinicDepartments(key: string): string[] | null {
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw) as unknown;
-    const data =
-      parsed && typeof parsed === "object" && "data" in parsed
-        ? (parsed as { data?: unknown }).data
-        : parsed;
-    const departments =
-      data && typeof data === "object" && "departments" in data
-        ? (data as { departments?: unknown }).departments
-        : null;
-
-    if (!Array.isArray(departments)) return null;
-
-    return Array.from(
-      new Set(
-        departments
-          .map((department) =>
-            department && typeof department === "object" && "name" in department
-              ? String((department as { name?: unknown }).name ?? "").trim()
-              : ""
-          )
-          .filter(Boolean)
-      )
-    );
-  } catch {
-    return null;
-  }
+  const profile = useWorkspaceProfile(
+    enabled ? organizationId : undefined,
+    "clinic"
+  );
+  return profile.workspace?.departments.map((d) => d.name) ?? [];
 }
 
 function DoctorRow({
@@ -654,10 +647,6 @@ function DoctorRow({
   onPublish: () => void;
   tone?: "blue" | "violet";
 }) {
-  const iconClass =
-    tone === "violet"
-      ? "flex size-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-800 dark:bg-violet-400/15 dark:text-violet-200"
-      : "flex size-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-800 dark:bg-blue-400/15 dark:text-blue-200";
   const publishClass =
     tone === "violet"
       ? "inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-violet-100 px-4 text-xs font-semi-bold text-violet-800 transition hover:bg-violet-200 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-violet-400/15 dark:text-violet-200 dark:hover:bg-violet-400/20"
@@ -666,9 +655,12 @@ function DoctorRow({
   return (
     <div className="grid gap-4 p-5 lg:grid-cols-[1.25fr_0.85fr_0.9fr_auto] lg:items-center">
       <div className="flex items-center gap-4">
-        <span className={iconClass}>
-          <Stethoscope size={20} />
-        </span>
+        <DoctorAvatar
+          name={doctor.name}
+          imageUrl={doctor.imageUrl}
+          gender={doctor.gender}
+          tone={tone === "violet" ? "clinic" : "hospital"}
+        />
         <div>
           <p className="font-headline text-lg font-semi-bold text-slate-950 dark:text-slate-100">
             {doctor.name}
@@ -685,7 +677,11 @@ function DoctorRow({
         </p>
         <p className="flex items-center gap-2">
           <Clock size={15} />
-          {doctor.experience || "Experience TBD"}
+          {doctor.experience
+            ? /^\d+(\.\d+)?$/.test(doctor.experience)
+              ? `${doctor.experience} years`
+              : doctor.experience
+            : "Experience not provided"}
         </p>
       </div>
       <div className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-400">
@@ -693,7 +689,13 @@ function DoctorRow({
           <CalendarDays size={15} />
           {doctor.availability || "Availability not set"}
         </p>
-        <p>Fee: Rs {doctor.fee || "0"}</p>
+        <p>Fee: ₹{doctor.fee || "0"}</p>
+        <p className="text-xs">
+          Registration: {doctor.registrationNumber || "Not provided"}
+        </p>
+        {doctor.inviteEmail && (
+          <p className="text-xs">Contact email: {doctor.inviteEmail}</p>
+        )}
       </div>
       <div className="flex flex-wrap items-center gap-2 lg:justify-end">
         {isVisible ? (
@@ -741,13 +743,14 @@ function DoctorRow({
   );
 }
 
-
 function DoctorDepartmentSelect({
   label,
   onChange,
   options,
   value,
+  required = false,
 }: {
+  required?: boolean;
   label: string;
   onChange: (value: string) => void;
   options: string[];
@@ -784,7 +787,9 @@ function DoctorInput({
   onChange,
   placeholder,
   value,
+  required = false,
 }: {
+  required?: boolean;
   label: string;
   onChange: (value: string) => void;
   placeholder: string;
@@ -793,12 +798,33 @@ function DoctorInput({
   return (
     <label className="block">
       <span className="text-[10px] font-semi-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-600">
-        {label}
+        {label}{" "}
+        <span className="normal-case tracking-normal">
+          {required || label === "Doctor name" || label === "Specialty"
+            ? "* Required"
+            : "(Optional)"}
+        </span>
       </span>
       <input
+        required={required || label === "Doctor name" || label === "Specialty"}
         className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-primary dark:border-white/[0.08] dark:bg-white/[0.055] dark:text-slate-100"
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
+        type={
+          label === "Experience" || label === "Consultation fee"
+            ? "number"
+            : "text"
+        }
+        min={
+          label === "Experience" || label === "Consultation fee" ? 0 : undefined
+        }
+        step={
+          label === "Experience"
+            ? 1
+            : label === "Consultation fee"
+              ? 0.01
+              : undefined
+        }
         value={value}
       />
     </label>

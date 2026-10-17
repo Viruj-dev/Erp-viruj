@@ -497,7 +497,11 @@ export function OrganizationOnboardingPage({
                         ) : null}
 
                         {currentStep.id === "doctors" ? (
-                          <DoctorsStep data={data} setData={setData} />
+                          <DoctorsStep
+                            data={data}
+                            setData={setData}
+                            organizationId={storageId}
+                          />
                         ) : null}
 
                         {currentStep.id === "public" ? (

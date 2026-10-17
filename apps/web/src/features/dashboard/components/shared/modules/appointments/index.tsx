@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/erp/input";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import { virujBackend } from "@/lib/viruj-backend";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { AppointmentDetailDialog } from "./components/appointment-detail";
 import { AppointmentSettings } from "./options/settings";
 import type { AppointmentTab } from "./types";
@@ -60,7 +60,19 @@ export function ErpDemoAppointments({
       (appointment) => appointment.status === "pending_approval"
     ).length ?? 0;
   return (
-    <div className="space-y-5 p-5 lg:p-8">
+    <div
+      style={
+        {
+          "--appointment-accent":
+            tenant.providerType === "clinic"
+              ? "#7c3aed"
+              : tenant.providerType === "hospital"
+                ? "#2563eb"
+                : "#15803d",
+        } as CSSProperties
+      }
+      className="space-y-5 p-5 lg:p-8"
+    >
       <div>
         <h2 className="text-2xl font-bold">
           {section === "review"
@@ -118,41 +130,87 @@ export function ErpDemoAppointments({
       ) : rows.length === 0 ? (
         <p>No appointments match these filters.</p>
       ) : (
-        <div className="space-y-3">
-          {rows.map((appointment) => (
-            <article
-              className="flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4"
-              key={appointment.id}
-            >
-              <div className="space-y-1">
-                <h3 className="font-semibold">{appointment.patientName}</h3>
-                <p className="text-sm">
-                  {appointment.doctorName} · {appointment.appointmentMode}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {formatDate(
-                    appointment.appointmentDate,
-                    appointment.timezone
-                  )}{" "}
-                  · {appointment.appointmentTime}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {appointment.approvalNotes || appointment.reason}
-                </p>
-              </div>
-              <span className={statusClassName(appointment.status)}>
-                {getStatusLabel(appointment.status)}
-              </span>
-              <Button
-                onClick={() => setSelectedId(appointment.id)}
-                variant="outline"
-              >
-                {appointment.status === "approved"
-                  ? "Details / Verify arrival"
-                  : "Review details"}
-              </Button>
-            </article>
-          ))}
+        <div className="overflow-x-auto rounded-2xl border bg-background">
+          <table className="w-full min-w-[760px] text-left text-sm">
+            <thead className="border-b bg-muted/40 text-xs text-muted-foreground">
+              <tr>
+                {[
+                  "Patient",
+                  "Doctor & mode",
+                  "Requested time",
+                  "Status",
+                  "",
+                ].map((heading, index) => (
+                  <th className="px-5 py-4 font-medium" scope="col" key={index}>
+                    {heading || <span className="sr-only">Actions</span>}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {rows.map((appointment) => (
+                <tr
+                  key={appointment.id}
+                  className="transition hover:bg-muted/30"
+                >
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <span
+                        aria-hidden="true"
+                        className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted font-semibold text-[var(--appointment-accent)]"
+                      >
+                        {appointment.patientName.slice(0, 1).toUpperCase()}
+                      </span>
+                      <div>
+                        <p className="font-semibold">
+                          {appointment.patientName}
+                        </p>
+                        <p className="mt-1 max-w-56 truncate text-xs text-muted-foreground">
+                          {appointment.approvalNotes ||
+                            appointment.reason ||
+                            "Consultation"}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4">
+                    <p>{appointment.doctorName}</p>
+                    <p className="mt-1 text-xs capitalize text-muted-foreground">
+                      {appointment.appointmentMode}
+                    </p>
+                  </td>
+                  <td className="px-5 py-4">
+                    <p>
+                      {formatDate(
+                        appointment.appointmentDate,
+                        appointment.timezone
+                      )}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {appointment.appointmentTime} ·{" "}
+                      {appointment.timezone || "Asia/Kolkata"}
+                    </p>
+                  </td>
+                  <td className="px-5 py-4">
+                    <span className={statusClassName(appointment.status)}>
+                      {getStatusLabel(appointment.status)}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <Button
+                      onClick={() => setSelectedId(appointment.id)}
+                      variant="outline"
+                      className="border-[var(--appointment-accent)] text-[var(--appointment-accent)]"
+                    >
+                      {appointment.status === "approved"
+                        ? "Details / Verify arrival"
+                        : "Review details"}
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
       {selectedId ? (

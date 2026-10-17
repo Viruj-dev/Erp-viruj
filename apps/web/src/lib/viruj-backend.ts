@@ -1,5 +1,7 @@
 "use client";
 
+import type { OnboardingState } from "@/features/dashboard/components/hospital/pages/onboarding/types";
+
 import { shouldShowApiSuccess } from "@/features/notifications/lib/api-feedback";
 import { notificationEvents } from "@/features/notifications/lib/notification-events";
 import type {
@@ -334,6 +336,9 @@ export type VirujStaffInviteResult = VirujStaffInvitation & {
 };
 
 export type VirujDoctorInput = {
+  imageUrl?: string;
+  gender?: string;
+  registrationNumber?: string;
   availability: string;
   department: string;
   experience: string;
@@ -345,6 +350,7 @@ export type VirujDoctorInput = {
 };
 
 export type VirujDoctor = VirujDoctorInput & {
+  inviteEmail?: string;
   appVisibility: "hidden" | "visible";
   visibleInApp?: boolean;
   createdAt: string;
@@ -571,7 +577,7 @@ export type VirujAnalyticsSignalWidget = {
 };
 
 export type VirujOrganizationProfileMedia = {
-  kind: "cover" | "logo" | "certificate";
+  kind: "cover" | "logo" | "certificate" | "doctor";
   url: string;
 };
 
@@ -828,7 +834,38 @@ function compactObject<T extends Record<string, unknown>>(value: T) {
 }
 export const virujBackend = {
   directory: {
-    departments: (organizationId?: string) => request<{ data: { id: number; name: string; description?: string }[] }>("/directory/departments", { organizationId, suppressToast: true }),
+    requestVerification: (organizationId?: string) =>
+      request<{ status: string }>("/directory/verification", {
+        method: "POST",
+        organizationId,
+      }),
+    workspace: (organizationId?: string) =>
+      request<{
+        clinicId: string;
+        verificationStatus: "verified" | "unverified";
+        hasCertificate: boolean;
+        data: Partial<OnboardingState>;
+      }>("/directory/workspace", { organizationId, suppressToast: true }),
+    updateWorkspace: (input: {
+      organizationId?: string;
+      section: "profile" | "departments" | "workingHours";
+      value: unknown;
+    }) =>
+      request<{
+        clinicId: string;
+        verificationStatus: "verified" | "unverified";
+        hasCertificate: boolean;
+        data: Partial<OnboardingState>;
+      }>(`/directory/workspace/${input.section}`, {
+        method: "PATCH",
+        body: input.value,
+        organizationId: input.organizationId,
+      }),
+    departments: (organizationId?: string) =>
+      request<{ data: { id: number; name: string; description?: string }[] }>(
+        "/directory/departments",
+        { organizationId, suppressToast: true }
+      ),
     facility: (organizationId?: string) =>
       request<{
         directoryHospitalId: number | null;
@@ -1062,7 +1099,7 @@ export const virujBackend = {
   organizationProfile: {
     uploadMedia: (input: {
       file: File;
-      kind: "cover" | "logo" | "certificate";
+      kind: "cover" | "logo" | "certificate" | "doctor";
       organizationId?: string;
     }) => {
       const formData = new FormData();

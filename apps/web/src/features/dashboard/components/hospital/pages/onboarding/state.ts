@@ -312,6 +312,7 @@ export function normalizeDepartments(
       if (item && typeof item === "object" && "name" in item) {
         const department = item as Partial<Department>;
         return {
+          published: department.published,
           closeTime:
             department.closeTime?.trim() ?? defaultDepartmentHours.closeTime,
           description: department.description?.trim() ?? "",
@@ -448,6 +449,8 @@ function normalizeDoctors(value: unknown): OnboardingDoctor[] {
           : null;
       if (!doctor) return null;
       return {
+        imageUrl: doctor.imageUrl ?? "",
+        gender: doctor.gender ?? "unspecified",
         availability: doctor.availability?.trim() ?? "",
         registrationNumber: doctor.registrationNumber?.trim() ?? "",
         availabilityDays:
