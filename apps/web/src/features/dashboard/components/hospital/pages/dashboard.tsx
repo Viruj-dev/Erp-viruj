@@ -123,6 +123,7 @@ export function ErpDemoDashboard({
       />
       <RoleDashboardPage
         analytics={analytics}
+        organizationId={organizationId}
         organizationName={organizationName}
         loading={[
           appointmentsQuery,
@@ -328,6 +329,7 @@ function buildMarketplaceDashboardAnalytics({
   );
 
   return {
+    appointments,
     appointmentStatuses: [
       {
         label: "Awaiting approval",
@@ -384,11 +386,19 @@ function buildMarketplaceDashboardAnalytics({
       },
     ],
     doctors: doctors.slice(0, 5).map((doctor) => ({
-      badge: doctor.published ? "Shown in app" : "Draft",
+      id: doctor.id,
+      imageUrl: doctor.imageUrl,
+      gender: doctor.gender,
+      badge: doctor.visibleInApp
+        ? "Shown in app"
+        : doctor.published
+          ? "Hidden"
+          : "Draft",
       meta: [doctor.availability, doctor.fee].filter(Boolean).join(" | "),
       subtitle:
-        [doctor.department, doctor.specialty].filter(Boolean).join(" | ") ||
-        "Doctor profile",
+        [
+          ...new Set([doctor.department, doctor.specialty].filter(Boolean)),
+        ].join(" · ") || "Doctor profile",
       title: doctor.name,
     })),
     gallery: {
