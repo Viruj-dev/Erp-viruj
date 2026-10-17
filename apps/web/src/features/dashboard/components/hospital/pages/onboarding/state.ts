@@ -442,7 +442,7 @@ function normalizeDoctors(value: unknown): OnboardingDoctor[] {
   if (!Array.isArray(value)) return [];
 
   return value
-    .map((item) => {
+    .map((item): OnboardingDoctor | null => {
       const doctor =
         item && typeof item === "object"
           ? (item as Partial<OnboardingDoctor>)
