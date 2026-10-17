@@ -1,9 +1,4 @@
-import {
-  clinicDepartmentNames,
-  legacyDepartmentNames,
-  publicOptions,
-  weekDays,
-} from "./constants";
+import { getOnboardingSteps, publicOptions, weekDays } from "./constants";
 import type {
   Branch,
   Department,
@@ -37,7 +32,7 @@ export function validateStep(
   stepId: StepId,
   data: OnboardingState,
   kind: OnboardingKind = "hospital"
-) {
+): string {
   switch (stepId) {
     case "profile":
       if (!data.profile.hospitalName.trim()) {
@@ -51,10 +46,7 @@ export function validateStep(
       if (kind === "clinic" && !data.profile.hospitalType.trim()) {
         return "Select the clinic type.";
       }
-      if (
-        kind === "clinic" &&
-        !(data.profile.logoName || data.profile.logoUrl)
-      ) {
+      if (kind === "clinic" && !data.profile.logoUrl) {
         return "Upload the clinic logo.";
       }
       if (kind === "clinic" && !data.profile.registrationNumber.trim()) {
@@ -97,13 +89,26 @@ export function validateStep(
       }
       return "";
     case "review":
-      return validateStep("locations", data, kind);
+      for (const step of getOnboardingSteps(kind)) {
+        if (step.id === "review") continue;
+        const error = validateStep(step.id, data, kind);
+        if (error) return error;
+      }
+      return "";
     case "clinicProfile":
       if (!data.profile.description.trim())
         return "Add the About Clinic details.";
       if (!data.profile.languagesSpoken.trim()) return "Add languages spoken.";
       return "";
     case "workingHours":
+      if (!data.workingHours.some((h) => h.isOpen))
+        return "Select at least one open day.";
+      if (
+        data.workingHours.some(
+          (h) => h.isOpen && !validTimeRange(h.openingTime, h.closingTime)
+        )
+      )
+        return "Closing time must be after opening time on each open day.";
       if (
         data.workingHours.some(
           (hours) =>
@@ -112,6 +117,19 @@ export function validateStep(
         )
       ) {
         return "Each open day needs opening and closing time.";
+      }
+      for (const hours of data.workingHours.filter(
+        (h) => h.isOpen && h.lunchBreak
+      )) {
+        const [start, end] = hours.lunchBreak.split(" - ");
+        if (
+          !start ||
+          !end ||
+          !validTimeRange(start, end) ||
+          start < hours.openingTime ||
+          end > hours.closingTime
+        )
+          return "Set both break times within opening hours, or remove the break.";
       }
       return "";
     case "departments":
@@ -133,7 +151,8 @@ export function validateStep(
           (department) =>
             !department.name.trim() ||
             !department.openTime.trim() ||
-            !department.closeTime.trim()
+            !department.closeTime.trim() ||
+            !validTimeRange(department.openTime, department.closeTime)
         )
       ) {
         return "Each department needs a name, opening time, and closing time.";
@@ -141,19 +160,45 @@ export function validateStep(
       return "";
     case "doctors":
       if (kind === "clinic" && data.doctors.length === 0) {
-        return "Add at least one doctor or invite a doctor.";
+        return "Add at least one doctor to start your clinic.";
       }
       if (
         data.doctors.some(
           (doctor) =>
             !doctor.name.trim() ||
+            !doctor.registrationNumber.trim() ||
             !doctor.department.trim() ||
             !doctor.consultationFee.trim() ||
             !doctor.experience.trim() ||
-            !doctor.availability.trim()
+            !doctor.availableFrom ||
+            !doctor.availableTo ||
+            !doctor.availabilityDays.length
         )
       ) {
-        return "Each doctor needs name, department, fee, experience, and availability.";
+        return "Each doctor needs a name, registration number, department, fee, experience, and availability.";
+      }
+      for (const doctor of data.doctors) {
+        if (
+          !data.departments.some(
+            (d) =>
+              d.name === doctor.department &&
+              !data.disabledDepartments.includes(d.name)
+          )
+        )
+          return "Assign each doctor to a selected department.";
+        if (
+          !Number.isFinite(Number(doctor.consultationFee)) ||
+          Number(doctor.consultationFee) < 0
+        )
+          return "Consultation fee must be a non-negative number.";
+        if (
+          !Number.isInteger(Number(doctor.experience)) ||
+          Number(doctor.experience) < 0 ||
+          Number(doctor.experience) > 80
+        )
+          return "Experience must be a whole number from 0 to 80 years.";
+        if (!validTimeRange(doctor.availableFrom, doctor.availableTo))
+          return "Doctor availability must end after its start time.";
       }
       return "";
     case "services":
@@ -183,11 +228,13 @@ export function getDefaultOnboardingState(
 ): OnboardingState {
   return {
     branches: [getEmptyBranch(true, kind)],
-    departments: kind === "clinic" ? defaultClinicDepartments() : [],
+    departments: [],
     disabledDepartments: [],
     doctors: [],
     profile: {
       alternateMobile: "",
+      certificateName: "",
+      certificateUrl: "",
       clinicPhotosNames: [],
       clinicPhotosPreviewUrls: [],
       coverName: "",
@@ -247,10 +294,9 @@ export function isQuotaExceededError(error: unknown) {
 
 export function normalizeDepartments(
   value: unknown,
-  kind: OnboardingKind = "hospital"
+  _kind: OnboardingKind = "hospital"
 ): Department[] {
-  if (!Array.isArray(value))
-    return kind === "clinic" ? defaultClinicDepartments() : [];
+  if (!Array.isArray(value)) return [];
 
   const departments = value
     .map((item) => {
@@ -282,17 +328,7 @@ export function normalizeDepartments(
       Boolean(department?.name)
     );
 
-  if (kind === "hospital") {
-    return departments.filter(
-      (department) =>
-        !legacyDepartmentNames.some(
-          (legacyDepartment) =>
-            legacyDepartment.toLowerCase() === department.name.toLowerCase()
-        )
-    );
-  }
-
-  return departments.length ? departments : defaultClinicDepartments();
+  return departments;
 }
 
 export function mergeOnboardingState(
@@ -356,16 +392,6 @@ export function getEmptyBranch(
   };
 }
 
-function defaultClinicDepartments(): Department[] {
-  return clinicDepartmentNames.map((name) => ({
-    closeTime: defaultDepartmentHours.closeTime,
-    description: "",
-    head: "",
-    name,
-    openTime: defaultDepartmentHours.openTime,
-  }));
-}
-
 function getDefaultWorkingHours(): WorkingHour[] {
   return weekDays.map((day) => ({
     closingTime: day === "Sunday" ? "" : "18:00",
@@ -423,6 +449,12 @@ function normalizeDoctors(value: unknown): OnboardingDoctor[] {
       if (!doctor) return null;
       return {
         availability: doctor.availability?.trim() ?? "",
+        registrationNumber: doctor.registrationNumber?.trim() ?? "",
+        availabilityDays:
+          doctor.availabilityDays?.filter((day) => weekDays.includes(day)) ??
+          [],
+        availableFrom: doctor.availableFrom ?? "",
+        availableTo: doctor.availableTo ?? "",
         consultationFee: doctor.consultationFee?.trim() ?? "",
         department: doctor.department?.trim() ?? "",
         experience: doctor.experience?.trim() ?? "",
@@ -457,4 +489,9 @@ function normalizeServices(value: unknown): OnboardingService[] {
     .filter((service): service is OnboardingService => Boolean(service?.name));
 
   return services;
+}
+
+export function validTimeRange(start: string, end: string) {
+  const time = /^([01]\d|2[0-3]):[0-5]\d$/;
+  return time.test(start) && time.test(end) && end > start;
 }

@@ -9,11 +9,15 @@ export const hospitalSteps: StepDefinition[] = [
 ];
 
 export const clinicSteps: StepDefinition[] = [
-  { id: "profile", label: "Basic Clinic Information", kicker: "Identity" },
+  { id: "profile", label: "Organization Profile", kicker: "Identity" },
   { id: "contact", label: "Contact Information", kicker: "Reachability" },
   { id: "locations", label: "Location", kicker: "Address" },
   { id: "workingHours", label: "Working Hours", kicker: "Schedule" },
-  { id: "departments", label: "Departments / Specialties", kicker: "Care units" },
+  {
+    id: "departments",
+    label: "Departments / Specialties",
+    kicker: "Care units",
+  },
   { id: "doctors", label: "Doctors", kicker: "Clinical team" },
   { id: "review", label: "Review & Complete", kicker: "Launch" },
 ];
@@ -37,14 +41,14 @@ export const hospitalStepDescriptions: Record<StepId, string> = {
 export const clinicStepDescriptions: Record<StepId, string> = {
   clinicProfile: "Add about, languages, photos, and cover image",
   contact: "Add mobile, email, WhatsApp, and emergency contact",
-  departments: "Add specialties with descriptions and hours",
-  doctors: "Add existing doctors or invite new doctors",
+  departments: "Select specialties from the Viruj department directory",
+  doctors: "Add registered doctors and their availability",
   locations: "Add address, map link, and coordinates",
   profile: "Add clinic identity and registration details",
   public: "Control what appears on the Viruj patient app",
   review: "Confirm and launch your clinic workspace",
   services: "Add services, pricing, duration, and online availability",
-  workingHours: "Set opening, lunch, closed, and emergency hours",
+  workingHours: "Set your weekly schedule in Indian Standard Time",
 };
 
 export const stepDescriptions = hospitalStepDescriptions;
@@ -93,37 +97,6 @@ export const clinicOwnershipTypes = [
   "LLP",
   "Pvt Ltd",
   "Trust",
-];
-
-export const legacyDepartmentNames = [
-  "General Medicine",
-  "Cardiology",
-  "Neurology",
-  "Orthopedics",
-  "Pediatrics",
-  "Gynecology",
-  "Dermatology",
-  "ENT",
-  "Oncology",
-  "Nephrology",
-  "Emergency",
-  "ICU",
-  "Radiology",
-  "Pathology",
-  "Physiotherapy",
-];
-
-export const clinicDepartmentNames = [
-  "General Medicine",
-  "Pediatrics",
-  "Gynecology",
-  "Orthopedics",
-  "Dentistry",
-  "Dermatology",
-  "Psychiatry",
-  "ENT",
-  "Cardiology",
-  "Physiotherapy",
 ];
 
 export const clinicServiceNames = [

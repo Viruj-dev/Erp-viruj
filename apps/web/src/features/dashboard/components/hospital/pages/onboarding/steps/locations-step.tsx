@@ -15,7 +15,9 @@ export function LocationsStep({
   setData: Dispatch<SetStateAction<OnboardingState>>;
 }) {
   const [locatingBranchId, setLocatingBranchId] = useState<string | null>(null);
-  const [locationStatus, setLocationStatus] = useState<Record<string, string>>({});
+  const [locationStatus, setLocationStatus] = useState<Record<string, string>>(
+    {}
+  );
   const isClinic = kind === "clinic";
 
   const updateBranch = (id: string, key: keyof Branch, value: string) => {
@@ -108,10 +110,15 @@ export function LocationsStep({
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--onboarding-accent)]">
-                  {index === 0 ? (isClinic ? "Primary Location" : "Main Branch") : `Branch ${index + 1}`}
+                  {index === 0
+                    ? isClinic
+                      ? "Primary Location"
+                      : "Main Branch"
+                    : `Branch ${index + 1}`}
                 </p>
                 <h3 className="font-headline text-xl font-semibold">
-                  {branch.name || (isClinic ? "Clinic address" : "Branch details")}
+                  {branch.name ||
+                    (isClinic ? "Clinic address" : "Branch details")}
                 </h3>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -121,7 +128,11 @@ export function LocationsStep({
                   onClick={() => void handleUseCurrentLocation(branch)}
                   type="button"
                 >
-                  {isLocating ? <Loader2 className="animate-spin" size={14} /> : <MapPin size={14} />}
+                  {isLocating ? (
+                    <Loader2 className="animate-spin" size={14} />
+                  ) : (
+                    <MapPin size={14} />
+                  )}
                   {isLocating ? "Finding location" : "Use current location"}
                 </button>
                 {index > 0 ? (
@@ -146,7 +157,11 @@ export function LocationsStep({
 
             {status ? (
               <div className="mb-4 flex items-center gap-2 rounded-2xl border border-[#dbeafe] bg-[#f0f9ff] px-3 py-2 text-xs font-semibold text-[var(--onboarding-accent-mid)] dark:border-cyan-300/15 dark:bg-cyan-400/[0.06] dark:text-cyan-100/80">
-                {isLocating ? <Loader2 className="animate-spin" size={14} /> : <MapPin size={14} />}
+                {isLocating ? (
+                  <Loader2 className="animate-spin" size={14} />
+                ) : (
+                  <MapPin size={14} />
+                )}
                 {status}
               </div>
             ) : null}
@@ -159,6 +174,7 @@ export function LocationsStep({
                 value={branch.name}
               />
               <TextField
+                required
                 label="Address"
                 onChange={(value) => updateBranch(branch.id, "address", value)}
                 placeholder="Block A, Ring Road"
@@ -171,12 +187,14 @@ export function LocationsStep({
                 value={branch.landmark}
               />
               <TextField
+                required
                 label="City"
                 onChange={(value) => updateBranch(branch.id, "city", value)}
                 placeholder="Delhi"
                 value={branch.city}
               />
               <TextField
+                required
                 label="State"
                 onChange={(value) => updateBranch(branch.id, "state", value)}
                 placeholder="Delhi"
@@ -189,8 +207,11 @@ export function LocationsStep({
                 value={branch.country}
               />
               <TextField
+                required
                 label={isClinic ? "Pincode" : "Postal Code"}
-                onChange={(value) => updateBranch(branch.id, "postalCode", value)}
+                onChange={(value) =>
+                  updateBranch(branch.id, "postalCode", value)
+                }
                 placeholder="110001"
                 value={branch.postalCode}
               />
@@ -203,14 +224,18 @@ export function LocationsStep({
                 value={branch.mapsLocation}
               />
               <TextField
+                required={data.publicProfile.showHospitalProfile}
                 label="Latitude"
                 onChange={(value) => updateBranch(branch.id, "latitude", value)}
                 placeholder="28.6139"
                 value={branch.latitude}
               />
               <TextField
+                required={data.publicProfile.showHospitalProfile}
                 label="Longitude"
-                onChange={(value) => updateBranch(branch.id, "longitude", value)}
+                onChange={(value) =>
+                  updateBranch(branch.id, "longitude", value)
+                }
                 placeholder="77.2090"
                 value={branch.longitude}
               />
@@ -278,11 +303,11 @@ function getCurrentPosition() {
 
 async function reverseGeocodeLocation(
   latitude: string,
-  longitude: string,
+  longitude: string
 ): Promise<ReverseGeocodeResult> {
   try {
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&addressdetails=1`,
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&addressdetails=1`
     );
 
     if (!response.ok) return emptyReverseGeocodeResult();

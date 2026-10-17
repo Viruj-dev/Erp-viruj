@@ -52,6 +52,10 @@ export type OnboardingDoctor = {
   consultationFee: string;
   experience: string;
   availability: string;
+  registrationNumber: string;
+  availabilityDays: string[];
+  availableFrom: string;
+  availableTo: string;
 };
 
 export type OnboardingService = {
@@ -84,6 +88,8 @@ export type OnboardingState = {
     hospitalType: string;
     hospitalOwnershipType: string;
     numberOfBeds: string;
+    certificateName: string;
+    certificateUrl: string;
     registrationNumber: string;
     gstNumber: string;
     panNumber: string;

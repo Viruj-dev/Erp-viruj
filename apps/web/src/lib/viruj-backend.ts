@@ -571,7 +571,7 @@ export type VirujAnalyticsSignalWidget = {
 };
 
 export type VirujOrganizationProfileMedia = {
-  kind: "cover" | "logo";
+  kind: "cover" | "logo" | "certificate";
   url: string;
 };
 
@@ -828,6 +828,7 @@ function compactObject<T extends Record<string, unknown>>(value: T) {
 }
 export const virujBackend = {
   directory: {
+    departments: (organizationId?: string) => request<{ data: { id: number; name: string; description?: string }[] }>("/directory/departments", { organizationId, suppressToast: true }),
     facility: (organizationId?: string) =>
       request<{
         directoryHospitalId: number | null;
@@ -1061,14 +1062,14 @@ export const virujBackend = {
   organizationProfile: {
     uploadMedia: (input: {
       file: File;
-      kind: "cover" | "logo";
+      kind: "cover" | "logo" | "certificate";
       organizationId?: string;
     }) => {
       const formData = new FormData();
       formData.set("kind", input.kind);
       formData.set("file", input.file);
       return formRequest<VirujOrganizationProfileMedia>(
-        "/hospital/profile/media",
+        "/directory/profile-media",
         formData,
         {
           method: "POST",

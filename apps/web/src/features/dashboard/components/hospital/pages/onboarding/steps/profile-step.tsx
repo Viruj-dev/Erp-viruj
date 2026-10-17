@@ -1,12 +1,26 @@
 import { virujBackend } from "@/lib/viruj-backend";
-import { BadgeCheck, BedDouble, Building2, Globe2, Hospital, Phone } from "lucide-react";
+import {
+  BadgeCheck,
+  BedDouble,
+  Building2,
+  Globe2,
+  Hospital,
+  Phone,
+} from "lucide-react";
 import {
   clinicOwnershipTypes,
   clinicTypes,
   hospitalOwnershipTypes,
   hospitalTypes,
 } from "../constants";
-import { FieldLabel, PreviewRow, SelectField, TextField, UploadField, fieldClassName } from "../fields";
+import {
+  FieldLabel,
+  PreviewRow,
+  SelectField,
+  TextField,
+  UploadField,
+  fieldClassName,
+} from "../fields";
 import type { OnboardingKind, OnboardingState } from "../types";
 
 export function ProfileStep({
@@ -21,14 +35,18 @@ export function ProfileStep({
   updateProfile: (key: keyof OnboardingState["profile"], value: string) => void;
 }) {
   const isClinic = kind === "clinic";
-  const displayName = data.profile.hospitalName || (isClinic ? "Your Clinic" : "Your Hospital");
+  const displayName =
+    data.profile.hospitalName || (isClinic ? "Your Clinic" : "Your Hospital");
   const categoryOptions = isClinic ? clinicTypes : hospitalTypes;
-  const ownershipOptions = isClinic ? clinicOwnershipTypes : hospitalOwnershipTypes;
+  const ownershipOptions = isClinic
+    ? clinicOwnershipTypes
+    : hospitalOwnershipTypes;
 
   return (
     <div className="space-y-5">
       <section className="grid gap-4 md:grid-cols-2">
         <TextField
+          required
           label={isClinic ? "Clinic Name" : "Hospital Name"}
           onChange={(value) => updateProfile("hospitalName", value)}
           placeholder={isClinic ? "Viruj Family Clinic" : "Apollo Delhi"}
@@ -36,6 +54,7 @@ export function ProfileStep({
         />
         {isClinic ? (
           <TextField
+            required
             label="Legal Business Name"
             onChange={(value) => updateProfile("legalBusinessName", value)}
             placeholder="Viruj Family Clinic LLP"
@@ -43,12 +62,14 @@ export function ProfileStep({
           />
         ) : null}
         <SelectField
+          required={isClinic}
           label={isClinic ? "Clinic Type" : "Organization Category"}
           onChange={(value) => updateProfile("hospitalType", value)}
           options={categoryOptions}
           value={data.profile.hospitalType}
         />
         <SelectField
+          required={isClinic}
           label={isClinic ? "Ownership Type" : "Hospital Type"}
           onChange={(value) => updateProfile("hospitalOwnershipType", value)}
           options={ownershipOptions}
@@ -64,22 +85,21 @@ export function ProfileStep({
           />
         )}
         <UploadField
+          required={isClinic}
           label={isClinic ? "Clinic Logo" : "Logo Upload"}
           name={data.profile.logoName}
           onChange={async (file) => {
-            updateProfile("logoName", file.name);
-            updateProfile("logoPreviewUrl", file.previewUrl);
-
             try {
               const media = await virujBackend.organizationProfile.uploadMedia({
                 file: file.file,
                 kind: "logo",
                 organizationId,
               });
+              updateProfile("logoName", file.name);
               updateProfile("logoUrl", media.url);
               updateProfile("logoPreviewUrl", media.url);
-            } catch {
-              updateProfile("logoPreviewUrl", file.previewUrl);
+            } finally {
+              URL.revokeObjectURL(file.previewUrl);
             }
           }}
         />
@@ -88,35 +108,59 @@ export function ProfileStep({
             label="Cover Image"
             name={data.profile.coverName}
             onChange={async (file) => {
-              updateProfile("coverName", file.name);
-              updateProfile("coverPreviewUrl", file.previewUrl);
-
               try {
-                const media = await virujBackend.organizationProfile.uploadMedia({
-                  file: file.file,
-                  kind: "cover",
-                  organizationId,
-                });
+                const media =
+                  await virujBackend.organizationProfile.uploadMedia({
+                    file: file.file,
+                    kind: "cover",
+                    organizationId,
+                  });
+                updateProfile("coverName", file.name);
                 updateProfile("coverUrl", media.url);
                 updateProfile("coverPreviewUrl", media.url);
-              } catch {
-                updateProfile("coverPreviewUrl", file.previewUrl);
+              } finally {
+                URL.revokeObjectURL(file.previewUrl);
               }
             }}
           />
         )}
         <TextField
+          required={isClinic}
           label="Registration Number"
           onChange={(value) => updateProfile("registrationNumber", value)}
           placeholder={isClinic ? "CLINIC-REG-2026-091" : "DL-HOSP-2026-0091"}
           value={data.profile.registrationNumber}
         />
         <TextField
+          required={isClinic}
+          type="number"
+          min={1800}
+          max={new Date().getFullYear()}
           label="Year Established"
           onChange={(value) => updateProfile("establishedYear", value)}
           placeholder="2008"
           value={data.profile.establishedYear}
         />
+        {isClinic && (
+          <UploadField
+            label="Certification / License"
+            name={data.profile.certificateName}
+            onChange={async ({ file, name, previewUrl }) => {
+              try {
+                const media =
+                  await virujBackend.organizationProfile.uploadMedia({
+                    file,
+                    kind: "certificate",
+                    organizationId,
+                  });
+                updateProfile("certificateUrl", media.url);
+                updateProfile("certificateName", name);
+              } finally {
+                URL.revokeObjectURL(previewUrl);
+              }
+            }}
+          />
+        )}
         <TextField
           label="GST Number (optional)"
           onChange={(value) => updateProfile("gstNumber", value)}
@@ -134,6 +178,7 @@ export function ProfileStep({
         {isClinic ? null : (
           <>
             <TextField
+              required
               label="Email"
               onChange={(value) => updateProfile("email", value)}
               placeholder="admin@hospital.co"
@@ -141,6 +186,7 @@ export function ProfileStep({
               value={data.profile.email}
             />
             <TextField
+              required
               label="Phone"
               onChange={(value) => updateProfile("phone", value)}
               placeholder="+91 98765 43210"
@@ -156,7 +202,9 @@ export function ProfileStep({
               <FieldLabel>Description</FieldLabel>
               <textarea
                 className={fieldClassName("min-h-32 resize-none py-3")}
-                onChange={(event) => updateProfile("description", event.target.value)}
+                onChange={(event) =>
+                  updateProfile("description", event.target.value)
+                }
                 placeholder="Describe your care model, specialties, infrastructure, and patient experience."
                 value={data.profile.description}
               />
@@ -197,7 +245,8 @@ export function ProfileStep({
                   {displayName}
                 </h3>
                 <p className="mt-1 text-sm font-semibold text-[var(--onboarding-accent)]">
-                  {data.profile.hospitalType} - {data.profile.hospitalOwnershipType}
+                  {data.profile.hospitalType} -{" "}
+                  {data.profile.hospitalOwnershipType}
                 </p>
               </div>
               <span className="rounded-full bg-[var(--onboarding-accent-soft)] px-3 py-1 text-xs font-bold text-[var(--onboarding-accent)]">
@@ -211,13 +260,36 @@ export function ProfileStep({
                   : "A trusted healthcare institution configured on Viruj for appointments, care departments, department hours, and patient engagement.")}
             </p>
             <div className="mt-5 grid gap-3 text-sm">
-              <PreviewRow icon={<Phone size={15} />} value={data.profile.phone || "Phone pending"} />
-              <PreviewRow icon={<Building2 size={15} />} value={data.profile.hospitalOwnershipType || "Ownership pending"} />
+              <PreviewRow
+                icon={<Phone size={15} />}
+                value={data.profile.phone || "Phone pending"}
+              />
+              <PreviewRow
+                icon={<Building2 size={15} />}
+                value={
+                  data.profile.hospitalOwnershipType || "Ownership pending"
+                }
+              />
               {isClinic ? null : (
-                <PreviewRow icon={<BedDouble size={15} />} value={data.profile.numberOfBeds ? `${data.profile.numberOfBeds} beds` : "Beds pending"} />
+                <PreviewRow
+                  icon={<BedDouble size={15} />}
+                  value={
+                    data.profile.numberOfBeds
+                      ? `${data.profile.numberOfBeds} beds`
+                      : "Beds pending"
+                  }
+                />
               )}
-              <PreviewRow icon={<Globe2 size={15} />} value={data.profile.website || "Website pending"} />
-              <PreviewRow icon={<BadgeCheck size={15} />} value={data.profile.registrationNumber || "Registration pending"} />
+              <PreviewRow
+                icon={<Globe2 size={15} />}
+                value={data.profile.website || "Website pending"}
+              />
+              <PreviewRow
+                icon={<BadgeCheck size={15} />}
+                value={
+                  data.profile.registrationNumber || "Registration pending"
+                }
+              />
             </div>
           </div>
         </div>

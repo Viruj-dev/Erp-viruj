@@ -11,6 +11,7 @@ export function ContactStep({
   return (
     <section className="grid gap-4 rounded-[26px] border border-slate-200/80 bg-white/78 p-5 shadow-sm md:grid-cols-2 dark:border-white/[0.10] dark:bg-white/[0.055]">
       <TextField
+        required
         label="Primary Mobile"
         onChange={(value) => updateProfile("phone", value)}
         placeholder="+91 98765 43210"
@@ -23,6 +24,7 @@ export function ContactStep({
         value={data.profile.alternateMobile}
       />
       <TextField
+        required
         label="Email"
         onChange={(value) => updateProfile("email", value)}
         placeholder="care@clinic.co"

@@ -30,7 +30,7 @@ export function ClinicProfileStep({
     <div className="space-y-5">
       <section className="grid gap-4 md:grid-cols-2">
         <label className="md:col-span-2">
-          <FieldLabel>About Clinic</FieldLabel>
+          <FieldLabel required>About Clinic</FieldLabel>
           <textarea
             className={fieldClassName("min-h-32 resize-none py-3")}
             onChange={(event) => updateProfile("description", event.target.value)}
@@ -51,6 +51,7 @@ export function ClinicProfileStep({
           value={data.profile.vision}
         />
         <TextField
+          required
           label="Languages Spoken"
           onChange={(value) => updateProfile("languagesSpoken", value)}
           placeholder="English, Hindi, Punjabi"

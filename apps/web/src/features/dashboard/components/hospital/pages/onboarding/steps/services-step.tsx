@@ -98,13 +98,14 @@ export function ServicesStep({
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_140px_140px]">
               <TextField
+                required
                 label="Name"
                 onChange={(value) => updateService(service.id, { name: value })}
                 placeholder="General Consultation"
                 value={service.name}
               />
               <label>
-                <FieldLabel>Category</FieldLabel>
+                <FieldLabel required>Category</FieldLabel>
                 <select
                   className={fieldClassName("appearance-none")}
                   onChange={(event) => updateService(service.id, { category: event.target.value })}
@@ -118,12 +119,14 @@ export function ServicesStep({
                 </select>
               </label>
               <TextField
+                required
                 label="Price"
                 onChange={(value) => updateService(service.id, { price: value })}
                 placeholder="500"
                 value={service.price}
               />
               <TextField
+                required
                 label="Duration"
                 onChange={(value) => updateService(service.id, { duration: value })}
                 placeholder="30 min"
