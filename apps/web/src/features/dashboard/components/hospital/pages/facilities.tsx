@@ -1,7 +1,14 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Filter, Loader2, Plus, RadioTower, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Filter,
+  Loader2,
+  Plus,
+  RadioTower,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -30,7 +37,11 @@ import {
   type SortKey,
 } from "@/features/dashboard/components/shared/facilities";
 import { authClient } from "@/lib/auth-client";
-import { virujBackend, type VirujFacility, type VirujFacilityInput } from "@/lib/viruj-backend";
+import {
+  virujBackend,
+  type VirujFacility,
+  type VirujFacilityInput,
+} from "@/lib/viruj-backend";
 
 export function FacilitiesPage({
   catalogKind = "facilities",
@@ -60,16 +71,20 @@ export function FacilitiesPage({
   const [deleteTarget, setDeleteTarget] = useState<VirujFacility | null>(null);
 
   const organizationId = tenant?.organizationId;
-  const catalogApi = catalogKind === "services" ? virujBackend.services : virujBackend.facilities;
+  const catalogApi =
+    catalogKind === "services"
+      ? virujBackend.services
+      : virujBackend.facilities;
   const catalogLabel = catalogKind === "services" ? "Services" : "Facilities";
   const isClinicTone = tenant?.providerType === "clinic";
   const pageTone = isClinicTone ? "violet" : "blue";
   const publishAllClass = isClinicTone
     ? "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-violet-500 dark:hover:bg-violet-400"
     : "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50";
-  const catalogSubtitle = catalogKind === "services"
-    ? "A persisted service catalog for patient discovery and booking."
-    : "A persisted facility catalog for infrastructure, amenities, and access.";
+  const catalogSubtitle =
+    catalogKind === "services"
+      ? "Showcase your care. Manage the services patients can discover and book."
+      : "Bring your infrastructure, amenities, and patient access together.";
   const catalogQueryKey = catalogApi.key({ organizationId });
 
   const facilitiesQuery = useQuery({
@@ -83,24 +98,31 @@ export function FacilitiesPage({
     queryClient.invalidateQueries({ queryKey: catalogQueryKey });
 
   const createMutation = useMutation({
-    mutationFn: (input: VirujFacilityInput) => catalogApi.create({ ...input, organizationId }),
+    mutationFn: (input: VirujFacilityInput) =>
+      catalogApi.create({ ...input, organizationId }),
     onSuccess: async () => {
       await invalidateFacilities();
       router.push(`${routeBasePath}/${catalogKind}`);
     },
   });
   const updateMutation = useMutation({
-    mutationFn: (input: { facility: VirujFacilityInput; id: string }) => catalogApi.update({ ...input, organizationId }),
+    mutationFn: (input: { facility: VirujFacilityInput; id: string }) =>
+      catalogApi.update({ ...input, organizationId }),
     onSuccess: async () => {
       await invalidateFacilities();
       router.push(`${routeBasePath}/${catalogKind}`);
     },
   });
   const statusMutation = useMutation({
-    mutationFn: (input: { id: string; isAvailable?: boolean; status: VirujFacility["status"] }) => catalogApi.updateStatus({ ...input, organizationId }),
+    mutationFn: (input: {
+      id: string;
+      isAvailable?: boolean;
+      status: VirujFacility["status"];
+    }) => catalogApi.updateStatus({ ...input, organizationId }),
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: catalogQueryKey });
-      const previous = queryClient.getQueryData<VirujFacility[]>(catalogQueryKey);
+      const previous =
+        queryClient.getQueryData<VirujFacility[]>(catalogQueryKey);
       queryClient.setQueryData<VirujFacility[]>(catalogQueryKey, (current) =>
         current?.map((facility) =>
           facility.id === input.id
@@ -115,12 +137,14 @@ export function FacilitiesPage({
       return { previous };
     },
     onError: (_error, _input, context) => {
-      if (context?.previous) queryClient.setQueryData(catalogQueryKey, context.previous);
+      if (context?.previous)
+        queryClient.setQueryData(catalogQueryKey, context.previous);
     },
     onSettled: invalidateFacilities,
   });
   const deleteMutation = useMutation({
-    mutationFn: (input: { id: string }) => catalogApi.delete({ ...input, organizationId }),
+    mutationFn: (input: { id: string }) =>
+      catalogApi.delete({ ...input, organizationId }),
     onSuccess: async () => {
       setDeleteTarget(null);
       await invalidateFacilities();
@@ -157,14 +181,29 @@ export function FacilitiesPage({
       : null;
   const stats = useMemo(() => buildFacilityStats(facilities), [facilities]);
   const publishableFacilities = useMemo(
-    () => facilities.filter((facility) => !(facility.status === "active" && facility.isAvailable && facility.visibility === "public")),
+    () =>
+      facilities.filter(
+        (facility) =>
+          !(
+            facility.status === "active" &&
+            facility.isAvailable &&
+            facility.visibility === "public"
+          )
+      ),
     [facilities]
   );
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   function renderCatalog(dimmed = false) {
     return (
-      <div aria-hidden={dimmed} className={dimmed ? "pointer-events-none select-none blur-[3px] transition duration-200" : undefined}>
+      <div
+        aria-hidden={dimmed}
+        className={
+          dimmed
+            ? "pointer-events-none select-none blur-[3px] transition duration-200"
+            : undefined
+        }
+      >
         <DashboardPageShell
           actions={
             permissions.create || permissions.publish ? (
@@ -172,11 +211,20 @@ export function FacilitiesPage({
                 {permissions.publish ? (
                   <button
                     className={publishAllClass}
-                    disabled={publishAllMutation.isPending || publishableFacilities.length === 0}
-                    onClick={() => publishAllMutation.mutate(publishableFacilities)}
+                    disabled={
+                      publishAllMutation.isPending ||
+                      publishableFacilities.length === 0
+                    }
+                    onClick={() =>
+                      publishAllMutation.mutate(publishableFacilities)
+                    }
                     type="button"
                   >
-                    {publishAllMutation.isPending ? <Loader2 className="animate-spin" size={16} /> : <RadioTower size={16} />}
+                    {publishAllMutation.isPending ? (
+                      <Loader2 className="animate-spin" size={16} />
+                    ) : (
+                      <RadioTower size={16} />
+                    )}
                     Publish All
                   </button>
                 ) : null}
@@ -184,7 +232,9 @@ export function FacilitiesPage({
                   <PrimaryButton
                     icon={<Plus size={16} />}
                     label={`Add ${catalogKind === "services" ? "Service" : "Facility"}`}
-                    onClick={() => router.push(`${routeBasePath}/${catalogKind}/new`)}
+                    onClick={() =>
+                      router.push(`${routeBasePath}/${catalogKind}/new`)
+                    }
                     tone={isClinicTone ? "violet" : "slate"}
                   />
                 ) : null}
@@ -197,7 +247,12 @@ export function FacilitiesPage({
           title={catalogLabel}
           tone={pageTone}
         >
-          <section className="flex min-h-[calc(100vh-15rem)] flex-1 flex-col space-y-5">
+          <section className="flex flex-col space-y-5">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {stats.map((stat) => (
+                <StatCard key={stat.label} tone={pageTone} {...stat} />
+              ))}
+            </div>
             <Toolbar
               filters={filters}
               onFilterChange={setFilters}
@@ -207,12 +262,20 @@ export function FacilitiesPage({
               sortKey={sortKey}
               tone={pageTone}
             />
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {stats.map((stat) => (
-                <StatCard key={stat.label} tone={pageTone} {...stat} />
-              ))}
-            </div>
-            <section className="min-h-[calc(100vh-27rem)] flex-1 overflow-hidden rounded-[1.65rem] border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#111418]">
+            <section className="overflow-hidden rounded-[1.65rem] border border-slate-200/70 bg-white dark:border-white/[0.08] dark:bg-[#111418]">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-6 py-5 dark:border-white/5">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Your {catalogLabel.toLowerCase()}{" "}
+                  <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500 dark:bg-white/5">
+                    {facilitiesQuery.isLoading || facilitiesQuery.isError
+                      ? "—"
+                      : filteredFacilities.length}
+                  </span>
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Manage details, availability, and visibility
+                </p>
+              </div>
               {facilitiesQuery.isLoading ? (
                 <FacilitySkeletonGrid />
               ) : facilitiesQuery.isError ? (
@@ -223,7 +286,10 @@ export function FacilitiesPage({
                 />
               ) : facilities.length === 0 ? (
                 <EmptyFacilities
-                  onCreate={() => router.push(`${routeBasePath}/${catalogKind}/new`)}
+                  catalogKind={catalogKind}
+                  onCreate={() =>
+                    router.push(`${routeBasePath}/${catalogKind}/new`)
+                  }
                   permissions={permissions}
                   tone={pageTone}
                 />
@@ -238,12 +304,33 @@ export function FacilitiesPage({
                   {filteredFacilities.map((facility) => (
                     <FacilityBentoCard
                       facility={facility}
-                      isUpdating={(statusMutation.isPending && statusMutation.variables?.id === facility.id) || (updateMutation.isPending && updateMutation.variables?.id === facility.id)}
+                      isUpdating={
+                        (statusMutation.isPending &&
+                          statusMutation.variables?.id === facility.id) ||
+                        (updateMutation.isPending &&
+                          updateMutation.variables?.id === facility.id)
+                      }
                       key={facility.id}
-                      onActivate={() => statusMutation.mutate({ id: facility.id, isAvailable: true, status: "active" })}
-                      onDeactivate={() => statusMutation.mutate({ id: facility.id, isAvailable: false, status: "draft" })}
+                      onActivate={() =>
+                        statusMutation.mutate({
+                          id: facility.id,
+                          isAvailable: true,
+                          status: "active",
+                        })
+                      }
+                      onDeactivate={() =>
+                        statusMutation.mutate({
+                          id: facility.id,
+                          isAvailable: false,
+                          status: "draft",
+                        })
+                      }
                       onDelete={() => setDeleteTarget(facility)}
-onEdit={() => router.push(`${routeBasePath}/${catalogKind}/${facility.id}/edit`)}
+                      onEdit={() =>
+                        router.push(
+                          `${routeBasePath}/${catalogKind}/${facility.id}/edit`
+                        )
+                      }
                       onPublish={() =>
                         updateMutation.mutate({
                           facility: {
@@ -267,7 +354,9 @@ onEdit={() => router.push(`${routeBasePath}/${catalogKind}/${facility.id}/edit`)
             facility={deleteTarget}
             isDeleting={deleteMutation.isPending}
             onClose={() => setDeleteTarget(null)}
-            onConfirm={() => deleteTarget && deleteMutation.mutate({ id: deleteTarget.id })}
+            onConfirm={() =>
+              deleteTarget && deleteMutation.mutate({ id: deleteTarget.id })
+            }
           />
         </DashboardPageShell>
       </div>
@@ -286,7 +375,10 @@ onEdit={() => router.push(`${routeBasePath}/${catalogKind}/${facility.id}/edit`)
         >
           <FacilityForm
             existingFacilities={facilities}
-            initialValue={{ ...emptyFacilityForm, displayOrder: facilities.length + 1 }}
+            initialValue={{
+              ...emptyFacilityForm,
+              displayOrder: facilities.length + 1,
+            }}
             isSaving={isSaving}
             onCancel={() => router.push(`${routeBasePath}/${catalogKind}`)}
             onSubmit={(input) => createMutation.mutate(input)}
@@ -299,8 +391,18 @@ onEdit={() => router.push(`${routeBasePath}/${catalogKind}/${facility.id}/edit`)
   }
 
   if (route.mode === "edit") {
-    if (facilitiesQuery.isLoading) return <FacilitiesLoading title={`Loading ${catalogKind === "services" ? "service" : "facility"} editor...`} />;
-    if (!routeFacility) return <FacilityMissing onBack={() => router.push(`${routeBasePath}/${catalogKind}`)} />;
+    if (facilitiesQuery.isLoading)
+      return (
+        <FacilitiesLoading
+          title={`Loading ${catalogKind === "services" ? "service" : "facility"} editor...`}
+        />
+      );
+    if (!routeFacility)
+      return (
+        <FacilityMissing
+          onBack={() => router.push(`${routeBasePath}/${catalogKind}`)}
+        />
+      );
 
     return (
       <>
@@ -312,11 +414,15 @@ onEdit={() => router.push(`${routeBasePath}/${catalogKind}/${facility.id}/edit`)
           tone={pageTone}
         >
           <FacilityForm
-            existingFacilities={facilities.filter((facility) => facility.id !== routeFacility.id)}
+            existingFacilities={facilities.filter(
+              (facility) => facility.id !== routeFacility.id
+            )}
             initialValue={toFacilityInput(routeFacility)}
             isSaving={isSaving}
             onCancel={() => router.push(`${routeBasePath}/${catalogKind}`)}
-            onSubmit={(input) => updateMutation.mutate({ facility: input, id: routeFacility.id })}
+            onSubmit={(input) =>
+              updateMutation.mutate({ facility: input, id: routeFacility.id })
+            }
             saveError={updateMutation.error}
             submitLabel="Save card"
           />
@@ -365,8 +471,12 @@ function FacilityEditorDialog({
           <header className="flex items-start justify-between gap-4 px-2 pb-4 pt-1">
             <div>
               <p className={eyebrowClass}>Facilities & Services</p>
-              <h2 className="mt-2 font-headline text-2xl font-semi-bold text-slate-950 dark:text-slate-100">{title}</h2>
-              <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-500">{subtitle}</p>
+              <h2 className="mt-2 font-headline text-2xl font-semi-bold text-slate-950 dark:text-slate-100">
+                {title}
+              </h2>
+              <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-500">
+                {subtitle}
+              </p>
             </div>
             <button
               aria-label="Close service editor"
