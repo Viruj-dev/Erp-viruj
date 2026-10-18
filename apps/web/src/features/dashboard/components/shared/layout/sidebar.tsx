@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { VirujLogo } from "@/components/brand/viruj-logo";
+
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
 import type { WorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
@@ -18,6 +21,7 @@ import {
   FileBadge,
   FileText,
   HeartPulse,
+  CircleHelp,
   History,
   Image,
   LayoutDashboard,
@@ -232,22 +236,13 @@ export function ErpDemoSidebar({
             )}
           >
             <div className="relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-[#181b1f] dark:ring-white/[0.10]">
-              <span
-                className={cn(
-                  "absolute inset-1 rounded-full blur-[1px]",
-                  workspaceTheme.logoAura
-                )}
-              />
-              <Stethoscope
-                className="relative text-slate-950 dark:text-white"
-                size={18}
-              />
+              <VirujLogo className="size-10" />
             </div>
 
             {!isCollapsed ? (
               <div className="erp-sidebar-label min-w-0 flex-1">
                 <h1 className="truncate font-headline text-base font-semi-bold leading-tight text-slate-950 dark:text-white">
-                  Viruj ERP
+                  Viruj Health
                 </h1>
                 <p className="truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                   {organizationLabel} Workspace
@@ -359,6 +354,18 @@ export function ErpDemoSidebar({
           </nav>
 
           <div className="erp-sidebar-account relative mt-4 space-y-2 border-t border-slate-200/80 pt-4 dark:border-white/[0.08]">
+            <Link
+              href="/about"
+              aria-label="About Viruj Health and support"
+              title="About & support"
+              className={cn(
+                "flex min-h-9 items-center gap-2 rounded-xl px-2 text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5",
+                isCollapsed && "justify-center"
+              )}
+            >
+              <CircleHelp size={17} />
+              {!isCollapsed && <span>About & support</span>}
+            </Link>
             <div
               className={cn(
                 "flex items-center rounded-xl bg-white/80 ring-1 ring-slate-200/90 dark:bg-white/[0.055] dark:ring-white/[0.07] cursor-pointer transition hover:bg-white hover:ring-slate-300 dark:hover:bg-white/[0.08] dark:hover:ring-white/[0.12]",

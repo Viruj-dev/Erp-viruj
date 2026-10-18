@@ -1,5 +1,7 @@
 "use client";
 
+import { VirujLogo } from "@/components/brand/viruj-logo";
+
 import { ArrowRight, LogOut } from "lucide-react";
 
 export function OrganizationAccessScreen({
@@ -30,6 +32,7 @@ export function OrganizationAccessScreen({
       <div className="relative w-full max-w-3xl rounded-[2.5rem] border border-white/10 bg-white/80 p-8 shadow-2xl backdrop-blur-xl md:p-12">
         <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
           <div>
+            <VirujLogo className="mb-4 size-14" />
             <p className="text-xs font-semi-bold uppercase tracking-[0.35em] text-primary">
               Organization Access
             </p>
@@ -84,8 +87,8 @@ export function OrganizationAccessScreen({
               No organization membership found
             </h2>
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-on-surface-variant">
-              Create a new organization from the onboarding flow or ask an
-              OWNER or ADMIN to send you an invitation ID from the Staff page.
+              Create a new organization from the onboarding flow or ask an OWNER
+              or ADMIN to send you an invitation ID from the Staff page.
             </p>
             <button
               className="mt-6 rounded-full bg-primary px-5 py-3 text-sm font-bold text-white shadow-md transition-opacity hover:opacity-90"

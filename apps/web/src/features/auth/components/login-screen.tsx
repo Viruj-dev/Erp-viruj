@@ -1,5 +1,8 @@
 "use client";
 
+import { VirujLogo } from "@/components/brand/viruj-logo";
+import { virujBrand } from "@/lib/viruj-brand";
+
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
@@ -234,11 +237,9 @@ export function ErpDemoLogin({
         <section className="relative flex min-h-[760px] flex-col bg-[#f7f7f3] px-6 py-6 transition-colors dark:bg-[#0f141a] md:px-10">
           <header className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-slate-950 text-white shadow-sm dark:bg-white dark:text-slate-950">
-                <ShieldCheck size={19} />
-              </span>
+              <VirujLogo />
               <span className="font-headline text-sm font-bold tracking-tight text-slate-950 dark:text-white">
-                Viruj ERP
+                {virujBrand.product}
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -630,8 +631,12 @@ export function ErpDemoLogin({
           </div>
 
           <footer className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span>(c) 2026 Viruj Health ERP</span>
-            <span>ENG</span>
+            <span>
+              © {new Date().getFullYear()} {virujBrand.name}
+            </span>
+            <Link href="/about" className="hover:underline">
+              About & support
+            </Link>
           </footer>
         </section>
 
@@ -646,16 +651,16 @@ export function ErpDemoLogin({
                 size={25}
               />
             </div>
-            <blockquote className="max-w-2xl font-headline text-4xl font-bold leading-tight tracking-tight text-slate-950 dark:text-white xl:text-5xl">
-              The healthcare ERP system has unified our doctors, staff,
-              appointments, and patient operations into one calm workspace.
-            </blockquote>
+            <div className="max-w-2xl font-headline text-4xl font-bold leading-tight tracking-tight text-slate-950 dark:text-white xl:text-5xl">
+              One connected workspace for your doctors, staff, appointments, and
+              patient care.
+            </div>
             <div className="mt-8">
               <p className="text-sm font-bold text-slate-950 dark:text-white">
-                Dr. Asha Mehta
+                {virujBrand.name}
               </p>
               <p className="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400">
-                Medical Director / Hospital Network
+                Connected to the Viruj patient app
               </p>
             </div>
             <div className="mt-10 flex gap-1.5">

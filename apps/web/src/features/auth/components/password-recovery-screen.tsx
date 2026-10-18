@@ -1,7 +1,10 @@
 "use client";
 
+import { VirujLogo } from "@/components/brand/viruj-logo";
+import { virujBrand } from "@/lib/viruj-brand";
+
 import { authClient } from "@/lib/auth-client";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
@@ -80,10 +83,10 @@ export function PasswordRecoveryScreen(props: PasswordRecoveryProps) {
     <main className="flex min-h-screen items-center justify-center bg-[#eef0ea] p-4 text-slate-950 dark:bg-[#05070a] dark:text-slate-100">
       <section className="w-full max-w-md rounded-[1.75rem] bg-[#f7f7f3] p-6 shadow-[0_28px_100px_rgba(15,23,42,0.16)] dark:bg-[#10151b] dark:shadow-[0_28px_100px_rgba(0,0,0,0.55)] dark:ring-1 dark:ring-white/10 sm:p-9">
         <div className="mb-8 flex items-center gap-2">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-slate-950 text-white dark:bg-white dark:text-slate-950">
-            <ShieldCheck size={19} />
+          <VirujLogo />
+          <span className="font-headline text-sm font-bold">
+            {virujBrand.product}
           </span>
-          <span className="font-headline text-sm font-bold">Viruj ERP</span>
         </div>
 
         <h1 className="font-headline text-2xl font-bold">

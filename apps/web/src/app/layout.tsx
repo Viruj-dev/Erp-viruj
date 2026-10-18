@@ -10,12 +10,14 @@ const manrope = Manrope({
   variable: "--font-headline",
 });
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   title: "Viruj Health Clinical ERP",
+  applicationName: "Viruj Health ERP",
+  icons: { icon: "/brand/viruj-icon.png", apple: "/brand/viruj-icon.png" },
   description:
-    "ERP-demo UI transplanted into the Viruj Health web app for clinical operations, patient records, scheduling, staffing and analytics.",
+    "Viruj Health’s connected workspace for clinical operations, appointments, patient records, care teams, and practice insights.",
 };
 
 export default function RootLayout({
