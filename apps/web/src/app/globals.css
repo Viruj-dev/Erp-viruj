@@ -380,7 +380,10 @@
   box-shadow: 0 2px 5px rgb(15 23 42 / 5%);
 }
 .erp-topbar {
-  min-height: 88px;
+  min-height: 68px;
+  margin: 12px 28px 0;
+  border-radius: 20px;
+  box-shadow: 0 2px 12px rgb(15 23 42 / 2%);
 }
 .erp-scroll {
   overscroll-behavior: contain;
@@ -421,9 +424,10 @@
 }
 @media (max-width: 639px) {
   .erp-topbar {
-    min-height: 76px;
-    flex-wrap: wrap;
-    gap: 10px;
+    min-height: 64px;
+    margin: 12px 12px 0;
+    padding-inline: 12px;
+    gap: 8px;
   }
   .erp-sidebar-brand {
     padding-inline: 0;

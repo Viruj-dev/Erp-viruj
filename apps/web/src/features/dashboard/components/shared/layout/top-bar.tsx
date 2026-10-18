@@ -6,7 +6,7 @@ import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme-provider";
-import { ChevronDown, Moon, Sun } from "lucide-react";
+import { Building2, ChevronDown, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 
 export function ErpDemoTopBar({
@@ -34,22 +34,32 @@ export function ErpDemoTopBar({
   const title = organizationName?.trim() || organizationLabel;
 
   return (
-    <header className="erp-topbar sticky top-0 z-30 flex w-full items-center justify-between gap-4 bg-transparent px-4 py-4 backdrop-blur-xl transition-colors dark:bg-transparent sm:px-6 lg:px-8">
-      <div className="min-w-0">
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-          Viruj · {organizationLabel} workspace
-        </p>
-        <h2 className="truncate font-headline text-lg font-semibold tracking-tight text-on-surface dark:text-slate-100 sm:text-xl">
-          {title}
-        </h2>
+    <header className="erp-topbar relative z-30 flex shrink-0 items-center justify-between gap-3 border border-white/80 bg-white px-4 py-3 transition-colors dark:border-white/[0.06] dark:bg-[#17191e]">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div
+          className={cn(
+            "hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex",
+            workspaceTheme.avatar
+          )}
+        >
+          <Building2 size={19} strokeWidth={1.6} aria-hidden="true" />
+        </div>
+        <div className="min-w-0">
+          <h2 className="truncate text-sm font-semibold tracking-tight text-on-surface dark:text-slate-100">
+            {title}
+          </h2>
+          <p className="mt-0.5 truncate text-[11px] text-slate-400">
+            {organizationLabel} workspace
+          </p>
+        </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
         <button
           aria-label={
             theme === "dark" ? "Switch to light theme" : "Switch to dark theme"
           }
-          className="flex size-10 items-center justify-center rounded-xl border border-slate-200/80 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
+          className="flex size-10 items-center justify-center rounded-full border border-slate-200/60 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
           onClick={toggleTheme}
           type="button"
         >
@@ -58,7 +68,7 @@ export function ErpDemoTopBar({
         <NotificationCenter organizationId={organizationId} />
         <div className="mx-1 h-8 w-px bg-slate-200 dark:bg-white/[0.08]" />
 
-        {/* Profile button ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ opens dropdown */}
+        {/* Account controls stay grouped in one compact menu. */}
         <div className="relative">
           <button
             id="top-bar-profile-button"
@@ -66,21 +76,21 @@ export function ErpDemoTopBar({
             aria-expanded={isProfileOpen}
             type="button"
             onClick={() => setIsProfileOpen((v) => !v)}
-            className="flex cursor-pointer items-center gap-3 rounded-lg p-1.5 transition-colors hover:bg-slate-200/50 dark:hover:bg-white/[0.08]"
+            className="flex cursor-pointer items-center gap-2.5 rounded-full p-1.5 transition-colors hover:bg-slate-200/50 dark:hover:bg-white/[0.08]"
           >
-            <div className="hidden text-right sm:block">
-              <p className="text-xs font-bold text-on-surface dark:text-slate-100">
+            <div className="hidden max-w-40 text-right md:block">
+              <p className="truncate text-xs font-semibold text-on-surface dark:text-slate-100">
                 {userName || "Viruj User"}
               </p>
               <p className="text-[10px] text-outline dark:text-slate-500">
-                {formatRole(roleLabel)} | {organizationLabel}
+                {formatRole(roleLabel)}
               </p>
             </div>
             {userImage ? (
               <img
                 alt="User profile"
                 className={cn(
-                  "h-9 w-9 rounded-lg object-cover ring-2",
+                  "h-9 w-9 rounded-full object-cover ring-2",
                   workspaceTheme.profileRing
                 )}
                 src={userImage}
@@ -88,7 +98,7 @@ export function ErpDemoTopBar({
             ) : (
               <div
                 className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-lg text-xs font-bold ring-2",
+                  "flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold ring-2",
                   workspaceTheme.avatar,
                   workspaceTheme.profileRing
                 )}
