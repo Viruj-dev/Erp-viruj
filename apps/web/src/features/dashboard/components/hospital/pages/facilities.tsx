@@ -191,7 +191,7 @@ export function FacilitiesPage({
               </div>
             ) : null
           }
-          className="flex min-h-full flex-col"
+          className="mx-auto flex min-h-full w-[calc(100%-8px)] max-w-[1440px] flex-col px-0 sm:w-[calc(100%-16px)] sm:px-0 lg:w-[calc(100%-24px)] lg:px-0"
           eyebrow={catalogLabel}
           subtitle={catalogSubtitle}
           title={catalogLabel}

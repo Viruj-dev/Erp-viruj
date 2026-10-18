@@ -283,7 +283,7 @@ export function DoctorsManagementPage({
           </button>
         </>
       }
-      className="flex min-h-full flex-col"
+      className="mx-auto flex min-h-full w-[calc(100%-8px)] max-w-[1440px] flex-col px-0 sm:w-[calc(100%-16px)] sm:px-0 lg:w-[calc(100%-24px)] lg:px-0"
       eyebrow="Doctors"
       subtitle={`Add doctors for ${organizationLabel}, review profile readiness, then publish live availability to patients.`}
       title={`${organizationLabel}-added Profiles`}
