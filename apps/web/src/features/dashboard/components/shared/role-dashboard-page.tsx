@@ -11,6 +11,10 @@ import {
   CircleAlert,
   Clock3,
   RefreshCw,
+  Users,
+  Stethoscope,
+  HeartPulse,
+  ClipboardCheck,
 } from "lucide-react";
 import {
   Bar,
@@ -175,12 +179,17 @@ export function RoleDashboardPage({
                 : "#278565",
         } as CSSProperties
       }
-      className="[--dashboard-accent:var(--dashboard-brand)] dark:[--dashboard-accent:var(--dashboard-brand-light)] min-w-0 bg-transparent px-4 py-6 text-slate-900 dark:bg-[#111318] dark:text-slate-100 sm:px-6 lg:px-8 [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-offset-4 [&_button]:focus-visible:outline-[var(--dashboard-accent)] [&_a]:focus-visible:outline-2 [&_a]:focus-visible:outline-offset-4 [&_a]:focus-visible:outline-[var(--dashboard-accent)]"
+      className="[--dashboard-accent:var(--dashboard-brand)] dark:[--dashboard-accent:var(--dashboard-brand-light)] erp-overview min-w-0 bg-transparent px-1 py-3 text-slate-900 dark:text-slate-100 sm:px-2 lg:px-3 [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-offset-4 [&_button]:focus-visible:outline-[var(--dashboard-accent)] [&_a]:focus-visible:outline-2 [&_a]:focus-visible:outline-offset-4 [&_a]:focus-visible:outline-[var(--dashboard-accent)]"
     >
       <div className="mx-auto max-w-[1440px] space-y-6">
-        <header className="flex flex-wrap items-end justify-between gap-4">
+        <header className="erp-overview-heading flex flex-wrap items-end justify-between gap-5">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--dashboard-accent)]">
+              Your care workspace
+            </p>
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+              Your practice, at a glance.
+            </h1>
             <p className={`mt-1.5 text-sm ${subtle}`}>
               {userName
                 ? `Welcome back, ${userName.split(" ")[0]}.`
@@ -206,7 +215,7 @@ export function RoleDashboardPage({
             )}
             <Link
               href={href("appointments-review")}
-              className="inline-flex items-center gap-2 rounded-lg bg-[var(--dashboard-brand)] px-3.5 py-2 text-xs font-medium text-white transition hover:opacity-90"
+              className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--dashboard-brand)] px-5 py-2.5 text-xs font-semibold text-white transition hover:opacity-90"
             >
               Open appointments
               <ArrowUpRight size={14} />
@@ -233,26 +242,31 @@ export function RoleDashboardPage({
               label: "Appointment requests",
               source: "appointments",
               page: "appointments-dashboard",
+              icon: CalendarDays,
             },
             {
               key: "Patients",
               label: "Patients",
               source: "appointments",
               page: "patients",
+              icon: Users,
             },
             {
               key: "Active Doctors",
               label: "Published doctors",
               source: "doctors",
               page: "doctors",
+              icon: Stethoscope,
             },
             {
               key: "Active Services",
               label: "Live services",
               source: "services",
               page: "services",
+              icon: HeartPulse,
             },
           ].map((metric) => {
+            const MetricIcon = metric.icon;
             const stat = analytics?.stats?.find(
               (item) => item.label === metric.key
             );
@@ -260,21 +274,43 @@ export function RoleDashboardPage({
               <Link
                 href={href(metric.page as DashboardPage)}
                 key={metric.key}
+                data-featured={
+                  metric.source === "appointments" &&
+                  metric.page === "appointments-dashboard"
+                }
                 className="erp-metric group rounded-[22px] border border-slate-200/80 bg-white p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 dark:border-white/10 dark:bg-[#17191e] motion-reduce:transform-none"
               >
-                <div className={`flex items-center gap-2 text-xs ${subtle}`}>
+                <div className="mb-5 flex items-center justify-between">
+                  <span className="erp-metric-icon flex size-10 items-center justify-center rounded-2xl">
+                    <MetricIcon
+                      size={19}
+                      strokeWidth={1.6}
+                      aria-hidden="true"
+                    />
+                  </span>
+                  <ArrowUpRight
+                    size={17}
+                    className="opacity-50"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div
+                  className={`erp-metric-label flex items-center gap-2 text-xs ${subtle}`}
+                >
                   {metric.label}
                   <ArrowUpRight
                     size={12}
                     className="opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100"
                   />
                 </div>
-                <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">
+                <p className="mt-2 text-4xl font-semibold tracking-tight tabular-nums">
                   {ready && !unavailable.includes(metric.source)
                     ? (stat?.value ?? "—")
                     : "—"}
                 </p>
-                <p className={`mt-1.5 text-[11px] leading-5 ${subtle}`}>
+                <p
+                  className={`erp-metric-note mt-2 text-[11px] leading-5 ${subtle}`}
+                >
                   {loading
                     ? "Loading…"
                     : unavailable.includes(metric.source)
@@ -287,6 +323,166 @@ export function RoleDashboardPage({
         </section>
         <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="min-w-0 space-y-5">
+            <section className={panel}>
+              <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-4">
+                <div>
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--dashboard-accent)]">
+                    Practice insights
+                  </p>
+                  <h2 className="text-base font-semibold">Activity overview</h2>
+                  <p className={`mt-1 text-[11px] ${subtle}`}>
+                    {chart?.period ?? "Recent activity"}
+                  </p>
+                </div>
+                <select
+                  aria-label="Activity metric"
+                  value={chartIndex}
+                  onChange={(event) =>
+                    setChartIndex(Number(event.target.value))
+                  }
+                  className={`${control} py-1.5`}
+                >
+                  {["Appointments", "Doctors", "Services"].map(
+                    (label, index) => (
+                      <option key={label} value={index}>
+                        {label}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+              {loading ? (
+                <EmptyBlock title="Loading activity…" />
+              ) : chartUnavailable ? (
+                <EmptyBlock
+                  title="Activity is unavailable"
+                  description="Refresh to load this trend."
+                />
+              ) : !hasTrend ? (
+                <div className="m-5 flex min-h-28 items-center gap-4 rounded-lg border border-dashed border-slate-200 p-5 dark:border-white/10">
+                  <Clock3
+                    aria-hidden="true"
+                    size={22}
+                    strokeWidth={1.3}
+                    className="shrink-0 text-slate-400"
+                  />
+                  <div>
+                    <h3 className="text-xs font-medium">
+                      No activity in this period
+                    </h3>
+                    <p className={`mt-1.5 text-xs leading-5 ${subtle}`}>
+                      A trend will appear here as{" "}
+                      {chartIndex === 0
+                        ? "patients request appointments"
+                        : chartIndex === 1
+                          ? "doctor profiles are published"
+                          : "services are published"}
+                      .
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  role="img"
+                  aria-label={points
+                    .map((point) => `${point.label}: ${point.value}`)
+                    .join(", ")}
+                  className="mt-5 h-60 pr-5"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={points}
+                      accessibilityLayer
+                      margin={{ top: 10, right: 0, left: -20, bottom: 10 }}
+                    >
+                      <CartesianGrid
+                        vertical={false}
+                        stroke="var(--border, #e2e8f0)"
+                        strokeDasharray="3 5"
+                      />
+                      <XAxis
+                        dataKey="label"
+                        axisLine={false}
+                        tickLine={false}
+                        minTickGap={30}
+                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                      />
+                      <Tooltip
+                        cursor={{ fill: "#94a3b812" }}
+                        contentStyle={{
+                          borderRadius: 8,
+                          fontSize: 12,
+                          color: "#334155",
+                        }}
+                      />
+                      <Bar
+                        dataKey="value"
+                        name={
+                          [
+                            "Requests",
+                            "Doctors published",
+                            "Services published",
+                          ][chartIndex]
+                        }
+                        fill="var(--dashboard-accent)"
+                        radius={[7, 7, 0, 0]}
+                        maxBarSize={32}
+                        isAnimationActive={false}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+              {appointmentTotal > 0 && !appointmentsUnavailable && (
+                <div className="border-t border-slate-100 p-5 dark:border-white/5">
+                  <p className={`mb-3 text-[11px] ${subtle}`}>
+                    Appointment status · all loaded requests
+                  </p>
+                  <div
+                    aria-label="Appointment status distribution"
+                    className="flex h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/5"
+                  >
+                    {statuses
+                      .filter((item) => item.value > 0)
+                      .map((item) => (
+                        <span
+                          key={item.label}
+                          title={`${item.label}: ${item.value}`}
+                          style={{
+                            width: `${(item.value / appointmentTotal) * 100}%`,
+                            background: item.color,
+                          }}
+                        />
+                      ))}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+                    {statuses
+                      .filter((item) => item.value > 0)
+                      .map((item) => (
+                        <span
+                          key={item.label}
+                          className={`flex items-center gap-1.5 text-[10px] ${subtle}`}
+                        >
+                          <span
+                            className="size-1.5 rounded-full"
+                            style={{ background: item.color }}
+                          />
+                          {item.label}
+                          <span className="font-medium text-slate-700 dark:text-slate-200">
+                            {item.value}
+                          </span>
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </section>
             <section className={panel} aria-label="Recent appointments">
               <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                 <div className="flex items-center gap-2.5">
@@ -430,165 +626,50 @@ export function RoleDashboardPage({
                 Requested times are confirmed after approval.
               </div>
             </section>
-            <section className={panel}>
-              <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-4">
-                <div>
-                  <h2 className="text-sm font-semibold">Activity</h2>
-                  <p className={`mt-1 text-[11px] ${subtle}`}>
-                    {chart?.period ?? "Recent activity"}
-                  </p>
-                </div>
-                <select
-                  aria-label="Activity metric"
-                  value={chartIndex}
-                  onChange={(event) =>
-                    setChartIndex(Number(event.target.value))
-                  }
-                  className={`${control} py-1.5`}
-                >
-                  {["Appointments", "Doctors", "Services"].map(
-                    (label, index) => (
-                      <option key={label} value={index}>
-                        {label}
-                      </option>
-                    )
-                  )}
-                </select>
-              </div>
-              {loading ? (
-                <EmptyBlock title="Loading activity…" />
-              ) : chartUnavailable ? (
-                <EmptyBlock
-                  title="Activity is unavailable"
-                  description="Refresh to load this trend."
-                />
-              ) : !hasTrend ? (
-                <div className="m-5 flex min-h-28 items-center gap-4 rounded-lg border border-dashed border-slate-200 p-5 dark:border-white/10">
-                  <Clock3
-                    aria-hidden="true"
-                    size={22}
-                    strokeWidth={1.3}
-                    className="shrink-0 text-slate-400"
-                  />
-                  <div>
-                    <h3 className="text-xs font-medium">
-                      No activity in this period
-                    </h3>
-                    <p className={`mt-1.5 text-xs leading-5 ${subtle}`}>
-                      A trend will appear here as{" "}
-                      {chartIndex === 0
-                        ? "patients request appointments"
-                        : chartIndex === 1
-                          ? "doctor profiles are published"
-                          : "services are published"}
-                      .
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  role="img"
-                  aria-label={points
-                    .map((point) => `${point.label}: ${point.value}`)
-                    .join(", ")}
-                  className="mt-3 h-48 pr-5"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={points}
-                      accessibilityLayer
-                      margin={{ top: 10, right: 0, left: -20, bottom: 10 }}
-                    >
-                      <CartesianGrid
-                        vertical={false}
-                        stroke="var(--border, #e2e8f0)"
-                        strokeDasharray="3 5"
-                      />
-                      <XAxis
-                        dataKey="label"
-                        axisLine={false}
-                        tickLine={false}
-                        minTickGap={30}
-                        tick={{ fontSize: 10, fill: "#94a3b8" }}
-                      />
-                      <YAxis
-                        allowDecimals={false}
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 10, fill: "#94a3b8" }}
-                      />
-                      <Tooltip
-                        cursor={{ fill: "#94a3b812" }}
-                        contentStyle={{
-                          borderRadius: 8,
-                          fontSize: 12,
-                          color: "#334155",
-                        }}
-                      />
-                      <Bar
-                        dataKey="value"
-                        name={
-                          [
-                            "Requests",
-                            "Doctors published",
-                            "Services published",
-                          ][chartIndex]
-                        }
-                        fill="var(--dashboard-accent)"
-                        radius={[3, 3, 0, 0]}
-                        maxBarSize={20}
-                        isAnimationActive={false}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-              {appointmentTotal > 0 && !appointmentsUnavailable && (
-                <div className="border-t border-slate-100 p-5 dark:border-white/5">
-                  <p className={`mb-3 text-[11px] ${subtle}`}>
-                    Appointment status · all loaded requests
-                  </p>
-                  <div
-                    aria-label="Appointment status distribution"
-                    className="flex h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/5"
-                  >
-                    {statuses
-                      .filter((item) => item.value > 0)
-                      .map((item) => (
-                        <span
-                          key={item.label}
-                          title={`${item.label}: ${item.value}`}
-                          style={{
-                            width: `${(item.value / appointmentTotal) * 100}%`,
-                            background: item.color,
-                          }}
-                        />
-                      ))}
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-                    {statuses
-                      .filter((item) => item.value > 0)
-                      .map((item) => (
-                        <span
-                          key={item.label}
-                          className={`flex items-center gap-1.5 text-[10px] ${subtle}`}
-                        >
-                          <span
-                            className="size-1.5 rounded-full"
-                            style={{ background: item.color }}
-                          />
-                          {item.label}
-                          <span className="font-medium text-slate-700 dark:text-slate-200">
-                            {item.value}
-                          </span>
-                        </span>
-                      ))}
-                  </div>
-                </div>
-              )}
-            </section>
           </div>
           <aside className="min-w-0 space-y-5">
+            <section
+              className={`${panel} erp-review-card`}
+              aria-label="Requests to review"
+            >
+              <div className="flex items-center justify-between">
+                <span className="erp-metric-icon flex size-11 items-center justify-center rounded-2xl">
+                  <ClipboardCheck
+                    size={21}
+                    strokeWidth={1.5}
+                    aria-hidden="true"
+                  />
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--dashboard-accent)]">
+                  Needs your attention
+                </span>
+              </div>
+              <h2 className="mt-5 text-lg font-semibold">
+                Make room for better care.
+              </h2>
+              <p className="mt-2 text-xs leading-6 text-slate-500 dark:text-slate-400">
+                Review patient requests and help them take their next step.
+              </p>
+              <div className="my-5 flex items-end gap-3">
+                <span className="text-5xl font-semibold tracking-tight tabular-nums">
+                  {ready && !appointmentsUnavailable ? pending : "—"}
+                </span>
+                <span className="pb-1 text-xs text-slate-500 dark:text-slate-400">
+                  {loading
+                    ? "Loading requests…"
+                    : appointmentsUnavailable
+                      ? "Requests unavailable"
+                      : "awaiting approval"}
+                </span>
+              </div>
+              <Link
+                href={href("appointments-review")}
+                className="flex min-h-11 items-center justify-between rounded-full bg-[var(--dashboard-brand)] px-4 text-xs font-semibold text-white transition hover:opacity-90"
+              >
+                Review appointments
+                <ArrowUpRight size={16} />
+              </Link>
+            </section>
             <section className={panel}>
               <div className="flex items-center justify-between px-5 pt-4">
                 <h2 className="text-sm font-semibold">Patient-app listing</h2>

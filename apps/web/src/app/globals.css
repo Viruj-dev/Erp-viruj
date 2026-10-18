@@ -439,3 +439,55 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Overview hierarchy: one highlighted metric, a wide insights panel, and a care rail. */
+.erp-overview-heading {
+  padding-block: 4px 12px;
+}
+.erp-overview .erp-metric {
+  padding: 22px;
+  border-radius: 24px;
+}
+.erp-overview .erp-metric::before {
+  display: none;
+}
+.erp-metric-icon {
+  color: var(--dashboard-accent);
+  background: color-mix(in srgb, var(--dashboard-brand) 9%, transparent);
+}
+.erp-overview .erp-metric[data-featured="true"] {
+  color: white;
+  background: var(--dashboard-brand);
+  border-color: transparent;
+  box-shadow: 0 8px 24px
+    color-mix(in srgb, var(--dashboard-brand) 16%, transparent);
+}
+.erp-metric[data-featured="true"] .erp-metric-icon {
+  color: white;
+  background: rgb(255 255 255 / 15%);
+}
+.erp-metric[data-featured="true"] .erp-metric-label,
+.erp-metric[data-featured="true"] .erp-metric-note {
+  color: rgb(255 255 255 / 80%);
+}
+.erp-review-card {
+  padding: 22px;
+}
+.erp-overview .erp-bento {
+  border-radius: 24px;
+}
+.erp-overview .erp-bento > div:first-child {
+  padding-top: 22px;
+}
+.erp-overview .erp-bento table tbody tr {
+  transition: background-color 150ms ease;
+}
+@media (max-width: 639px) {
+  .erp-overview-heading h1 {
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+  .erp-overview .erp-metric {
+    padding: 18px;
+  }
+}
