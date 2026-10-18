@@ -34,7 +34,7 @@ export function ErpDemoTopBar({
   const title = organizationName?.trim() || organizationLabel;
 
   return (
-    <header className="erp-topbar relative z-30 flex shrink-0 items-center justify-between gap-3 border border-white/80 bg-white px-4 py-3 transition-colors dark:border-white/[0.06] dark:bg-[#17191e]">
+    <header className="erp-topbar mx-auto relative z-30 flex shrink-0 items-center justify-between gap-3 border border-white/80 bg-white px-4 py-3 transition-colors dark:border-white/[0.06] dark:bg-[#17191e]">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <div
           className={cn(
