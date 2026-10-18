@@ -381,7 +381,10 @@
 }
 .erp-topbar {
   min-height: 68px;
-  margin: 12px 28px 0;
+  position: sticky;
+  top: 12px;
+  width: min(1440px, calc(100% - 80px));
+  margin: 12px auto 0;
   border-radius: 20px;
   box-shadow: 0 2px 12px rgb(15 23 42 / 2%);
 }
@@ -422,10 +425,17 @@
   padding-top: 16px;
   padding-bottom: 16px;
 }
+@media (min-width: 640px) and (max-width: 1023px) {
+  .erp-topbar {
+    width: min(1440px, calc(100% - 56px));
+  }
+}
+
 @media (max-width: 639px) {
   .erp-topbar {
     min-height: 64px;
-    margin: 12px 12px 0;
+    width: calc(100% - 32px);
+    margin: 12px auto 0;
     padding-inline: 12px;
     gap: 8px;
   }

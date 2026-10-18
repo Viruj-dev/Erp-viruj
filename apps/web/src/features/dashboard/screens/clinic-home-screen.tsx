@@ -423,36 +423,36 @@ export function ClinicHomeScreen({
             : "ml-[76px] lg:ml-[264px]"
         }`}
       >
-        <ErpDemoTopBar
-          organizationId={activeOrganization.id}
-          organizationLabel={organizationLabel}
-          organizationName={organizationName}
-          roleLabel={roleLabel}
-          userName={userName}
-          onNavigateToProfile={() => {
-            router.push(
-              activeOrganizationSlug
-                ? buildTenantDashboardPath(
-                    "clinic",
-                    activeOrganizationSlug,
-                    "clinic-profile"
-                  )
-                : buildDashboardPath("clinic", "clinic-profile")
-            );
-          }}
-          onLogout={async () => {
-            setIsSigningOut(true);
-            try {
-              await authClient.signOut();
-              await sessionState.refetch();
-              await activeOrganizationState.refetch();
-              await activeMemberState.refetch();
-            } finally {
-              setIsSigningOut(false);
-            }
-          }}
-        />
         <div className="erp-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+          <ErpDemoTopBar
+            organizationId={activeOrganization.id}
+            organizationLabel={organizationLabel}
+            organizationName={organizationName}
+            roleLabel={roleLabel}
+            userName={userName}
+            onNavigateToProfile={() => {
+              router.push(
+                activeOrganizationSlug
+                  ? buildTenantDashboardPath(
+                      "clinic",
+                      activeOrganizationSlug,
+                      "clinic-profile"
+                    )
+                  : buildDashboardPath("clinic", "clinic-profile")
+              );
+            }}
+            onLogout={async () => {
+              setIsSigningOut(true);
+              try {
+                await authClient.signOut();
+                await sessionState.refetch();
+                await activeOrganizationState.refetch();
+                await activeMemberState.refetch();
+              } finally {
+                setIsSigningOut(false);
+              }
+            }}
+          />
           <AnimatePresence mode="wait">
             <motion.div
               key={resolvedPage}
