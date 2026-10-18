@@ -168,7 +168,7 @@ export function WorkspaceSection({
   return (
     <OnboardingTheme.Provider value={kind}>
       <div
-        className={`${theme} min-h-full space-y-6 bg-[var(--onboarding-shell)] p-5 text-[var(--onboarding-text)] lg:p-8`}
+        className={`${theme} mx-auto min-h-full w-[calc(100%-8px)] max-w-[1440px] space-y-6 rounded-[24px] bg-[var(--onboarding-shell)] p-5 text-[var(--onboarding-text)] sm:w-[calc(100%-16px)] lg:w-[calc(100%-24px)] lg:p-8`}
       >
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
