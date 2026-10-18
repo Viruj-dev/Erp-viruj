@@ -175,7 +175,7 @@ export function RoleDashboardPage({
                 : "#278565",
         } as CSSProperties
       }
-      className="[--dashboard-accent:var(--dashboard-brand)] dark:[--dashboard-accent:var(--dashboard-brand-light)] min-w-0 bg-[#fafafa] px-4 py-6 text-slate-900 dark:bg-[#111318] dark:text-slate-100 sm:px-6 lg:px-8 [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-offset-4 [&_button]:focus-visible:outline-[var(--dashboard-accent)] [&_a]:focus-visible:outline-2 [&_a]:focus-visible:outline-offset-4 [&_a]:focus-visible:outline-[var(--dashboard-accent)]"
+      className="[--dashboard-accent:var(--dashboard-brand)] dark:[--dashboard-accent:var(--dashboard-brand-light)] min-w-0 bg-transparent px-4 py-6 text-slate-900 dark:bg-[#111318] dark:text-slate-100 sm:px-6 lg:px-8 [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-offset-4 [&_button]:focus-visible:outline-[var(--dashboard-accent)] [&_a]:focus-visible:outline-2 [&_a]:focus-visible:outline-offset-4 [&_a]:focus-visible:outline-[var(--dashboard-accent)]"
     >
       <div className="mx-auto max-w-[1440px] space-y-6">
         <header className="flex flex-wrap items-end justify-between gap-4">

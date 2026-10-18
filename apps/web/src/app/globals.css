@@ -345,6 +345,23 @@
 .erp-workspace {
   isolation: isolate;
 }
+
+/* A neutral canvas makes the white navigation and dashboard cards stand out. */
+:root:not(.dark) .erp-workspace {
+  background: #eceeef;
+}
+
+:root:not(.dark) .erp-sidebar {
+  background: #fff;
+  border-color: rgb(255 255 255 / 85%);
+}
+
+:root:not(.dark) .erp-bento,
+:root:not(.dark) .erp-metric {
+  background: #fff;
+  border-color: rgb(15 23 42 / 4%);
+  box-shadow: 0 2px 8px rgb(15 23 42 / 2%);
+}
 .erp-sidebar {
   box-shadow: 0 4px 24px rgb(15 23 42 / 4%);
 }
