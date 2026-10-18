@@ -2,12 +2,27 @@
 
 import { Loader2, Save } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
-import type { VirujFacility, VirujFacilityCategory, VirujFacilityInput, VirujFacilityStatus } from "@/lib/viruj-backend";
+import type {
+  VirujFacility,
+  VirujFacilityCategory,
+  VirujFacilityInput,
+  VirujFacilityStatus,
+} from "@/lib/viruj-backend";
+import { clinicServices } from "../clinic-services";
 import { facilityCategories } from "../constants";
 import { slugify, validateFacilityForm } from "../utils";
-import { CategoryPill, NumberField, SelectField, StatusPill, SwitchRow, TextAreaField, TextField } from "./primitives";
+import {
+  CategoryPill,
+  NumberField,
+  SelectField,
+  StatusPill,
+  SwitchRow,
+  TextAreaField,
+  TextField,
+} from "./primitives";
 
 export function FacilityForm({
+  clinicService = false,
   existingFacilities,
   initialValue,
   isSaving,
@@ -16,6 +31,7 @@ export function FacilityForm({
   saveError,
   submitLabel,
 }: {
+  clinicService?: boolean;
   existingFacilities: VirujFacility[];
   initialValue: VirujFacilityInput;
   isSaving: boolean;
@@ -25,12 +41,14 @@ export function FacilityForm({
   submitLabel: string;
 }) {
   const [form, setForm] = useState<VirujFacilityInput>(initialValue);
-  const [slugTouched, setSlugTouched] = useState(Boolean(initialValue.slug));
+  const [serviceSearch, setServiceSearch] = useState("");
+  const preserveSlug = Boolean(initialValue.slug);
   const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     if (!dirty) return;
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => event.preventDefault();
+    const handleBeforeUnload = (event: BeforeUnloadEvent) =>
+      event.preventDefault();
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [dirty]);
@@ -38,7 +56,10 @@ export function FacilityForm({
   const validation = validateFacilityForm(form, existingFacilities);
   const canSubmit = validation.length === 0 && !isSaving;
 
-  function updateField<TKey extends keyof VirujFacilityInput>(field: TKey, value: VirujFacilityInput[TKey]) {
+  function updateField<TKey extends keyof VirujFacilityInput>(
+    field: TKey,
+    value: VirujFacilityInput[TKey]
+  ) {
     setDirty(true);
     setForm((current) => ({ ...current, [field]: value }));
   }
@@ -49,7 +70,15 @@ export function FacilityForm({
       ...current,
       name: value,
       seoTitle: current.seoTitle || value,
-      slug: slugTouched ? current.slug : slugify(value),
+      slug: clinicService
+        ? slugify(value)
+        : preserveSlug
+          ? current.slug
+          : slugify(value),
+      category: clinicService
+        ? (clinicServices.find((service) => service.name === value)?.category ??
+          current.category)
+        : current.category,
     }));
   }
 
@@ -78,17 +107,81 @@ export function FacilityForm({
         <div className="space-y-4 p-5">
           <div className="flex flex-wrap items-center gap-2">
             <CategoryPill category={form.category} />
-            <StatusPill status={active ? "active" : form.status === "archived" ? "archived" : "draft"} />
+            <StatusPill
+              status={
+                active
+                  ? "active"
+                  : form.status === "archived"
+                    ? "archived"
+                    : "draft"
+              }
+            />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TextField label="Service Name *" onChange={updateName} placeholder="MRI Scan" value={form.name} />
-            <SelectField label="Category *" onChange={(value) => updateField("category", value as VirujFacilityCategory)} value={form.category}>
-              {facilityCategories.map((category) => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </SelectField>
-          </div>
+          {clinicService ? (
+            <div className="space-y-3">
+              <TextField
+                label="Find a clinic service"
+                onChange={setServiceSearch}
+                placeholder="Search consultations, vaccination, physiotherapy…"
+                value={serviceSearch}
+              />
+              <SelectField
+                label="Service *"
+                onChange={updateName}
+                value={form.name}
+              >
+                <option value="">Choose a service</option>
+                {form.name &&
+                !clinicServices.some(
+                  (service) => service.name === form.name
+                ) ? (
+                  <option value={form.name}>
+                    {form.name} (existing service)
+                  </option>
+                ) : null}
+                {clinicServices
+                  .filter(
+                    (service) =>
+                      service.name === form.name ||
+                      service.name
+                        .toLowerCase()
+                        .includes(serviceSearch.trim().toLowerCase())
+                  )
+                  .map((service) => (
+                    <option key={service.name} value={service.name}>
+                      {service.name}
+                    </option>
+                  ))}
+              </SelectField>
+              <p className="text-xs text-slate-500">
+                Select a service, then set the fee and booking preferences
+                below.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TextField
+                label="Service Name *"
+                onChange={updateName}
+                placeholder="MRI Scan"
+                value={form.name}
+              />
+              <SelectField
+                label="Category *"
+                onChange={(value) =>
+                  updateField("category", value as VirujFacilityCategory)
+                }
+                value={form.category}
+              >
+                {facilityCategories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </SelectField>
+            </div>
+          )}
 
           <TextAreaField
             compact
@@ -97,57 +190,104 @@ export function FacilityForm({
               updateField("shortDescription", value);
               updateField("description", value);
             }}
-            placeholder="Short patient-facing summary. Example: 24x7 ambulance service with trained emergency staff."
+            placeholder="Tell patients what is included, who this service is for, and any preparation needed."
             value={form.shortDescription || form.description}
           />
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            <NumberField label="Price set by owner" onChange={(value) => updateField("startingPrice", value)} prefix="Rs" value={form.startingPrice} />
-            <TextField label="Custom Price Text" onChange={(value) => updateField("priceText", value)} placeholder="Contact Clinic" value={form.priceText} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <NumberField
+              label="Service fee (INR)"
+              onChange={(value) => updateField("startingPrice", value)}
+              prefix="₹"
+              value={form.startingPrice}
+            />
             <TextField
-              label="Slug"
-              onChange={(value) => {
-                setSlugTouched(true);
-                updateField("slug", slugify(value));
-              }}
-              placeholder="mri-scan"
-              value={form.slug}
+              label="Pricing note (optional)"
+              onChange={(value) => updateField("priceText", value)}
+              placeholder="e.g. Per session or Contact clinic"
+              value={form.priceText}
             />
           </div>
         </div>
 
         <aside className="border-t border-slate-200 bg-slate-50 p-5 dark:border-white/[0.08] dark:bg-white/[0.035] lg:border-l lg:border-t-0">
           <div className="space-y-3">
-            <SelectField label="Status" onChange={(value) => {
-              const nextStatus = value as VirujFacilityStatus;
-              updateField("status", nextStatus);
-              updateField("isAvailable", nextStatus === "active");
-            }} value={form.status}>
+            <SelectField
+              label="Status"
+              onChange={(value) => {
+                const nextStatus = value as VirujFacilityStatus;
+                updateField("status", nextStatus);
+                updateField("isAvailable", nextStatus === "active");
+              }}
+              value={form.status}
+            >
               <option value="active">Active</option>
               <option value="draft">Inactive</option>
               <option value="archived">Archived</option>
             </SelectField>
-            <SwitchRow checked={form.isFeatured} label="Featured" onChange={(value) => updateField("isFeatured", value)} />
-            <SwitchRow checked={form.onlineBooking} label="Online Booking" onChange={(value) => updateField("onlineBooking", value)} />
-            <SwitchRow checked={form.emergencyService} label="Emergency" onChange={(value) => updateField("emergencyService", value)} />
-            <SwitchRow checked={form.available247} label="24x7" onChange={(value) => updateField("available247", value)} />
+            <SwitchRow
+              checked={form.isFeatured}
+              label="Featured"
+              onChange={(value) => updateField("isFeatured", value)}
+            />
+            <SwitchRow
+              checked={form.onlineBooking}
+              label="Online Booking"
+              onChange={(value) => updateField("onlineBooking", value)}
+            />
+            {clinicService ? (
+              <SwitchRow
+                checked={form.appointmentRequired}
+                label="Appointment required"
+                onChange={(value) => updateField("appointmentRequired", value)}
+              />
+            ) : (
+              <SwitchRow
+                checked={form.emergencyService}
+                label="Emergency"
+                onChange={(value) => updateField("emergencyService", value)}
+              />
+            )}
+            {!clinicService && (
+              <SwitchRow
+                checked={form.available247}
+                label="24x7"
+                onChange={(value) => updateField("available247", value)}
+              />
+            )}
           </div>
         </aside>
       </section>
 
-      {validation.length > 0 ? (
-        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-200">{validation[0]}</div>
+      {dirty && validation.length > 0 ? (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-200">
+          {validation[0]}
+        </div>
       ) : null}
       {saveError ? (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-200">{saveError.message || "Unable to save service."}</div>
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-200">
+          {saveError.message || "Unable to save service."}
+        </div>
       ) : null}
 
       <div className="mt-5 flex justify-end gap-3">
-        <button className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semi-bold text-slate-700 transition hover:bg-slate-50 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-200" onClick={cancel} type="button">
+        <button
+          className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semi-bold text-slate-700 transition hover:bg-slate-50 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-200"
+          onClick={cancel}
+          type="button"
+        >
           Cancel
         </button>
-        <button className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 text-sm font-semi-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950" disabled={!canSubmit} type="submit">
-          {isSaving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+        <button
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 text-sm font-semi-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950"
+          disabled={!canSubmit}
+          type="submit"
+        >
+          {isSaving ? (
+            <Loader2 className="animate-spin" size={16} />
+          ) : (
+            <Save size={16} />
+          )}
           {submitLabel}
         </button>
       </div>

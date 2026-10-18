@@ -374,6 +374,9 @@ export function FacilitiesPage({
           tone={pageTone}
         >
           <FacilityForm
+            clinicService={
+              catalogKind === "services" && tenant?.providerType === "clinic"
+            }
             existingFacilities={facilities}
             initialValue={{
               ...emptyFacilityForm,
@@ -383,7 +386,9 @@ export function FacilitiesPage({
             onCancel={() => router.push(`${routeBasePath}/${catalogKind}`)}
             onSubmit={(input) => createMutation.mutate(input)}
             saveError={createMutation.error}
-            submitLabel="Create card"
+            submitLabel={
+              catalogKind === "services" ? "Add service" : "Add facility"
+            }
           />
         </FacilityEditorDialog>
       </>
@@ -414,6 +419,9 @@ export function FacilitiesPage({
           tone={pageTone}
         >
           <FacilityForm
+            clinicService={
+              catalogKind === "services" && tenant?.providerType === "clinic"
+            }
             existingFacilities={facilities.filter(
               (facility) => facility.id !== routeFacility.id
             )}
@@ -424,7 +432,7 @@ export function FacilitiesPage({
               updateMutation.mutate({ facility: input, id: routeFacility.id })
             }
             saveError={updateMutation.error}
-            submitLabel="Save card"
+            submitLabel="Save changes"
           />
         </FacilityEditorDialog>
       </>

@@ -1,14 +1,34 @@
-import { AlertTriangle, CalendarCheck, CheckCircle2, ClipboardList, Star, Zap } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarCheck,
+  CheckCircle2,
+  ClipboardList,
+  Star,
+  Zap,
+} from "lucide-react";
 import type { ChangeEvent } from "react";
-import type { VirujFacility, VirujFacilityInput, VirujFacilityStatus } from "@/lib/viruj-backend";
-import type { FacilityAction, FacilityRoute, FilterState, SortKey } from "./types";
-export function parseFacilityRoute(segments: string[], root = "facilities"): FacilityRoute {
+import type {
+  VirujFacility,
+  VirujFacilityInput,
+  VirujFacilityStatus,
+} from "@/lib/viruj-backend";
+import type {
+  FacilityAction,
+  FacilityRoute,
+  FilterState,
+  SortKey,
+} from "./types";
+export function parseFacilityRoute(
+  segments: string[],
+  root = "facilities"
+): FacilityRoute {
   const facilityIndex = segments.indexOf(root);
   const trailing = facilityIndex >= 0 ? segments.slice(facilityIndex + 1) : [];
   const first = trailing[0];
   const second = trailing[1];
   if (first === "new") return { mode: "create" };
-  if (first && first !== "dashboard" && second === "edit") return { id: first, mode: "edit" };
+  if (first && first !== "dashboard" && second === "edit")
+    return { id: first, mode: "edit" };
   return { mode: "list" };
 }
 export function filterAndSortFacilities(
@@ -94,7 +114,9 @@ export function buildFacilityStats(facilities: VirujFacility[]) {
     {
       icon: <CheckCircle2 size={18} />,
       label: "Active",
-      value: String(facilities.filter((item) => item.status === "active").length),
+      value: String(
+        facilities.filter((item) => item.status === "active").length
+      ),
     },
     {
       icon: <Star size={18} />,
@@ -118,8 +140,13 @@ export function validateFacilityForm(
   if (form.startingPrice !== null && form.startingPrice < 0)
     errors.push("Price cannot be negative.");
   const slug = form.slug || slugify(form.name);
-  if (slug && existingFacilities.some((facility) => facility.slug === slug))
-    errors.push("Slug must be unique.");
+  if (
+    slug &&
+    existingFacilities.some(
+      (facility) => facility.slug === slug
+    )
+  )
+    errors.push("A service with this name already exists.");
   return errors;
 }
 export function getFacilityPermissions(
