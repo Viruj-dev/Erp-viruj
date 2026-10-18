@@ -3,11 +3,20 @@
 import { shouldStartOrganizationOnboarding } from "@/features/dashboard/lib/onboarding";
 import { ActivityLogsPage } from "@/features/dashboard/components/shared/activity";
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
-import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
+import {
+  ErpDemoSidebar,
+  ErpDemoTopBar,
+} from "@/features/dashboard/components/shared/layout";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
-import { createErpTenantContext, type ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
+import {
+  createErpTenantContext,
+  type ErpTenantContext,
+} from "@/features/dashboard/lib/erp-tenant";
 import { ClinicGalleryPage } from "@/features/dashboard/components/clinic/pages";
-import { ErpDemoAppointments, ErpEnterpriseModule } from "@/features/dashboard/components/shared/modules";
+import {
+  ErpDemoAppointments,
+  ErpEnterpriseModule,
+} from "@/features/dashboard/components/shared/modules";
 import {
   ErpDemoAnalytics,
   ErpDemoBilling,
@@ -34,14 +43,18 @@ import {
   resolveAccessibleDashboardPage,
 } from "@/features/dashboard/lib/routing";
 import { LoadingScreen } from "@/features/shell/components/loading-screen";
-import { billingQueryOptions, needsAnalyticsSubscription } from "@/features/subscription/utils/billing-query-options";
-import { subscriptionBillingApi } from "@/features/subscription/api/subscription.api";
-import { getBillingPermissionsFromMember, hasBillingPermission, hasFeature } from "@/features/subscription/utils/subscription-access";
 import {
-  activateOrganization,
-  authClient,
-} from "@/lib/auth-client";
-import { AnimatePresence, motion } from "framer-motion";
+  billingQueryOptions,
+  needsAnalyticsSubscription,
+} from "@/features/subscription/utils/billing-query-options";
+import { subscriptionBillingApi } from "@/features/subscription/api/subscription.api";
+import {
+  getBillingPermissionsFromMember,
+  hasBillingPermission,
+  hasFeature,
+} from "@/features/subscription/utils/subscription-access";
+import { activateOrganization, authClient } from "@/lib/auth-client";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
@@ -61,6 +74,7 @@ export function ErpHomeScreen({
   const [isActivatingOnlyOrganization, setIsActivatingOnlyOrganization] =
     useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const reduceMotion = useReducedMotion();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [canRenderSignupOnboarding, setCanRenderSignupOnboarding] =
     useState(false);
@@ -138,23 +152,51 @@ export function ErpHomeScreen({
       : null;
   const activeMemberRole = activeMember?.role;
   const activeMemberPermissions = getBillingPermissionsFromMember(activeMember);
-  const canReadSubscription = hasBillingPermission(activeMemberPermissions, "subscription.read");
-  const checkAnalyticsSubscription = needsAnalyticsSubscription(currentPage, activeOrganizationType, canReadSubscription);
-  const subscriptionQuery = useQuery({ ...billingQueryOptions, enabled: checkAnalyticsSubscription, queryFn: subscriptionBillingApi.current, queryKey: subscriptionBillingApi.currentKey });
-  const plansQuery = useQuery({ ...billingQueryOptions, enabled: checkAnalyticsSubscription, queryFn: subscriptionBillingApi.plans, queryKey: subscriptionBillingApi.plansKey });
-  const checkingAnalyticsAccess = checkAnalyticsSubscription && (subscriptionQuery.isLoading || plansQuery.isLoading);
+  const canReadSubscription = hasBillingPermission(
+    activeMemberPermissions,
+    "subscription.read"
+  );
+  const checkAnalyticsSubscription = needsAnalyticsSubscription(
+    currentPage,
+    activeOrganizationType,
+    canReadSubscription
+  );
+  const subscriptionQuery = useQuery({
+    ...billingQueryOptions,
+    enabled: checkAnalyticsSubscription,
+    queryFn: subscriptionBillingApi.current,
+    queryKey: subscriptionBillingApi.currentKey,
+  });
+  const plansQuery = useQuery({
+    ...billingQueryOptions,
+    enabled: checkAnalyticsSubscription,
+    queryFn: subscriptionBillingApi.plans,
+    queryKey: subscriptionBillingApi.plansKey,
+  });
+  const checkingAnalyticsAccess =
+    checkAnalyticsSubscription &&
+    (subscriptionQuery.isLoading || plansQuery.isLoading);
   const allowedPages = getAllowedDashboardPages(
     activeMemberRole,
     activeMemberPermissions
   );
   // Resolve paid access on entry; opening unrelated pages must not call billing.
-  const lockedPages = activeOrganizationType === "hospital" && currentPage === "analytics" && !checkingAnalyticsAccess
-    ? getLockedPages(subscriptionQuery.data, plansQuery.data)
-    : [];
-  const routablePages = allowedPages.filter((page) => !lockedPages.includes(page));
+  const lockedPages =
+    activeOrganizationType === "hospital" &&
+    currentPage === "analytics" &&
+    !checkingAnalyticsAccess
+      ? getLockedPages(subscriptionQuery.data, plansQuery.data)
+      : [];
+  const routablePages = allowedPages.filter(
+    (page) => !lockedPages.includes(page)
+  );
   const resolvedPage = routablePages.includes(currentPage)
     ? currentPage
-    : resolveAccessibleDashboardPage("dashboard", activeMemberRole, activeMemberPermissions);
+    : resolveAccessibleDashboardPage(
+        "dashboard",
+        activeMemberRole,
+        activeMemberPermissions
+      );
   const organizationLabel = activeOrganizationType
     ? organizationTypeLabels[activeOrganizationType]
     : "Organization";
@@ -166,15 +208,16 @@ export function ErpHomeScreen({
   const roleLabel = activeMemberRole
     ? activeMemberRole.replace(/_/g, " ")
     : "member";
-  const appointmentTenant = activeOrganization?.id && activeOrganizationType
-    ? createErpTenantContext({
-        organizationId: activeOrganization.id,
-        organizationSlug: activeOrganizationSlug,
-        permissions: activeMemberPermissions,
-        providerType: activeOrganizationType,
-        role: activeMemberRole,
-      })
-    : null;
+  const appointmentTenant =
+    activeOrganization?.id && activeOrganizationType
+      ? createErpTenantContext({
+          organizationId: activeOrganization.id,
+          organizationSlug: activeOrganizationSlug,
+          permissions: activeMemberPermissions,
+          providerType: activeOrganizationType,
+          role: activeMemberRole,
+        })
+      : null;
   const workspaceTheme = getWorkspaceTheme(organizationLabel);
   const shouldRedirectToOnboarding =
     isHydrated &&
@@ -257,7 +300,10 @@ export function ErpHomeScreen({
     if (!canEnter) {
       router.replace(
         activeOrganizationSlug
-          ? buildTenantDashboardPath(activeOrganizationType, activeOrganizationSlug)
+          ? buildTenantDashboardPath(
+              activeOrganizationType,
+              activeOrganizationSlug
+            )
           : buildDashboardPath(activeOrganizationType)
       );
     }
@@ -386,7 +432,7 @@ export function ErpHomeScreen({
 
   return (
     <div
-      className={`flex h-screen min-h-screen bg-surface text-on-surface transition-colors dark:bg-[#0b0d10] dark:text-slate-100 ${workspaceTheme.selection}`}
+      className={`erp-workspace flex h-dvh min-h-dvh bg-surface text-on-surface transition-colors dark:bg-[#0b0d10] dark:text-slate-100 ${workspaceTheme.selection}`}
     >
       <ErpDemoSidebar
         allowedPages={allowedPages}
@@ -419,8 +465,10 @@ export function ErpHomeScreen({
         organizationLabel={organizationLabel}
       />
       <main
-        className={`flex h-screen min-w-0 flex-1 flex-col overflow-hidden transition-all duration-300 ${
-          isSidebarCollapsed ? "lg:ml-28" : "lg:ml-80"
+        className={`erp-main flex h-dvh min-w-0 flex-1 flex-col overflow-hidden transition-[margin] duration-300 motion-reduce:transition-none ${
+          isSidebarCollapsed
+            ? "ml-[76px] lg:ml-[88px]"
+            : "ml-[76px] lg:ml-[264px]"
         }`}
       >
         <ErpDemoTopBar
@@ -452,38 +500,45 @@ export function ErpHomeScreen({
             }
           }}
         />
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="erp-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={resolvedPage}
               animate={{ opacity: 1, y: 0 }}
-              className="mx-auto flex min-h-full w-full max-w-full p-5 lg:p-8"
-              exit={{ opacity: 0, y: -12 }}
-              initial={{ opacity: 0, y: 12 }}
-              transition={{ duration: 0.2 }}
+              className="erp-page mx-auto flex min-h-full w-full max-w-[1800px] p-3 sm:p-5 lg:p-7"
+              exit={{ opacity: 0, y: reduceMotion ? 0 : -6 }}
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 10 }}
+              transition={{
+                duration: reduceMotion ? 0 : 0.22,
+                ease: "easeOut",
+              }}
             >
               <div
                 className={
                   resolvedPage === "doctors"
                     ? "flex min-h-full w-full flex-col"
-                    : `flex min-h-full w-full flex-col overflow-hidden rounded-[2rem] border shadow-sm ring-1 backdrop-blur ${workspaceTheme.contentFrame}`
+                    : `erp-page-content flex min-h-full w-full flex-col`
                 }
               >
-                {checkingAnalyticsAccess ? <LoadingScreen /> : <PageContent
-                  currentPage={resolvedPage}
-                  organizationLabel={organizationLabel}
-                  roleLabel={roleLabel}
-                  userName={userName}
-                  organizationId={activeOrganization.id}
-                  organizationName={organizationName}
-                  appointmentTenant={appointmentTenant}
-                  routeBasePath={
-                    activeOrganizationSlug
-                      ? `/${activeOrganizationType}/${activeOrganizationSlug}`
-                      : `/${activeOrganizationType}`
-                  }
-                  routeSegments={routeSegments}
-                />}
+                {checkingAnalyticsAccess ? (
+                  <LoadingScreen />
+                ) : (
+                  <PageContent
+                    currentPage={resolvedPage}
+                    organizationLabel={organizationLabel}
+                    roleLabel={roleLabel}
+                    userName={userName}
+                    organizationId={activeOrganization.id}
+                    organizationName={organizationName}
+                    appointmentTenant={appointmentTenant}
+                    routeBasePath={
+                      activeOrganizationSlug
+                        ? `/${activeOrganizationType}/${activeOrganizationSlug}`
+                        : `/${activeOrganizationType}`
+                    }
+                    routeSegments={routeSegments}
+                  />
+                )}
               </div>
             </motion.div>
           </AnimatePresence>
@@ -527,13 +582,29 @@ function PageContent({
       return <ErpDemoBilling />;
     case "appointments":
     case "appointments-review":
-      return appointmentTenant ? <ErpDemoAppointments section="review" tenant={appointmentTenant} /> : <ErpEnterpriseModule module="appointments" roleLabel={roleLabel} />;
+      return appointmentTenant ? (
+        <ErpDemoAppointments section="review" tenant={appointmentTenant} />
+      ) : (
+        <ErpEnterpriseModule module="appointments" roleLabel={roleLabel} />
+      );
     case "appointments-dashboard":
-      return appointmentTenant ? <ErpDemoAppointments section="dashboard" tenant={appointmentTenant} /> : <ErpEnterpriseModule module="appointments" roleLabel={roleLabel} />;
+      return appointmentTenant ? (
+        <ErpDemoAppointments section="dashboard" tenant={appointmentTenant} />
+      ) : (
+        <ErpEnterpriseModule module="appointments" roleLabel={roleLabel} />
+      );
     case "appointments-patients":
-      return appointmentTenant ? <ErpDemoAppointments section="patients" tenant={appointmentTenant} /> : <ErpEnterpriseModule module="appointments" roleLabel={roleLabel} />;
+      return appointmentTenant ? (
+        <ErpDemoAppointments section="patients" tenant={appointmentTenant} />
+      ) : (
+        <ErpEnterpriseModule module="appointments" roleLabel={roleLabel} />
+      );
     case "appointments-settings":
-      return appointmentTenant ? <ErpDemoAppointments section="settings" tenant={appointmentTenant} /> : <ErpEnterpriseModule module="appointments" roleLabel={roleLabel} />;
+      return appointmentTenant ? (
+        <ErpDemoAppointments section="settings" tenant={appointmentTenant} />
+      ) : (
+        <ErpEnterpriseModule module="appointments" roleLabel={roleLabel} />
+      );
     case "patients":
       return <ErpDemoPatients organizationId={organizationId} />;
     case "staff":
@@ -551,22 +622,56 @@ function PageContent({
       return <ErpDemoBilling />;
     case "pricing":
     case "subscription":
-      return <PricingPage organizationId={organizationId} organizationName={organizationName} />;
+      return (
+        <PricingPage
+          organizationId={organizationId}
+          organizationName={organizationName}
+        />
+      );
     case "settings":
-      return <ErpDemoSettings key="settings-operational" organizationId={organizationId} section="operational" />;
+      return (
+        <ErpDemoSettings
+          key="settings-operational"
+          organizationId={organizationId}
+          section="operational"
+        />
+      );
     case "settings-alert-rules":
-      return <ErpDemoSettings key="settings-notifications" organizationId={organizationId} section="notifications" />;
+      return (
+        <ErpDemoSettings
+          key="settings-notifications"
+          organizationId={organizationId}
+          section="notifications"
+        />
+      );
     case "settings-audit-logs":
-      return <ErpDemoSettings key="settings-security" organizationId={organizationId} section="security" />;
+      return (
+        <ErpDemoSettings
+          key="settings-security"
+          organizationId={organizationId}
+          section="security"
+        />
+      );
     case "settings-storage":
     case "settings-data-export":
-      return <ErpDemoSettings key="settings-operational" organizationId={organizationId} section="operational" />;
+      return (
+        <ErpDemoSettings
+          key="settings-operational"
+          organizationId={organizationId}
+          section="operational"
+        />
+      );
     case "activity-logs":
       return <ActivityLogsPage organizationId={organizationId} />;
     case "analytics":
       return <ErpDemoAnalytics organizationId={organizationId} />;
     case "doctors":
-      return <DoctorsManagementPage organizationId={organizationId} organizationLabel={organizationLabel} />;
+      return (
+        <DoctorsManagementPage
+          organizationId={organizationId}
+          organizationLabel={organizationLabel}
+        />
+      );
     case "facilities":
       return (
         <FacilitiesPage
@@ -615,9 +720,17 @@ function isErpDemoPage(page: string): page is ErpDemoPage {
   return isDashboardPage(page);
 }
 
-function getLockedPages(subscription: Awaited<ReturnType<typeof subscriptionBillingApi.current>> | undefined, plans: Awaited<ReturnType<typeof subscriptionBillingApi.plans>> | undefined): ErpDemoPage[] {
+function getLockedPages(
+  subscription:
+    | Awaited<ReturnType<typeof subscriptionBillingApi.current>>
+    | undefined,
+  plans: Awaited<ReturnType<typeof subscriptionBillingApi.plans>> | undefined
+): ErpDemoPage[] {
   const plan = plans?.find((item) => item.id === subscription?.planId);
-  const featureCodes = plan?.activeVersion.features.filter((feature) => feature.enabled).map((feature) => feature.code) ?? [];
+  const featureCodes =
+    plan?.activeVersion.features
+      .filter((feature) => feature.enabled)
+      .map((feature) => feature.code) ?? [];
   return hasFeature(featureCodes, "advanced_analytics") ? [] : ["analytics"];
 }
 

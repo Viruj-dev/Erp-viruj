@@ -34,10 +34,12 @@ export function ErpDemoTopBar({
   const title = organizationName?.trim() || organizationLabel;
 
   return (
-    <header className="sticky top-0 z-30 flex w-full items-center justify-between gap-4 border-b border-slate-200/80 bg-white/90 px-4 py-4 backdrop-blur-xl transition-colors dark:border-white/[0.08] dark:bg-[#111418]/90 sm:px-6 lg:px-10">
+    <header className="erp-topbar sticky top-0 z-30 flex w-full items-center justify-between gap-4 bg-transparent px-4 py-4 backdrop-blur-xl transition-colors dark:bg-transparent sm:px-6 lg:px-8">
       <div className="min-w-0">
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Viruj · {organizationLabel} workspace</p>
-        <h2 className="truncate font-headline text-xl font-bold tracking-tight text-on-surface dark:text-slate-100 sm:text-2xl">
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+          Viruj · {organizationLabel} workspace
+        </p>
+        <h2 className="truncate font-headline text-lg font-semibold tracking-tight text-on-surface dark:text-slate-100 sm:text-xl">
           {title}
         </h2>
       </div>
@@ -66,7 +68,7 @@ export function ErpDemoTopBar({
             onClick={() => setIsProfileOpen((v) => !v)}
             className="flex cursor-pointer items-center gap-3 rounded-lg p-1.5 transition-colors hover:bg-slate-200/50 dark:hover:bg-white/[0.08]"
           >
-              <div className="hidden text-right sm:block">
+            <div className="hidden text-right sm:block">
               <p className="text-xs font-bold text-on-surface dark:text-slate-100">
                 {userName || "Viruj User"}
               </p>

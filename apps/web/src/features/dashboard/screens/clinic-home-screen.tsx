@@ -43,7 +43,7 @@ import {
 } from "@/features/dashboard/lib/routing";
 import { LoadingScreen } from "@/features/shell/components/loading-screen";
 import { activateOrganization, authClient } from "@/lib/auth-client";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 
@@ -86,6 +86,7 @@ export function ClinicHomeScreen({
   const [isActivatingOnlyOrganization, setIsActivatingOnlyOrganization] =
     useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const reduceMotion = useReducedMotion();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [canRenderSignupOnboarding, setCanRenderSignupOnboarding] =
     useState(false);
@@ -383,7 +384,7 @@ export function ClinicHomeScreen({
 
   return (
     <div
-      className={`flex h-screen min-h-screen bg-surface text-on-surface transition-colors dark:bg-[#0b0d10] dark:text-slate-100 ${workspaceTheme.selection}`}
+      className={`erp-workspace flex h-dvh min-h-dvh bg-surface text-on-surface transition-colors dark:bg-[#0b0d10] dark:text-slate-100 ${workspaceTheme.selection}`}
     >
       <ErpDemoSidebar
         allowedPages={allowedPages}
@@ -416,8 +417,10 @@ export function ClinicHomeScreen({
         organizationLabel={organizationLabel}
       />
       <main
-        className={`flex h-screen min-w-0 flex-1 flex-col overflow-hidden transition-all duration-300 ${
-          isSidebarCollapsed ? "lg:ml-28" : "lg:ml-80"
+        className={`erp-main flex h-dvh min-w-0 flex-1 flex-col overflow-hidden transition-[margin] duration-300 motion-reduce:transition-none ${
+          isSidebarCollapsed
+            ? "ml-[76px] lg:ml-[88px]"
+            : "ml-[76px] lg:ml-[264px]"
         }`}
       >
         <ErpDemoTopBar
@@ -449,18 +452,21 @@ export function ClinicHomeScreen({
             }
           }}
         />
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="erp-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={resolvedPage}
               animate={{ opacity: 1, y: 0 }}
-              className="mx-auto flex min-h-full w-full max-w-full p-5 lg:p-8"
-              exit={{ opacity: 0, y: -12 }}
-              initial={{ opacity: 0, y: 12 }}
-              transition={{ duration: 0.2 }}
+              className="erp-page mx-auto flex min-h-full w-full max-w-[1800px] p-3 sm:p-5 lg:p-7"
+              exit={{ opacity: 0, y: reduceMotion ? 0 : -6 }}
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 10 }}
+              transition={{
+                duration: reduceMotion ? 0 : 0.22,
+                ease: "easeOut",
+              }}
             >
               <div
-                className={`flex min-h-full w-full flex-col overflow-hidden rounded-[2rem] border shadow-sm ring-1 backdrop-blur ${workspaceTheme.contentFrame}`}
+                className={`erp-page-content flex min-h-full w-full flex-col`}
               >
                 <ClinicPageContent
                   appointmentTenant={appointmentTenant}

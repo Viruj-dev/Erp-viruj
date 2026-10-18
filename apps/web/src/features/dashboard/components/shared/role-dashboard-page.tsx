@@ -78,7 +78,7 @@ type ProfileVisibilityControl = {
   statusLabel?: string;
 };
 const panel =
-  "overflow-hidden rounded-xl border border-slate-200/80 bg-white dark:border-white/10 dark:bg-[#17191e]";
+  "erp-bento overflow-hidden rounded-[22px] border border-slate-200/80 bg-white dark:border-white/10 dark:bg-[#17191e]";
 const subtle = "text-slate-500 dark:text-slate-400";
 const textLink =
   "inline-flex items-center gap-1.5 text-xs font-medium text-[var(--dashboard-accent)] hover:underline underline-offset-4";
@@ -225,7 +225,7 @@ export function RoleDashboardPage({
         <section
           aria-label="Workspace summary"
           aria-busy={loading}
-          className="grid grid-cols-2 gap-y-5 border-y border-slate-200/80 py-5 dark:border-white/10 lg:grid-cols-4"
+          className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
         >
           {[
             {
@@ -252,7 +252,7 @@ export function RoleDashboardPage({
               source: "services",
               page: "services",
             },
-          ].map((metric, index) => {
+          ].map((metric) => {
             const stat = analytics?.stats?.find(
               (item) => item.label === metric.key
             );
@@ -260,7 +260,7 @@ export function RoleDashboardPage({
               <Link
                 href={href(metric.page as DashboardPage)}
                 key={metric.key}
-                className={`group px-4 first:pl-0 sm:px-6 ${index % 2 ? "border-l border-slate-200/80 dark:border-white/10" : "lg:border-l lg:border-slate-200/80 lg:dark:border-white/10"} lg:first:border-0`}
+                className="erp-metric group rounded-[22px] border border-slate-200/80 bg-white p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 dark:border-white/10 dark:bg-[#17191e] motion-reduce:transform-none"
               >
                 <div className={`flex items-center gap-2 text-xs ${subtle}`}>
                   {metric.label}

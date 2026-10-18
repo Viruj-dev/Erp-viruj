@@ -31,7 +31,7 @@ export function DashboardPageShell({
   tone?: DashboardPageShellTone;
 }) {
   const header = (
-    <header className="flex flex-wrap items-start justify-between gap-4">
+    <header className="erp-page-heading flex flex-wrap items-start justify-between gap-4">
       <div>
         <p
           className={cn(
@@ -54,7 +54,7 @@ export function DashboardPageShell({
 
   if (framed) {
     return (
-      <div className={cn("p-6 lg:p-5", className)}>
+      <div className={cn("p-2 sm:p-3 lg:p-4", className)}>
         <section className="space-y-6 rounded-[2rem] border border-slate-200 bg-white/85 p-5 shadow-sm dark:border-white/[0.08] dark:bg-[#111418]">
           {header}
           {children}
@@ -64,10 +64,9 @@ export function DashboardPageShell({
   }
 
   return (
-    <div className={cn("space-y-6 p-6 lg:p-5", className)}>
+    <div className={cn("space-y-7 p-2 sm:p-3 lg:p-4", className)}>
       {header}
       {children}
     </div>
   );
 }
-

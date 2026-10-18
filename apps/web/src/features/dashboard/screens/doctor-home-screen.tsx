@@ -1,7 +1,10 @@
 "use client";
 
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
-import { ErpDemoAppointments, ErpEnterpriseModule } from "@/features/dashboard/components/shared/modules";
+import {
+  ErpDemoAppointments,
+  ErpEnterpriseModule,
+} from "@/features/dashboard/components/shared/modules";
 import { ClinicGalleryPage } from "@/features/dashboard/components/clinic/pages";
 import {
   DoctorAvailabilityPage,
@@ -19,9 +22,15 @@ import {
   DoctorVerificationVaultPage,
 } from "@/features/dashboard/components/doctor/pages";
 import { ErpDemoCommunity } from "@/features/dashboard/components/hospital/pages";
-import { ErpDemoSidebar, ErpDemoTopBar } from "@/features/dashboard/components/shared/layout";
+import {
+  ErpDemoSidebar,
+  ErpDemoTopBar,
+} from "@/features/dashboard/components/shared/layout";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
-import { createErpTenantContext, type ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
+import {
+  createErpTenantContext,
+  type ErpTenantContext,
+} from "@/features/dashboard/lib/erp-tenant";
 import { getBillingPermissionsFromMember } from "@/features/subscription/utils/subscription-access";
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
 import {
@@ -32,11 +41,8 @@ import {
   organizationTypeLabels,
 } from "@/features/dashboard/lib/routing";
 import { LoadingScreen } from "@/features/shell/components/loading-screen";
-import {
-  activateOrganization,
-  authClient,
-} from "@/lib/auth-client";
-import { AnimatePresence, motion } from "framer-motion";
+import { activateOrganization, authClient } from "@/lib/auth-client";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
@@ -73,6 +79,7 @@ export function DoctorHomeScreen({
   const [isActivatingOnlyOrganization, setIsActivatingOnlyOrganization] =
     useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const reduceMotion = useReducedMotion();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const isHydrated = useSyncExternalStore(
     () => () => {},
@@ -88,9 +95,7 @@ export function DoctorHomeScreen({
   const activeOrganization =
     sessionOrganization ?? activeOrganizationState.data;
   const activeMember = sessionMember ?? activeMemberState.data;
-  const isAuthPending =
-    sessionState.isPending ||
-    organizationsState.isPending;
+  const isAuthPending = sessionState.isPending || organizationsState.isPending;
 
   useEffect(() => {
     const activeOrganizationId = activeOrganization?.id;
@@ -127,25 +132,22 @@ export function DoctorHomeScreen({
     sessionState,
   ]);
 
-  const currentPage = requestedPage === "settings"
-    ? "doctor-settings"
-    : isErpDemoPage(requestedPage)
-    ? requestedPage
-    : "dashboard";
+  const currentPage =
+    requestedPage === "settings"
+      ? "doctor-settings"
+      : isErpDemoPage(requestedPage)
+        ? requestedPage
+        : "dashboard";
   const activeOrganizationType =
     activeOrganization?.organizationType &&
     isDashboardOrganizationType(activeOrganization.organizationType)
       ? activeOrganization.organizationType
       : null;
   const activeOrganizationSlug = getOrganizationSlug(activeOrganization);
-  const resolvedPage = resolveDoctorPage(
-    currentPage
-  );
+  const resolvedPage = resolveDoctorPage(currentPage);
   const detailId = getDoctorDetailId(resolvedPage, routeSegments);
   const userName =
-    sessionState.data?.user?.name ||
-    sessionState.data?.user?.email ||
-    "Doctor";
+    sessionState.data?.user?.name || sessionState.data?.user?.email || "Doctor";
   const roleLabel = activeMember?.role
     ? activeMember.role.replace(/_/g, " ")
     : "doctor";
@@ -256,7 +258,7 @@ export function DoctorHomeScreen({
 
   return (
     <div
-      className={`flex h-screen min-h-screen bg-surface text-on-surface transition-colors dark:bg-[#0b0d10] dark:text-slate-100 ${workspaceTheme.selection}`}
+      className={`erp-workspace flex h-dvh min-h-dvh bg-surface text-on-surface transition-colors dark:bg-[#0b0d10] dark:text-slate-100 ${workspaceTheme.selection}`}
     >
       <ErpDemoSidebar
         allowedPages={doctorAllowedPages}
@@ -277,7 +279,11 @@ export function DoctorHomeScreen({
           const doctorPage = resolveDoctorPage(page);
           router.push(
             activeOrganizationSlug
-              ? buildTenantDashboardPath("doctor", activeOrganizationSlug, doctorPage)
+              ? buildTenantDashboardPath(
+                  "doctor",
+                  activeOrganizationSlug,
+                  doctorPage
+                )
               : buildDashboardPath("doctor", doctorPage)
           );
         }}
@@ -285,8 +291,10 @@ export function DoctorHomeScreen({
         organizationLabel={organizationLabel}
       />
       <main
-        className={`flex h-screen min-w-0 flex-1 flex-col overflow-hidden transition-all duration-300 ${
-          isSidebarCollapsed ? "lg:ml-28" : "lg:ml-80"
+        className={`erp-main flex h-dvh min-w-0 flex-1 flex-col overflow-hidden transition-[margin] duration-300 motion-reduce:transition-none ${
+          isSidebarCollapsed
+            ? "ml-[76px] lg:ml-[88px]"
+            : "ml-[76px] lg:ml-[264px]"
         }`}
       >
         <ErpDemoTopBar
@@ -298,7 +306,11 @@ export function DoctorHomeScreen({
           onNavigateToProfile={() => {
             router.push(
               activeOrganizationSlug
-                ? buildTenantDashboardPath("doctor", activeOrganizationSlug, "profile")
+                ? buildTenantDashboardPath(
+                    "doctor",
+                    activeOrganizationSlug,
+                    "profile"
+                  )
                 : buildDashboardPath("doctor", "profile")
             );
           }}
@@ -314,18 +326,21 @@ export function DoctorHomeScreen({
             }
           }}
         />
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="erp-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={resolvedPage}
               animate={{ opacity: 1, y: 0 }}
-              className="mx-auto flex min-h-full w-full max-w-full p-5 lg:p-8"
-              exit={{ opacity: 0, y: -12 }}
-              initial={{ opacity: 0, y: 12 }}
-              transition={{ duration: 0.2 }}
+              className="erp-page mx-auto flex min-h-full w-full max-w-[1800px] p-3 sm:p-5 lg:p-7"
+              exit={{ opacity: 0, y: reduceMotion ? 0 : -6 }}
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 10 }}
+              transition={{
+                duration: reduceMotion ? 0 : 0.22,
+                ease: "easeOut",
+              }}
             >
               <div
-                className={`flex min-h-full w-full flex-col overflow-hidden rounded-[2rem] border shadow-sm ring-1 backdrop-blur ${workspaceTheme.contentFrame}`}
+                className={`erp-page-content flex min-h-full w-full flex-col`}
               >
                 <DoctorPageContent
                   currentPage={resolvedPage}
@@ -370,13 +385,36 @@ function DoctorPageContent({
   switch (currentPage) {
     case "appointments":
     case "appointments-dashboard":
-      return <ErpDemoAppointments initialAppointmentId={detailId} key={organizationId} section="dashboard" tenant={tenant} />;
+      return (
+        <ErpDemoAppointments
+          initialAppointmentId={detailId}
+          key={organizationId}
+          section="dashboard"
+          tenant={tenant}
+        />
+      );
     case "appointments-patients":
-      return <ErpDemoAppointments key={organizationId} section="patients" tenant={tenant} />;
+      return (
+        <ErpDemoAppointments
+          key={organizationId}
+          section="patients"
+          tenant={tenant}
+        />
+      );
     case "appointments-review":
-      return <ErpDemoAppointments key={organizationId} section="review" tenant={tenant} />;
+      return (
+        <ErpDemoAppointments
+          key={organizationId}
+          section="review"
+          tenant={tenant}
+        />
+      );
     case "patients":
-      return detailId ? <DoctorPatientDetailPage id={detailId} /> : <DoctorPatientDirectoryPage />;
+      return detailId ? (
+        <DoctorPatientDetailPage id={detailId} />
+      ) : (
+        <DoctorPatientDirectoryPage />
+      );
     case "gallery":
       return (
         <ClinicGalleryPage
@@ -395,7 +433,11 @@ function DoctorPageContent({
     case "leaves":
       return <DoctorLeavesPage />;
     case "consultations":
-      return detailId ? <DoctorConsultationDetailPage id={detailId} /> : <DoctorConsultationsPage />;
+      return detailId ? (
+        <DoctorConsultationDetailPage id={detailId} />
+      ) : (
+        <DoctorConsultationsPage />
+      );
     case "locations":
       return <DoctorPracticeLocationsPage />;
     case "verification":
@@ -421,10 +463,19 @@ function resolveDoctorPage(page: ErpDemoPage): ErpDemoPage {
 }
 
 function getDoctorDetailId(page: ErpDemoPage, segments: string[]) {
-  const moduleIndex = segments.findIndex((segment) => segment === page || (page === "appointments-dashboard" && segment === "appointments"));
+  const moduleIndex = segments.findIndex(
+    (segment) =>
+      segment === page ||
+      (page === "appointments-dashboard" && segment === "appointments")
+  );
   const candidate = moduleIndex >= 0 ? segments[moduleIndex + 1] : undefined;
 
-  if (!candidate || candidate === "dashboard" || candidate === "review" || candidate === "patients") {
+  if (
+    !candidate ||
+    candidate === "dashboard" ||
+    candidate === "review" ||
+    candidate === "patients"
+  ) {
     return undefined;
   }
 

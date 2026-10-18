@@ -35,7 +35,21 @@ import {
   Users,
 } from "lucide-react";
 import type { ComponentType } from "react";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+
+function subscribeToViewport(callback: () => void) {
+  const media = window.matchMedia("(max-width: 1023px)");
+  media.addEventListener("change", callback);
+  return () => media.removeEventListener("change", callback);
+}
+
+function isCompactViewport() {
+  return window.matchMedia("(max-width: 1023px)").matches;
+}
+
+function serverViewport() {
+  return false;
+}
 
 const mainNavItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -45,7 +59,7 @@ const mainNavItems = [
   { id: "facilities", label: "Facilities & Services", icon: HeartPulse },
   { id: "gallery", label: "Gallery", icon: Image },
   { id: "community", label: "Community", icon: MessagesSquare, badge: "2" },
-  { id: "analytics", label: "Analytics", icon: BarChart3,},
+  { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "activity-logs", label: "Activity Logs", icon: History },
 ] as const;
 
@@ -57,7 +71,7 @@ const clinicNavItems = [
   { id: "services", label: "Services", icon: HeartPulse },
   { id: "gallery", label: "Gallery", icon: Image },
   { id: "community", label: "Community", icon: MessagesSquare },
-  { id: "analytics", label: "Analytics", icon: BarChart3,},
+  { id: "analytics", label: "Analytics", icon: BarChart3 },
 ] as const;
 
 const doctorNavItems = [
@@ -106,10 +120,10 @@ const comingSoonNavItems = new Set<ErpDemoPage>([
 export function ErpDemoSidebar({
   allowedPages,
   currentPage,
-  isCollapsed,
+  isCollapsed: desktopCollapsed,
   lockedPages = [],
   onLogout,
-  onPageChange,
+  onPageChange: navigate,
   onToggle,
   organizationLabel,
 }: {
@@ -122,6 +136,17 @@ export function ErpDemoSidebar({
   onToggle: () => void;
   organizationLabel: string;
 }) {
+  const compact = useSyncExternalStore(
+    subscribeToViewport,
+    isCompactViewport,
+    serverViewport
+  );
+  const [mobileExpanded, setMobileExpanded] = useState(false);
+  const isCollapsed = compact ? !mobileExpanded : desktopCollapsed;
+  const onPageChange = (page: ErpDemoPage) => {
+    navigate(page);
+    setMobileExpanded(false);
+  };
   const [isAppointmentsOpen, setIsAppointmentsOpen] = useState(
     currentPage.startsWith("appointments")
   );
@@ -161,8 +186,11 @@ export function ErpDemoSidebar({
     : doctorProfileOptions;
   const systemItems = [
     {
-      id:
-        isClinicWorkspace ? "clinic-profile" : isDoctorWorkspace ? "profile" : "hospital-profile",
+      id: isClinicWorkspace
+        ? "clinic-profile"
+        : isDoctorWorkspace
+          ? "profile"
+          : "hospital-profile",
       label: "Profile",
       icon: UserRound,
     },
@@ -180,169 +208,202 @@ export function ErpDemoSidebar({
   const userEmail = sessionState.data?.user?.email ?? organizationLabel;
 
   return (
-    <aside
-      className={cn(
-        "fixed bottom-4 left-4 top-4 z-40 flex flex-col rounded-[22px] border border-slate-200/80 bg-[#f3f4f4] text-slate-700 shadow-[0_12px_40px_rgba(30,41,59,0.08)] transition-all duration-300 ease-in-out dark:border-white/[0.10] dark:bg-[#141618] dark:text-slate-200 dark:shadow-[0_24px_80px_rgba(0,0,0,0.32)]",
-        "before:pointer-events-none before:absolute before:inset-0 before:bg-white/[0.42] dark:before:bg-white/[0.03]",
-        isCollapsed ? "w-20 overflow-visible" : "w-60 overflow-hidden"
-      )}
-    >
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col p-4">
-        <div
-          className={cn(
-            "mb-4 flex items-center gap-3",
-            isCollapsed && "justify-center items-center"
-          )}
-        >
-          <div className="relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-[#181b1f] dark:ring-white/[0.10]">
-            <span
-              className={cn(
-                "absolute inset-1 rounded-full blur-[1px]",
-                workspaceTheme.logoAura
-              )}
-            />
-            <Stethoscope
-              className="relative text-slate-950 dark:text-white"
-              size={18}
-            />
-          </div>
-
-          {!isCollapsed ? (
-            <div className="min-w-0 flex-1">
-              <h1 className="truncate font-headline text-base font-semi-bold leading-tight text-slate-950 dark:text-white">
-                Viruj ERP
-              </h1>
-              <p className="truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                {organizationLabel} Workspace
-              </p>
-            </div>
-          ) : null}
-
-          <button
-            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            aria-expanded={!isCollapsed}
-            className={cn(
-              "flex size-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white hover:text-slate-950 dark:text-slate-500 dark:hover:bg-white/[0.08] dark:hover:text-white",
-              isCollapsed &&
-                "absolute -right-3 top-2 rotate-180 bg-white ring-1 ring-slate-200/80 dark:bg-[#17191b] dark:ring-white/[0.10]"
-            )}
-            onClick={onToggle}
-            type="button"
-          >
-            <ChevronLeft size={15} />
-          </button>
-        </div>
-
-        <nav aria-label="Workspace navigation" className="no-scrollbar mt-2 min-h-0 flex-1 space-y-5 overflow-y-auto border-t border-slate-200/80 pt-4 pr-1 dark:border-white/[0.07]">
-          <SidebarSection
-            allowedPages={allowedPages}
-            currentPage={currentPage}
-            isCollapsed={isCollapsed}
-            items={navItems}
-            lockedPages={lockedPages}
-            label="Main Menu"
-            onAppointmentToggle={() => {
-              if (isCollapsed) {
-                onPageChange("appointments-review");
-                return;
-              }
-
-              setIsAppointmentsOpen((value) => !value);
-            }}
-            onDoctorProfileToggle={() => {
-              if (isCollapsed) {
-                onPageChange("profile");
-                return;
-              }
-
-              setIsDoctorProfileOpen((value) => !value);
-            }}
-            onPageChange={onPageChange}
-            profileOptions={nestedProfileOptions}
-            isDoctorProfileOpen={isDoctorProfileOpen}
-            showDoctorProfileDropdown={isDoctorWorkspace}
-            showAppointmentDropdown={!isOwnerOrAdmin && !isClinicWorkspace}
-            theme={workspaceTheme}
-          />
-
-          {!isClinicWorkspace && !isOwnerOrAdmin && !isCollapsed && isAppointmentsOpen ? (
-            <div className="-mt-4 ml-5 space-y-1 border-l border-slate-200/80 pl-3 dark:border-white/[0.08]">
-              {appointmentOptions.map((option) => {
-                const OptionIcon = option.icon;
-
-                return (
-                  <button
-                    className={cn(
-                      "flex h-8 w-full items-center gap-2 rounded-lg px-2.5 text-left text-[12px] font-semibold transition",
-                      currentPage === option.id
-                        ? workspaceTheme.activeNav
-                        : "text-slate-500 hover:bg-white hover:text-slate-900 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
-                    )}
-                    key={option.id}
-                    onClick={() => onPageChange(option.id)}
-                    type="button"
-                  >
-                    <OptionIcon size={14} />
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
-
-          <SidebarSection
-            allowedPages={allowedPages}
-            currentPage={currentPage}
-            isCollapsed={isCollapsed}
-            items={operationsItems}
-            lockedPages={lockedPages}
-            label="Payments"
-            onPageChange={onPageChange}
-            theme={workspaceTheme}
-          />
-
-          <SidebarSection
-            allowedPages={allowedPages}
-            currentPage={currentPage}
-            isCollapsed={isCollapsed}
-            items={systemItems}
-            lockedPages={lockedPages}
-            label="System"
-            onPageChange={onPageChange}
-            theme={workspaceTheme}
-          />
-        </nav>
-
-        <div className="relative mt-4 space-y-2 border-t border-slate-200/80 pt-4 dark:border-white/[0.08]">
+    <>
+      {compact && mobileExpanded ? (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+          onClick={() => setMobileExpanded(false)}
+        />
+      ) : null}
+      <aside
+        className={cn(
+          "erp-sidebar fixed bottom-3 left-3 top-3 z-40 flex flex-col rounded-[20px] border border-slate-200/80 bg-[#f3f4f4] text-slate-700 shadow-[0_12px_40px_rgba(30,41,59,0.08)] transition-all duration-300 ease-in-out dark:border-white/[0.10] dark:bg-[#141618] dark:text-slate-200 dark:shadow-[0_24px_80px_rgba(0,0,0,0.32)]",
+          "before:pointer-events-none before:absolute before:inset-0 before:bg-white/[0.42] dark:before:bg-white/[0.03]",
+          isCollapsed ? "w-16 overflow-visible" : "w-60 overflow-visible"
+        )}
+      >
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col p-2 lg:p-3">
           <div
             className={cn(
-              "flex items-center rounded-xl bg-white/80 ring-1 ring-slate-200/90 dark:bg-white/[0.055] dark:ring-white/[0.07] cursor-pointer transition hover:bg-white hover:ring-slate-300 dark:hover:bg-white/[0.08] dark:hover:ring-white/[0.12]",
-              isCollapsed ? "justify-center p-2" : "gap-3 p-2"
+              "erp-sidebar-brand mb-5 flex items-center gap-3 px-1 pt-2",
+              isCollapsed && "justify-center items-center"
             )}
           >
-            <button type="button" aria-label="View profile" onClick={() => onPageChange(isClinicWorkspace ? "clinic-profile" : isDoctorWorkspace ? "profile" : "hospital-profile")} className={cn("flex min-w-0 items-center gap-3 text-left", isCollapsed ? "justify-center" : "flex-1")}>
+            <div className="relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-[#181b1f] dark:ring-white/[0.10]">
+              <span
+                className={cn(
+                  "absolute inset-1 rounded-full blur-[1px]",
+                  workspaceTheme.logoAura
+                )}
+              />
+              <Stethoscope
+                className="relative text-slate-950 dark:text-white"
+                size={18}
+              />
+            </div>
+
+            {!isCollapsed ? (
+              <div className="erp-sidebar-label min-w-0 flex-1">
+                <h1 className="truncate font-headline text-base font-semi-bold leading-tight text-slate-950 dark:text-white">
+                  Viruj ERP
+                </h1>
+                <p className="truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  {organizationLabel} Workspace
+                </p>
+              </div>
+            ) : null}
+
+            <button
+              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-expanded={!isCollapsed}
+              className={cn(
+                "flex size-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white hover:text-slate-950 dark:text-slate-500 dark:hover:bg-white/[0.08] dark:hover:text-white",
+                isCollapsed &&
+                  "absolute -right-3 top-2 rotate-180 bg-white ring-1 ring-slate-200/80 dark:bg-[#17191b] dark:ring-white/[0.10]"
+              )}
+              onClick={() =>
+                compact ? setMobileExpanded((value) => !value) : onToggle()
+              }
+              type="button"
+            >
+              <ChevronLeft size={15} />
+            </button>
+          </div>
+
+          <nav
+            aria-label="Workspace navigation"
+            className="erp-sidebar-nav no-scrollbar mt-2 min-h-0 flex-1 space-y-5 overflow-y-auto border-t border-slate-200/80 pt-4 pr-1 dark:border-white/[0.07]"
+          >
+            <SidebarSection
+              allowedPages={allowedPages}
+              currentPage={currentPage}
+              isCollapsed={isCollapsed}
+              items={navItems}
+              lockedPages={lockedPages}
+              label="Main Menu"
+              onAppointmentToggle={() => {
+                if (isCollapsed) {
+                  onPageChange("appointments-review");
+                  return;
+                }
+
+                setIsAppointmentsOpen((value) => !value);
+              }}
+              onDoctorProfileToggle={() => {
+                if (isCollapsed) {
+                  onPageChange("profile");
+                  return;
+                }
+
+                setIsDoctorProfileOpen((value) => !value);
+              }}
+              onPageChange={onPageChange}
+              profileOptions={nestedProfileOptions}
+              isDoctorProfileOpen={isDoctorProfileOpen}
+              showDoctorProfileDropdown={isDoctorWorkspace}
+              showAppointmentDropdown={!isOwnerOrAdmin && !isClinicWorkspace}
+              theme={workspaceTheme}
+            />
+
+            {!isClinicWorkspace &&
+            !isOwnerOrAdmin &&
+            !isCollapsed &&
+            isAppointmentsOpen ? (
+              <div className="-mt-4 ml-5 space-y-1 border-l border-slate-200/80 pl-3 dark:border-white/[0.08]">
+                {appointmentOptions.map((option) => {
+                  const OptionIcon = option.icon;
+
+                  return (
+                    <button
+                      className={cn(
+                        "flex h-8 w-full items-center gap-2 rounded-lg px-2.5 text-left text-[12px] font-semibold transition",
+                        currentPage === option.id
+                          ? workspaceTheme.activeNav
+                          : "text-slate-500 hover:bg-white hover:text-slate-900 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+                      )}
+                      key={option.id}
+                      onClick={() => onPageChange(option.id)}
+                      type="button"
+                    >
+                      <OptionIcon size={14} />
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            <SidebarSection
+              allowedPages={allowedPages}
+              currentPage={currentPage}
+              isCollapsed={isCollapsed}
+              items={operationsItems}
+              lockedPages={lockedPages}
+              label="Payments"
+              onPageChange={onPageChange}
+              theme={workspaceTheme}
+            />
+
+            <SidebarSection
+              allowedPages={allowedPages}
+              currentPage={currentPage}
+              isCollapsed={isCollapsed}
+              items={systemItems}
+              lockedPages={lockedPages}
+              label="System"
+              onPageChange={onPageChange}
+              theme={workspaceTheme}
+            />
+          </nav>
+
+          <div className="erp-sidebar-account relative mt-4 space-y-2 border-t border-slate-200/80 pt-4 dark:border-white/[0.08]">
             <div
               className={cn(
-                "flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-semi-bold",
-                workspaceTheme.avatar
+                "flex items-center rounded-xl bg-white/80 ring-1 ring-slate-200/90 dark:bg-white/[0.055] dark:ring-white/[0.07] cursor-pointer transition hover:bg-white hover:ring-slate-300 dark:hover:bg-white/[0.08] dark:hover:ring-white/[0.12]",
+                isCollapsed ? "justify-center p-2" : "gap-3 p-2"
               )}
             >
-              {getInitials(userName)}
-            </div>
-            {!isCollapsed ? (
-              <>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[12px] font-semibold text-slate-900 dark:text-white">
-                    {userName}
-                  </p>
-                  <p className="truncate text-[10px] text-slate-500">
-                    {userEmail}
-                  </p>
+              <button
+                type="button"
+                aria-label="View profile"
+                onClick={() =>
+                  onPageChange(
+                    isClinicWorkspace
+                      ? "clinic-profile"
+                      : isDoctorWorkspace
+                        ? "profile"
+                        : "hospital-profile"
+                  )
+                }
+                className={cn(
+                  "flex min-w-0 items-center gap-3 text-left",
+                  isCollapsed ? "justify-center" : "flex-1"
+                )}
+              >
+                <div
+                  className={cn(
+                    "flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-semi-bold",
+                    workspaceTheme.avatar
+                  )}
+                >
+                  {getInitials(userName)}
                 </div>
-              </>
-            ) : null}
-            </button>
-            {!isCollapsed ? (
+                {!isCollapsed ? (
+                  <>
+                    <div className="erp-sidebar-label min-w-0 flex-1">
+                      <p className="truncate text-[12px] font-semibold text-slate-900 dark:text-white">
+                        {userName}
+                      </p>
+                      <p className="truncate text-[10px] text-slate-500">
+                        {userEmail}
+                      </p>
+                    </div>
+                  </>
+                ) : null}
+              </button>
+              {!isCollapsed ? (
                 <button
                   aria-label="Logout"
                   className="flex size-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:text-slate-500 dark:hover:bg-red-500/[0.12] dark:hover:text-red-300"
@@ -351,22 +412,23 @@ export function ErpDemoSidebar({
                 >
                   <LogOut size={15} />
                 </button>
+              ) : null}
+            </div>
+
+            {isCollapsed ? (
+              <button
+                aria-label="Logout"
+                className="flex h-9 w-full items-center justify-center rounded-xl text-slate-500 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/[0.12] dark:hover:text-red-300"
+                onClick={onLogout}
+                type="button"
+              >
+                <LogOut size={17} />
+              </button>
             ) : null}
           </div>
-
-          {isCollapsed ? (
-            <button
-              aria-label="Logout"
-              className="flex h-9 w-full items-center justify-center rounded-xl text-slate-500 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/[0.12] dark:hover:text-red-300"
-              onClick={onLogout}
-              type="button"
-            >
-              <LogOut size={17} />
-            </button>
-          ) : null}
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }
 
@@ -420,7 +482,7 @@ function SidebarSection({
     <div>
       <p
         className={cn(
-          "mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-600",
+          "erp-sidebar-label mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-600",
           isCollapsed && "sr-only"
         )}
       >
@@ -546,7 +608,7 @@ function NavButton({
   return (
     <button
       className={cn(
-        "group relative flex min-h-10 w-full items-center rounded-xl text-[13px] font-semibold transition-all duration-200",
+        "erp-nav-button group relative flex min-h-11 w-full items-center rounded-xl text-[13px] font-semibold transition-all duration-200",
         isCollapsed ? "justify-center px-0" : "gap-3 px-2.5",
         isComingSoon && "cursor-not-allowed",
         active
@@ -561,11 +623,7 @@ function NavButton({
       aria-expanded={showChevron ? isOpen : undefined}
       onClick={onClick}
       title={
-        isComingSoon
-          ? `${label} is locked`
-          : isCollapsed
-            ? label
-            : undefined
+        isComingSoon ? `${label} is locked` : isCollapsed ? label : undefined
       }
       type="button"
     >
@@ -582,7 +640,9 @@ function NavButton({
       />
       {!isCollapsed ? (
         <>
-          <span className="min-w-0 flex-1 inline truncate text-left">{label}</span>
+          <span className="min-w-0 flex-1 inline truncate text-left">
+            {label}
+          </span>
           {badge ? (
             <span className="rounded-md border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] leading-none text-slate-500 dark:border-white/[0.10] dark:bg-transparent">
               {badge}
