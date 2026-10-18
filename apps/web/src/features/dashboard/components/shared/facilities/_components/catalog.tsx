@@ -242,6 +242,152 @@ export function FacilityBentoCard({
   );
 }
 
+export function ClinicServiceList({
+  facilities,
+  isUpdatingId,
+  onActivate,
+  onDeactivate,
+  onDelete,
+  onEdit,
+  permissions,
+}: {
+  facilities: VirujFacility[];
+  isUpdatingId?: string | null;
+  onActivate: (facility: VirujFacility) => void;
+  onDeactivate: (facility: VirujFacility) => void;
+  onDelete: (facility: VirujFacility) => void;
+  onEdit: (facility: VirujFacility) => void;
+  permissions: Record<FacilityAction, boolean>;
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[900px] border-collapse text-left">
+        <thead>
+          <tr className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:border-white/[0.06] dark:bg-white/[0.025]">
+            <th className="px-6 py-3.5">Service</th>
+            <th className="px-4 py-3.5">Department</th>
+            <th className="px-4 py-3.5">Fee</th>
+            <th className="px-4 py-3.5">Booking</th>
+            <th className="px-4 py-3.5">Status</th>
+            <th className="px-6 py-3.5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100 dark:divide-white/[0.06]">
+          {facilities.map((facility) => {
+            const active = facility.status === "active" && facility.isAvailable;
+            const status = active
+              ? "active"
+              : facility.status === "archived"
+                ? "archived"
+                : "draft";
+            const updating = isUpdatingId === facility.id;
+
+            return (
+              <tr
+                className="group transition-colors hover:bg-violet-50/40 dark:hover:bg-violet-400/[0.035]"
+                key={facility.id}
+              >
+                <td className="max-w-[380px] px-6 py-4">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 dark:bg-violet-400/10 dark:text-violet-300">
+                      <FileText size={16} aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-slate-900 dark:text-white">
+                        {facility.name}
+                      </span>
+                      <span className="mt-1 block truncate text-xs text-slate-500 dark:text-slate-400">
+                        {facility.shortDescription ||
+                          facility.description ||
+                          "No description added"}
+                      </span>
+                    </span>
+                  </div>
+                </td>
+                <td className="px-4 py-4">
+                  <CategoryPill category={facility.category} />
+                </td>
+                <td className="whitespace-nowrap px-4 py-4 text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  {formatPrice(facility)}
+                </td>
+                <td className="px-4 py-4">
+                  <div className="flex flex-wrap gap-1.5">
+                    {facility.onlineBooking ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300">
+                        <CalendarCheck size={11} /> Online
+                      </span>
+                    ) : null}
+                    {facility.appointmentRequired ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600 dark:bg-white/[0.07] dark:text-slate-300">
+                        Appointment
+                      </span>
+                    ) : null}
+                    {!facility.onlineBooking &&
+                    !facility.appointmentRequired ? (
+                      <span className="text-xs text-slate-400">Manual</span>
+                    ) : null}
+                  </div>
+                </td>
+                <td className="px-4 py-4">
+                  <StatusPill status={status} />
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center justify-end gap-2">
+                    {permissions.update ? (
+                      <button
+                        aria-label={`Edit ${facility.name}`}
+                        className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-violet-400/10 dark:hover:text-violet-200"
+                        disabled={updating}
+                        onClick={() => onEdit(facility)}
+                        title="Edit service"
+                        type="button"
+                      >
+                        <Edit3 size={15} />
+                      </button>
+                    ) : null}
+                    {permissions.publish ? (
+                      <button
+                        className={cn(
+                          "h-9 min-w-24 rounded-lg px-3 text-xs font-semibold transition disabled:cursor-wait disabled:opacity-50",
+                          active
+                            ? "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/[0.07] dark:text-slate-200"
+                            : "bg-emerald-600 text-white hover:bg-emerald-700"
+                        )}
+                        disabled={updating}
+                        onClick={() =>
+                          active ? onDeactivate(facility) : onActivate(facility)
+                        }
+                        type="button"
+                      >
+                        {updating
+                          ? "Saving…"
+                          : active
+                            ? "Deactivate"
+                            : "Activate"}
+                      </button>
+                    ) : null}
+                    {permissions.delete ? (
+                      <button
+                        aria-label={`Delete ${facility.name}`}
+                        className="inline-flex size-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-400/10 dark:hover:text-red-300"
+                        onClick={() => onDelete(facility)}
+                        title="Delete service"
+                        type="button"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    ) : null}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function CardButton({
   disabled,
   icon,

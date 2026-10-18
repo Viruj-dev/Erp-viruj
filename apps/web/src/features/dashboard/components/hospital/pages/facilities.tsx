@@ -16,6 +16,7 @@ import { DashboardPageShell } from "@/features/dashboard/components/shared/dashb
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import {
   DeleteDialog,
+  ClinicServiceList,
   EmptyFacilities,
   FacilitiesLoading,
   FacilityBentoCard,
@@ -77,6 +78,8 @@ export function FacilitiesPage({
       : virujBackend.facilities;
   const catalogLabel = catalogKind === "services" ? "Services" : "Facilities";
   const isClinicTone = tenant?.providerType === "clinic";
+  const useClinicServiceList =
+    catalogKind === "services" && tenant?.providerType === "clinic";
   const pageTone = isClinicTone ? "violet" : "blue";
   const publishAllClass = isClinicTone
     ? "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-violet-500 dark:hover:bg-violet-400"
@@ -298,6 +301,38 @@ export function FacilitiesPage({
                   icon={<Filter size={26} />}
                   subtitle="Adjust category, availability, status, or search terms."
                   title={`No ${catalogLabel.toLowerCase()} match these filters.`}
+                />
+              ) : useClinicServiceList ? (
+                <ClinicServiceList
+                  facilities={filteredFacilities}
+                  isUpdatingId={
+                    statusMutation.isPending
+                      ? statusMutation.variables?.id
+                      : updateMutation.isPending
+                        ? updateMutation.variables?.id
+                        : null
+                  }
+                  onActivate={(facility) =>
+                    statusMutation.mutate({
+                      id: facility.id,
+                      isAvailable: true,
+                      status: "active",
+                    })
+                  }
+                  onDeactivate={(facility) =>
+                    statusMutation.mutate({
+                      id: facility.id,
+                      isAvailable: false,
+                      status: "draft",
+                    })
+                  }
+                  onDelete={setDeleteTarget}
+                  onEdit={(facility) =>
+                    router.push(
+                      `${routeBasePath}/${catalogKind}/${facility.id}/edit`
+                    )
+                  }
+                  permissions={permissions}
                 />
               ) : (
                 <div className="grid gap-4 p-4 md:grid-cols-2 2xl:grid-cols-3">
