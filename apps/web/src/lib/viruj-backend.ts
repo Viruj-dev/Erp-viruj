@@ -1,5 +1,11 @@
 "use client";
 
+import type {
+  DiagnosticService,
+  DiagnosticServiceInput,
+  DiagnosticOrder,
+} from "@/features/dashboard/lib/diagnostics";
+
 import type { OnboardingState } from "@/features/dashboard/components/hospital/pages/onboarding/types";
 
 import { shouldShowApiSuccess } from "@/features/notifications/lib/api-feedback";
@@ -833,6 +839,61 @@ function compactObject<T extends Record<string, unknown>>(value: T) {
   };
 }
 export const virujBackend = {
+  diagnostics: {
+    key: (organizationId: string, resource: "orders" | "services") =>
+      ["viruj-backend", "diagnostics", organizationId, resource] as const,
+    services: (organizationId: string) =>
+      request<DiagnosticService[]>("/diagnostics/services", {
+        organizationId,
+        suppressToast: true,
+      }),
+    saveService: (
+      organizationId: string,
+      data: DiagnosticServiceInput,
+      id?: string
+    ) =>
+      request<DiagnosticService>(
+        `/diagnostics/services${id ? `/${encodeURIComponent(id)}` : ""}`,
+        { organizationId, method: id ? "PUT" : "POST", body: data }
+      ),
+    setServiceActive: (organizationId: string, id: string, active: boolean) =>
+      request<{ success: boolean }>(
+        `/diagnostics/services/${encodeURIComponent(id)}`,
+        { organizationId, method: "PATCH", body: { active } }
+      ),
+    orders: (organizationId: string) =>
+      request<DiagnosticOrder[]>("/diagnostics/orders", {
+        organizationId,
+        suppressToast: true,
+      }),
+    createOrder: (
+      organizationId: string,
+      body: {
+        serviceId: string;
+        patientName: string;
+        patientPhone: string;
+        patientAge: number | null;
+        patientSex: string;
+        referringDoctor: string;
+        branch: string;
+        priority: string;
+      }
+    ) =>
+      request<DiagnosticOrder>("/diagnostics/orders", {
+        organizationId,
+        method: "POST",
+        body,
+      }),
+    updateOrder: (
+      organizationId: string,
+      id: string,
+      body: Record<string, unknown>
+    ) =>
+      request<DiagnosticOrder>(
+        `/diagnostics/orders/${encodeURIComponent(id)}`,
+        { organizationId, method: "PATCH", body }
+      ),
+  },
   directory: {
     requestVerification: (organizationId?: string) =>
       request<{ status: string }>("/directory/verification", {

@@ -32,22 +32,30 @@ export function DiagnosticWorkspace({
     retry: false,
   });
   const rows = appointments.data ?? [];
-  const ready = appointments.isSuccess;
+  const diagnosticOrders = useQuery({
+    queryKey: virujBackend.diagnostics.key(tenant.organizationId, "orders"),
+    queryFn: () => virujBackend.diagnostics.orders(tenant.organizationId),
+    retry: false,
+  });
+  const orders = diagnosticOrders.data ?? [];
+  const ready = diagnosticOrders.isSuccess;
   const stats = [
     {
-      label: "Booking requests",
-      value: rows.filter((row) => row.status === "pending_approval").length,
-      detail: "Awaiting reception review",
+      label: "Active diagnostic orders",
+      value: orders.filter(
+        (row) => !["released", "cancelled"].includes(row.status)
+      ).length,
+      detail: "Across the latest 200 orders",
     },
     {
-      label: "Confirmed bookings",
-      value: rows.filter((row) => row.status === "approved").length,
-      detail: "Approved appointment records",
+      label: "Awaiting authorisation",
+      value: orders.filter((row) => row.status === "review").length,
+      detail: "Ready for reporting doctor review",
     },
     {
-      label: "Rescheduled bookings",
-      value: rows.filter((row) => row.status === "rescheduled").length,
-      detail: "Review the updated times",
+      label: "Released reports",
+      value: orders.filter((row) => row.status === "released").length,
+      detail: "Across the latest 200 orders",
     },
   ];
   const accent = pathology
@@ -74,7 +82,7 @@ export function DiagnosticWorkspace({
               )}
             >
               <Icon size={17} aria-hidden="true" />
-              {pathology ? "Pathology" : "Radiology"} reception
+              {pathology ? "Pathology" : "Radiology"} operations
             </p>
             <h1 className="font-headline text-3xl font-semibold tracking-tight sm:text-4xl">
               {organizationName ||
@@ -82,17 +90,17 @@ export function DiagnosticWorkspace({
             </h1>
             <p className="text-sm leading-7 text-muted-foreground">
               {pathology
-                ? "A focused reception desk for laboratory bookings and patient requests."
-                : "Keep imaging bookings and patient requests in one workspace."}
+                ? "Manage test orders, track samples and release reviewed laboratory reports."
+                : "Manage scan orders, track imaging progress and release reviewed reports."}
             </p>
             <Link
               className={cn(
                 "inline-flex items-center gap-3 rounded-xl px-5 py-3 text-sm font-semibold transition-colors",
                 accent
               )}
-              href={tenant.buildRoute("appointments-review")}
+              href={tenant.buildRoute(pathology ? "pathology" : "radiology")}
             >
-              Review booking requests{" "}
+              Open diagnostic operations{" "}
               <ArrowUpRight size={16} aria-hidden="true" />
             </Link>
           </div>
@@ -109,7 +117,22 @@ export function DiagnosticWorkspace({
         </div>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-3" aria-label="Booking summary">
+      {diagnosticOrders.isError && (
+        <p role="alert" className="rounded-xl border p-4 text-sm">
+          Diagnostic orders could not be loaded.{" "}
+          <button
+            type="button"
+            className="underline"
+            onClick={() => void diagnosticOrders.refetch()}
+          >
+            Try again
+          </button>
+        </p>
+      )}
+      <div
+        className="grid gap-4 sm:grid-cols-3"
+        aria-label="Diagnostic summary"
+      >
         {stats.map((stat) => (
           <div key={stat.label} className="rounded-2xl border bg-card p-6">
             <p className="text-sm text-muted-foreground">{stat.label}</p>
@@ -211,11 +234,9 @@ export function DiagnosticWorkspace({
       </section>
 
       <div className="rounded-2xl border border-dashed p-5 text-sm text-muted-foreground">
-        {pathology
-          ? "Sample tracking, structured test results and report authorisation"
-          : "Machine scheduling, imaging studies and radiologist reporting"}{" "}
-        will be added in the diagnostic workflow phase. Booking completion does
-        not indicate a released diagnostic report.
+        Bookings and diagnostic orders are separate records. Booking completion
+        does not indicate a released diagnostic report. Use diagnostic
+        operations for the catalogue, order workflow and authorised reports.
       </div>
     </div>
   );

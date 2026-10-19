@@ -1,6 +1,7 @@
 "use client";
 
 import { DiagnosticWorkspace } from "@/features/dashboard/components/shared/modules/diagnostic-workspace";
+import { DiagnosticOrders } from "@/features/dashboard/components/shared/modules/diagnostic-orders";
 
 import { shouldStartOrganizationOnboarding } from "@/features/dashboard/lib/onboarding";
 import { ActivityLogsPage } from "@/features/dashboard/components/shared/activity";
@@ -574,17 +575,27 @@ function PageContent({
   const isDiagnosticTenant =
     appointmentTenant?.providerType === "pathology" ||
     appointmentTenant?.providerType === "radiology";
-  if (
-    appointmentTenant &&
-    isDiagnosticTenant &&
-    (currentPage === "dashboard" ||
-      currentPage === appointmentTenant.providerType)
-  ) {
+  if (appointmentTenant && isDiagnosticTenant && currentPage === "dashboard") {
     return (
       <DiagnosticWorkspace
         key={appointmentTenant.organizationId}
         tenant={appointmentTenant}
         organizationName={organizationName}
+      />
+    );
+  }
+  if (
+    appointmentTenant &&
+    isDiagnosticTenant &&
+    (currentPage === appointmentTenant.providerType ||
+      currentPage === "reports")
+  ) {
+    return (
+      <DiagnosticOrders
+        key={`${appointmentTenant.organizationId}:${currentPage}`}
+        tenant={appointmentTenant}
+        organizationName={organizationName}
+        initialTab={currentPage === "reports" ? "reports" : "orders"}
       />
     );
   }
