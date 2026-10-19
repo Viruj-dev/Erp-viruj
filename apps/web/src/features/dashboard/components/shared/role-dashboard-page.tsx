@@ -133,6 +133,7 @@ export function RoleDashboardPage({
     slug
       ? buildTenantDashboardPath(tone, slug, page)
       : buildDashboardPath(tone, page);
+  const servicesPage = tone === "hospital" ? "facilities" : "services";
   const profilePage =
     tone === "clinic"
       ? "clinic-profile"
@@ -222,7 +223,7 @@ export function RoleDashboardPage({
               </button>
             )}
             <Link
-              href={href("appointments-review")}
+              href={href("appointments")}
               className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--dashboard-brand)] px-5 py-2.5 text-xs font-semibold text-white transition hover:opacity-90"
             >
               Open appointments
@@ -270,64 +271,70 @@ export function RoleDashboardPage({
               key: "Active Services",
               label: "Live services",
               source: "services",
-              page: "services",
+              page: servicesPage,
               icon: HeartPulse,
             },
-          ].map((metric) => {
-            const MetricIcon = metric.icon;
-            const stat = analytics?.stats?.find(
-              (item) => item.label === metric.key
-            );
-            return (
-              <Link
-                href={href(metric.page as DashboardPage)}
-                key={metric.key}
-                data-featured={
-                  metric.source === "appointments" &&
-                  metric.page === "appointments-dashboard"
-                }
-                className="erp-metric group rounded-[22px] border border-slate-200/80 bg-white p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 dark:border-white/10 dark:bg-[#17191e] motion-reduce:transform-none"
-              >
-                <div className="mb-5 flex items-center justify-between">
-                  <span className="erp-metric-icon flex size-10 items-center justify-center rounded-2xl">
-                    <MetricIcon
-                      size={19}
-                      strokeWidth={1.6}
+          ]
+            .filter(
+              (metric) =>
+                tone !== "doctor" ||
+                !["doctors", "services"].includes(metric.source)
+            )
+            .map((metric) => {
+              const MetricIcon = metric.icon;
+              const stat = analytics?.stats?.find(
+                (item) => item.label === metric.key
+              );
+              return (
+                <Link
+                  href={href(metric.page as DashboardPage)}
+                  key={metric.key}
+                  data-featured={
+                    metric.source === "appointments" &&
+                    metric.page === "appointments-dashboard"
+                  }
+                  className="erp-metric group rounded-[22px] border border-slate-200/80 bg-white p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 dark:border-white/10 dark:bg-[#17191e] motion-reduce:transform-none"
+                >
+                  <div className="mb-5 flex items-center justify-between">
+                    <span className="erp-metric-icon flex size-10 items-center justify-center rounded-2xl">
+                      <MetricIcon
+                        size={19}
+                        strokeWidth={1.6}
+                        aria-hidden="true"
+                      />
+                    </span>
+                    <ArrowUpRight
+                      size={17}
+                      className="opacity-50"
                       aria-hidden="true"
                     />
-                  </span>
-                  <ArrowUpRight
-                    size={17}
-                    className="opacity-50"
-                    aria-hidden="true"
-                  />
-                </div>
-                <div
-                  className={`erp-metric-label flex items-center gap-2 text-xs ${subtle}`}
-                >
-                  {metric.label}
-                  <ArrowUpRight
-                    size={12}
-                    className="opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100"
-                  />
-                </div>
-                <p className="mt-2 text-4xl font-semibold tracking-tight tabular-nums">
-                  {ready && !unavailable.includes(metric.source)
-                    ? (stat?.value ?? "—")
-                    : "—"}
-                </p>
-                <p
-                  className={`erp-metric-note mt-2 text-[11px] leading-5 ${subtle}`}
-                >
-                  {loading
-                    ? "Loading…"
-                    : unavailable.includes(metric.source)
-                      ? "Unavailable"
-                      : (stat?.note ?? "No information yet")}
-                </p>
-              </Link>
-            );
-          })}
+                  </div>
+                  <div
+                    className={`erp-metric-label flex items-center gap-2 text-xs ${subtle}`}
+                  >
+                    {metric.label}
+                    <ArrowUpRight
+                      size={12}
+                      className="opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100"
+                    />
+                  </div>
+                  <p className="mt-2 text-4xl font-semibold tracking-tight tabular-nums">
+                    {ready && !unavailable.includes(metric.source)
+                      ? (stat?.value ?? "—")
+                      : "—"}
+                  </p>
+                  <p
+                    className={`erp-metric-note mt-2 text-[11px] leading-5 ${subtle}`}
+                  >
+                    {loading
+                      ? "Loading…"
+                      : unavailable.includes(metric.source)
+                        ? "Unavailable"
+                        : (stat?.note ?? "No information yet")}
+                  </p>
+                </Link>
+              );
+            })}
         </section>
         <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="min-w-0 space-y-5">
@@ -725,119 +732,129 @@ export function RoleDashboardPage({
                 </div>
               </div>
             </section>
-            <section className={panel}>
-              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/5">
-                <h2 className="text-sm font-semibold">Your doctors</h2>
-                <Link href={href("doctors")} className={textLink}>
-                  Manage
-                  <ArrowUpRight size={13} />
-                </Link>
-              </div>
-              {loading || unavailable.includes("doctors") || !team.length ? (
-                <EmptyBlock
-                  title={
-                    loading
-                      ? "Loading doctors…"
-                      : unavailable.includes("doctors")
-                        ? "Doctor list is unavailable"
-                        : "Build your care team"
-                  }
-                  description={
-                    !loading && !unavailable.includes("doctors")
-                      ? "Add doctor profiles so patients can find the right specialist."
-                      : undefined
-                  }
-                />
-              ) : (
-                <ul className="divide-y divide-slate-100 px-5 dark:divide-white/5">
-                  {team.slice(0, 4).map((doctor, index) => (
-                    <li
-                      key={doctor.id ?? `${doctor.title}-${index}`}
-                      className="flex items-center gap-3 py-4"
-                    >
-                      <DoctorAvatar
-                        name={doctor.title}
-                        imageUrl={doctor.imageUrl}
-                        gender={doctor.gender}
-                        tone={tone}
-                        className="size-10"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-medium">
-                          {doctor.title}
-                        </p>
-                        <p className={`mt-1 truncate text-[11px] ${subtle}`}>
-                          {doctor.subtitle}
-                        </p>
-                      </div>
-                      {doctor.badge === "Shown in app" ? (
-                        <Check
-                          size={14}
-                          aria-label="Published"
-                          className="shrink-0 text-emerald-600"
-                        />
-                      ) : (
-                        <span className={`text-[10px] ${subtle}`}>
-                          {doctor.badge}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-            <section className={panel}>
-              <div className="flex items-center justify-between px-5 py-4">
-                <h2 className="text-sm font-semibold">Services</h2>
-                <Link href={href("services")} className={textLink}>
-                  Manage
-                  <ArrowUpRight size={13} />
-                </Link>
-              </div>
-              {loading ||
-              unavailable.includes("services") ||
-              !services.length ? (
-                <div className="px-5 pb-5">
-                  <p className={`text-xs leading-5 ${subtle}`}>
-                    {loading
-                      ? "Loading services…"
-                      : unavailable.includes("services")
-                        ? "Services are unavailable."
-                        : "List the care you offer, with fees and consultation details."}
-                  </p>
-                  {!loading && !unavailable.includes("services") && (
-                    <Link
-                      className={`${textLink} mt-3`}
-                      href={href("services")}
-                    >
-                      Add a service
-                      <ArrowRight size={13} />
+            {tone !== "doctor" && (
+              <>
+                <section className={panel}>
+                  <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/5">
+                    <h2 className="text-sm font-semibold">Your doctors</h2>
+                    <Link href={href("doctors")} className={textLink}>
+                      Manage
+                      <ArrowUpRight size={13} />
                     </Link>
+                  </div>
+                  {loading ||
+                  unavailable.includes("doctors") ||
+                  !team.length ? (
+                    <EmptyBlock
+                      title={
+                        loading
+                          ? "Loading doctors…"
+                          : unavailable.includes("doctors")
+                            ? "Doctor list is unavailable"
+                            : "Build your care team"
+                      }
+                      description={
+                        !loading && !unavailable.includes("doctors")
+                          ? "Add doctor profiles so patients can find the right specialist."
+                          : undefined
+                      }
+                    />
+                  ) : (
+                    <ul className="divide-y divide-slate-100 px-5 dark:divide-white/5">
+                      {team.slice(0, 4).map((doctor, index) => (
+                        <li
+                          key={doctor.id ?? `${doctor.title}-${index}`}
+                          className="flex items-center gap-3 py-4"
+                        >
+                          <DoctorAvatar
+                            name={doctor.title}
+                            imageUrl={doctor.imageUrl}
+                            gender={doctor.gender}
+                            tone={tone}
+                            className="size-10"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-medium">
+                              {doctor.title}
+                            </p>
+                            <p
+                              className={`mt-1 truncate text-[11px] ${subtle}`}
+                            >
+                              {doctor.subtitle}
+                            </p>
+                          </div>
+                          {doctor.badge === "Shown in app" ? (
+                            <Check
+                              size={14}
+                              aria-label="Published"
+                              className="shrink-0 text-emerald-600"
+                            />
+                          ) : (
+                            <span className={`text-[10px] ${subtle}`}>
+                              {doctor.badge}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
                   )}
-                </div>
-              ) : (
-                <ul className="divide-y divide-slate-100 px-5 dark:divide-white/5">
-                  {services.slice(0, 3).map((service, index) => (
-                    <li
-                      key={service.id ?? `${service.title}-${index}`}
-                      className="flex items-start justify-between gap-3 py-3 first:pt-0"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-medium">
-                          {service.title}
-                        </p>
-                        <p className={`mt-1 truncate text-[11px] ${subtle}`}>
-                          {service.subtitle}
-                        </p>
-                      </div>
-                      <span className={`shrink-0 text-[11px] ${subtle}`}>
-                        {service.meta || service.badge}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+                </section>
+                <section className={panel}>
+                  <div className="flex items-center justify-between px-5 py-4">
+                    <h2 className="text-sm font-semibold">Services</h2>
+                    <Link href={href(servicesPage)} className={textLink}>
+                      Manage
+                      <ArrowUpRight size={13} />
+                    </Link>
+                  </div>
+                  {loading ||
+                  unavailable.includes("services") ||
+                  !services.length ? (
+                    <div className="px-5 pb-5">
+                      <p className={`text-xs leading-5 ${subtle}`}>
+                        {loading
+                          ? "Loading services…"
+                          : unavailable.includes("services")
+                            ? "Services are unavailable."
+                            : "List the care you offer, with fees and consultation details."}
+                      </p>
+                      {!loading && !unavailable.includes("services") && (
+                        <Link
+                          className={`${textLink} mt-3`}
+                          href={href(servicesPage)}
+                        >
+                          Add a service
+                          <ArrowRight size={13} />
+                        </Link>
+                      )}
+                    </div>
+                  ) : (
+                    <ul className="divide-y divide-slate-100 px-5 dark:divide-white/5">
+                      {services.slice(0, 3).map((service, index) => (
+                        <li
+                          key={service.id ?? `${service.title}-${index}`}
+                          className="flex items-start justify-between gap-3 py-3 first:pt-0"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-medium">
+                              {service.title}
+                            </p>
+                            <p
+                              className={`mt-1 truncate text-[11px] ${subtle}`}
+                            >
+                              {service.subtitle}
+                            </p>
+                          </div>
+                          <span className={`shrink-0 text-[11px] ${subtle}`}>
+                            {service.meta || service.badge}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              </>
+            )}
           </aside>
         </div>
         {analytics?.activity?.length ? (
