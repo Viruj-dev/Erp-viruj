@@ -181,7 +181,8 @@ export function ErpHomeScreen({
     (subscriptionQuery.isLoading || plansQuery.isLoading);
   const allowedPages = getAllowedDashboardPages(
     activeMemberRole,
-    activeMemberPermissions
+    activeMemberPermissions,
+    activeOrganizationType
   );
   // Resolve paid access on entry; opening unrelated pages must not call billing.
   const lockedPages =

@@ -7,6 +7,7 @@ import {
   type DiagnosticOrder,
 } from "./diagnostics";
 import { virujBackend } from "@/lib/viruj-backend";
+import { getAllowedDashboardPages } from "./routing";
 
 const order: DiagnosticOrder = {
   id: "order-a",
@@ -52,6 +53,27 @@ const order: DiagnosticOrder = {
   },
 };
 describe("diagnostic UI boundaries", () => {
+  test("clinical and reception teams can reach their diagnostic workspace", () => {
+    for (const role of [
+      "DOCTOR",
+      "TECHNICIAN",
+      "RECEPTIONIST",
+      "STAFF",
+      "doctor",
+      "receptionist",
+      "lab_tech",
+    ]) {
+      expect(getAllowedDashboardPages(role, [], "pathology")).toContain(
+        "pathology"
+      );
+      expect(getAllowedDashboardPages(role, [], "radiology")).toContain(
+        "radiology"
+      );
+    }
+    expect(
+      getAllowedDashboardPages("RECEPTIONIST", [], "hospital")
+    ).not.toContain("pathology");
+  });
   test("a draft cannot render a printable authorised report", () => {
     const html = renderToStaticMarkup(
       <DiagnosticReport

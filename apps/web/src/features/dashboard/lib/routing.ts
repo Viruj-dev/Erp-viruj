@@ -122,7 +122,7 @@ export const allowedDashboardPagesByRole: Record<
     "community",
     "billing",
     "pricing",
-  "subscription",
+    "subscription",
     "settings",
     "settings-alert-rules",
     "settings-audit-logs",
@@ -131,7 +131,7 @@ export const allowedDashboardPagesByRole: Record<
     "analytics",
     "activity-logs",
     "doctors",
-  "departments",
+    "departments",
     "facilities",
     "hospital-profile",
     "radiology",
@@ -156,7 +156,7 @@ export const allowedDashboardPagesByRole: Record<
     "community",
     "billing",
     "pricing",
-  "subscription",
+    "subscription",
     "settings",
     "settings-alert-rules",
     "settings-audit-logs",
@@ -165,7 +165,7 @@ export const allowedDashboardPagesByRole: Record<
     "analytics",
     "activity-logs",
     "doctors",
-  "departments",
+    "departments",
     "facilities",
     "hospital-profile",
     "radiology",
@@ -177,7 +177,7 @@ export const allowedDashboardPagesByRole: Record<
   ],
   CLINIC_ADMIN: [
     "dashboard",
-  "appointments",
+    "appointments",
     "appointments-dashboard",
     "appointments-review",
     "appointments-patients",
@@ -187,7 +187,7 @@ export const allowedDashboardPagesByRole: Record<
     "working-hours",
     "patients",
     "doctors",
-  "departments",
+    "departments",
     "offerings",
     "services",
     "facilities",
@@ -201,7 +201,7 @@ export const allowedDashboardPagesByRole: Record<
   ],
   CLINIC_OWNER: [
     "dashboard",
-  "appointments",
+    "appointments",
     "appointments-dashboard",
     "appointments-review",
     "appointments-patients",
@@ -211,7 +211,7 @@ export const allowedDashboardPagesByRole: Record<
     "working-hours",
     "patients",
     "doctors",
-  "departments",
+    "departments",
     "offerings",
     "services",
     "facilities",
@@ -225,14 +225,14 @@ export const allowedDashboardPagesByRole: Record<
   ],
   CLINIC_STAFF: [
     "dashboard",
-  "appointments",
+    "appointments",
     "appointments-dashboard",
     "appointments-review",
     "appointments-patients",
     "clinic-profile",
     "patients",
     "doctors",
-  "departments",
+    "departments",
     "offerings",
     "services",
     "facilities",
@@ -255,12 +255,12 @@ export const allowedDashboardPagesByRole: Record<
     "community",
     "billing",
     "pricing",
-  "subscription",
+    "subscription",
     "settings",
     "analytics",
     "activity-logs",
     "doctors",
-  "departments",
+    "departments",
     "facilities",
     "hospital-profile",
     "radiology",
@@ -299,7 +299,14 @@ export const allowedDashboardPagesByRole: Record<
     "notifications",
     "profile",
   ],
-  TECHNICIAN: ["dashboard", "pathology", "radiology", "patients", "reports", "profile"],
+  TECHNICIAN: [
+    "dashboard",
+    "pathology",
+    "radiology",
+    "patients",
+    "reports",
+    "profile",
+  ],
   APPOINTMENT_HANDLER: [
     "dashboard",
     "appointments",
@@ -326,7 +333,7 @@ export const allowedDashboardPagesByRole: Record<
     "community",
     "billing",
     "pricing",
-  "subscription",
+    "subscription",
     "settings",
     "settings-alert-rules",
     "settings-audit-logs",
@@ -335,7 +342,7 @@ export const allowedDashboardPagesByRole: Record<
     "analytics",
     "activity-logs",
     "doctors",
-  "departments",
+    "departments",
     "facilities",
     "hospital-profile",
     "radiology",
@@ -360,7 +367,7 @@ export const allowedDashboardPagesByRole: Record<
     "community",
     "billing",
     "pricing",
-  "subscription",
+    "subscription",
     "settings",
     "settings-alert-rules",
     "settings-audit-logs",
@@ -369,7 +376,7 @@ export const allowedDashboardPagesByRole: Record<
     "analytics",
     "activity-logs",
     "doctors",
-  "departments",
+    "departments",
     "facilities",
     "hospital-profile",
     "radiology",
@@ -384,7 +391,7 @@ export const allowedDashboardPagesByRole: Record<
     "finance",
     "billing",
     "pricing",
-  "subscription",
+    "subscription",
     "reports",
     "settings",
     "profile",
@@ -426,7 +433,7 @@ export const allowedDashboardPagesByRole: Record<
     "community",
     "billing",
     "pricing",
-  "subscription",
+    "subscription",
     "settings",
     "settings-alert-rules",
     "settings-audit-logs",
@@ -435,7 +442,7 @@ export const allowedDashboardPagesByRole: Record<
     "analytics",
     "activity-logs",
     "doctors",
-  "departments",
+    "departments",
     "facilities",
     "hospital-profile",
     "radiology",
@@ -460,7 +467,7 @@ export const allowedDashboardPagesByRole: Record<
     "community",
     "billing",
     "pricing",
-  "subscription",
+    "subscription",
     "settings",
     "settings-alert-rules",
     "settings-audit-logs",
@@ -469,7 +476,7 @@ export const allowedDashboardPagesByRole: Record<
     "analytics",
     "activity-logs",
     "doctors",
-  "departments",
+    "departments",
     "facilities",
     "hospital-profile",
     "radiology",
@@ -604,7 +611,8 @@ export function normalizeDashboardModule(value: string): DashboardPage {
 
 export function getAllowedDashboardPages(
   role?: string | null,
-  permissions?: readonly string[] | null
+  permissions?: readonly string[] | null,
+  organizationType?: DashboardOrganizationType | null
 ): DashboardPage[] {
   const fallbackRole: OrganizationMemberRole = "OWNER";
   const pages =
@@ -612,7 +620,28 @@ export function getAllowedDashboardPages(
       (role as OrganizationMemberRole | undefined) ?? fallbackRole
     ] ?? allowedDashboardPagesByRole[fallbackRole];
 
-  return filterSubscriptionPage(pages, permissions);
+  const diagnosticRole = [
+    "OWNER",
+    "ADMIN",
+    "ORG_ADMIN",
+    "MANAGER",
+    "DOCTOR",
+    "STAFF",
+    "RECEPTIONIST",
+    "TECHNICIAN",
+    "owner",
+    "admin",
+    "manager",
+    "doctor",
+    "receptionist",
+    "lab_tech",
+  ].includes(role ?? "");
+  const diagnosticPages: DashboardPage[] =
+    diagnosticRole &&
+    (organizationType === "pathology" || organizationType === "radiology")
+      ? [...new Set<DashboardPage>([...pages, organizationType, "reports"])]
+      : pages;
+  return filterSubscriptionPage(diagnosticPages, permissions);
 }
 
 export function getDefaultDashboardPage(role?: string | null): DashboardPage {
