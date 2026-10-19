@@ -580,6 +580,7 @@ function PageContent({
     return (
       <DiagnosticWorkspace
         key={appointmentTenant.organizationId}
+        userName={userName}
         tenant={appointmentTenant}
         organizationName={organizationName}
       />

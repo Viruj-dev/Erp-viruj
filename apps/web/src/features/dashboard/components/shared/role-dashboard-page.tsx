@@ -49,7 +49,12 @@ import {
 import { AppointmentDetailDialog } from "./modules/appointments/components/appointment-detail";
 import { DoctorAvatar } from "./workspace/doctor-avatar";
 
-type DashboardTone = "clinic" | "hospital" | "doctor";
+type DashboardTone =
+  | "clinic"
+  | "hospital"
+  | "doctor"
+  | "pathology"
+  | "radiology";
 type RoleDashboardKpi = { label: string; note: string; value: string };
 type RoleDashboardChart = {
   title: string;
@@ -133,9 +138,18 @@ export function RoleDashboardPage({
     slug
       ? buildTenantDashboardPath(tone, slug, page)
       : buildDashboardPath(tone, page);
-  const servicesPage = tone === "hospital" ? "facilities" : "services";
-  const profilePage =
-    tone === "clinic"
+  const diagnostic = tone === "pathology" || tone === "radiology";
+  const chartLabels = diagnostic
+    ? ["Bookings", "Orders", "Reports"]
+    : ["Appointments", "Doctors", "Services"];
+  const servicesPage = diagnostic
+    ? tone
+    : tone === "hospital"
+      ? "facilities"
+      : "services";
+  const profilePage = diagnostic
+    ? "profile"
+    : tone === "clinic"
       ? "clinic-profile"
       : tone === "doctor"
         ? "profile"
@@ -165,7 +179,11 @@ export function RoleDashboardPage({
   const hasTrend = points.some((point) => point.value > 0);
   const chartUnavailable =
     !analytics ||
-    unavailable.includes(["appointments", "doctors", "services"][chartIndex]) ||
+    unavailable.includes(
+      (diagnostic
+        ? ["appointments", "orders", "orders"]
+        : ["appointments", "doctors", "services"])[chartIndex]
+    ) ||
     (chartIndex === 0 && unavailable.includes("analytics"));
   const team = analytics?.doctors ?? [];
   const services = analytics?.services ?? [];
@@ -175,17 +193,25 @@ export function RoleDashboardPage({
       style={
         {
           "--dashboard-brand-light":
-            tone === "clinic"
-              ? "#c4b5fd"
-              : tone === "hospital"
-                ? "#93c5fd"
-                : "#6ee7b7",
+            tone === "pathology"
+              ? "#fdba74"
+              : tone === "radiology"
+                ? "#d4d4d8"
+                : tone === "clinic"
+                  ? "#c4b5fd"
+                  : tone === "hospital"
+                    ? "#93c5fd"
+                    : "#6ee7b7",
           "--dashboard-brand":
-            tone === "clinic"
-              ? "#7855c7"
-              : tone === "hospital"
-                ? "#3569ba"
-                : "#278565",
+            tone === "pathology"
+              ? "#c2410c"
+              : tone === "radiology"
+                ? "#52525b"
+                : tone === "clinic"
+                  ? "#7855c7"
+                  : tone === "hospital"
+                    ? "#3569ba"
+                    : "#278565",
         } as CSSProperties
       }
       className="[--dashboard-accent:var(--dashboard-brand)] dark:[--dashboard-accent:var(--dashboard-brand-light)] erp-overview min-w-0 bg-transparent px-1 py-3 text-slate-900 dark:text-slate-100 sm:px-2 lg:px-3 [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-offset-4 [&_button]:focus-visible:outline-[var(--dashboard-accent)] [&_a]:focus-visible:outline-2 [&_a]:focus-visible:outline-offset-4 [&_a]:focus-visible:outline-[var(--dashboard-accent)]"
@@ -197,7 +223,9 @@ export function RoleDashboardPage({
               Your care workspace
             </p>
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Your practice, at a glance.
+              {diagnostic
+                ? "Your diagnostics, at a glance."
+                : "Your practice, at a glance."}
             </h1>
             <p className={`mt-1.5 text-sm ${subtle}`}>
               {userName
@@ -262,16 +290,18 @@ export function RoleDashboardPage({
             },
             {
               key: "Active Doctors",
-              label: "Published doctors",
-              source: "doctors",
-              page: "doctors",
+              label: diagnostic
+                ? "Active diagnostic orders"
+                : "Published doctors",
+              source: diagnostic ? "orders" : "doctors",
+              page: diagnostic ? tone : "doctors",
               icon: Stethoscope,
             },
             {
               key: "Active Services",
-              label: "Live services",
-              source: "services",
-              page: servicesPage,
+              label: diagnostic ? "Released reports" : "Live services",
+              source: diagnostic ? "orders" : "services",
+              page: diagnostic ? "reports" : servicesPage,
               icon: HeartPulse,
             },
           ]
@@ -356,7 +386,7 @@ export function RoleDashboardPage({
                       control + " inline-flex items-center gap-2 py-1.5"
                     }
                   >
-                    {["Appointments", "Doctors", "Services"][chartIndex]}
+                    {chartLabels[chartIndex]}
                     <ChevronDown size={14} aria-hidden="true" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -364,16 +394,14 @@ export function RoleDashboardPage({
                       value={String(chartIndex)}
                       onValueChange={(value) => setChartIndex(Number(value))}
                     >
-                      {["Appointments", "Doctors", "Services"].map(
-                        (label, index) => (
-                          <DropdownMenuRadioItem
-                            key={label}
-                            value={String(index)}
-                          >
-                            {label}
-                          </DropdownMenuRadioItem>
-                        )
-                      )}
+                      {chartLabels.map((label, index) => (
+                        <DropdownMenuRadioItem
+                          key={label}
+                          value={String(index)}
+                        >
+                          {label}
+                        </DropdownMenuRadioItem>
+                      ))}
                     </DropdownMenuRadioGroup>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -402,7 +430,9 @@ export function RoleDashboardPage({
                       {chartIndex === 0
                         ? "patients request appointments"
                         : chartIndex === 1
-                          ? "doctor profiles are published"
+                          ? diagnostic
+                            ? "diagnostic orders are received"
+                            : "doctor profiles are published"
                           : "services are published"}
                       .
                     </p>
@@ -736,8 +766,13 @@ export function RoleDashboardPage({
               <>
                 <section className={panel}>
                   <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/5">
-                    <h2 className="text-sm font-semibold">Your doctors</h2>
-                    <Link href={href("doctors")} className={textLink}>
+                    <h2 className="text-sm font-semibold">
+                      {diagnostic ? "Reporting team" : "Your doctors"}
+                    </h2>
+                    <Link
+                      href={href(diagnostic ? "staff" : "doctors")}
+                      className={textLink}
+                    >
                       Manage
                       <ArrowUpRight size={13} />
                     </Link>
@@ -751,11 +786,15 @@ export function RoleDashboardPage({
                           ? "Loading doctors…"
                           : unavailable.includes("doctors")
                             ? "Doctor list is unavailable"
-                            : "Build your care team"
+                            : diagnostic
+                              ? "Manage your reporting team"
+                              : "Build your care team"
                       }
                       description={
                         !loading && !unavailable.includes("doctors")
-                          ? "Add doctor profiles so patients can find the right specialist."
+                          ? diagnostic
+                            ? "Manage laboratory and reporting staff from Team."
+                            : "Add doctor profiles so patients can find the right specialist."
                           : undefined
                       }
                     />
