@@ -74,6 +74,7 @@ export function ErpDemoTopBar({
             id="top-bar-profile-button"
             aria-label="Open account menu"
             aria-expanded={isProfileOpen}
+            aria-controls={isProfileOpen ? "account-menu" : undefined}
             type="button"
             onClick={() => setIsProfileOpen((v) => !v)}
             className="flex cursor-pointer items-center gap-2.5 rounded-full p-1.5 transition-colors hover:bg-slate-200/50 dark:hover:bg-white/[0.08]"
