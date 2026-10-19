@@ -15,9 +15,9 @@ import {
   diagnosticMoney,
   diagnosticPermissions,
   type DiagnosticService,
-  type DiagnosticParameter,
   type DiagnosticServiceInput,
 } from "@/features/dashboard/lib/diagnostics";
+import { pathologyServicePresets } from "@/features/dashboard/lib/pathology-services";
 import { virujBackend } from "@/lib/viruj-backend";
 
 export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
@@ -53,7 +53,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-semibold">
-            {pathology ? "Test catalogue" : "Scan catalogue"}
+            {pathology ? "Services" : "Scan catalogue"}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Configure services, preparation, pricing and turnaround time.
@@ -61,7 +61,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
         </div>
         {canManage && (
           <Button className={accent} onClick={() => setEditing("new")}>
-            Add {pathology ? "test" : "scan"}
+            Add {pathology ? "service" : "scan"}
           </Button>
         )}
       </div>
@@ -152,8 +152,8 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
             {editing === "new" ? "Add service" : "Edit service"}
           </DialogTitle>
           <DialogDescription>
-            Reference ranges are configured by your laboratory and copied into
-            each new order.
+            Add the service details patients will see in the app. Publish your
+            branch and add appointment availability when you are ready.
           </DialogDescription>
           {editing && (
             <ServiceForm
@@ -186,9 +186,6 @@ function ServiceForm({
       (tenant.providerType === "radiology" ? "radiology" : "pathology")
   );
   const pathology = kind === "pathology";
-  const [parameters, setParameters] = useState<DiagnosticParameter[]>(
-    service?.parameters ?? [{ name: "", unit: "", reference: "" }]
-  );
   const save = useMutation({
     mutationFn: (data: DiagnosticServiceInput) =>
       virujBackend.diagnostics.saveService(
@@ -212,23 +209,27 @@ function ServiceForm({
       preparation: String(form.get("preparation")),
       specimen: pathology ? String(form.get("specimen")) : null,
       modality: pathology ? null : String(form.get("modality")),
-      parameters: pathology ? parameters : [],
+      parameters: pathology ? (service?.parameters ?? []) : [],
     });
   }
   return (
     <form onSubmit={submit} className="space-y-4">
-      <label className="block space-y-1 text-sm">
-        Service type
-        <ErpSelect
-          className="w-full rounded-lg border bg-background p-2"
-          disabled={Boolean(service)}
-          value={kind}
-          onChange={(e) => setKind(e.target.value as "pathology" | "radiology")}
-        >
-          <option value="pathology">Pathology test / panel</option>
-          <option value="radiology">Radiology scan</option>
-        </ErpSelect>
-      </label>
+      {tenant.providerType !== "pathology" && (
+        <label className="block space-y-1 text-sm">
+          Service type
+          <ErpSelect
+            className="w-full rounded-lg border bg-background p-2"
+            disabled={Boolean(service)}
+            value={kind}
+            onChange={(e) =>
+              setKind(e.target.value as "pathology" | "radiology")
+            }
+          >
+            <option value="pathology">Pathology test / panel</option>
+            <option value="radiology">Radiology scan</option>
+          </ErpSelect>
+        </label>
+      )}
       <label className="block space-y-1 text-sm">
         Description
         <textarea
@@ -249,6 +250,41 @@ function ServiceForm({
           defaultValue={service?.durationMinutes ?? 30}
         />
       </label>
+      {pathology && (
+        <label className="block space-y-1 text-sm">
+          Choose a test or service
+          <ErpSelect
+            defaultValue=""
+            onChange={(event) => {
+              const preset = pathologyServicePresets.find(
+                (item) => item.name === event.target.value
+              );
+              const form = event.currentTarget.form;
+              if (!preset || !form) return;
+              for (const key of ["name", "code", "specimen"] as const) {
+                const input = form.elements.namedItem(key);
+                if (input instanceof HTMLInputElement)
+                  input.value = preset[key];
+              }
+            }}
+          >
+            <option value="">Custom service / choose from the list</option>
+            {[
+              ...new Set(pathologyServicePresets.map((item) => item.category)),
+            ].map((category) => (
+              <optgroup key={category} label={category}>
+                {pathologyServicePresets
+                  .filter((item) => item.category === category)
+                  .map((item) => (
+                    <option key={item.code} value={item.name}>
+                      {item.name}
+                    </option>
+                  ))}
+              </optgroup>
+            ))}
+          </ErpSelect>
+        </label>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-1 text-sm">
           Service name
@@ -313,81 +349,6 @@ function ServiceForm({
           className="min-h-20 w-full rounded-lg border bg-transparent p-3"
         />
       </label>
-      {pathology && (
-        <fieldset className="space-y-3 rounded-xl border p-4">
-          <legend className="px-2 text-sm font-semibold">
-            Result parameters
-          </legend>
-          {parameters.map((p, index) => (
-            <div
-              key={index}
-              className="grid gap-2 sm:grid-cols-[1fr_0.7fr_1fr_auto]"
-            >
-              <Input
-                aria-label={`Parameter ${index + 1} name`}
-                required
-                placeholder="Parameter"
-                value={p.name}
-                onChange={(e) =>
-                  setParameters((rows) =>
-                    rows.map((row, i) =>
-                      i === index ? { ...row, name: e.target.value } : row
-                    )
-                  )
-                }
-              />
-              <Input
-                aria-label={`Parameter ${index + 1} unit`}
-                placeholder="Unit"
-                value={p.unit}
-                onChange={(e) =>
-                  setParameters((rows) =>
-                    rows.map((row, i) =>
-                      i === index ? { ...row, unit: e.target.value } : row
-                    )
-                  )
-                }
-              />
-              <Input
-                aria-label={`Parameter ${index + 1} reference range`}
-                placeholder="Reference / applicability"
-                value={p.reference}
-                onChange={(e) =>
-                  setParameters((rows) =>
-                    rows.map((row, i) =>
-                      i === index ? { ...row, reference: e.target.value } : row
-                    )
-                  )
-                }
-              />
-              <Button
-                type="button"
-                variant="outline"
-                aria-label={`Remove parameter ${index + 1}`}
-                disabled={parameters.length === 1}
-                onClick={() =>
-                  setParameters((rows) => rows.filter((_, i) => i !== index))
-                }
-              >
-                ×
-              </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            disabled={parameters.length >= 100}
-            onClick={() =>
-              setParameters((rows) => [
-                ...rows,
-                { name: "", unit: "", reference: "" },
-              ])
-            }
-          >
-            Add parameter
-          </Button>
-        </fieldset>
-      )}
       {save.isError && (
         <p role="alert" className="text-sm text-destructive">
           {save.error.message}

@@ -199,19 +199,47 @@ export function ErpDemoSidebar({
     { id: "staff", label: "Team", icon: BadgeCheck },
     { id: "activity-logs", label: "Activity Logs", icon: History },
   ];
-  const navItems = isDoctorWorkspace
-    ? doctorNavItems
-    : isClinicWorkspace
-      ? clinicNavItems
-      : isDiagnosticWorkspace
-        ? diagnosticNavItems
-        : mainNavItems;
+  const pathologyNavItems: NavItem[] = [
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "appointments", label: "Appointments", icon: ClipboardCheck },
+    { id: "services", label: "Services", icon: FlaskConical },
+    { id: "facilities", label: "Facilities", icon: HeartPulse },
+    { id: "staff", label: "Staff", icon: BadgeCheck },
+    { id: "analytics", label: "Analytics", icon: BarChart3 },
+  ];
+  const baseNavItems = isPathologyWorkspace
+    ? pathologyNavItems
+    : isDoctorWorkspace
+      ? doctorNavItems
+      : isClinicWorkspace
+        ? clinicNavItems
+        : isDiagnosticWorkspace
+          ? diagnosticNavItems
+          : mainNavItems;
+  const navItems: NavItem[] = [
+    ...baseNavItems,
+    ...(
+      [
+        { id: "community", label: "Community", icon: MessagesSquare },
+        { id: "gallery", label: "Gallery", icon: Image },
+        { id: "activity-logs", label: "Activity Logs", icon: History },
+      ] satisfies NavItem[]
+    ).filter(
+      (item) => !baseNavItems.some((existing) => existing.id === item.id)
+    ),
+  ];
   const nestedProfileOptions = isClinicWorkspace
     ? clinicProfileOptions
     : doctorProfileOptions;
   const systemItems = [
     ...(isDiagnosticWorkspace
-      ? [{ id: "onboarding" as const, label: "Centre setup", icon: Building2 }]
+      ? [
+          {
+            id: "onboarding" as const,
+            label: isPathologyWorkspace ? "Organization setup" : "Centre setup",
+            icon: Building2,
+          },
+        ]
       : []),
     {
       id: isClinicWorkspace
@@ -322,11 +350,14 @@ export function ErpDemoSidebar({
               profileOptions={nestedProfileOptions}
               isDoctorProfileOpen={isDoctorProfileOpen}
               showDoctorProfileDropdown={isDoctorWorkspace}
-              showAppointmentDropdown={!isOwnerOrAdmin && !isClinicWorkspace}
+              showAppointmentDropdown={
+                !isOwnerOrAdmin && !isClinicWorkspace && !isDiagnosticWorkspace
+              }
               theme={workspaceTheme}
             />
 
             {!isClinicWorkspace &&
+            !isDiagnosticWorkspace &&
             !isOwnerOrAdmin &&
             !isCollapsed &&
             isAppointmentsOpen ? (

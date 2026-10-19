@@ -649,7 +649,37 @@ export function getAllowedDashboardPages(
           ]),
         ]
       : pages;
-  return filterSubscriptionPage(diagnosticPages, permissions);
+  const workspacePages = [
+    ...new Set<DashboardPage>([
+      ...diagnosticPages,
+      "community",
+      "gallery",
+      "activity-logs",
+      "subscription",
+    ]),
+  ];
+  if (organizationType === "pathology" && diagnosticRole) {
+    return filterSubscriptionPage(
+      [
+        "dashboard",
+        "appointments",
+        "services",
+        "facilities",
+        "staff",
+        "analytics",
+        "community",
+        "gallery",
+        "activity-logs",
+        "subscription",
+        "profile",
+        "settings",
+        "settings-data-export",
+        ...(canManageDiagnosticSetup(role) ? ["onboarding" as const] : []),
+      ],
+      permissions
+    );
+  }
+  return filterSubscriptionPage(workspacePages, permissions);
 }
 
 export function getDefaultDashboardPage(role?: string | null): DashboardPage {

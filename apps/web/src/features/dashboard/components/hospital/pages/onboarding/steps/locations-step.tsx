@@ -291,7 +291,7 @@ type ReverseGeocodeResult = {
   state: string;
 };
 
-function getCurrentPosition() {
+export function getCurrentPosition() {
   return new Promise<GeolocationPosition>((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(resolve, reject, {
       enableHighAccuracy: true,
@@ -301,7 +301,7 @@ function getCurrentPosition() {
   });
 }
 
-async function reverseGeocodeLocation(
+export async function reverseGeocodeLocation(
   latitude: string,
   longitude: string
 ): Promise<ReverseGeocodeResult> {

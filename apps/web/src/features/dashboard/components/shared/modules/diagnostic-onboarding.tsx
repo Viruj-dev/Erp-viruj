@@ -1,4 +1,9 @@
 "use client";
+import { UploadField } from "@/features/dashboard/components/hospital/pages/onboarding/fields";
+import {
+  getCurrentPosition,
+  reverseGeocodeLocation,
+} from "@/features/dashboard/components/hospital/pages/onboarding/steps/locations-step";
 import { OnboardingFrame } from "@/features/dashboard/components/hospital/pages/onboarding/onboarding-frame";
 import { OnboardingSuccessScreen } from "@/features/dashboard/components/hospital/pages/onboarding/onboarding-success-screen";
 import type {
@@ -99,13 +104,17 @@ function SetupForm({
     [validationError, setValidationError] = useState("");
   const pathology = tenant.providerType === "pathology";
   const draftKey = `viruj:diagnostic-onboarding:draft:${tenant.organizationId}`;
-  const steps = [
-    "Centre identity",
-    "Branch & contact",
-    "Reporting team",
-    pathology ? "Laboratory setup" : "Imaging setup",
-    "Review",
-  ];
+  const [locationStatus, setLocationStatus] = useState("");
+  const [locating, setLocating] = useState(false);
+  const steps = pathology
+    ? ["Identity", "Branch", "Contact & hours", "Review"]
+    : [
+        "Centre identity",
+        "Branch & contact",
+        "Reporting team",
+        pathology ? "Laboratory setup" : "Imaging setup",
+        "Review",
+      ];
   const save = useMutation({
     mutationFn: (complete: boolean) =>
       virujBackend.diagnostics.saveOnboarding(
@@ -240,8 +249,12 @@ function SetupForm({
       </div>
     );
   }
-  const ids: StepId[] = ["profile", "contact", "doctors", "departments", "review"];
-  const kickers = ["Identity", "Branch", "Clinical team", "Operations", "Launch"];
+  const ids: StepId[] = pathology
+    ? ["profile", "locations", "contact", "review"]
+    : ["profile", "contact", "doctors", "departments", "review"];
+  const kickers = pathology
+    ? ["Identity", "Location", "Contact", "Launch"]
+    : ["Identity", "Branch", "Clinical team", "Operations", "Launch"];
   const definitions: StepDefinition[] = steps.map((label, index) => ({
     id: ids[index]!,
     label,
@@ -249,7 +262,13 @@ function SetupForm({
   }));
   const descriptions = Object.fromEntries([
     ["profile", "Register the centre and facility credentials"],
-    ["contact", "Add the main branch, contact details and opening hours"],
+    ["locations", "Locate your primary branch and confirm its address"],
+    [
+      "contact",
+      pathology
+        ? "Add contact details and choose your opening hours"
+        : "Add the main branch, contact details and opening hours",
+    ],
     ["doctors", "Add the professional responsible for approved reports"],
     [
       "departments",
@@ -266,23 +285,15 @@ function SetupForm({
     { label: "Centre", value: data.centreName || "Not provided" },
     { label: "Branch", value: data.branchName || "Not provided" },
     {
-      label: "Reporting professional",
-      value: data.reportingName || "Not provided",
+      label: pathology ? "Contact" : "Reporting professional",
+      value: (pathology ? data.email : data.reportingName) || "Not provided",
     },
   ];
   const validateCurrentStep = () => {
     setValidationError("");
     if (!formRef.current?.reportValidity()) return false;
-    if (step === 1 && data.workingDays.length === 0) {
+    if (step === (pathology ? 2 : 1) && data.workingDays.length === 0) {
       setValidationError("Select at least one working day to continue.");
-      return false;
-    }
-    if (step === 3 && pathology && data.sections.length === 0) {
-      setValidationError("Select at least one laboratory section.");
-      return false;
-    }
-    if (step === 3 && pathology && data.specimens.length === 0) {
-      setValidationError("Select at least one accepted specimen type.");
       return false;
     }
     if (step === 3 && !pathology && data.modalities.length === 0) {
@@ -294,13 +305,63 @@ function SetupForm({
   const handleContinue = () => {
     if (!validateCurrentStep()) return;
     save.mutate(false, {
-      onSuccess: () => setStep((current) => Math.min(current + 1, 4)),
+      onSuccess: () =>
+        setStep((current) => Math.min(current + 1, steps.length - 1)),
     });
   };
   const handleLaunch = () => {
     if (validateCurrentStep()) save.mutate(true);
   };
 
+  async function locateBranch() {
+    setLocating(true);
+    setLocationStatus("Finding your branch location…");
+    try {
+      const position = await getCurrentPosition();
+      const latitude = position.coords.latitude.toFixed(6);
+      const longitude = position.coords.longitude.toFixed(6);
+      update("latitude", latitude);
+      update("longitude", longitude);
+      update(
+        "mapsLocation",
+        `https://www.google.com/maps?q=${latitude},${longitude}`
+      );
+      const address = await reverseGeocodeLocation(latitude, longitude);
+      setData((current) => ({
+        ...current,
+        address: address.address || current.address,
+        city: address.city || current.city,
+        state: address.state || current.state,
+        postalCode: address.postalCode || current.postalCode,
+      }));
+      setLocationStatus("Location found. Check the address before continuing.");
+    } catch {
+      setLocationStatus(
+        "Unable to fetch location. Allow browser location access or enter your address manually."
+      );
+    } finally {
+      setLocating(false);
+    }
+  }
+  const upload = (kind: "logo" | "certificate") => (
+    <UploadField
+      label={kind === "logo" ? "Organization logo" : "License / certificate"}
+      name={kind === "logo" ? data.logoName : data.certificateName}
+      onChange={async ({ file, name, previewUrl }) => {
+        try {
+          const media = await virujBackend.organizationProfile.uploadMedia({
+            file,
+            kind,
+            organizationId: tenant.organizationId,
+          });
+          update(kind === "logo" ? "logoUrl" : "certificateUrl", media.url);
+          update(kind === "logo" ? "logoName" : "certificateName", name);
+        } finally {
+          URL.revokeObjectURL(previewUrl);
+        }
+      }}
+    />
+  );
   if (complete) {
     return (
       <OnboardingSuccessScreen
@@ -324,21 +385,18 @@ function SetupForm({
       steps={definitions}
       stepDescriptions={descriptions}
       currentStepIndex={step}
-      setCurrentStepIndex={setStep}
+      setCurrentStepIndex={(action) => {
+        const next = typeof action === "function" ? action(step) : action;
+        if (next <= step) setStep(next);
+      }}
       completedSteps={ids.slice(0, step)}
       completionPercentage={Math.round((step / steps.length) * 100)}
       contentWidthClassName="max-w-[960px]"
       saveState={
-        save.isPending || draftSaving
-          ? "saving"
-          : draftSaved
-            ? "saved"
-            : "idle"
+        save.isPending || draftSaving ? "saving" : draftSaved ? "saved" : "idle"
       }
       launching={save.isPending}
-      errorMessage={
-        validationError || (save.isError ? save.error.message : "")
-      }
+      errorMessage={validationError || (save.isError ? save.error.message : "")}
       handleContinue={handleContinue}
       handleLaunch={handleLaunch}
     >
@@ -347,266 +405,387 @@ function SetupForm({
         onSubmit={(event) => event.preventDefault()}
         className="space-y-6 pb-4"
       >
-          {step === 0 && (
-            <div className="grid gap-5 sm:grid-cols-2">
-              {field("centreName", "Centre display name", { required: true })}
-              {field("legalName", "Legal business name", { required: true })}
-              {field(
-                "registrationNumber",
-                "Facility registration / licence number",
-                { required: true }
-              )}
-              {field("registrationAuthority", "Issuing authority", {
+        {step === 0 && (
+          <div className="grid gap-5 sm:grid-cols-2">
+            {field(
+              "centreName",
+              pathology ? "Organization name" : "Centre display name",
+              { required: true }
+            )}
+            {!pathology &&
+              field("legalName", "Legal business name", { required: true })}
+            {field(
+              "registrationNumber",
+              "Facility registration / licence number",
+              { required: true }
+            )}
+            {!pathology &&
+              field("registrationAuthority", "Issuing authority", {
                 required: true,
               })}
-              <div className="sm:col-span-2">
-                {field(
-                  "additionalCertificates",
-                  "Additional certificates / accreditation identifiers",
-                  {
-                    hint: "Optional. Enter identifiers and issuing bodies where applicable. This does not verify or approve them.",
-                  }
+            {pathology && (
+              <>
+                {upload("logo")}
+                {upload("certificate")}
+                {field("establishedYear", "Year of establishment", {
+                  type: "number",
+                })}
+                {field("website", "Website", { type: "url" })}
+                {field("instagram", "Instagram", { type: "url" })}
+                {field("facebook", "Facebook", { type: "url" })}
+                {field("linkedin", "LinkedIn", { type: "url" })}
+              </>
+            )}
+            <div className="sm:col-span-2">
+              {field(
+                "additionalCertificates",
+                "Additional certificates / accreditation identifiers",
+                {
+                  hint: "Optional. Enter identifiers and issuing bodies where applicable. This does not verify or approve them.",
+                }
+              )}
+            </div>
+          </div>
+        )}
+        {step === 1 && (
+          <div className="space-y-5">
+            {pathology && (
+              <div className="rounded-2xl border border-dashed p-5 space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Fetch your branch location, then confirm the address below.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={locating}
+                  onClick={() => void locateBranch()}
+                >
+                  {locating ? "Finding location…" : "Use current location"}
+                </Button>
+                <p role="status" className="text-sm">
+                  {locationStatus}
+                </p>
+                {data.mapsLocation && (
+                  <a
+                    className="text-sm underline"
+                    href={data.mapsLocation}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View branch on map
+                  </a>
                 )}
               </div>
-            </div>
-          )}
-          {step === 1 && (
-            <div className="space-y-5">
-              <div className="grid gap-5 sm:grid-cols-2">
-                {field("phone", "Centre phone", {
-                  required: true,
-                  type: "tel",
-                })}
-                {field("email", "Centre email", {
-                  required: true,
-                  type: "email",
-                })}
-                {field("branchName", "Primary branch name", { required: true })}
-                {field("address", "Street address", { required: true })}
-                {field("city", "City", { required: true })}
-                {field("state", "State", { required: true })}
-                {field("postalCode", "PIN code", { required: true })}
-                {field("openingTime", "Opening time", {
-                  required: true,
-                  type: "time",
-                })}
-                {field("closingTime", "Closing time", {
-                  required: true,
-                  type: "time",
-                })}
-              </div>
-              <fieldset className="space-y-3">
-                <legend className="mb-3 text-sm font-medium">
-                  Working days · Asia/Kolkata
-                </legend>
-                {choices("workingDays", [
-                  "Mon",
-                  "Tue",
-                  "Wed",
-                  "Thu",
-                  "Fri",
-                  "Sat",
-                  "Sun",
-                ])}
-              </fieldset>
-            </div>
-          )}
-          {step === 2 && (
-            <div className="space-y-5">
-              <p className="text-sm text-muted-foreground">
-                Enter the professional responsible for{" "}
-                {pathology
-                  ? "laboratory result review"
-                  : "imaging interpretation"}
-                . Add their account and Doctor role through Team before they
-                release reports.
-              </p>
-              {field(
-                "reportingName",
-                pathology
-                  ? "Reporting pathologist / clinical lead name"
-                  : "Reporting radiologist name",
-                { required: true }
+            )}
+            <div className="grid gap-5 sm:grid-cols-2">
+              {!pathology && (
+                <>
+                  {field("phone", "Centre phone", {
+                    required: true,
+                    type: "tel",
+                  })}
+                  {field("email", "Centre email", {
+                    required: true,
+                    type: "email",
+                  })}
+                </>
               )}
-              {field(
-                "reportingRegistration",
-                "Professional registration number",
-                { required: true }
-              )}
-              {field("reportingEmail", "Reporting professional email", {
+              {field("branchName", "Primary branch name", { required: true })}
+              {field("address", "Street address", { required: true })}
+              {field("city", "City", { required: true })}
+              {field("state", "State", { required: true })}
+              {field("postalCode", "PIN code", { required: true })}
+            </div>
+            {!pathology && (
+              <>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  {field("openingTime", "Opening time", {
+                    required: true,
+                    type: "time",
+                  })}
+                  {field("closingTime", "Closing time", {
+                    required: true,
+                    type: "time",
+                  })}
+                </div>
+                <fieldset className="space-y-3">
+                  <legend className="mb-3 text-sm font-medium">
+                    Working days · Asia/Kolkata
+                  </legend>
+                  {choices("workingDays", [
+                    "Mon",
+                    "Tue",
+                    "Wed",
+                    "Thu",
+                    "Fri",
+                    "Sat",
+                    "Sun",
+                  ])}
+                </fieldset>
+              </>
+            )}
+          </div>
+        )}
+        {pathology && step === 2 && (
+          <div className="space-y-5">
+            <div className="grid gap-5 sm:grid-cols-2">
+              {field("phone", "Contact phone", { required: true, type: "tel" })}
+              {field("email", "Contact email", {
                 required: true,
                 type: "email",
               })}
-              <p className="rounded-xl bg-muted p-4 text-xs leading-6 text-muted-foreground">
-                Saving these details does not invite staff, grant permissions or
-                verify professional credentials. Report release remains
-                restricted by backend role checks.
-              </p>
+              {field("openingTime", "Opening time", {
+                required: true,
+                type: "time",
+              })}
+              {field("closingTime", "Closing time", {
+                required: true,
+                type: "time",
+              })}
             </div>
-          )}
-          {step === 3 && (
-            <div className="space-y-5">
-              {pathology ? (
-                <>
-                  <fieldset>
-                    <legend className="mb-3 text-sm font-medium">
-                      Laboratory sections offered *
-                    </legend>
-                    {choices("sections", [
-                      "Haematology",
-                      "Biochemistry",
-                      "Microbiology",
-                      "Immunology",
-                      "Histopathology",
-                      "Molecular testing",
-                    ])}
-                  </fieldset>
-                  <fieldset>
-                    <legend className="mb-3 text-sm font-medium">
-                      Specimens accepted *
-                    </legend>
-                    {choices("specimens", [
-                      "Blood",
-                      "Urine",
-                      "Stool",
-                      "Swab",
-                      "Tissue",
-                      "Other",
-                    ])}
-                  </fieldset>
-                  {field(
-                    "sampleHandling",
-                    "Sample handling, containers and rejection process",
-                    { required: true, multiline: true }
-                  )}
-                  {field(
-                    "collectionInstructions",
-                    "Patient preparation and collection instructions",
-                    { required: true, multiline: true }
-                  )}
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      className="accent-[var(--onboarding-accent)]"
-                      checked={data.homeCollection}
-                      onChange={(e) =>
-                        update("homeCollection", e.target.checked)
-                      }
-                    />
-                    Offer home sample collection
-                  </label>
-                </>
-              ) : (
-                <>
-                  <fieldset>
-                    <legend className="mb-3 text-sm font-medium">
-                      Imaging modalities offered *
-                    </legend>
-                    {choices("modalities", [
-                      "X-ray",
-                      "Ultrasound",
-                      "CT",
-                      "MRI",
-                      "Mammography",
-                      "Doppler",
-                      "Other",
-                    ])}
-                  </fieldset>
-                  {field(
-                    "equipment",
-                    "Machines / room identifiers and available modalities",
-                    {
-                      required: true,
-                      multiline: true,
-                      hint: "Use the same machine identifiers when creating appointment slots.",
-                    }
-                  )}
-                  {field(
-                    "referralPolicy",
-                    "Referral / prescription requirements",
-                    { required: true, multiline: true }
-                  )}
-                  {field(
-                    "screeningProcess",
-                    "Patient preparation, screening and consent process",
-                    { required: true, multiline: true }
-                  )}
-                  {field(
-                    "imageWorkflow",
-                    "Secure image storage / PACS and reporting workflow",
-                    {
-                      required: true,
-                      multiline: true,
-                      hint: "Describe your workflow. Do not enter passwords, access tokens or patient records.",
-                    }
-                  )}
-                </>
-              )}
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  className="accent-[var(--onboarding-accent)]"
-                  checked={data.walkIns}
-                  onChange={(e) => update("walkIns", e.target.checked)}
-                />
-                Accept walk-in patients
-              </label>
+            <fieldset>
+              <legend className="mb-3 text-sm font-medium">
+                Working days · Asia/Kolkata
+              </legend>
+              {choices("workingDays", [
+                "Mon",
+                "Tue",
+                "Wed",
+                "Thu",
+                "Fri",
+                "Sat",
+                "Sun",
+              ])}
+            </fieldset>
+            <label className="flex gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={data.homeCollection}
+                onChange={(e) => update("homeCollection", e.target.checked)}
+              />
+              Offer home collection
+            </label>
+            <label className="flex gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={data.walkIns}
+                onChange={(e) => update("walkIns", e.target.checked)}
+              />
+              Accept walk-in appointments
+            </label>
+          </div>
+        )}
+        {!pathology && step === 2 && (
+          <div className="space-y-5">
+            <p className="text-sm text-muted-foreground">
+              Enter the professional responsible for{" "}
+              {pathology
+                ? "laboratory result review"
+                : "imaging interpretation"}
+              . Add their account and Doctor role through Team before they
+              release reports.
+            </p>
+            {field(
+              "reportingName",
+              pathology
+                ? "Reporting pathologist / clinical lead name"
+                : "Reporting radiologist name",
+              { required: true }
+            )}
+            {field(
+              "reportingRegistration",
+              "Professional registration number",
+              { required: true }
+            )}
+            {field("reportingEmail", "Reporting professional email", {
+              required: true,
+              type: "email",
+            })}
+            <p className="rounded-xl bg-muted p-4 text-xs leading-6 text-muted-foreground">
+              Saving these details does not invite staff, grant permissions or
+              verify professional credentials. Report release remains restricted
+              by backend role checks.
+            </p>
+          </div>
+        )}
+        {!pathology && step === 3 && (
+          <div className="space-y-5">
+            {pathology ? (
+              <>
+                <fieldset>
+                  <legend className="mb-3 text-sm font-medium">
+                    Laboratory sections offered *
+                  </legend>
+                  {choices("sections", [
+                    "Haematology",
+                    "Biochemistry",
+                    "Microbiology",
+                    "Immunology",
+                    "Histopathology",
+                    "Molecular testing",
+                  ])}
+                </fieldset>
+                <fieldset>
+                  <legend className="mb-3 text-sm font-medium">
+                    Specimens accepted *
+                  </legend>
+                  {choices("specimens", [
+                    "Blood",
+                    "Urine",
+                    "Stool",
+                    "Swab",
+                    "Tissue",
+                    "Other",
+                  ])}
+                </fieldset>
+                {field(
+                  "sampleHandling",
+                  "Sample handling, containers and rejection process",
+                  { required: true, multiline: true }
+                )}
+                {field(
+                  "collectionInstructions",
+                  "Patient preparation and collection instructions",
+                  { required: true, multiline: true }
+                )}
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="accent-[var(--onboarding-accent)]"
+                    checked={data.homeCollection}
+                    onChange={(e) => update("homeCollection", e.target.checked)}
+                  />
+                  Offer home sample collection
+                </label>
+              </>
+            ) : (
+              <>
+                <fieldset>
+                  <legend className="mb-3 text-sm font-medium">
+                    Imaging modalities offered *
+                  </legend>
+                  {choices("modalities", [
+                    "X-ray",
+                    "Ultrasound",
+                    "CT",
+                    "MRI",
+                    "Mammography",
+                    "Doppler",
+                    "Other",
+                  ])}
+                </fieldset>
+                {field(
+                  "equipment",
+                  "Machines / room identifiers and available modalities",
+                  {
+                    required: true,
+                    multiline: true,
+                    hint: "Use the same machine identifiers when creating appointment slots.",
+                  }
+                )}
+                {field(
+                  "referralPolicy",
+                  "Referral / prescription requirements",
+                  { required: true, multiline: true }
+                )}
+                {field(
+                  "screeningProcess",
+                  "Patient preparation, screening and consent process",
+                  { required: true, multiline: true }
+                )}
+                {field(
+                  "imageWorkflow",
+                  "Secure image storage / PACS and reporting workflow",
+                  {
+                    required: true,
+                    multiline: true,
+                    hint: "Describe your workflow. Do not enter passwords, access tokens or patient records.",
+                  }
+                )}
+              </>
+            )}
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="accent-[var(--onboarding-accent)]"
+                checked={data.walkIns}
+                onChange={(e) => update("walkIns", e.target.checked)}
+              />
+              Accept walk-in patients
+            </label>
+          </div>
+        )}
+        {step === steps.length - 1 && (
+          <div className="space-y-5">
+            <dl className="grid gap-5 text-sm sm:grid-cols-2">
+              {[
+                ["Centre", data.centreName],
+                ...(!pathology
+                  ? [["Legal business", data.legalName]]
+                  : [
+                      ["Established", data.establishedYear],
+                      ["Website", data.website],
+                      ["Instagram", data.instagram],
+                      ["Facebook", data.facebook],
+                      ["LinkedIn", data.linkedin],
+                      ["Logo", data.logoName],
+                      ["License / certificate", data.certificateName],
+                    ]),
+                [
+                  "Registration",
+                  [data.registrationNumber, data.registrationAuthority]
+                    .filter(Boolean)
+                    .join(" · "),
+                ],
+                ["Contact", `${data.phone} · ${data.email}`],
+                [
+                  "Branch",
+                  `${data.branchName}, ${data.address}, ${data.city}, ${data.state} ${data.postalCode}`,
+                ],
+                [
+                  "Hours",
+                  `${data.workingDays.join(", ")} · ${data.openingTime}–${data.closingTime}`,
+                ],
+                ...(!pathology
+                  ? [
+                      [
+                        "Reporting professional",
+                        `${data.reportingName} · ${data.reportingRegistration}`,
+                      ],
+                      [
+                        pathology ? "Laboratory sections" : "Modalities",
+                        (pathology ? data.sections : data.modalities).join(
+                          ", "
+                        ),
+                      ],
+                    ]
+                  : []),
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <dt className="text-muted-foreground">{label}</dt>
+                  <dd className="mt-1 whitespace-pre-wrap font-medium">
+                    {value || "Not provided"}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <div className="rounded-xl border border-dashed p-5 text-sm leading-7 text-muted-foreground">
+              Completing setup saves your primary branch as private. Next, add
+              your services and prices, configure appointment slots, and publish
+              your branch in Facilities to accept app bookings. Add your team
+              from Staff.
             </div>
-          )}
-          {step === 4 && (
-            <div className="space-y-5">
-              <dl className="grid gap-5 text-sm sm:grid-cols-2">
-                {[
-                  ["Centre", data.centreName],
-                  ["Legal business", data.legalName],
-                  [
-                    "Registration",
-                    `${data.registrationNumber} · ${data.registrationAuthority}`,
-                  ],
-                  ["Contact", `${data.phone} · ${data.email}`],
-                  [
-                    "Branch",
-                    `${data.branchName}, ${data.address}, ${data.city}, ${data.state} ${data.postalCode}`,
-                  ],
-                  [
-                    "Hours",
-                    `${data.workingDays.join(", ")} · ${data.openingTime}–${data.closingTime}`,
-                  ],
-                  [
-                    "Reporting professional",
-                    `${data.reportingName} · ${data.reportingRegistration}`,
-                  ],
-                  [
-                    pathology ? "Laboratory sections" : "Modalities",
-                    (pathology ? data.sections : data.modalities).join(", "),
-                  ],
-                ].map(([label, value]) => (
-                  <div key={label}>
-                    <dt className="text-muted-foreground">{label}</dt>
-                    <dd className="mt-1 whitespace-pre-wrap font-medium">
-                      {value || "Not provided"}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-              <div className="rounded-xl border border-dashed p-5 text-sm leading-7 text-muted-foreground">
-                Completing setup creates or updates your primary branch as
-                private. Next, add your tests/scans and prices in Catalogue,
-                configure slots, and explicitly publish the branch in
-                Availability to accept app bookings.
-              </div>
-              <label className="flex items-start gap-2 text-sm">
-                <input
-                  required
-                  type="checkbox"
-                  className="mt-1 accent-[var(--onboarding-accent)]"
-                />
-                I confirm
-                these business and professional details are accurate and I am
-                authorised to configure this centre.
-              </label>
-            </div>
-          )}
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                required
+                type="checkbox"
+                className="mt-1 accent-[var(--onboarding-accent)]"
+              />
+              I confirm these business and professional details are accurate and
+              I am authorised to configure this centre.
+            </label>
+          </div>
+        )}
       </form>
     </OnboardingFrame>
   );
