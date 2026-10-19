@@ -312,9 +312,15 @@ function SetupForm({
   const validateCurrentStep = () => {
     setValidationError("");
     if (!formRef.current?.reportValidity()) return false;
-    if (step === (pathology ? 2 : 1) && data.workingDays.length === 0) {
-      setValidationError("Select at least one working day to continue.");
-      return false;
+    if (step === (pathology ? 2 : 1)) {
+      if (data.workingDays.length === 0) {
+        setValidationError("Select at least one working day to continue.");
+        return false;
+      }
+      if (!data.openingTime || !data.closingTime) {
+        setValidationError("Choose both opening and closing times.");
+        return false;
+      }
     }
     if (step === 3 && !pathology && data.modalities.length === 0) {
       setValidationError("Select at least one imaging modality.");

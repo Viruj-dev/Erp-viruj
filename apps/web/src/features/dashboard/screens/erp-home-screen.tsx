@@ -656,11 +656,7 @@ function PageContent({
       return <DiagnosticBookingInbox tenant={appointmentTenant} />;
     if (currentPage === "analytics")
       return (
-        <DiagnosticWorkspace
-          tenant={appointmentTenant}
-          organizationName={organizationName}
-          userName={userName}
-        />
+        <ErpDemoAnalytics organizationId={appointmentTenant.organizationId} />
       );
   }
   if (appointmentTenant && isDiagnosticTenant && currentPage === "dashboard") {

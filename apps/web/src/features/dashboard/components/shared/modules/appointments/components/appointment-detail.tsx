@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/erp/dialog";
 import { virujBackend, type VirujAppointmentStatus } from "@/lib/viruj-backend";
+import { DateTimePicker } from "@/features/dashboard/components/hospital/pages/onboarding/date-time-picker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -25,10 +26,12 @@ export function AppointmentDetailDialog({
   appointmentId,
   organizationId,
   onClose,
+  themeClassName,
 }: {
   appointmentId: string;
   organizationId: string;
   onClose: () => void;
+  themeClassName?: string;
 }) {
   return (
     <Dialog
@@ -41,6 +44,7 @@ export function AppointmentDetailDialog({
         <AppointmentDetail
           appointmentId={appointmentId}
           organizationId={organizationId}
+          themeClassName={themeClassName}
         />
       </DialogContent>
     </Dialog>
@@ -50,9 +54,11 @@ export function AppointmentDetailDialog({
 export function AppointmentDetail({
   appointmentId,
   organizationId,
+  themeClassName,
 }: {
   appointmentId: string;
   organizationId: string;
+  themeClassName?: string;
 }) {
   const queryClient = useQueryClient();
   const key = virujBackend.appointments.key({ organizationId });
@@ -361,29 +367,22 @@ export function AppointmentDetail({
               <p className="text-sm">
                 New schedule in {timezone}. The backend checks doctor conflicts.
               </p>
-              <label
-                className="block text-sm"
-                htmlFor={`start-${appointmentId}`}
-              >
-                Start
-                <Input
-                  id={`start-${appointmentId}`}
-                  onChange={(event) => setStart(event.target.value)}
-                  required
-                  type="datetime-local"
+              <div className="grid gap-4 sm:grid-cols-2">
+                <DateTimePicker
+                  label="Start"
                   value={start}
+                  onChange={setStart}
+                  timezone={timezone}
+                  themeClassName={themeClassName}
                 />
-              </label>
-              <label className="block text-sm" htmlFor={`end-${appointmentId}`}>
-                End
-                <Input
-                  id={`end-${appointmentId}`}
-                  onChange={(event) => setEnd(event.target.value)}
-                  required
-                  type="datetime-local"
+                <DateTimePicker
+                  label="End"
                   value={end}
+                  onChange={setEnd}
+                  timezone={timezone}
+                  themeClassName={themeClassName}
                 />
-              </label>
+              </div>
               <Button disabled={mutation.isPending} type="submit">
                 Save new schedule
               </Button>

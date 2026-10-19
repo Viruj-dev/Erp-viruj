@@ -18,12 +18,14 @@ export function DateTimePicker({
   value,
   onChange,
   themeClassName = "",
+  timezone = "Asia/Kolkata",
   required = true,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   themeClassName?: string;
+  timezone?: string;
   required?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -59,7 +61,7 @@ export function DateTimePicker({
           >
             <DialogTitle>{label} date</DialogTitle>
             <DialogDescription>
-              Choose an appointment date · Indian Standard Time
+              Choose an appointment date · {timezone}
             </DialogDescription>
             <DayPicker
               mode="single"
@@ -101,6 +103,7 @@ export function DateTimePicker({
         value={time}
         required={required}
         themeClassName={themeClassName}
+        timezoneLabel={`Timezone: ${timezone}`}
         onChange={(next) => onChange(`${date}T${next}`)}
       />
     </div>

@@ -433,6 +433,15 @@ export function ErpDemoAppointments({
           key={`${tenant.organizationId}:${selectedId}`}
           onClose={() => setSelectedId(null)}
           organizationId={tenant.organizationId}
+          themeClassName={
+            tenant.providerType === "pathology"
+              ? "vh-onboarding--pathology"
+              : tenant.providerType === "radiology"
+                ? "vh-onboarding--radiology"
+                : tenant.providerType === "clinic"
+                  ? "vh-onboarding--clinic"
+                  : ""
+          }
         />
       ) : null}
     </div>

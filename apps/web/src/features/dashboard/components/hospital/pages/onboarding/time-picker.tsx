@@ -28,6 +28,7 @@ export function TimePicker({
   required = true,
   disabled = false,
   themeClassName,
+  timezoneLabel,
 }: {
   label: string;
   value: string;
@@ -35,6 +36,7 @@ export function TimePicker({
   required?: boolean;
   disabled?: boolean;
   themeClassName?: string;
+  timezoneLabel?: string;
 }) {
   const kind = useContext(OnboardingTheme);
   const [open, setOpen] = useState(false);
@@ -78,7 +80,7 @@ export function TimePicker({
         >
           <DialogTitle>{label}</DialogTitle>
           <DialogDescription>
-            Indian Standard Time · IST (UTC+05:30)
+            {timezoneLabel ?? "Indian Standard Time · IST (UTC+05:30)"}
           </DialogDescription>
           <div className="flex items-center justify-center gap-2">
             <button

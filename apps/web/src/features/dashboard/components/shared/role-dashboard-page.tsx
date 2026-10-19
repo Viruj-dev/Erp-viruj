@@ -231,7 +231,9 @@ export function RoleDashboardPage({
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               {diagnostic
                 ? "Your diagnostics, at a glance."
-                : "Your practice, at a glance."}
+                : pathology
+                  ? "Your pathology centre, at a glance."
+                  : "Your practice, at a glance."}
             </h1>
             <p className={`mt-1.5 text-sm ${subtle}`}>
               {userName
