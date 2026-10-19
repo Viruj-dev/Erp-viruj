@@ -125,7 +125,7 @@ export function ProfileStep({
           />
         )}
         <TextField
-          required={isClinic}
+          required
           label="Registration Number"
           onChange={(value) => updateProfile("registrationNumber", value)}
           placeholder={isClinic ? "CLINIC-REG-2026-091" : "DL-HOSP-2026-0091"}

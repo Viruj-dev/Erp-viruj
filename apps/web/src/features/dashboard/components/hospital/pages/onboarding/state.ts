@@ -49,7 +49,7 @@ export function validateStep(
       if (kind === "clinic" && !data.profile.logoUrl) {
         return "Upload the clinic logo.";
       }
-      if (kind === "clinic" && !data.profile.registrationNumber.trim()) {
+      if (!data.profile.registrationNumber.trim()) {
         return "Add the registration number.";
       }
       if (kind === "clinic" && !data.profile.establishedYear.trim()) {

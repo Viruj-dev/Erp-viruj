@@ -69,7 +69,7 @@ function PathologyWorkspace({
     .filter(
       (row) =>
         ["requested", "accepted"].includes(row.status) &&
-        new Date(row.slot.startsAt).getTime() >= Date.now()
+        new Date(row.slot.startsAt).getTime() >= bookings.dataUpdatedAt
     )
     .sort((a, b) => a.slot.startsAt.localeCompare(b.slot.startsAt))
     .slice(0, 5);
