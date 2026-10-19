@@ -78,12 +78,19 @@ export function FacilitiesPage({
       : virujBackend.facilities;
   const catalogLabel = catalogKind === "services" ? "Services" : "Facilities";
   const isClinicTone = tenant?.providerType === "clinic";
+  const isPathologyTone = tenant?.providerType === "pathology";
   const useClinicServiceList =
     catalogKind === "services" && tenant?.providerType === "clinic";
-  const pageTone = isClinicTone ? "violet" : "blue";
+  const pageTone = isClinicTone
+    ? "violet"
+    : isPathologyTone
+      ? "orange"
+      : "blue";
   const publishAllClass = isClinicTone
     ? "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-violet-500 dark:hover:bg-violet-400"
-    : "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50";
+    : isPathologyTone
+      ? "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-orange-700 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-orange-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-orange-600 dark:hover:bg-orange-500"
+      : "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50";
   const catalogSubtitle =
     catalogKind === "services"
       ? "Showcase your care. Manage the services patients can discover and book."
@@ -238,7 +245,13 @@ export function FacilitiesPage({
                     onClick={() =>
                       router.push(`${routeBasePath}/${catalogKind}/new`)
                     }
-                    tone={isClinicTone ? "violet" : "slate"}
+                    tone={
+                      isClinicTone
+                        ? "violet"
+                        : isPathologyTone
+                          ? "orange"
+                          : "slate"
+                    }
                   />
                 ) : null}
               </div>
@@ -488,7 +501,7 @@ function FacilityEditorDialog({
   onClose: () => void;
   subtitle: string;
   title: string;
-  tone?: "blue" | "violet";
+  tone?: "blue" | "violet" | "orange";
 }) {
   const [mounted, setMounted] = useState(false);
 
@@ -501,7 +514,9 @@ function FacilityEditorDialog({
   const eyebrowClass =
     tone === "violet"
       ? "text-[10px] font-semi-bold uppercase tracking-[0.22em] text-violet-500"
-      : "text-[10px] font-semi-bold uppercase tracking-[0.22em] text-blue-500 dark:text-blue-400";
+      : tone === "orange"
+        ? "text-[10px] font-semi-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300"
+        : "text-[10px] font-semi-bold uppercase tracking-[0.22em] text-blue-500 dark:text-blue-400";
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/72 p-4 backdrop-blur-xl">

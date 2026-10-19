@@ -140,12 +140,7 @@ export function validateFacilityForm(
   if (form.startingPrice !== null && form.startingPrice < 0)
     errors.push("Price cannot be negative.");
   const slug = form.slug || slugify(form.name);
-  if (
-    slug &&
-    existingFacilities.some(
-      (facility) => facility.slug === slug
-    )
-  )
+  if (slug && existingFacilities.some((facility) => facility.slug === slug))
     errors.push("A service with this name already exists.");
   return errors;
 }
@@ -213,7 +208,9 @@ export function toFacilityInput(facility: VirujFacility): VirujFacilityInput {
     visibility: facility.visibility,
   };
 }
-export function formatPrice(facility: VirujFacility) {
+export function formatPrice(
+  facility: Pick<VirujFacility, "startingPrice" | "priceText" | "currency">
+) {
   if (facility.priceText) return facility.priceText;
   if (facility.startingPrice !== null)
     return `${facility.currency === "INR" ? "Rs" : facility.currency} ${facility.startingPrice.toLocaleString("en-IN")}`;

@@ -20,7 +20,7 @@ import type { FacilityAction, FilterState, SortKey } from "../types";
 import { formatPrice } from "../utils";
 import { Badge, CategoryPill, Select, StatusPill } from "./primitives";
 
-type CatalogTone = "blue" | "violet";
+type CatalogTone = "blue" | "violet" | "orange";
 
 export function Toolbar({
   filters,
@@ -42,7 +42,9 @@ export function Toolbar({
   const inputClass =
     tone === "violet"
       ? "h-11 w-full rounded-xl border border-violet-200 bg-white pl-10 pr-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-violet-300 focus:bg-white dark:border-violet-400/20 dark:bg-violet-400/[0.08] dark:text-slate-100"
-      : "h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-slate-400 focus:bg-white dark:border-white/[0.08] dark:bg-white/[0.055] dark:text-slate-100";
+      : tone === "orange"
+        ? "h-11 w-full rounded-xl border border-orange-200 bg-white pl-10 pr-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-orange-300 focus:bg-white dark:border-orange-400/20 dark:bg-orange-400/[0.08] dark:text-slate-100"
+        : "h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-slate-400 focus:bg-white dark:border-white/[0.08] dark:bg-white/[0.055] dark:text-slate-100";
   return (
     <section className="rounded-2xl border border-slate-200/70 bg-white p-3 dark:border-white/[0.08] dark:bg-[#111418]">
       <div className="grid gap-3 lg:grid-cols-[minmax(240px,1fr)_170px_145px_165px]">
@@ -140,7 +142,9 @@ export function FacilityBentoCard({
   const iconClass =
     tone === "violet"
       ? "flex size-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-800 dark:bg-violet-400/15 dark:text-violet-200"
-      : "flex size-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 dark:bg-white/[0.07] dark:text-slate-200";
+      : tone === "orange"
+        ? "flex size-12 shrink-0 items-center justify-center rounded-2xl bg-orange-100 text-orange-800 dark:bg-orange-400/15 dark:text-orange-200"
+        : "flex size-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 dark:bg-white/[0.07] dark:text-slate-200";
 
   return (
     <article className="flex min-h-64 flex-col rounded-2xl border border-slate-200/70 bg-white p-5 transition hover:border-slate-300 hover:shadow-md dark:border-white/[0.08] dark:bg-[#15181d]">
@@ -242,8 +246,27 @@ export function FacilityBentoCard({
   );
 }
 
-export function ClinicServiceList({
+type ServiceListRow = Pick<
+  VirujFacility,
+  | "id"
+  | "name"
+  | "shortDescription"
+  | "description"
+  | "category"
+  | "startingPrice"
+  | "priceText"
+  | "currency"
+  | "onlineBooking"
+  | "appointmentRequired"
+  | "status"
+  | "isAvailable"
+>;
+
+export function ClinicServiceList<T extends ServiceListRow>({
   facilities,
+  tone = "violet",
+  categoryLabel = "Department",
+  categoryName,
   isUpdatingId,
   onActivate,
   onDeactivate,
@@ -251,12 +274,15 @@ export function ClinicServiceList({
   onEdit,
   permissions,
 }: {
-  facilities: VirujFacility[];
+  facilities: T[];
+  tone?: "violet" | "orange";
+  categoryLabel?: string;
+  categoryName?: (facility: T) => string;
   isUpdatingId?: string | null;
-  onActivate: (facility: VirujFacility) => void;
-  onDeactivate: (facility: VirujFacility) => void;
-  onDelete: (facility: VirujFacility) => void;
-  onEdit: (facility: VirujFacility) => void;
+  onActivate: (facility: T) => void;
+  onDeactivate: (facility: T) => void;
+  onDelete: (facility: T) => void;
+  onEdit: (facility: T) => void;
   permissions: Record<FacilityAction, boolean>;
 }) {
   return (
@@ -265,7 +291,7 @@ export function ClinicServiceList({
         <thead>
           <tr className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:border-white/[0.06] dark:bg-white/[0.025]">
             <th className="px-6 py-3.5">Service</th>
-            <th className="px-4 py-3.5">Department</th>
+            <th className="px-4 py-3.5">{categoryLabel}</th>
             <th className="px-4 py-3.5">Fee</th>
             <th className="px-4 py-3.5">Booking</th>
             <th className="px-4 py-3.5">Status</th>
@@ -284,12 +310,22 @@ export function ClinicServiceList({
 
             return (
               <tr
-                className="group transition-colors hover:bg-violet-50/40 dark:hover:bg-violet-400/[0.035]"
+                className={
+                  tone === "orange"
+                    ? "group transition-colors hover:bg-orange-50/40 dark:hover:bg-orange-400/[0.035]"
+                    : "group transition-colors hover:bg-violet-50/40 dark:hover:bg-violet-400/[0.035]"
+                }
                 key={facility.id}
               >
                 <td className="max-w-[380px] px-6 py-4">
                   <div className="flex min-w-0 items-start gap-3">
-                    <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 dark:bg-violet-400/10 dark:text-violet-300">
+                    <span
+                      className={
+                        tone === "orange"
+                          ? "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-700 dark:bg-orange-400/10 dark:text-orange-300"
+                          : "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 dark:bg-violet-400/10 dark:text-violet-300"
+                      }
+                    >
                       <FileText size={16} aria-hidden="true" />
                     </span>
                     <span className="min-w-0">
@@ -305,7 +341,13 @@ export function ClinicServiceList({
                   </div>
                 </td>
                 <td className="px-4 py-4">
-                  <CategoryPill category={facility.category} />
+                  {categoryName ? (
+                    <span className="text-xs text-slate-500">
+                      {categoryName(facility)}
+                    </span>
+                  ) : (
+                    <CategoryPill category={facility.category} />
+                  )}
                 </td>
                 <td className="whitespace-nowrap px-4 py-4 text-sm font-semibold text-slate-800 dark:text-slate-200">
                   {formatPrice(facility)}
@@ -336,7 +378,11 @@ export function ClinicServiceList({
                     {permissions.update ? (
                       <button
                         aria-label={`Edit ${facility.name}`}
-                        className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-violet-400/10 dark:hover:text-violet-200"
+                        className={
+                          tone === "orange"
+                            ? "inline-flex size-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-orange-400/10 dark:hover:text-orange-200"
+                            : "inline-flex size-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-violet-400/10 dark:hover:text-violet-200"
+                        }
                         disabled={updating}
                         onClick={() => onEdit(facility)}
                         title="Edit service"
@@ -449,7 +495,9 @@ export function StatCard({
             "flex size-10 items-center justify-center rounded-2xl",
             tone === "violet"
               ? "bg-violet-50 text-violet-600 dark:bg-violet-400/10 dark:text-violet-300"
-              : "bg-blue-50 text-blue-600 dark:bg-blue-400/10 dark:text-blue-300"
+              : tone === "orange"
+                ? "bg-orange-50 text-orange-700 dark:bg-orange-400/10 dark:text-orange-300"
+                : "bg-blue-50 text-blue-600 dark:bg-blue-400/10 dark:text-blue-300"
           )}
         >
           {icon}
@@ -480,7 +528,9 @@ export function EmptyFacilities({
   const accent =
     tone === "violet"
       ? "bg-violet-50 text-violet-600 dark:bg-violet-400/10 dark:text-violet-300"
-      : "bg-blue-50 text-blue-600 dark:bg-blue-400/10 dark:text-blue-300";
+      : tone === "orange"
+        ? "bg-orange-50 text-orange-700 dark:bg-orange-400/10 dark:text-orange-300"
+        : "bg-blue-50 text-blue-600 dark:bg-blue-400/10 dark:text-blue-300";
   return (
     <div className="grid items-center gap-10 p-6 sm:p-9 lg:grid-cols-[1.2fr_1fr] lg:p-10">
       <div>
@@ -508,7 +558,9 @@ export function EmptyFacilities({
               "mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-xs font-semibold text-white transition",
               tone === "violet"
                 ? "bg-violet-700 hover:bg-violet-800 dark:bg-violet-600"
-                : "bg-blue-600 hover:bg-blue-700"
+                : tone === "orange"
+                  ? "bg-orange-700 hover:bg-orange-800 dark:bg-orange-600"
+                  : "bg-blue-600 hover:bg-blue-700"
             )}
             onClick={onCreate}
             type="button"

@@ -2,12 +2,14 @@
 
 import { ErpSelect } from "@/components/ui/erp/select";
 
-
 import { ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
 import { Switch } from "@/components/ui/erp/switch";
 import { cn } from "@/lib/utils";
-import type { VirujFacilityCategory, VirujFacilityStatus } from "@/lib/viruj-backend";
+import type {
+  VirujFacilityCategory,
+  VirujFacilityStatus,
+} from "@/lib/viruj-backend";
 export function BackButton({ onClick }: { onClick: () => void }) {
   return (
     <button
@@ -30,19 +32,17 @@ export function PrimaryButton({
   icon: ReactNode;
   label: string;
   onClick: () => void;
-  tone?: "slate" | "violet";
+  tone?: "slate" | "violet" | "orange";
 }) {
   const className =
     tone === "violet"
       ? "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-violet-800 dark:bg-violet-500 dark:hover:bg-violet-400"
-      : "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200";
+      : tone === "orange"
+        ? "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-orange-700 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-orange-800 dark:bg-orange-600 dark:hover:bg-orange-500"
+        : "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semi-bold text-white shadow-sm transition hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200";
 
   return (
-    <button
-      className={className}
-      onClick={onClick}
-      type="button"
-    >
+    <button className={className} onClick={onClick} type="button">
       {icon}
       {label}
     </button>
@@ -224,19 +224,19 @@ export function NumberField({
           </span>
         ) : null}
         <input
-        className={cn(
-          "h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-slate-400 dark:border-white/[0.08] dark:bg-white/[0.055] dark:text-slate-100",
-          prefix && "pl-10"
-        )}
-        min={0}
-        onChange={(event) =>
-          onChange(
-            event.target.value === "" ? null : Number(event.target.value)
-          )
-        }
-        type="number"
-        value={value ?? ""}
-      />
+          className={cn(
+            "h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-slate-400 dark:border-white/[0.08] dark:bg-white/[0.055] dark:text-slate-100",
+            prefix && "pl-10"
+          )}
+          min={0}
+          onChange={(event) =>
+            onChange(
+              event.target.value === "" ? null : Number(event.target.value)
+            )
+          }
+          type="number"
+          value={value ?? ""}
+        />
       </div>
     </label>
   );
@@ -347,7 +347,11 @@ export function BulkButton({
   );
 }
 
-export function CategoryPill({ category }: { category: VirujFacilityCategory }) {
+export function CategoryPill({
+  category,
+}: {
+  category: VirujFacilityCategory;
+}) {
   return (
     <span className="inline-flex w-fit items-center rounded-lg bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-700 ring-1 ring-slate-200 dark:bg-white/[0.08] dark:text-slate-200 dark:ring-white/[0.10]">
       {category}

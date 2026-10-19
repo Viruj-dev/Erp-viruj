@@ -12,13 +12,14 @@ import {
 } from "@/components/ui/erp/dialog";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import {
-  diagnosticMoney,
   diagnosticPermissions,
   type DiagnosticService,
   type DiagnosticServiceInput,
 } from "@/features/dashboard/lib/diagnostics";
 import { pathologyServicePresets } from "@/features/dashboard/lib/pathology-services";
 import { virujBackend } from "@/lib/viruj-backend";
+import { ClinicServiceList } from "../facilities/_components/catalog";
+import { Search } from "lucide-react";
 import { DashboardPageShell } from "../dashboard-page-shell";
 
 export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
@@ -27,6 +28,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
     null
   );
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
   const canManage = diagnosticPermissions(tenant.role).catalogue;
   const key = virujBackend.diagnostics.key(tenant.organizationId, "services");
   const query = useQuery({
@@ -46,9 +48,24 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
   const accent = pathology
     ? "bg-orange-700 text-white hover:bg-orange-800"
     : "bg-zinc-700 text-white hover:bg-zinc-800";
-  const rows = (query.data ?? []).filter((s) =>
-    `${s.name} ${s.code}`.toLowerCase().includes(search.toLowerCase())
+  const rows = (query.data ?? []).filter(
+    (s) =>
+      `${s.name} ${s.code}`.toLowerCase().includes(search.toLowerCase()) &&
+      (status === "all" || (status === "active") === s.active)
   );
+  const serviceRows = rows.map((service) => ({
+    ...service,
+    category: "Laboratory" as const,
+    startingPrice: service.pricePaise / 100,
+    priceText: "",
+    currency: "INR",
+    shortDescription: service.description || service.preparation,
+    description: service.description || "",
+    onlineBooking: false,
+    appointmentRequired: true,
+    status: service.active ? ("active" as const) : ("archived" as const),
+    isAvailable: service.active,
+  }));
   return (
     <DashboardPageShell
       eyebrow="Services"
@@ -66,13 +83,33 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
         )
       }
     >
-      <Input
-        aria-label="Search catalogue"
-        placeholder="Search by name or code"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="max-w-sm"
-      />
+      <section className="rounded-2xl border border-slate-200/70 bg-white p-3 dark:border-white/[0.08] dark:bg-[#111418]">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="relative min-w-60 flex-1">
+            <Search
+              size={17}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <Input
+              aria-label="Search services"
+              placeholder="Search services"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="h-11 rounded-xl pl-10"
+            />
+          </label>
+          <ErpSelect
+            aria-label="Service status"
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+            className="h-11 rounded-xl border bg-transparent px-3 text-sm"
+          >
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="archived">Archived</option>
+          </ErpSelect>
+        </div>
+      </section>
       {query.isPending ? (
         <p role="status">Loading catalogue…</p>
       ) : query.isError ? (
@@ -84,54 +121,38 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
         </div>
       ) : rows.length === 0 ? (
         <p className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
-          {search
-            ? "No matching services."
+          {query.data?.length
+            ? "No services match these filters."
             : "Your catalogue is empty. A manager can add the first service."}
         </p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {rows.map((service) => (
-            <article
-              key={service.id}
-              className="space-y-4 rounded-2xl border bg-card p-5"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-semibold tracking-widest text-muted-foreground">
-                  {service.code}
-                </span>
-                <span className="rounded-md bg-muted px-2 py-1 text-xs">
-                  {service.active ? "Active" : "Archived"}
-                </span>
-              </div>
-              <h3 className="text-lg font-semibold">{service.name}</h3>
-              <p className="text-sm text-muted-foreground">
-                {service.specimen || service.modality} ·{" "}
-                {service.turnaroundHours} hour turnaround
-              </p>
-              <p className="text-2xl font-semibold">
-                {diagnosticMoney(service.pricePaise)}
-              </p>
-              <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-                {service.preparation ||
-                  "No preparation instructions configured."}
-              </p>
-              {canManage && (
-                <div className="flex gap-2 border-t pt-4">
-                  <Button variant="outline" onClick={() => setEditing(service)}>
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    disabled={archive.isPending}
-                    onClick={() => archive.mutate(service)}
-                  >
-                    {service.active ? "Archive" : "Activate"}
-                  </Button>
-                </div>
-              )}
-            </article>
-          ))}
-        </div>
+        <section className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white dark:border-white/[0.08] dark:bg-[#111418]">
+          <ClinicServiceList
+            tone={pathology ? "orange" : "violet"}
+            categoryLabel={pathology ? "Test branch" : "Modality"}
+            facilities={serviceRows}
+            categoryName={(service) =>
+              pathologyServicePresets.find(
+                (preset) => preset.code === service.code
+              )?.category ||
+              service.modality ||
+              "Custom service"
+            }
+            permissions={{
+              read: true,
+              create: canManage,
+              update: canManage,
+              publish: canManage,
+              archive: canManage,
+              delete: false,
+            }}
+            isUpdatingId={archive.isPending ? archive.variables?.id : null}
+            onActivate={(service) => archive.mutate(service)}
+            onDeactivate={(service) => archive.mutate(service)}
+            onEdit={(service) => setEditing(service)}
+            onDelete={() => {}}
+          />
+        </section>
       )}
       {archive.isError && (
         <p role="alert" className="text-sm text-destructive">
