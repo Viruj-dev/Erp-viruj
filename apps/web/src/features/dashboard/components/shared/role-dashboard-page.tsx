@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from "@/components/ui/erp/dropdown-menu";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type CSSProperties } from "react";
@@ -7,6 +14,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   CalendarDays,
+  ChevronDown,
   Check,
   CircleAlert,
   Clock3,
@@ -334,22 +342,34 @@ export function RoleDashboardPage({
                     {chart?.period ?? "Recent activity"}
                   </p>
                 </div>
-                <select
-                  aria-label="Activity metric"
-                  value={chartIndex}
-                  onChange={(event) =>
-                    setChartIndex(Number(event.target.value))
-                  }
-                  className={`${control} py-1.5`}
-                >
-                  {["Appointments", "Doctors", "Services"].map(
-                    (label, index) => (
-                      <option key={label} value={index}>
-                        {label}
-                      </option>
-                    )
-                  )}
-                </select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    aria-label="Activity metric"
+                    className={
+                      control + " inline-flex items-center gap-2 py-1.5"
+                    }
+                  >
+                    {["Appointments", "Doctors", "Services"][chartIndex]}
+                    <ChevronDown size={14} aria-hidden="true" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuRadioGroup
+                      value={String(chartIndex)}
+                      onValueChange={(value) => setChartIndex(Number(value))}
+                    >
+                      {["Appointments", "Doctors", "Services"].map(
+                        (label, index) => (
+                          <DropdownMenuRadioItem
+                            key={label}
+                            value={String(index)}
+                          >
+                            {label}
+                          </DropdownMenuRadioItem>
+                        )
+                      )}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               {loading ? (
                 <EmptyBlock title="Loading activity…" />
