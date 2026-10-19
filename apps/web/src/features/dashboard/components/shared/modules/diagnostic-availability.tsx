@@ -85,10 +85,12 @@ export function DiagnosticAvailability({
   return (
     <section className="space-y-6">
       <header>
-        <h2 className="text-2xl font-semibold">Branches & availability</h2>
+        <h2 className="text-2xl font-semibold">
+          Branches & appointment availability
+        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Only published branches appear in the patient app. Slots reserve one
-          machine or collection resource at a time.
+          Only published branches and active services appear in the patient app.
+          Add appointment slots so patients can book a visit.
         </p>
       </header>
       {[branches, slots, services].some((q) => q.isError) && (
@@ -103,7 +105,7 @@ export function DiagnosticAvailability({
               Add branch
             </Button>
             <Button variant="outline" onClick={() => setShowSlot((v) => !v)}>
-              Add slot / maintenance
+              Add appointment slot
             </Button>
           </>
         )}
@@ -215,12 +217,18 @@ export function DiagnosticAvailability({
             </ErpSelect>
           </label>
           <label className="text-sm">
-            Machine / resource identifier
+            {tenant.providerType === "pathology"
+              ? "Appointment counter / collection desk"
+              : "Machine / resource identifier"}
             <Input
               name="resource"
               required
               maxLength={150}
-              placeholder="MRI-1 or Collection-desk-1"
+              placeholder={
+                tenant.providerType === "pathology"
+                  ? "Collection desk 1"
+                  : "MRI-1"
+              }
             />
           </label>
           <label className="text-sm">
@@ -233,7 +241,7 @@ export function DiagnosticAvailability({
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="blocked" />
-            Maintenance / unavailable block
+            Unavailable during this time
           </label>
           <Button type="submit" disabled={slotMutation.isPending}>
             Save slot
@@ -282,8 +290,8 @@ export function DiagnosticAvailability({
         </table>
       </div>
       <p className="text-xs text-muted-foreground">
-        Latest 200 future slots. Resource names must identify the same physical
-        machine consistently to prevent overlaps.
+        Latest 200 future slots. Use a consistent counter or resource name to
+        prevent overlapping appointments.
       </p>
     </section>
   );

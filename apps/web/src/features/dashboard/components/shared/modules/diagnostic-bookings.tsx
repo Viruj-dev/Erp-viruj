@@ -38,10 +38,10 @@ export function DiagnosticBookingInbox({
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-2xl font-semibold">Service booking requests</h2>
+        <h2 className="text-2xl font-semibold">Appointments</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Patient requests from the Viruj app. Confirm or decline before
-          collection or scanning starts.
+          Manage service appointments from the Viruj app. Confirm, decline or
+          cancel a patient request.
         </p>
       </div>
       <div className="flex gap-3">

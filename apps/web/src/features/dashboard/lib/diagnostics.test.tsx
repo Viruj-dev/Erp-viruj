@@ -64,7 +64,10 @@ describe("diagnostic UI boundaries", () => {
       "lab_tech",
     ]) {
       expect(getAllowedDashboardPages(role, [], "pathology")).toContain(
-        "pathology"
+        "services"
+      );
+      expect(getAllowedDashboardPages(role, [], "pathology")).not.toContain(
+        "reports"
       );
       expect(getAllowedDashboardPages(role, [], "radiology")).toContain(
         "radiology"

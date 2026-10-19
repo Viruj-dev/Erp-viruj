@@ -1,4 +1,8 @@
 "use client";
+import { PathologyProfile } from "@/features/dashboard/components/shared/modules/pathology-profile";
+import { DiagnosticCatalogue } from "@/features/dashboard/components/shared/modules/diagnostic-catalogue";
+import { DiagnosticAvailability } from "@/features/dashboard/components/shared/modules/diagnostic-availability";
+import { DiagnosticBookingInbox } from "@/features/dashboard/components/shared/modules/diagnostic-bookings";
 import { DiagnosticOnboarding } from "@/features/dashboard/components/shared/modules/diagnostic-onboarding";
 import {
   canManageDiagnosticSetup,
@@ -622,6 +626,43 @@ function PageContent({
   const isDiagnosticTenant =
     appointmentTenant?.providerType === "pathology" ||
     appointmentTenant?.providerType === "radiology";
+  if (appointmentTenant?.providerType === "pathology") {
+    if (currentPage === "profile")
+      return <PathologyProfile tenant={appointmentTenant} />;
+    if (currentPage === "services" || currentPage === "pathology")
+      return <DiagnosticCatalogue tenant={appointmentTenant} />;
+    if (currentPage === "facilities")
+      return (
+        <div className="space-y-6">
+          <details className="rounded-2xl border bg-card p-5">
+            <summary className="cursor-pointer font-semibold">
+              Branches & appointment availability
+            </summary>
+            <div className="mt-6">
+              <DiagnosticAvailability
+                tenant={appointmentTenant}
+                organizationName={organizationName}
+              />
+            </div>
+          </details>
+          <FacilitiesPage
+            routeBasePath={routeBasePath}
+            routeSegments={routeSegments}
+            tenant={appointmentTenant}
+          />
+        </div>
+      );
+    if (currentPage.startsWith("appointments"))
+      return <DiagnosticBookingInbox tenant={appointmentTenant} />;
+    if (currentPage === "analytics")
+      return (
+        <DiagnosticWorkspace
+          tenant={appointmentTenant}
+          organizationName={organizationName}
+          userName={userName}
+        />
+      );
+  }
   if (appointmentTenant && isDiagnosticTenant && currentPage === "dashboard") {
     return (
       <DiagnosticWorkspace

@@ -5,6 +5,7 @@ import { createErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import { diagnosticSetupKey } from "@/features/dashboard/lib/diagnostic-onboarding";
 mock.module("next/navigation", () => ({
   useRouter: () => ({ push() {}, replace() {} }),
+  usePathname: () => "/pathology/lab-a/dashboard",
 }));
 const { DiagnosticOnboarding } = await import("./diagnostic-onboarding");
 test("pathology setup uses orange and radiology setup uses gray", () => {
@@ -28,15 +29,18 @@ test("pathology setup uses orange and radiology setup uses gray", () => {
         />
       </QueryClientProvider>
     );
-    expect(html).toContain(
-      kind === "pathology" ? "--ring:#ea580c" : "--ring:#71717a"
-    );
-    expect(html).toContain(
-      kind === "pathology" ? "bg-orange-700" : "bg-zinc-700"
-    );
+    expect(html).toContain(`vh-onboarding--${kind}`);
     expect(html).toContain("ABC Diagnostics");
-    expect(html).toContain("Legal business name");
-    expect(html).toContain("Save draft");
+    expect(html).toContain(
+      kind === "pathology" ? "Organization name" : "Legal business name"
+    );
+    if (kind === "pathology") {
+      expect(html).toContain("Year of establishment");
+      expect(html).toContain("License / certificate");
+      expect(html).not.toContain("Reporting team");
+      expect(html).not.toContain("Laboratory setup");
+    }
+    expect(html).toContain("Save &amp; Continue");
     client.clear();
   }
 });

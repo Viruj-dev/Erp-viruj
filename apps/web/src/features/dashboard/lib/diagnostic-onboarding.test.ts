@@ -35,3 +35,29 @@ test("draft cache and initial setup do not leak between tenants", () => {
   expect(b.centreName).toBe("Lab B");
   expect(b.homeCollection).toBe(false);
 });
+
+test("all organization types include shared sidebar destinations with billing permissions", () => {
+  for (const kind of [
+    "hospital",
+    "clinic",
+    "doctor",
+    "pathology",
+    "radiology",
+  ] as const) {
+    const pages = getAllowedDashboardPages(
+      "OWNER",
+      ["subscription.read"],
+      kind
+    );
+    for (const page of [
+      "community",
+      "gallery",
+      "activity-logs",
+      "subscription",
+    ] as const)
+      expect(pages).toContain(page);
+    expect(getAllowedDashboardPages("STAFF", [], kind)).not.toContain(
+      "subscription"
+    );
+  }
+});
