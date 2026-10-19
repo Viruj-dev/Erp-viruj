@@ -1,4 +1,5 @@
 import type { OrganizationMemberRole } from "@erp_virujhealth/auth/roles";
+import { canManageDiagnosticSetup } from "./diagnostic-onboarding";
 
 export const organizationTypeOptions = [
   "hospital",
@@ -639,7 +640,14 @@ export function getAllowedDashboardPages(
   const diagnosticPages: DashboardPage[] =
     diagnosticRole &&
     (organizationType === "pathology" || organizationType === "radiology")
-      ? [...new Set<DashboardPage>([...pages, organizationType, "reports"])]
+      ? [
+          ...new Set<DashboardPage>([
+            ...pages,
+            organizationType,
+            "reports",
+            ...(canManageDiagnosticSetup(role) ? ["onboarding" as const] : []),
+          ]),
+        ]
       : pages;
   return filterSubscriptionPage(diagnosticPages, permissions);
 }

@@ -189,7 +189,9 @@ export function ErpDemoSidebar({
     { id: "dashboard", label: "Overview", icon: LayoutDashboard },
     {
       id: isPathologyWorkspace ? "pathology" : "radiology",
-      label: isPathologyWorkspace ? "Laboratory operations" : "Imaging operations",
+      label: isPathologyWorkspace
+        ? "Laboratory operations"
+        : "Imaging operations",
       icon: isPathologyWorkspace ? FlaskConical : ScanLine,
     },
     { id: "appointments", label: "Bookings", icon: ClipboardCheck },
@@ -208,6 +210,9 @@ export function ErpDemoSidebar({
     ? clinicProfileOptions
     : doctorProfileOptions;
   const systemItems = [
+    ...(isDiagnosticWorkspace
+      ? [{ id: "onboarding" as const, label: "Centre setup", icon: Building2 }]
+      : []),
     {
       id: isClinicWorkspace
         ? "clinic-profile"

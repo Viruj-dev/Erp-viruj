@@ -1,5 +1,9 @@
 "use client";
 import type {
+  DiagnosticSetup,
+  DiagnosticOnboardingState,
+} from "@/features/dashboard/lib/diagnostic-onboarding";
+import type {
   DiagnosticBranch,
   DiagnosticSlot,
   DiagnosticBooking,
@@ -845,6 +849,23 @@ function compactObject<T extends Record<string, unknown>>(value: T) {
 }
 export const virujBackend = {
   diagnostics: {
+    onboarding: (organizationId: string) =>
+      request<DiagnosticOnboardingState>("/diagnostics/onboarding", {
+        organizationId,
+        suppressToast: true,
+      }),
+    saveOnboarding: (
+      organizationId: string,
+      data: DiagnosticSetup,
+      version: number,
+      complete: boolean
+    ) =>
+      request<DiagnosticOnboardingState>("/diagnostics/onboarding", {
+        organizationId,
+        method: "PUT",
+        body: { data, version, complete },
+        suppressToast: true,
+      }),
     branches: (organizationId: string) =>
       request<DiagnosticBranch[]>("/diagnostics/branches", {
         organizationId,

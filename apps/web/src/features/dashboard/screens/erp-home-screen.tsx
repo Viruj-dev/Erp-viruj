@@ -1,4 +1,10 @@
 "use client";
+import { DiagnosticOnboarding } from "@/features/dashboard/components/shared/modules/diagnostic-onboarding";
+import {
+  canManageDiagnosticSetup,
+  diagnosticSetupKey,
+} from "@/features/dashboard/lib/diagnostic-onboarding";
+import { virujBackend } from "@/lib/viruj-backend";
 
 import { DiagnosticWorkspace } from "@/features/dashboard/components/shared/modules/diagnostic-workspace";
 import { DiagnosticOrders } from "@/features/dashboard/components/shared/modules/diagnostic-orders";
@@ -223,11 +229,36 @@ export function ErpHomeScreen({
         })
       : null;
   const workspaceTheme = getWorkspaceTheme(organizationLabel);
+  const isDiagnosticWorkspace =
+    activeOrganizationType === "pathology" ||
+    activeOrganizationType === "radiology";
+  const canSetupDiagnostics =
+    isDiagnosticWorkspace && canManageDiagnosticSetup(activeMemberRole);
+  const diagnosticSetup = useQuery({
+    queryKey: diagnosticSetupKey(activeOrganization?.id ?? "none"),
+    queryFn: () => {
+      if (!activeOrganization?.id)
+        throw new Error("Select an organisation before loading setup");
+      return virujBackend.diagnostics.onboarding(activeOrganization.id);
+    },
+    enabled:
+      isHydrated &&
+      !isAuthPending &&
+      canSetupDiagnostics &&
+      Boolean(activeOrganization?.id),
+    retry: false,
+  });
   const shouldRedirectToOnboarding =
     isHydrated &&
     !isAuthPending &&
     requestedPage === "dashboard" &&
-    shouldStartOrganizationOnboarding(activeOrganization, window.localStorage);
+    (shouldStartOrganizationOnboarding(
+      activeOrganization,
+      window.localStorage
+    ) ||
+      (canSetupDiagnostics &&
+        diagnosticSetup.isSuccess &&
+        !diagnosticSetup.data.completedAt));
 
   useEffect(() => {
     if (!isHydrated || isAuthPending) {
@@ -283,6 +314,13 @@ export function ErpHomeScreen({
       return;
     }
 
+    if (
+      activeOrganizationType === "pathology" ||
+      activeOrganizationType === "radiology"
+    ) {
+      setCanRenderSignupOnboarding(true);
+      return;
+    }
     const entryKey = `viruj:hospital-onboarding:entry:${activeOrganization.id}`;
     const workspaceEntryKey = "viruj:hospital-onboarding:entry:workspace";
     const draftKey = `viruj:hospital-onboarding:draft:${activeOrganization.id}`;
@@ -419,6 +457,14 @@ export function ErpHomeScreen({
   }
 
   if (resolvedPage === "onboarding") {
+    if (isDiagnosticWorkspace && appointmentTenant)
+      return (
+        <DiagnosticOnboarding
+          tenant={appointmentTenant}
+          organizationName={organizationName}
+          userEmail={sessionState.data.user.email}
+        />
+      );
     if (!canRenderSignupOnboarding) {
       return <LoadingScreen />;
     }
