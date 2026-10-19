@@ -8,6 +8,7 @@ type OnboardingSuccessScreenProps = {
   hospitalName: string;
   onContinue: () => void;
   kind?: OnboardingKind;
+  themeClassName?: string;
   summary: Array<{ label: string; value: string }>;
 };
 
@@ -17,9 +18,10 @@ export function OnboardingSuccessScreen({
   kind = "hospital",
   onContinue,
   summary,
+  themeClassName,
 }: OnboardingSuccessScreenProps) {
   return (
-    <div className={cn("vh-onboarding min-h-screen bg-[var(--onboarding-page)] p-2 text-[var(--onboarding-text)] md:p-3", kind === "clinic" && "vh-onboarding--clinic")}>
+    <div className={cn("vh-onboarding min-h-screen bg-[var(--onboarding-page)] p-2 text-[var(--onboarding-text)] md:p-3", kind === "clinic" && "vh-onboarding--clinic", themeClassName)}>
       <div className="relative flex min-h-[calc(100vh-1rem)] items-center justify-center overflow-hidden rounded-[24px] border border-black/5 bg-[var(--onboarding-shell)] px-5 py-10 shadow-[0_28px_110px_rgba(0,0,0,0.22)] md:min-h-[calc(100vh-1.5rem)]">
         <div className="pointer-events-none absolute inset-0 opacity-70">
           <div className="absolute left-[10%] top-[14%] h-24 w-64 rounded-[28px] bg-[var(--onboarding-accent-soft)] blur-sm" />
@@ -35,7 +37,7 @@ export function OnboardingSuccessScreen({
           transition={{ duration: 0.28, ease: "easeOut" }}
         >
           <div className="relative overflow-hidden vh-onboarding-gradient p-7 text-white">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(34,211,238,0.34),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.12),transparent_50%)]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.28),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.12),transparent_50%)]" />
             <div className="relative">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex size-14 items-center justify-center rounded-2xl bg-white/12 text-white/85 shadow-xl ring-1 ring-white/12">

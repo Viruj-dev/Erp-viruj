@@ -1,13 +1,19 @@
 "use client";
-import { useState, type FormEvent, type CSSProperties } from "react";
+import { OnboardingFrame } from "@/features/dashboard/components/hospital/pages/onboarding/onboarding-frame";
+import { OnboardingSuccessScreen } from "@/features/dashboard/components/hospital/pages/onboarding/onboarding-success-screen";
+import type {
+  StepDefinition,
+  StepId,
+} from "@/features/dashboard/components/hospital/pages/onboarding/types";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { FlaskConical, ScanLine, ArrowLeft, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/erp/input";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import {
   canManageDiagnosticSetup,
+  diagnosticSetupFields,
   diagnosticSetupKey,
   emptyDiagnosticSetup,
   type DiagnosticSetup,
@@ -77,6 +83,8 @@ function SetupForm({
   organizationName?: string;
   userEmail: string;
 }) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [complete, setComplete] = useState(false);
   const router = useRouter(),
     client = useQueryClient();
   const [data, setData] = useState<DiagnosticSetup>(() => ({
@@ -85,12 +93,12 @@ function SetupForm({
   }));
   const [version, setVersion] = useState(initial.version),
     [step, setStep] = useState(0),
-    [saved, setSaved] = useState(false);
-  const pathology = tenant.providerType === "pathology",
-    Icon = pathology ? FlaskConical : ScanLine;
-  const accent = pathology
-    ? "bg-orange-700 text-white hover:bg-orange-800"
-    : "bg-zinc-700 text-white hover:bg-zinc-800";
+    [draftLoaded, setDraftLoaded] = useState(false),
+    [draftSaving, setDraftSaving] = useState(false),
+    [draftSaved, setDraftSaved] = useState(true),
+    [validationError, setValidationError] = useState("");
+  const pathology = tenant.providerType === "pathology";
+  const draftKey = `viruj:diagnostic-onboarding:draft:${tenant.organizationId}`;
   const steps = [
     "Centre identity",
     "Branch & contact",
@@ -108,28 +116,62 @@ function SetupForm({
       ),
     onSuccess: (result, complete) => {
       setVersion(result.version);
-      setSaved(true);
+      setDraftSaved(true);
       client.setQueryData(diagnosticSetupKey(tenant.organizationId), result);
       if (complete) {
+        window.localStorage.removeItem(draftKey);
         void client.invalidateQueries({
           queryKey: ["diagnostic-availability", tenant.organizationId],
         });
-        router.replace(tenant.buildRoute());
+        setComplete(true);
       }
     },
   });
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(draftKey);
+      if (stored) {
+        const parsed = JSON.parse(stored) as {
+          data?: Partial<DiagnosticSetup>;
+          step?: number;
+        };
+        if (parsed.data) setData((current) => ({ ...current, ...parsed.data }));
+        if (Number.isInteger(parsed.step)) {
+          setStep(Math.min(Math.max(parsed.step ?? 0, 0), steps.length - 1));
+        }
+      }
+    } catch {
+      window.localStorage.removeItem(draftKey);
+    } finally {
+      setDraftLoaded(true);
+    }
+  }, [draftKey, steps.length]);
+  useEffect(() => {
+    if (!draftLoaded || complete) return;
+    setDraftSaving(true);
+    const timeout = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(draftKey, JSON.stringify({ data, step }));
+        setDraftSaved(true);
+      } catch {
+        setDraftSaved(false);
+      } finally {
+        setDraftSaving(false);
+      }
+    }, 500);
+    return () => window.clearTimeout(timeout);
+  }, [complete, data, draftKey, draftLoaded, step]);
   const update = <K extends keyof DiagnosticSetup>(
     key: K,
     value: DiagnosticSetup[K]
   ) => {
-    setSaved(false);
+    if (!save.isPending) save.reset();
+    setDraftSaved(false);
+    setValidationError("");
     setData((old) => ({ ...old, [key]: value }));
   };
   const field = (
-    key: keyof Pick<
-      DiagnosticSetup,
-      (typeof import("@/features/dashboard/lib/diagnostic-onboarding").diagnosticSetupFields)[number]
-    >,
+    key: (typeof diagnosticSetupFields)[number],
     label: string,
     options: {
       required?: boolean;
@@ -145,7 +187,7 @@ function SetupForm({
       </span>
       {options.multiline ? (
         <textarea
-          className="min-h-24 w-full rounded-xl border bg-background p-3"
+          className="min-h-24 w-full rounded-xl border border-[var(--onboarding-border-strong)] bg-[var(--onboarding-panel)] p-3 text-[var(--onboarding-text)] outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--onboarding-accent)]"
           value={data[key]}
           required={options.required}
           maxLength={2000}
@@ -154,6 +196,7 @@ function SetupForm({
       ) : (
         <Input
           type={options.type ?? "text"}
+          className="border-[var(--onboarding-border-strong)] bg-[var(--onboarding-panel)] text-[var(--onboarding-text)] focus-visible:ring-[var(--onboarding-accent)]"
           value={data[key]}
           required={options.required}
           maxLength={500}
@@ -176,10 +219,11 @@ function SetupForm({
         {labels.map((label) => (
           <label
             key={label}
-            className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
+            className="flex items-center gap-2 rounded-lg border border-[var(--onboarding-border)] bg-[var(--onboarding-panel-muted)] px-3 py-2 text-sm"
           >
             <input
               type="checkbox"
+              className="accent-[var(--onboarding-accent)]"
               checked={data[key].includes(label)}
               onChange={(e) =>
                 update(
@@ -196,85 +240,113 @@ function SetupForm({
       </div>
     );
   }
-  function next(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (step < steps.length - 1) setStep((s) => s + 1);
-    else save.mutate(true);
+  const ids: StepId[] = ["profile", "contact", "doctors", "departments", "review"];
+  const kickers = ["Identity", "Branch", "Clinical team", "Operations", "Launch"];
+  const definitions: StepDefinition[] = steps.map((label, index) => ({
+    id: ids[index]!,
+    label,
+    kicker: kickers[index]!,
+  }));
+  const descriptions = Object.fromEntries([
+    ["profile", "Register the centre and facility credentials"],
+    ["contact", "Add the main branch, contact details and opening hours"],
+    ["doctors", "Add the professional responsible for approved reports"],
+    [
+      "departments",
+      pathology
+        ? "Choose lab sections, accepted samples and collection procedures"
+        : "Choose imaging services, equipment and patient preparation",
+    ],
+    ["review", "Review the centre details before completing setup"],
+  ]) as Record<StepId, string>;
+  const themeClassName = pathology
+    ? "vh-onboarding--pathology"
+    : "vh-onboarding--radiology";
+  const summary = [
+    { label: "Centre", value: data.centreName || "Not provided" },
+    { label: "Branch", value: data.branchName || "Not provided" },
+    {
+      label: "Reporting professional",
+      value: data.reportingName || "Not provided",
+    },
+  ];
+  const validateCurrentStep = () => {
+    setValidationError("");
+    if (!formRef.current?.reportValidity()) return false;
+    if (step === 1 && data.workingDays.length === 0) {
+      setValidationError("Select at least one working day to continue.");
+      return false;
+    }
+    if (step === 3 && pathology && data.sections.length === 0) {
+      setValidationError("Select at least one laboratory section.");
+      return false;
+    }
+    if (step === 3 && pathology && data.specimens.length === 0) {
+      setValidationError("Select at least one accepted specimen type.");
+      return false;
+    }
+    if (step === 3 && !pathology && data.modalities.length === 0) {
+      setValidationError("Select at least one imaging modality.");
+      return false;
+    }
+    return true;
+  };
+  const handleContinue = () => {
+    if (!validateCurrentStep()) return;
+    save.mutate(false, {
+      onSuccess: () => setStep((current) => Math.min(current + 1, 4)),
+    });
+  };
+  const handleLaunch = () => {
+    if (validateCurrentStep()) save.mutate(true);
+  };
+
+  if (complete) {
+    return (
+      <OnboardingSuccessScreen
+        kind="hospital"
+        themeClassName={themeClassName}
+        completionPercentage={100}
+        hospitalName={data.centreName}
+        summary={summary}
+        onContinue={() => router.push(tenant.buildRoute())}
+      />
+    );
   }
+
   return (
-    <main
-      style={
-        {
-          "--ring": pathology ? "#ea580c" : "#71717a",
-          accentColor: pathology ? "#c2410c" : "#52525b",
-        } as CSSProperties
+    <OnboardingFrame
+      kind="hospital"
+      themeClassName={themeClassName}
+      organizationLabel={pathology ? "Pathology" : "Radiology"}
+      entityLabel={pathology ? "laboratory" : "imaging centre"}
+      userName={data.centreName || organizationName || "Administrator"}
+      steps={definitions}
+      stepDescriptions={descriptions}
+      currentStepIndex={step}
+      setCurrentStepIndex={setStep}
+      completedSteps={ids.slice(0, step)}
+      completionPercentage={Math.round((step / steps.length) * 100)}
+      contentWidthClassName="max-w-[960px]"
+      saveState={
+        save.isPending || draftSaving
+          ? "saving"
+          : draftSaved
+            ? "saved"
+            : "idle"
       }
-      className="min-h-dvh w-full bg-surface px-4 py-8 text-foreground sm:px-8"
+      launching={save.isPending}
+      errorMessage={
+        validationError || (save.isError ? save.error.message : "")
+      }
+      handleContinue={handleContinue}
+      handleLaunch={handleLaunch}
     >
-      <div className="mx-auto max-w-4xl">
-        <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <span
-              className={`rounded-2xl p-3 ${pathology ? "bg-orange-100 text-orange-800 dark:bg-orange-500/10 dark:text-orange-200" : "bg-zinc-200 text-zinc-800 dark:bg-zinc-500/10 dark:text-zinc-200"}`}
-            >
-              <Icon size={26} />
-            </span>
-            <div>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                {pathology ? "Pathology laboratory" : "Radiology centre"}
-              </p>
-              <h1 className="mt-1 text-2xl font-semibold">
-                Set up your diagnostic centre
-              </h1>
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            type="button"
-            onClick={() =>
-              router.push(
-                tenant.buildRoute(
-                  tenant.providerType === "pathology"
-                    ? "pathology"
-                    : "radiology"
-                )
-              )
-            }
-          >
-            Back to workspace
-          </Button>
-        </header>
-        <nav
-          aria-label="Onboarding progress"
-          className="mb-7 grid grid-cols-5 gap-2"
-        >
-          {steps.map((label, index) => (
-            <div
-              key={label}
-              aria-current={step === index ? "step" : undefined}
-              className={`rounded-xl border p-3 text-xs ${index === step ? (pathology ? "border-orange-500 bg-orange-50 text-orange-900 dark:bg-orange-500/10 dark:text-orange-100" : "border-zinc-500 bg-zinc-200 text-zinc-900 dark:bg-zinc-500/10 dark:text-zinc-100") : "text-muted-foreground"}`}
-            >
-              <span className="mb-2 block font-semibold">
-                {index < step ? (
-                  <Check size={15} aria-label="Completed step" />
-                ) : (
-                  `0${index + 1}`
-                )}
-              </span>
-              <span className="hidden sm:inline">{label}</span>
-            </div>
-          ))}
-        </nav>
-        <form
-          onSubmit={next}
-          className="space-y-6 rounded-3xl border bg-card p-5 shadow-sm sm:p-8"
-        >
-          <div>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">
-              Step {step + 1} of {steps.length}
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold">{steps[step]}</h2>
-          </div>
+      <form
+        ref={formRef}
+        onSubmit={(event) => event.preventDefault()}
+        className="space-y-6 pb-4"
+      >
           {step === 0 && (
             <div className="grid gap-5 sm:grid-cols-2">
               {field("centreName", "Centre display name", { required: true })}
@@ -415,6 +487,7 @@ function SetupForm({
                   <label className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
+                      className="accent-[var(--onboarding-accent)]"
                       checked={data.homeCollection}
                       onChange={(e) =>
                         update("homeCollection", e.target.checked)
@@ -472,6 +545,7 @@ function SetupForm({
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
+                  className="accent-[var(--onboarding-accent)]"
                   checked={data.walkIns}
                   onChange={(e) => update("walkIns", e.target.checked)}
                 />
@@ -522,56 +596,18 @@ function SetupForm({
                 Availability to accept app bookings.
               </div>
               <label className="flex items-start gap-2 text-sm">
-                <input required type="checkbox" className="mt-1" />I confirm
+                <input
+                  required
+                  type="checkbox"
+                  className="mt-1 accent-[var(--onboarding-accent)]"
+                />
+                I confirm
                 these business and professional details are accurate and I am
                 authorised to configure this centre.
               </label>
             </div>
           )}
-          {save.isError && (
-            <p role="alert" className="text-sm text-destructive">
-              {save.error.message}
-            </p>
-          )}
-          {saved && (
-            <p role="status" className="text-sm text-muted-foreground">
-              Draft saved to your organisation.
-            </p>
-          )}
-          <footer className="flex flex-wrap justify-between gap-3 border-t pt-5">
-            <Button
-              variant="outline"
-              type="button"
-              disabled={step === 0 || save.isPending}
-              onClick={() => setStep((s) => s - 1)}
-            >
-              <ArrowLeft size={15} />
-              Back
-            </Button>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                type="button"
-                disabled={save.isPending}
-                onClick={() => save.mutate(false)}
-              >
-                Save draft
-              </Button>
-              <Button
-                className={accent}
-                type="submit"
-                disabled={save.isPending}
-              >
-                {save.isPending
-                  ? "Saving…"
-                  : step === 4
-                    ? "Complete setup"
-                    : "Continue"}
-              </Button>
-            </div>
-          </footer>
-        </form>
-      </div>
-    </main>
+      </form>
+    </OnboardingFrame>
   );
 }
