@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/erp/input";
+import { ErpSelect } from "@/components/ui/erp/select";
 import {
   Dialog,
   DialogContent,
@@ -180,7 +181,11 @@ function ServiceForm({
   service?: DiagnosticService;
   onSaved: () => void;
 }) {
-  const pathology = tenant.providerType === "pathology";
+  const [kind, setKind] = useState<"pathology" | "radiology">(
+    service?.kind ??
+      (tenant.providerType === "radiology" ? "radiology" : "pathology")
+  );
+  const pathology = kind === "pathology";
   const [parameters, setParameters] = useState<DiagnosticParameter[]>(
     service?.parameters ?? [{ name: "", unit: "", reference: "" }]
   );
@@ -197,6 +202,7 @@ function ServiceForm({
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     save.mutate({
+      kind,
       name: String(form.get("name")),
       code: String(form.get("code")),
       pricePaise: Math.round(Number(form.get("price")) * 100),
@@ -211,6 +217,18 @@ function ServiceForm({
   }
   return (
     <form onSubmit={submit} className="space-y-4">
+      <label className="block space-y-1 text-sm">
+        Service type
+        <ErpSelect
+          className="w-full rounded-lg border bg-background p-2"
+          disabled={Boolean(service)}
+          value={kind}
+          onChange={(e) => setKind(e.target.value as "pathology" | "radiology")}
+        >
+          <option value="pathology">Pathology test / panel</option>
+          <option value="radiology">Radiology scan</option>
+        </ErpSelect>
+      </label>
       <label className="block space-y-1 text-sm">
         Description
         <textarea

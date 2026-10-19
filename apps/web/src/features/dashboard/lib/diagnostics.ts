@@ -22,7 +22,7 @@ export type DiagnosticService = {
 export type DiagnosticServiceInput = Omit<
   DiagnosticService,
   "id" | "kind" | "active"
->;
+> & { kind?: DiagnosticKind };
 export type DiagnosticOrder = {
   id: string;
   kind: DiagnosticKind;
