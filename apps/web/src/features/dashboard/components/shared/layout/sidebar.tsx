@@ -189,7 +189,7 @@ export function ErpDemoSidebar({
     { id: "dashboard", label: "Overview", icon: LayoutDashboard },
     {
       id: isPathologyWorkspace ? "pathology" : "radiology",
-      label: isPathologyWorkspace ? "Lab reception" : "Imaging reception",
+      label: isPathologyWorkspace ? "Laboratory operations" : "Imaging operations",
       icon: isPathologyWorkspace ? FlaskConical : ScanLine,
     },
     { id: "appointments", label: "Bookings", icon: ClipboardCheck },
