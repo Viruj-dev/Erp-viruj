@@ -216,14 +216,16 @@ function ColumnVisibilityMenu({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          className="h-10 border-slate-200 bg-white text-slate-700 shadow-none hover:bg-slate-50 dark:border-white/[0.09] dark:bg-[#0b0b0c] dark:text-slate-300 dark:hover:bg-white/[0.06]"
-          variant="outline"
-        >
-          Columns
-          <ChevronDown size={16} />
-        </Button>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            className="h-10 border-slate-200 bg-white text-slate-700 shadow-none hover:bg-slate-50 dark:border-white/[0.09] dark:bg-[#0b0b0c] dark:text-slate-300 dark:hover:bg-white/[0.06]"
+            variant="outline"
+          />
+        }
+      >
+        Columns
+        <ChevronDown size={16} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         {table

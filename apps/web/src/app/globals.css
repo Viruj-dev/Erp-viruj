@@ -388,6 +388,81 @@
   border-radius: 20px;
   box-shadow: 0 2px 12px rgb(15 23 42 / 2%);
 }
+/* The shared header becomes a compact dock without hiding its actions. */
+.erp-topbar {
+  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    min-height 280ms ease, padding 280ms ease, top 280ms ease,
+    border-radius 280ms ease, box-shadow 280ms ease;
+}
+.erp-topbar-workspace,
+.erp-topbar [data-slot="dropdown-menu-trigger"] {
+  transition: gap 240ms ease;
+}
+.erp-topbar-workspace-label {
+  max-width: 420px;
+}
+.erp-topbar-account-label {
+  max-width: 160px;
+}
+.erp-topbar-workspace-label,
+.erp-topbar-account-label,
+.erp-topbar-chevron {
+  overflow: hidden;
+  transition: max-width 280ms ease, opacity 180ms ease, transform 280ms ease;
+}
+.erp-topbar button {
+  transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+.erp-topbar button:hover {
+  transform: translateY(-1px);
+}
+.erp-topbar button:active {
+  transform: scale(0.94);
+}
+.erp-topbar button > svg {
+  transition: transform 220ms ease;
+}
+.erp-topbar button:hover > svg {
+  transform: rotate(-6deg);
+}
+.erp-topbar.erp-topbar[data-compact="true"] {
+  top: 6px;
+  width: min(236px, calc(100% - 24px));
+  min-height: 52px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  gap: 8px;
+  box-shadow: 0 8px 28px rgb(15 23 42 / 12%);
+}
+.erp-topbar[data-compact="true"] .erp-topbar-workspace {
+  flex: 0 0 auto;
+  gap: 0;
+}
+.erp-topbar[data-compact="true"] .erp-topbar-workspace-icon {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+.erp-topbar[data-compact="true"] .erp-topbar-workspace-label,
+.erp-topbar[data-compact="true"] .erp-topbar-account-label,
+.erp-topbar[data-compact="true"] .erp-topbar-chevron {
+  max-width: 0;
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.erp-topbar[data-compact="true"] [data-slot="dropdown-menu-trigger"] {
+  gap: 0;
+}
+.erp-topbar[data-compact="true"] button {
+  min-width: 36px;
+  min-height: 36px;
+}
+.erp-topbar[data-compact="true"] button:not([data-slot="dropdown-menu-trigger"]) {
+  width: 36px;
+  height: 36px;
+}
+
 .erp-scroll {
   overscroll-behavior: contain;
 }

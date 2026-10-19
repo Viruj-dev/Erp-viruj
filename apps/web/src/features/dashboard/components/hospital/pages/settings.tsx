@@ -2,6 +2,7 @@
 // @ts-nocheck
 "use client";
 
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/erp/dropdown-menu";
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
   Search, ChevronDown, ChevronRight, ChevronLeft, X, Plus, Check, AlertTriangle,
@@ -377,7 +378,6 @@ function OperationalTab({ data, setData, readOnly, search }) {
   const set = (patch) => setData((d) => ({ ...d, ...patch }));
   const setHour = (day, patch) => setData((d) => ({ ...d, hours: { ...d.hours, [day]: { ...d.hours[day], ...patch } } }));
 
-  const [copyMenuFor, setCopyMenuFor] = useState(null);
   const hoursError = (day) => {
     const h = data.hours[day];
     if (h.closed) return null;
@@ -396,7 +396,6 @@ function OperationalTab({ data, setData, readOnly, search }) {
   const clearHours = () => setData((d) => ({ ...d, hours: DEFAULT_HOURS() }));
   const copyDayTo = (from, to) => {
     setData((d) => ({ ...d, hours: { ...d.hours, [to]: { ...d.hours[from] } } }));
-    setCopyMenuFor(null);
   };
 
   const patternError = (val) => {
@@ -514,17 +513,15 @@ function OperationalTab({ data, setData, readOnly, search }) {
                       {err && <span className="flex items-center gap-1 text-[12px] text-rose-600"><AlertCircle className="h-3 w-3" />{err}</span>}
                     </div>
                   )}
-                  <div className="relative ml-auto">
-                    <Button variant="ghost" size="sm" icon={Copy} disabled={readOnly} onClick={() => setCopyMenuFor(copyMenuFor === d ? null : d)}>Copy to…</Button>
-                    {copyMenuFor === d && (
-                      <div className="absolute right-0 top-9 z-10 w-40 rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                  <div className="ml-auto">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger render={<Button variant="ghost" size="sm" icon={Copy} disabled={readOnly} />}>Copy to…</DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
                         {DAY_KEYS.filter((x) => x !== d).map((x) => (
-                          <button key={x} onClick={() => copyDayTo(d, x)} className="block w-full rounded-md px-2.5 py-1.5 text-left text-[12px] text-slate-600 hover:bg-slate-50">
-                            {DAY_LABELS[x]}
-                          </button>
+                          <DropdownMenuItem key={x} onClick={() => copyDayTo(d, x)}>{DAY_LABELS[x]}</DropdownMenuItem>
                         ))}
-                      </div>
-                    )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               );

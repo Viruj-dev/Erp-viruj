@@ -318,18 +318,20 @@ export function ErpDemoAppointments({
                     </td>
                     <td className="px-5 py-3.5">
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            aria-label={`Actions for ${appointment.patientName}`}
-                            className="flex size-8 items-center justify-center rounded-lg hover:bg-slate-100 focus-visible:outline-2 dark:hover:bg-white/10"
-                          >
-                            <MoreHorizontal size={18} />
-                          </button>
+                        <DropdownMenuTrigger
+                          render={
+                            <button
+                              type="button"
+                              aria-label={`Actions for ${appointment.patientName}`}
+                              className="flex size-8 items-center justify-center rounded-lg hover:bg-slate-100 focus-visible:outline-2 dark:hover:bg-white/10"
+                            />
+                          }
+                        >
+                          <MoreHorizontal size={18} />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onSelect={() => setSelectedId(appointment.id)}
+                            onClick={() => setSelectedId(appointment.id)}
                           >
                             {appointment.status === "approved"
                               ? "Details / Verify arrival"

@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+} from "@/components/ui/erp/dropdown-menu";
 import { ProfileDropdown } from "@/features/dashboard/components/shared/profile/profile-dropdown";
 import { NotificationCenter } from "@/features/notifications";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
@@ -7,7 +11,7 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme-provider";
 import { Building2, ChevronDown, Moon, Sun } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function ErpDemoTopBar({
   organizationLabel,
@@ -28,23 +32,48 @@ export function ErpDemoTopBar({
 }) {
   const { theme, toggleTheme } = useTheme();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isCompact, setIsCompact] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const scroller = headerRef.current?.closest(".erp-scroll");
+    if (!scroller) return;
+
+    const update = () => {
+      // Separate thresholds prevent resizing the header from toggling it repeatedly.
+      setIsCompact((compact) => scroller.scrollTop > (compact ? 32 : 112));
+    };
+    update();
+    scroller.addEventListener("scroll", update, { passive: true });
+    return () => scroller.removeEventListener("scroll", update);
+  }, []);
   const sessionState = authClient.useSession();
   const userImage = sessionState.data?.user?.image;
   const workspaceTheme = getWorkspaceTheme(organizationLabel);
   const title = organizationName?.trim() || organizationLabel;
 
   return (
-    <header className="erp-topbar mx-auto relative z-30 flex shrink-0 items-center justify-between gap-3 border border-white/80 bg-white px-4 py-3 transition-colors dark:border-white/[0.06] dark:bg-[#17191e]">
-      <div className="flex min-w-0 flex-1 items-center gap-3">
+    <header
+      ref={headerRef}
+      data-compact={isCompact}
+      className="erp-topbar mx-auto relative z-30 flex shrink-0 items-center justify-between gap-3 border border-white/80 bg-white px-4 py-3 transition-colors dark:border-white/[0.06] dark:bg-[#17191e]"
+    >
+      <div className="erp-topbar-workspace flex min-w-0 flex-1 items-center gap-3">
         <div
+          title={`${title} · ${organizationLabel} workspace`}
+          role="img"
+          aria-label={`${title} workspace`}
           className={cn(
-            "hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex",
+            "erp-topbar-workspace-icon hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex",
             workspaceTheme.avatar
           )}
         >
           <Building2 size={19} strokeWidth={1.6} aria-hidden="true" />
         </div>
-        <div className="min-w-0">
+        <div
+          className="erp-topbar-workspace-label min-w-0"
+          aria-hidden={isCompact}
+        >
           <h2 className="truncate text-sm font-semibold tracking-tight text-on-surface dark:text-slate-100">
             {title}
           </h2>
@@ -69,17 +98,18 @@ export function ErpDemoTopBar({
         <div className="mx-1 h-8 w-px bg-slate-200 dark:bg-white/[0.08]" />
 
         {/* Account controls stay grouped in one compact menu. */}
-        <div className="relative">
-          <button
+        <DropdownMenu open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+          <DropdownMenuTrigger
             id="top-bar-profile-button"
             aria-label="Open account menu"
             aria-expanded={isProfileOpen}
-            aria-controls={isProfileOpen ? "account-menu" : undefined}
             type="button"
-            onClick={() => setIsProfileOpen((v) => !v)}
             className="flex cursor-pointer items-center gap-2.5 rounded-full p-1.5 transition-colors hover:bg-slate-200/50 dark:hover:bg-white/[0.08]"
           >
-            <div className="hidden max-w-40 text-right md:block">
+            <div
+              className="erp-topbar-account-label hidden max-w-40 text-right md:block"
+              aria-hidden={isCompact}
+            >
               <p className="truncate text-xs font-semibold text-on-surface dark:text-slate-100">
                 {userName || "Viruj User"}
               </p>
@@ -108,19 +138,16 @@ export function ErpDemoTopBar({
               </div>
             )}
             <ChevronDown
-              className={`text-slate-400 transition-transform dark:text-slate-500 ${isProfileOpen ? "rotate-180" : ""}`}
+              className={`erp-topbar-chevron text-slate-400 transition-transform dark:text-slate-500 ${isProfileOpen ? "rotate-180" : ""}`}
               size={14}
             />
-          </button>
+          </DropdownMenuTrigger>
 
-          {isProfileOpen && (
-            <ProfileDropdown
-              onClose={() => setIsProfileOpen(false)}
-              onNavigateToProfile={onNavigateToProfile}
-              onLogout={onLogout}
-            />
-          )}
-        </div>
+          <ProfileDropdown
+            onNavigateToProfile={onNavigateToProfile}
+            onLogout={onLogout}
+          />
+        </DropdownMenu>
       </div>
     </header>
   );
