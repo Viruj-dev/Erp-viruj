@@ -1,5 +1,8 @@
 "use client";
 
+import { ErpSelect } from "@/components/ui/erp/select";
+
+
 import type { VirujFacilityCategory } from "@/lib/viruj-backend";
 import { facilityCategories } from "../constants";
 import { BulkButton } from "./primitives";
@@ -37,7 +40,7 @@ export function BulkActionBar({
           label="Archive"
           onClick={() => onRun("archive")}
         />
-        <select
+        <ErpSelect
           className="h-9 rounded-lg border border-white/15 bg-white/10 px-3 text-xs font-semibold text-white outline-none"
           onChange={(event) =>
             onBulkCategoryChange(event.target.value as VirujFacilityCategory)
@@ -49,7 +52,7 @@ export function BulkActionBar({
               {category}
             </option>
           ))}
-        </select>
+        </ErpSelect>
         <BulkButton
           disabled={disabled}
           label="Change Category"

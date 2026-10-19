@@ -2,6 +2,9 @@
 // @ts-nocheck
 "use client";
 
+import { ErpSelect } from "@/components/ui/erp/select";
+
+
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/erp/dropdown-menu";
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
@@ -156,7 +159,7 @@ function TextInput({ className, disabled, ...props }) {
 function Select({ className, disabled, children, ...props }) {
   return (
     <div className="relative">
-      <select
+      <ErpSelect
         disabled={disabled}
         className={cx(
           "h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-[13px] text-slate-800 outline-none transition dark:border-white/10 dark:bg-[#0b1118] dark:text-slate-100",
@@ -167,8 +170,7 @@ function Select({ className, disabled, children, ...props }) {
         {...props}
       >
         {children}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+      </ErpSelect>
     </div>
   );
 }

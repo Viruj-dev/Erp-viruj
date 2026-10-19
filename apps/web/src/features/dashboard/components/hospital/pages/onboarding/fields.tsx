@@ -1,3 +1,4 @@
+import { ErpSelect } from "@/components/ui/erp/select";
 import { cn } from "@/lib/utils";
 import { ImagePlus } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -72,7 +73,7 @@ export function SelectField({
   return (
     <label>
       <FieldLabel required={required}>{label}</FieldLabel>
-      <select
+      <ErpSelect
         className={fieldClassName("appearance-none")}
         onChange={(event) => onChange(event.target.value)}
         value={value}
@@ -83,7 +84,7 @@ export function SelectField({
             {option}
           </option>
         ))}
-      </select>
+      </ErpSelect>
     </label>
   );
 }

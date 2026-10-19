@@ -1,3 +1,4 @@
+import { ErpSelect } from "@/components/ui/erp/select";
 import { DoctorPhotoField } from "../../../../shared/workspace/doctor-photo-field";
 import { Plus, Trash2, UserPlus } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
@@ -134,7 +135,7 @@ export function DoctorsStep({
                 />
                 <label>
                   <FieldLabel required>Assign Department</FieldLabel>
-                  <select
+                  <ErpSelect
                     required
                     className={fieldClassName("appearance-none")}
                     onChange={(event) =>
@@ -150,7 +151,7 @@ export function DoctorsStep({
                         {department.name}
                       </option>
                     ))}
-                  </select>
+                  </ErpSelect>
                 </label>
                 <TextField
                   required

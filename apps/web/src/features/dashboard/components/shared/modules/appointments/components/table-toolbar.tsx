@@ -1,3 +1,4 @@
+import { ErpSelect } from "@/components/ui/erp/select";
 import { Filter, Search } from "lucide-react";
 
 export function TableToolbar({
@@ -42,7 +43,7 @@ export function TableToolbar({
           className="absolute left-3 top-1/2 -translate-y-1/2 text-outline"
           size={15}
         />
-        <select
+        <ErpSelect
           className="h-11 w-full appearance-none rounded-xl border border-outline-variant/20 bg-surface-container-low py-2 pl-9 pr-3 text-sm font-semi-bold text-on-surface outline-none focus:border-primary"
           onChange={(event) => onDepartmentFilter(event.target.value)}
           value={departmentFilter}
@@ -53,7 +54,7 @@ export function TableToolbar({
               {department}
             </option>
           ))}
-        </select>
+        </ErpSelect>
       </label>
     </div>
   );

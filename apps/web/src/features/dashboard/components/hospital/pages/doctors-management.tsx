@@ -1,4 +1,7 @@
 "use client";
+
+import { ErpSelect } from "@/components/ui/erp/select";
+
 import { DoctorAvatar } from "../../shared/workspace/doctor-avatar";
 import { DoctorPhotoField } from "../../shared/workspace/doctor-photo-field";
 import { useWorkspaceProfile } from "../../shared/workspace/use-workspace-profile";
@@ -763,7 +766,7 @@ function DoctorDepartmentSelect({
       <span className="text-[10px] font-semi-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-600">
         {label}
       </span>
-      <select
+      <ErpSelect
         className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/[0.08] dark:bg-white/[0.055] dark:text-slate-100"
         disabled={!options.length && !hasSavedValue}
         onChange={(event) => onChange(event.target.value)}
@@ -778,7 +781,7 @@ function DoctorDepartmentSelect({
             {option}
           </option>
         ))}
-      </select>
+      </ErpSelect>
     </label>
   );
 }

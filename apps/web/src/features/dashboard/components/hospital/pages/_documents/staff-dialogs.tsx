@@ -1,5 +1,8 @@
 "use client";
 
+import { ErpSelect } from "@/components/ui/erp/select";
+
+
 import { Edit3, Mail, Trash2, UserPlus, X } from "lucide-react";
 import type { FormEvent, ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -359,7 +362,7 @@ function RoleSelect({
   return (
     <label className="block text-[10px] font-semi-bold uppercase tracking-[0.18em] text-on-surface-variant">
       {label}
-      <select
+      <ErpSelect
         className="mt-2 w-full rounded-lg border border-outline-variant/25 bg-surface px-3 py-3 text-sm font-semibold normal-case tracking-normal text-on-surface outline-none transition focus:border-primary"
         onChange={(event) => onChange(event.target.value as StaffRole)}
         value={value}
@@ -369,7 +372,7 @@ function RoleSelect({
             {roleLabels[roleOption]}
           </option>
         ))}
-      </select>
+      </ErpSelect>
     </label>
   );
 }

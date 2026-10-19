@@ -1,5 +1,8 @@
 "use client";
 
+import { ErpSelect } from "@/components/ui/erp/select";
+
+
 import { VirujLogo } from "@/components/brand/viruj-logo";
 import { virujBrand } from "@/lib/viruj-brand";
 
@@ -791,7 +794,7 @@ function SelectField({
       <label className="px-1 text-xs font-bold text-slate-800 dark:text-slate-200">
         {label}
       </label>
-      <select
+      <ErpSelect
         className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-200 dark:border-white/10 dark:bg-[#161c24] dark:text-white dark:focus:border-cyan-400/40 dark:focus:ring-cyan-400/15"
         onChange={(event) => onChange(event.target.value)}
         value={value}
@@ -801,7 +804,7 @@ function SelectField({
             {option.label}
           </option>
         ))}
-      </select>
+      </ErpSelect>
     </div>
   );
 }

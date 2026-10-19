@@ -1,5 +1,8 @@
 "use client";
 
+import { ErpSelect } from "@/components/ui/erp/select";
+
+
 import { createContext, useContext, useState } from "react";
 import { Clock3 } from "lucide-react";
 import {
@@ -162,7 +165,7 @@ export function TimePicker({
           </div>
           <label className="flex items-center justify-between gap-3 text-xs">
             Exact minute
-            <select
+            <ErpSelect
               aria-label="Exact minute"
               className={fieldClassName("w-24")}
               value={minutes}
@@ -173,7 +176,7 @@ export function TimePicker({
                   {String(n).padStart(2, "0")}
                 </option>
               ))}
-            </select>
+            </ErpSelect>
           </label>
           <button
             type="button"

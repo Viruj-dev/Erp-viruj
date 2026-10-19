@@ -1,5 +1,8 @@
 "use client";
 
+import { ErpSelect } from "@/components/ui/erp/select";
+
+
 import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import { cn } from "@/lib/utils";
 import { type VirujActivity, virujBackend } from "@/lib/viruj-backend";
@@ -290,7 +293,7 @@ function FilterSelect({
   return (
     <label className="relative">
       <Filter className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-slate-400" />
-      <select
+      <ErpSelect
         className="h-11 appearance-none rounded-xl border border-slate-200 bg-white pl-9 pr-8 text-xs font-semibold text-slate-600 outline-none focus:border-blue-400 dark:border-white/[0.08] dark:bg-[#15191e] dark:text-slate-300"
         onChange={(event) => onChange(event.target.value)}
         value={value}
@@ -301,7 +304,7 @@ function FilterSelect({
             {humanize(option)}
           </option>
         ))}
-      </select>
+      </ErpSelect>
     </label>
   );
 }

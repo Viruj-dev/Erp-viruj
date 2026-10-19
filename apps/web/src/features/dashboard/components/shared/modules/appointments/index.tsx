@@ -1,5 +1,8 @@
 "use client";
 
+import { ErpSelect } from "@/components/ui/erp/select";
+
+
 import { Button } from "@/components/ui/button";
 import {
   Search,
@@ -141,7 +144,7 @@ export function ErpDemoAppointments({
                 value={query}
               />
             </label>
-            <select
+            <ErpSelect
               aria-label="Appointment status"
               className="h-9 rounded-lg border border-slate-200 bg-transparent px-3 text-xs dark:border-white/10"
               onChange={(event) => {
@@ -164,7 +167,7 @@ export function ErpDemoAppointments({
                   {getStatusLabel(value)}
                 </option>
               ))}
-            </select>
+            </ErpSelect>
             <Button
               aria-label="Refresh appointments"
               title="Refresh appointments"
@@ -355,7 +358,7 @@ export function ErpDemoAppointments({
                 : `Showing ${rows.length ? start + 1 : 0}–${Math.min(start + pageSize, rows.length)} of ${rows.length} results`}
           </p>
           <div className="flex items-center gap-2">
-            <select
+            <ErpSelect
               aria-label="Rows per page"
               value={pageSize}
               onChange={(event) => {
@@ -369,7 +372,7 @@ export function ErpDemoAppointments({
                   {size} per page
                 </option>
               ))}
-            </select>
+            </ErpSelect>
             <button
               type="button"
               aria-label="Previous page"

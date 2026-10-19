@@ -1,3 +1,4 @@
+import { ErpSelect } from "@/components/ui/erp/select";
 import { cn } from "@/lib/utils";
 import { Check, Plus, Trash2, Wrench } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
@@ -106,7 +107,7 @@ export function ServicesStep({
               />
               <label>
                 <FieldLabel required>Category</FieldLabel>
-                <select
+                <ErpSelect
                   className={fieldClassName("appearance-none")}
                   onChange={(event) => updateService(service.id, { category: event.target.value })}
                   value={service.category}
@@ -116,7 +117,7 @@ export function ServicesStep({
                       {category}
                     </option>
                   ))}
-                </select>
+                </ErpSelect>
               </label>
               <TextField
                 required
