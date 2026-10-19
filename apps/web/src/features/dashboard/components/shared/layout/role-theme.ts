@@ -1,4 +1,9 @@
-export type WorkspaceRole = "hospital" | "doctor" | "clinic";
+export type WorkspaceRole =
+  | "hospital"
+  | "doctor"
+  | "clinic"
+  | "pathology"
+  | "radiology";
 
 export type WorkspaceTheme = {
   activeDot: string;
@@ -12,6 +17,35 @@ export type WorkspaceTheme = {
 };
 
 export const workspaceThemes: Record<WorkspaceRole, WorkspaceTheme> = {
+  pathology: {
+    activeDot: "bg-orange-600 shadow-[0_0_10px_2px_rgba(234,88,12,0.4)]",
+    activeIcon: "text-orange-700 dark:text-orange-200",
+    activeNav:
+      "bg-orange-50 text-orange-800 shadow-sm dark:bg-orange-400/10 dark:text-orange-100",
+    avatar:
+      "bg-orange-100 text-orange-900 dark:bg-orange-500/20 dark:text-orange-200",
+    contentFrame:
+      "border-orange-200/70 bg-white/90 ring-orange-50 dark:border-orange-400/10 dark:bg-[#181512] dark:ring-white/[0.03]",
+    logoAura:
+      "bg-[conic-gradient(from_150deg,#fed7aa,#ea580c,#c2410c,#fed7aa)]",
+    profileRing: "ring-orange-500/10",
+    selection:
+      "selection:bg-orange-500/15 selection:text-orange-800 dark:selection:text-orange-100",
+  },
+  radiology: {
+    activeDot: "bg-zinc-500 shadow-[0_0_10px_2px_rgba(113,113,122,0.4)]",
+    activeIcon: "text-zinc-700 dark:text-zinc-200",
+    activeNav:
+      "bg-zinc-200/70 text-zinc-950 shadow-sm dark:bg-zinc-400/15 dark:text-zinc-100",
+    avatar: "bg-zinc-200 text-zinc-900 dark:bg-zinc-500/20 dark:text-zinc-200",
+    contentFrame:
+      "border-zinc-300/70 bg-zinc-50/90 ring-white/60 dark:border-zinc-400/10 dark:bg-[#161618] dark:ring-white/[0.03]",
+    logoAura:
+      "bg-[conic-gradient(from_150deg,#e4e4e7,#71717a,#3f3f46,#e4e4e7)]",
+    profileRing: "ring-zinc-500/10",
+    selection:
+      "selection:bg-zinc-500/20 selection:text-zinc-900 dark:selection:text-zinc-100",
+  },
   hospital: {
     activeDot: "bg-[#0f6cbf] shadow-[0_0_10px_2px_rgba(15,108,191,0.62)]",
     activeIcon: "text-blue-700 dark:text-blue-200",
@@ -61,6 +95,10 @@ export const workspaceThemes: Record<WorkspaceRole, WorkspaceTheme> = {
 
 export function resolveWorkspaceRole(organizationLabel: string): WorkspaceRole {
   const normalized = organizationLabel.toLowerCase();
+
+  if (normalized === "pathology" || normalized === "radiology") {
+    return normalized;
+  }
 
   if (normalized === "doctor") {
     return "doctor";
