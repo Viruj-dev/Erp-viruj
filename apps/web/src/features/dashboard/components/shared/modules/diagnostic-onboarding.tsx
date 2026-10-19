@@ -1,5 +1,6 @@
 "use client";
 import { UploadField } from "@/features/dashboard/components/hospital/pages/onboarding/fields";
+import { TimePicker } from "@/features/dashboard/components/hospital/pages/onboarding/time-picker";
 import {
   getCurrentPosition,
   reverseGeocodeLocation,
@@ -188,37 +189,48 @@ function SetupForm({
       multiline?: boolean;
       hint?: string;
     } = {}
-  ) => (
-    <label className="block space-y-2 text-sm">
-      <span className="font-medium">
-        {label}
-        {options.required ? " *" : ""}
-      </span>
-      {options.multiline ? (
-        <textarea
-          className="min-h-24 w-full rounded-xl border border-[var(--onboarding-border-strong)] bg-[var(--onboarding-panel)] p-3 text-[var(--onboarding-text)] outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--onboarding-accent)]"
-          value={data[key]}
-          required={options.required}
-          maxLength={2000}
-          onChange={(e) => update(key, e.target.value)}
-        />
-      ) : (
-        <Input
-          type={options.type ?? "text"}
-          className="border-[var(--onboarding-border-strong)] bg-[var(--onboarding-panel)] text-[var(--onboarding-text)] focus-visible:ring-[var(--onboarding-accent)]"
-          value={data[key]}
-          required={options.required}
-          maxLength={500}
-          onChange={(e) => update(key, e.target.value)}
-        />
-      )}
-      {options.hint && (
-        <span className="block text-xs leading-5 text-muted-foreground">
-          {options.hint}
+  ) =>
+    options.type === "time" ? (
+      <TimePicker
+        label={label}
+        value={data[key]}
+        required={options.required}
+        onChange={(value) => update(key, value)}
+        themeClassName={
+          pathology ? "vh-onboarding--pathology" : "vh-onboarding--radiology"
+        }
+      />
+    ) : (
+      <label className="block space-y-2 text-sm">
+        <span className="font-medium">
+          {label}
+          {options.required ? " *" : ""}
         </span>
-      )}
-    </label>
-  );
+        {options.multiline ? (
+          <textarea
+            className="min-h-24 w-full rounded-xl border border-[var(--onboarding-border-strong)] bg-[var(--onboarding-panel)] p-3 text-[var(--onboarding-text)] outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--onboarding-accent)]"
+            value={data[key]}
+            required={options.required}
+            maxLength={2000}
+            onChange={(e) => update(key, e.target.value)}
+          />
+        ) : (
+          <Input
+            type={options.type ?? "text"}
+            className="border-[var(--onboarding-border-strong)] bg-[var(--onboarding-panel)] text-[var(--onboarding-text)] focus-visible:ring-[var(--onboarding-accent)]"
+            value={data[key]}
+            required={options.required}
+            maxLength={500}
+            onChange={(e) => update(key, e.target.value)}
+          />
+        )}
+        {options.hint && (
+          <span className="block text-xs leading-5 text-muted-foreground">
+            {options.hint}
+          </span>
+        )}
+      </label>
+    );
   function choices(
     key: "sections" | "specimens" | "modalities" | "workingDays",
     labels: readonly string[]

@@ -2,7 +2,6 @@
 
 import { ErpSelect } from "@/components/ui/erp/select";
 
-
 import { createContext, useContext, useState } from "react";
 import { Clock3 } from "lucide-react";
 import {
@@ -28,12 +27,14 @@ export function TimePicker({
   onChange,
   required = true,
   disabled = false,
+  themeClassName,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
   disabled?: boolean;
+  themeClassName?: string;
 }) {
   const kind = useContext(OnboardingTheme);
   const [open, setOpen] = useState(false);
@@ -73,7 +74,7 @@ export function TimePicker({
           </button>
         </DialogTrigger>
         <DialogContent
-          className={`vh-onboarding ${kind === "clinic" ? "vh-onboarding--clinic" : ""} max-h-[90dvh] overflow-y-auto border border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] text-[var(--onboarding-text)] sm:max-w-sm`}
+          className={`vh-onboarding ${themeClassName ?? (kind === "clinic" ? "vh-onboarding--clinic" : "")} max-h-[90dvh] overflow-y-auto border border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] text-[var(--onboarding-text)] sm:max-w-sm`}
         >
           <DialogTitle>{label}</DialogTitle>
           <DialogDescription>
