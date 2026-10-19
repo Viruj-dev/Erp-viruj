@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/erp/dropdown-menu";
 import { Input } from "@/components/ui/erp/input";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
-import { virujBackend } from "@/lib/viruj-backend";
+import { virujBackend, type VirujAppointment } from "@/lib/viruj-backend";
 import { useQuery } from "@tanstack/react-query";
 import { useState, type CSSProperties } from "react";
 import { AppointmentDetailDialog } from "./components/appointment-detail";
@@ -42,10 +42,20 @@ export function ErpDemoAppointments({
   section = "dashboard",
   tenant,
   initialAppointmentId,
+  source,
 }: {
   section?: AppointmentTab;
   tenant?: ErpTenantContext;
   initialAppointmentId?: string;
+  source?: {
+    data: VirujAppointment[];
+    isPending: boolean;
+    isError: boolean;
+    error: Error | null;
+    isFetching: boolean;
+    refetch: () => unknown;
+    onSelect: (id: string) => void;
+  };
 }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -57,13 +67,15 @@ export function ErpDemoAppointments({
     initialAppointmentId ?? null
   );
   const organizationId = tenant?.organizationId;
-  const appointments = useQuery({
-    enabled: Boolean(organizationId),
+  const appointmentQuery = useQuery({
+    enabled: Boolean(organizationId) && !source,
     queryKey: virujBackend.appointments.key({ organizationId }),
     queryFn: () => virujBackend.appointments.list({ organizationId }),
     refetchInterval: 15_000,
     retry: false,
   });
+  const appointments = source ?? appointmentQuery;
+  const selectAppointment = source?.onSelect ?? setSelectedId;
   if (!tenant?.capabilities.appointments.enabled)
     return (
       <p className="p-5">Appointments are not enabled for this workspace.</p>
@@ -143,7 +155,11 @@ export function ErpDemoAppointments({
                   setQuery(event.target.value);
                   setPage(1);
                 }}
-                placeholder="Search patient, doctor or phone"
+                placeholder={
+                  source
+                    ? "Search patient, service or phone"
+                    : "Search patient, doctor or phone"
+                }
                 value={query}
               />
             </label>
@@ -157,15 +173,18 @@ export function ErpDemoAppointments({
               value={status}
             >
               <option value="all">All statuses</option>
-              {[
-                "pending_approval",
-                "approved",
-                "rescheduled",
-                "completed",
-                "rejected",
-                "cancelled",
-                "no_show",
-              ].map((value) => (
+              {(source
+                ? ["pending_approval", "approved", "rejected", "cancelled"]
+                : [
+                    "pending_approval",
+                    "approved",
+                    "rescheduled",
+                    "completed",
+                    "rejected",
+                    "cancelled",
+                    "no_show",
+                  ]
+              ).map((value) => (
                 <option key={value} value={value}>
                   {getStatusLabel(value)}
                 </option>
@@ -201,7 +220,7 @@ export function ErpDemoAppointments({
                 {[
                   "Patient ID",
                   "Patient name",
-                  "Type / doctor",
+                  source ? "Type / service" : "Type / doctor",
                   "Requested time",
                   "Mobile number",
                   "Status",
@@ -233,7 +252,7 @@ export function ErpDemoAppointments({
                       <p role="status">Loading appointments…</p>
                     ) : appointments.isError ? (
                       <p role="alert" className="text-error">
-                        {appointments.error.message} Use Refresh to retry.
+                        {appointments.error?.message} Use Refresh to retry.
                       </p>
                     ) : (
                       <>
@@ -264,7 +283,7 @@ export function ErpDemoAppointments({
                     <td className="px-5 py-3.5">
                       <button
                         type="button"
-                        onClick={() => setSelectedId(appointment.id)}
+                        onClick={() => selectAppointment(appointment.id)}
                         className="flex items-center gap-3 text-left hover:text-[var(--appointment-accent)] focus-visible:outline-2 focus-visible:outline-offset-4"
                         aria-label={`View appointment for ${appointment.patientName}`}
                       >
@@ -337,9 +356,9 @@ export function ErpDemoAppointments({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={() => setSelectedId(appointment.id)}
+                            onClick={() => selectAppointment(appointment.id)}
                           >
-                            {appointment.status === "approved"
+                            {appointment.status === "approved" && !source
                               ? "Details / Verify arrival"
                               : "Review details"}
                           </DropdownMenuItem>

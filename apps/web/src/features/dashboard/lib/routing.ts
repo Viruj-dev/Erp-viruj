@@ -663,6 +663,8 @@ export function getAllowedDashboardPages(
       [
         "dashboard",
         "appointments",
+        "appointments-dashboard",
+        "appointments-review",
         "services",
         "facilities",
         "staff",

@@ -113,6 +113,7 @@ export function RoleDashboardPage({
   unavailable = [],
   onRefresh,
   refreshing = false,
+  onAppointmentSelect,
 }: {
   analytics?: RoleDashboardAnalytics;
   tone: DashboardTone;
@@ -124,6 +125,7 @@ export function RoleDashboardPage({
   unavailable?: string[];
   onRefresh?: () => void;
   refreshing?: boolean;
+  onAppointmentSelect?: (id: string) => void;
 }) {
   const pathname = usePathname();
   const [selectedAppointment, setSelectedAppointment] = useState<string | null>(
@@ -138,22 +140,26 @@ export function RoleDashboardPage({
     slug
       ? buildTenantDashboardPath(tone, slug, page)
       : buildDashboardPath(tone, page);
-  const diagnostic = tone === "pathology" || tone === "radiology";
-  const chartLabels = diagnostic
-    ? ["Bookings", "Orders", "Reports"]
-    : ["Appointments", "Doctors", "Services"];
+  const pathology = tone === "pathology";
+  const diagnostic = tone === "radiology";
+  const chartLabels = pathology
+    ? ["Appointments", "Branches", "Services"]
+    : diagnostic
+      ? ["Bookings", "Orders", "Reports"]
+      : ["Appointments", "Doctors", "Services"];
   const servicesPage = diagnostic
     ? tone
     : tone === "hospital"
       ? "facilities"
       : "services";
-  const profilePage = diagnostic
-    ? "profile"
-    : tone === "clinic"
-      ? "clinic-profile"
-      : tone === "doctor"
-        ? "profile"
-        : "hospital-profile";
+  const profilePage =
+    diagnostic || pathology
+      ? "profile"
+      : tone === "clinic"
+        ? "clinic-profile"
+        : tone === "doctor"
+          ? "profile"
+          : "hospital-profile";
   const statuses = analytics?.appointmentStatuses ?? [];
   const pending =
     statuses.find((item) => item.label === "Awaiting approval")?.value ?? 0;
@@ -285,16 +291,18 @@ export function RoleDashboardPage({
               key: "Patients",
               label: "Patients",
               source: "appointments",
-              page: "patients",
+              page: pathology ? "appointments" : "patients",
               icon: Users,
             },
             {
               key: "Active Doctors",
-              label: diagnostic
-                ? "Active diagnostic orders"
-                : "Published doctors",
+              label: pathology
+                ? "Published branches"
+                : diagnostic
+                  ? "Active diagnostic orders"
+                  : "Published doctors",
               source: diagnostic ? "orders" : "doctors",
-              page: diagnostic ? tone : "doctors",
+              page: pathology ? "facilities" : diagnostic ? tone : "doctors",
               icon: Stethoscope,
             },
             {
@@ -430,9 +438,11 @@ export function RoleDashboardPage({
                       {chartIndex === 0
                         ? "patients request appointments"
                         : chartIndex === 1
-                          ? diagnostic
-                            ? "diagnostic orders are received"
-                            : "doctor profiles are published"
+                          ? pathology
+                            ? "branches are published"
+                            : diagnostic
+                              ? "diagnostic orders are received"
+                              : "doctor profiles are published"
                           : "services are published"}
                       .
                     </p>
@@ -613,7 +623,11 @@ export function RoleDashboardPage({
                             <button
                               type="button"
                               disabled={!organizationId}
-                              onClick={() => setSelectedAppointment(item.id)}
+                              onClick={() =>
+                                (onAppointmentSelect ?? setSelectedAppointment)(
+                                  item.id
+                                )
+                              }
                               className="text-left font-medium hover:text-[var(--dashboard-accent)] hover:underline disabled:cursor-default"
                               aria-label={`Review appointment for ${item.patientName}`}
                             >
@@ -767,10 +781,20 @@ export function RoleDashboardPage({
                 <section className={panel}>
                   <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/5">
                     <h2 className="text-sm font-semibold">
-                      {diagnostic ? "Reporting team" : "Your doctors"}
+                      {pathology
+                        ? "Your branches"
+                        : diagnostic
+                          ? "Reporting team"
+                          : "Your doctors"}
                     </h2>
                     <Link
-                      href={href(diagnostic ? "staff" : "doctors")}
+                      href={href(
+                        pathology
+                          ? "facilities"
+                          : diagnostic
+                            ? "staff"
+                            : "doctors"
+                      )}
                       className={textLink}
                     >
                       Manage
@@ -783,18 +807,26 @@ export function RoleDashboardPage({
                     <EmptyBlock
                       title={
                         loading
-                          ? "Loading doctors…"
+                          ? pathology
+                            ? "Loading branches…"
+                            : "Loading doctors…"
                           : unavailable.includes("doctors")
-                            ? "Doctor list is unavailable"
-                            : diagnostic
-                              ? "Manage your reporting team"
-                              : "Build your care team"
+                            ? pathology
+                              ? "Branch list is unavailable"
+                              : "Doctor list is unavailable"
+                            : pathology
+                              ? "Add your first branch"
+                              : diagnostic
+                                ? "Manage your reporting team"
+                                : "Build your care team"
                       }
                       description={
                         !loading && !unavailable.includes("doctors")
-                          ? diagnostic
-                            ? "Manage laboratory and reporting staff from Team."
-                            : "Add doctor profiles so patients can find the right specialist."
+                          ? pathology
+                            ? "Add and publish your branches from Facilities."
+                            : diagnostic
+                              ? "Manage laboratory and reporting staff from Team."
+                              : "Add doctor profiles so patients can find the right specialist."
                           : undefined
                       }
                     />

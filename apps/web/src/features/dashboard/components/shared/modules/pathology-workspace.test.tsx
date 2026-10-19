@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, mock, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
@@ -7,8 +7,12 @@ import {
   emptyDiagnosticSetup,
 } from "@/features/dashboard/lib/diagnostic-onboarding";
 import { virujBackend } from "@/lib/viruj-backend";
-import { DiagnosticWorkspace } from "./diagnostic-workspace";
 import { PathologyProfile } from "./pathology-profile";
+mock.module("next/navigation", () => ({
+  useRouter: () => ({ push() {}, replace() {} }),
+  usePathname: () => "/pathology/lab-a/dashboard",
+}));
+const { DiagnosticWorkspace } = await import("./diagnostic-workspace");
 
 const tenant = createErpTenantContext({
   organizationId: "lab-a",
@@ -26,9 +30,11 @@ test("pathology dashboard counts services and branches without loading laborator
       <DiagnosticWorkspace tenant={tenant} userName="Owner" />
     </QueryClientProvider>
   );
-  expect(html).toContain("Active services");
+  expect(html).toContain("Live services");
   expect(html).toContain("Published branches");
-  expect(html).toContain("No upcoming appointments");
+  expect(html).toContain("No appointment requests yet");
+  expect(html).toContain("erp-overview");
+  expect(html).toContain("Your branches");
   expect(html).not.toContain("Reports");
   expect(client.getQueryCache().getAll()).toHaveLength(3);
   client.clear();

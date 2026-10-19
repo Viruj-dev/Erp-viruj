@@ -8,8 +8,19 @@ import {
   diagnosticLabel,
   diagnosticMoney,
 } from "@/features/dashboard/lib/diagnostics";
-import type { DiagnosticBooking } from "@/features/dashboard/lib/diagnostic-bookings";
+import {
+  diagnosticBookingAppointment,
+  type DiagnosticBooking,
+} from "@/features/dashboard/lib/diagnostic-bookings";
 import { virujBackend } from "@/lib/viruj-backend";
+
+import { ErpDemoAppointments } from "./appointments";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/erp/dialog";
 
 export function DiagnosticBookingInbox({
   tenant,
@@ -17,7 +28,7 @@ export function DiagnosticBookingInbox({
   tenant: ErpTenantContext;
 }) {
   const client = useQueryClient();
-  const [search, setSearch] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const key = ["diagnostic-bookings", tenant.organizationId];
   const query = useQuery({
     queryKey: key,
@@ -30,58 +41,47 @@ export function DiagnosticBookingInbox({
       queryKey: virujBackend.diagnostics.key(tenant.organizationId, "orders"),
     });
   };
-  const rows = (query.data ?? []).filter((b) =>
-    `${b.order.patientName} ${b.order.serviceSnapshot.name} ${b.slot.branch.name} ${b.status}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+  const selected = query.data?.find((booking) => booking.id === selectedId);
   return (
-    <section className="space-y-4">
-      <div>
-        <h2 className="text-2xl font-semibold">Appointments</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Manage service appointments from the Viruj app. Confirm, decline or
-          cancel a patient request.
-        </p>
-      </div>
-      <div className="flex gap-3">
-        <Input
-          aria-label="Search service bookings"
-          placeholder="Patient, service, branch or status"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-sm"
-        />
-        <Button variant="outline" onClick={() => void query.refetch()}>
-          Refresh
-        </Button>
-      </div>
-      {query.isPending ? (
-        <p role="status">Loading booking requests…</p>
-      ) : query.isError ? (
-        <p role="alert" className="text-destructive">
-          {query.error.message}
-        </p>
-      ) : !rows.length ? (
-        <p className="rounded-2xl border border-dashed p-10 text-center text-muted-foreground">
-          No service bookings yet. Publish a branch and create available slots
-          to accept app bookings.
-        </p>
-      ) : (
-        <div className="space-y-4">
-          {rows.map((booking) => (
+    <>
+      <ErpDemoAppointments
+        tenant={tenant}
+        section="dashboard"
+        source={{
+          data: (query.data ?? []).map(diagnosticBookingAppointment),
+          isPending: query.isPending,
+          isError: query.isError,
+          error: query.error,
+          isFetching: query.isFetching,
+          refetch: query.refetch,
+          onSelect: setSelectedId,
+        }}
+      />
+      <Dialog
+        open={Boolean(selected)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedId(null);
+        }}
+      >
+        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
+          <DialogTitle>Appointment details</DialogTitle>
+          <DialogDescription>
+            Review the patient, service and requested time.
+          </DialogDescription>
+          {selected && (
             <BookingCard
-              key={`${booking.id}:${booking.version}`}
-              booking={booking}
+              key={`${selected.id}:${selected.version}`}
+              booking={selected}
               tenant={tenant}
               refresh={refresh}
             />
-          ))}
-        </div>
-      )}
-    </section>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
+
 function BookingCard({
   booking,
   tenant,
