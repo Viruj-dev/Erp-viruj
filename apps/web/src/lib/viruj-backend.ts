@@ -1,4 +1,9 @@
 "use client";
+import type {
+  DiagnosticBranch,
+  DiagnosticSlot,
+  DiagnosticBooking,
+} from "@/features/dashboard/lib/diagnostic-bookings";
 
 import type {
   DiagnosticService,
@@ -840,6 +845,45 @@ function compactObject<T extends Record<string, unknown>>(value: T) {
 }
 export const virujBackend = {
   diagnostics: {
+    branches: (organizationId: string) =>
+      request<DiagnosticBranch[]>("/diagnostics/branches", {
+        organizationId,
+        suppressToast: true,
+      }),
+    saveBranch: (
+      organizationId: string,
+      body: Record<string, unknown>,
+      id?: string
+    ) =>
+      request<DiagnosticBranch>(
+        `/diagnostics/branches${id ? `/${encodeURIComponent(id)}` : ""}`,
+        { organizationId, method: id ? "PUT" : "POST", body }
+      ),
+    slots: (organizationId: string) =>
+      request<DiagnosticSlot[]>("/diagnostics/slots", {
+        organizationId,
+        suppressToast: true,
+      }),
+    createSlot: (organizationId: string, body: Record<string, unknown>) =>
+      request<DiagnosticSlot>("/diagnostics/slots", {
+        organizationId,
+        method: "POST",
+        body,
+      }),
+    bookings: (organizationId: string) =>
+      request<DiagnosticBooking[]>("/diagnostics/bookings", {
+        organizationId,
+        suppressToast: true,
+      }),
+    decideBooking: (
+      organizationId: string,
+      id: string,
+      body: Record<string, unknown>
+    ) =>
+      request<{ id: string; status: string; version: number }>(
+        `/diagnostics/bookings/${encodeURIComponent(id)}`,
+        { organizationId, method: "PATCH", body }
+      ),
     key: (organizationId: string, resource: "orders" | "services") =>
       ["viruj-backend", "diagnostics", organizationId, resource] as const,
     services: (organizationId: string) =>

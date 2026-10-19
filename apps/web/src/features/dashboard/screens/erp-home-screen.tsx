@@ -589,14 +589,21 @@ function PageContent({
     appointmentTenant &&
     isDiagnosticTenant &&
     (currentPage === appointmentTenant.providerType ||
-      currentPage === "reports")
+      currentPage === "reports" ||
+      currentPage.startsWith("appointments"))
   ) {
     return (
       <DiagnosticOrders
         key={`${appointmentTenant.organizationId}:${currentPage}`}
         tenant={appointmentTenant}
         organizationName={organizationName}
-        initialTab={currentPage === "reports" ? "reports" : "orders"}
+        initialTab={
+          currentPage === "reports"
+            ? "reports"
+            : currentPage.startsWith("appointments")
+              ? "bookings"
+              : "orders"
+        }
       />
     );
   }

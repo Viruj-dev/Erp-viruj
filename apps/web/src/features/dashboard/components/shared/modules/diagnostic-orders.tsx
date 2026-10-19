@@ -22,6 +22,8 @@ import {
 import { virujBackend } from "@/lib/viruj-backend";
 import { DiagnosticCatalogue } from "./diagnostic-catalogue";
 import { DiagnosticReport } from "./diagnostic-report";
+import { DiagnosticBookingInbox } from "./diagnostic-bookings";
+import { DiagnosticAvailability } from "./diagnostic-availability";
 
 export function DiagnosticOrders({
   tenant,
@@ -30,12 +32,12 @@ export function DiagnosticOrders({
 }: {
   tenant: ErpTenantContext;
   organizationName?: string;
-  initialTab?: "orders" | "reports";
+  initialTab?: "orders" | "reports" | "bookings";
 }) {
   const client = useQueryClient();
-  const [tab, setTab] = useState<"orders" | "catalogue" | "reports">(
-    initialTab
-  );
+  const [tab, setTab] = useState<
+    "orders" | "catalogue" | "reports" | "bookings" | "availability"
+  >(initialTab);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -84,7 +86,15 @@ export function DiagnosticOrders({
         </Button>
       </header>
       <div className="flex flex-wrap gap-2" aria-label="Diagnostic sections">
-        {(["orders", "catalogue", "reports"] as const).map((value) => (
+        {(
+          [
+            "catalogue",
+            "bookings",
+            "orders",
+            "reports",
+            "availability",
+          ] as const
+        ).map((value) => (
           <Button
             key={value}
             aria-pressed={tab === value}
@@ -99,7 +109,14 @@ export function DiagnosticOrders({
           </Button>
         ))}
       </div>
-      {tab === "catalogue" ? (
+      {tab === "bookings" ? (
+        <DiagnosticBookingInbox tenant={tenant} />
+      ) : tab === "availability" ? (
+        <DiagnosticAvailability
+          tenant={tenant}
+          organizationName={organizationName}
+        />
+      ) : tab === "catalogue" ? (
         <DiagnosticCatalogue tenant={tenant} />
       ) : (
         <section className="overflow-hidden rounded-2xl border bg-card">

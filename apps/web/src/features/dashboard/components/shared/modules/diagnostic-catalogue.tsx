@@ -201,6 +201,8 @@ function ServiceForm({
       code: String(form.get("code")),
       pricePaise: Math.round(Number(form.get("price")) * 100),
       turnaroundHours: Number(form.get("turnaroundHours")),
+      description: String(form.get("description") ?? ""),
+      durationMinutes: Number(form.get("durationMinutes")),
       preparation: String(form.get("preparation")),
       specimen: pathology ? String(form.get("specimen")) : null,
       modality: pathology ? null : String(form.get("modality")),
@@ -209,6 +211,26 @@ function ServiceForm({
   }
   return (
     <form onSubmit={submit} className="space-y-4">
+      <label className="block space-y-1 text-sm">
+        Description
+        <textarea
+          name="description"
+          maxLength={3000}
+          defaultValue={service?.description}
+          className="min-h-20 w-full rounded-lg border bg-transparent p-3"
+        />
+      </label>
+      <label className="block space-y-1 text-sm">
+        Appointment duration (minutes)
+        <Input
+          name="durationMinutes"
+          type="number"
+          min="1"
+          max="1440"
+          required
+          defaultValue={service?.durationMinutes ?? 30}
+        />
+      </label>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-1 text-sm">
           Service name

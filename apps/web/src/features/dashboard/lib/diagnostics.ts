@@ -5,6 +5,8 @@ export type DiagnosticParameter = {
   reference: string;
 };
 export type DiagnosticService = {
+  description?: string;
+  durationMinutes?: number;
   id: string;
   kind: DiagnosticKind;
   code: string;
