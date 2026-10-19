@@ -1,5 +1,10 @@
 "use client";
-import { UploadField } from "@/features/dashboard/components/hospital/pages/onboarding/fields";
+import {
+  UploadField,
+  TextField,
+  FieldLabel,
+  fieldClassName,
+} from "@/features/dashboard/components/hospital/pages/onboarding/fields";
 import { TimePicker } from "@/features/dashboard/components/hospital/pages/onboarding/time-picker";
 import {
   getCurrentPosition,
@@ -15,7 +20,7 @@ import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/erp/input";
+import { MapPin, Clock3, Building2 } from "lucide-react";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import {
   canManageDiagnosticSetup,
@@ -201,35 +206,38 @@ function SetupForm({
         }
       />
     ) : (
-      <label className="block space-y-2 text-sm">
-        <span className="font-medium">
-          {label}
-          {options.required ? " *" : ""}
-        </span>
+      <div>
         {options.multiline ? (
-          <textarea
-            className="min-h-24 w-full rounded-xl border border-[var(--onboarding-border-strong)] bg-[var(--onboarding-panel)] p-3 text-[var(--onboarding-text)] outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--onboarding-accent)]"
-            value={data[key]}
-            required={options.required}
-            maxLength={2000}
-            onChange={(e) => update(key, e.target.value)}
-          />
+          <label>
+            <FieldLabel required={options.required}>{label}</FieldLabel>
+            <textarea
+              className={fieldClassName("min-h-24 py-3")}
+              value={data[key]}
+              required={options.required}
+              maxLength={2000}
+              onChange={(e) => update(key, e.target.value)}
+            />
+          </label>
         ) : (
-          <Input
-            type={options.type ?? "text"}
-            className="border-[var(--onboarding-border-strong)] bg-[var(--onboarding-panel)] text-[var(--onboarding-text)] focus-visible:ring-[var(--onboarding-accent)]"
+          <TextField
+            label={label}
             value={data[key]}
+            onChange={(value) => update(key, value)}
+            placeholder={label}
+            type={options.type}
             required={options.required}
-            maxLength={500}
-            onChange={(e) => update(key, e.target.value)}
+            min={key === "establishedYear" ? 1800 : undefined}
+            max={
+              key === "establishedYear" ? new Date().getFullYear() : undefined
+            }
           />
         )}
         {options.hint && (
-          <span className="block text-xs leading-5 text-muted-foreground">
+          <p className="mt-2 text-xs leading-5 text-[var(--onboarding-muted)]">
             {options.hint}
-          </span>
+          </p>
         )}
-      </label>
+      </div>
     );
   function choices(
     key: "sections" | "specimens" | "modalities" | "workingDays",
@@ -392,7 +400,7 @@ function SetupForm({
       kind="hospital"
       themeClassName={themeClassName}
       organizationLabel={pathology ? "Pathology" : "Radiology"}
-      entityLabel={pathology ? "laboratory" : "imaging centre"}
+      entityLabel={pathology ? "organization" : "imaging centre"}
       userName={data.centreName || organizationName || "Administrator"}
       steps={definitions}
       stepDescriptions={descriptions}
@@ -418,57 +426,83 @@ function SetupForm({
         className="space-y-6 pb-4"
       >
         {step === 0 && (
-          <div className="grid gap-5 sm:grid-cols-2">
-            {field(
-              "centreName",
-              pathology ? "Organization name" : "Centre display name",
-              { required: true }
-            )}
-            {!pathology &&
-              field("legalName", "Legal business name", { required: true })}
-            {field(
-              "registrationNumber",
-              "Facility registration / licence number",
-              { required: true }
-            )}
-            {!pathology &&
-              field("registrationAuthority", "Issuing authority", {
-                required: true,
-              })}
-            {pathology && (
-              <>
-                {upload("logo")}
-                {upload("certificate")}
-                {field("establishedYear", "Year of establishment", {
-                  type: "number",
-                })}
-                {field("website", "Website", { type: "url" })}
-                {field("instagram", "Instagram", { type: "url" })}
-                {field("facebook", "Facebook", { type: "url" })}
-                {field("linkedin", "LinkedIn", { type: "url" })}
-              </>
-            )}
-            <div className="sm:col-span-2">
+          <>
+            <div className="grid gap-4 md:grid-cols-2">
               {field(
-                "additionalCertificates",
-                "Additional certificates / accreditation identifiers",
-                {
-                  hint: "Optional. Enter identifiers and issuing bodies where applicable. This does not verify or approve them.",
-                }
+                "centreName",
+                pathology ? "Organization name" : "Centre display name",
+                { required: true }
               )}
+              {!pathology &&
+                field("legalName", "Legal business name", { required: true })}
+              {field(
+                "registrationNumber",
+                "Facility registration / licence number",
+                { required: true }
+              )}
+              {!pathology &&
+                field("registrationAuthority", "Issuing authority", {
+                  required: true,
+                })}
+              {pathology && (
+                <>
+                  {upload("logo")}
+                  {upload("certificate")}
+                  {field("establishedYear", "Year of establishment", {
+                    type: "number",
+                  })}
+                  {field("website", "Website", { type: "url" })}
+                  {field("instagram", "Instagram", { type: "url" })}
+                  {field("facebook", "Facebook", { type: "url" })}
+                  {field("linkedin", "LinkedIn", { type: "url" })}
+                </>
+              )}
+              <div className="sm:col-span-2">
+                {field(
+                  "additionalCertificates",
+                  "Additional certificates / accreditation identifiers",
+                  {
+                    hint: "Optional. Enter identifiers and issuing bodies where applicable. This does not verify or approve them.",
+                  }
+                )}
+              </div>
             </div>
-          </div>
+            <section className="mt-5 flex items-center gap-4 rounded-[26px] border border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] p-5 shadow-sm">
+              <span className="flex size-12 items-center justify-center rounded-2xl bg-[var(--onboarding-accent-soft)] text-[var(--onboarding-accent)]">
+                <Building2 size={24} />
+              </span>
+              <div>
+                <h3 className="font-semibold">
+                  {data.centreName || "Your organization"}
+                </h3>
+                <p className="mt-1 text-xs text-[var(--onboarding-muted)]">
+                  {data.registrationNumber || "Registration pending"}
+                  {data.establishedYear
+                    ? ` · Established ${data.establishedYear}`
+                    : ""}
+                </p>
+              </div>
+            </section>
+          </>
         )}
         {step === 1 && (
-          <div className="space-y-5">
+          <div className="space-y-5 rounded-[26px] border border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] p-5 shadow-sm">
             {pathology && (
-              <div className="rounded-2xl border border-dashed p-5 space-y-3">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--onboarding-border)] pb-4">
+                <h3 className="flex items-center gap-2 font-semibold">
+                  <MapPin
+                    size={18}
+                    className="text-[var(--onboarding-accent)]"
+                  />
+                  Primary branch
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   Fetch your branch location, then confirm the address below.
                 </p>
                 <Button
                   type="button"
                   variant="outline"
+                  className="rounded-full border-[var(--onboarding-border-strong)] bg-[var(--onboarding-accent-soft)] text-[var(--onboarding-accent)]"
                   disabled={locating}
                   onClick={() => void locateBranch()}
                 >
@@ -489,7 +523,7 @@ function SetupForm({
                 )}
               </div>
             )}
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
               {!pathology && (
                 <>
                   {field("phone", "Centre phone", {
@@ -510,7 +544,7 @@ function SetupForm({
             </div>
             {!pathology && (
               <>
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-2">
                   {field("openingTime", "Opening time", {
                     required: true,
                     type: "time",
@@ -540,38 +574,52 @@ function SetupForm({
         )}
         {pathology && step === 2 && (
           <div className="space-y-5">
-            <div className="grid gap-5 sm:grid-cols-2">
+            <section className="grid gap-4 rounded-[26px] border border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] p-5 shadow-sm md:grid-cols-2">
               {field("phone", "Contact phone", { required: true, type: "tel" })}
               {field("email", "Contact email", {
                 required: true,
                 type: "email",
               })}
-              {field("openingTime", "Opening time", {
-                required: true,
-                type: "time",
-              })}
-              {field("closingTime", "Closing time", {
-                required: true,
-                type: "time",
-              })}
-            </div>
-            <fieldset>
-              <legend className="mb-3 text-sm font-medium">
-                Working days · Asia/Kolkata
-              </legend>
-              {choices("workingDays", [
-                "Mon",
-                "Tue",
-                "Wed",
-                "Thu",
-                "Fri",
-                "Sat",
-                "Sun",
-              ])}
-            </fieldset>
+            </section>
+            <section className="space-y-4 rounded-2xl border border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] p-4">
+              <div className="rounded-2xl bg-[var(--onboarding-accent-soft)] p-4">
+                <p className="flex items-center gap-2 font-semibold text-[var(--onboarding-accent)]">
+                  <Clock3 size={18} />
+                  Opening hours
+                </p>
+                <p className="mt-1 text-xs text-[var(--onboarding-muted-strong)]">
+                  12-hour time · Indian Standard Time (IST, UTC+05:30)
+                </p>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                {field("openingTime", "Opening time", {
+                  required: true,
+                  type: "time",
+                })}
+                {field("closingTime", "Closing time", {
+                  required: true,
+                  type: "time",
+                })}
+              </div>
+              <fieldset>
+                <legend className="mb-3 text-sm font-medium">
+                  Working days · Asia/Kolkata
+                </legend>
+                {choices("workingDays", [
+                  "Mon",
+                  "Tue",
+                  "Wed",
+                  "Thu",
+                  "Fri",
+                  "Sat",
+                  "Sun",
+                ])}
+              </fieldset>
+            </section>
             <label className="flex gap-2 text-sm">
               <input
                 type="checkbox"
+                className="accent-[var(--onboarding-accent)]"
                 checked={data.homeCollection}
                 onChange={(e) => update("homeCollection", e.target.checked)}
               />

@@ -7,6 +7,8 @@ import { ErpSelect } from "@/components/ui/erp/select";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import { diagnosticPermissions } from "@/features/dashboard/lib/diagnostics";
 import { virujBackend } from "@/lib/viruj-backend";
+import { DateTimePicker } from "../../hospital/pages/onboarding/date-time-picker";
+import { appointmentUtcDateTime } from "./appointments/utils";
 
 export function DiagnosticAvailability({
   tenant,
@@ -31,6 +33,9 @@ export function DiagnosticAvailability({
   });
   const [showBranch, setShowBranch] = useState(false),
     [showSlot, setShowSlot] = useState(false);
+  const [startsAt, setStartsAt] = useState("");
+  const [endsAt, setEndsAt] = useState("");
+  const [slotError, setSlotError] = useState("");
   const refresh = () => {
     void client.invalidateQueries({ queryKey: prefix });
   };
@@ -73,12 +78,25 @@ export function DiagnosticAvailability({
   function slotSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
+    setSlotError("");
+    let start: string, end: string;
+    try {
+      start = appointmentUtcDateTime(startsAt, "Asia/Kolkata");
+      end = appointmentUtcDateTime(endsAt, "Asia/Kolkata");
+      if (Date.parse(end) <= Date.parse(start))
+        throw new Error("The end time must be later than the start time.");
+    } catch (error) {
+      setSlotError(
+        error instanceof Error ? error.message : "Select a date and time."
+      );
+      return;
+    }
     slotMutation.mutate({
       branchId: f.get("branchId"),
       serviceId: f.get("serviceId"),
       resource: f.get("resource"),
-      startsAt: new Date(String(f.get("startsAt"))).toISOString(),
-      endsAt: new Date(String(f.get("endsAt"))).toISOString(),
+      startsAt: start,
+      endsAt: end,
       blocked: f.get("blocked") === "on",
     });
   }
@@ -182,7 +200,7 @@ export function DiagnosticAvailability({
           className="grid gap-4 rounded-2xl border p-5 sm:grid-cols-2"
         >
           <h3 className="font-semibold sm:col-span-2">
-            New slot (times in your local timezone)
+            New appointment slot · Indian Standard Time
           </h3>
           <label className="text-sm">
             Branch
@@ -231,14 +249,23 @@ export function DiagnosticAvailability({
               }
             />
           </label>
-          <label className="text-sm">
-            Starts
-            <Input type="datetime-local" name="startsAt" required />
-          </label>
-          <label className="text-sm">
-            Ends
-            <Input type="datetime-local" name="endsAt" required />
-          </label>
+          <DateTimePicker
+            label="Starts"
+            value={startsAt}
+            onChange={setStartsAt}
+            themeClassName={`vh-onboarding--${tenant.providerType}`}
+          />
+          <DateTimePicker
+            label="Ends"
+            value={endsAt}
+            onChange={setEndsAt}
+            themeClassName={`vh-onboarding--${tenant.providerType}`}
+          />
+          {slotError && (
+            <p role="alert" className="text-sm text-destructive sm:col-span-2">
+              {slotError}
+            </p>
+          )}
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="blocked" />
             Unavailable during this time

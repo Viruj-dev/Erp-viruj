@@ -1,6 +1,11 @@
 "use client";
 
-import Image from "next/image";
+import {
+  ProfileHero,
+  ProfileDetailPanel,
+} from "../workspace/profile-presentation";
+import { formatTime } from "../../hospital/pages/onboarding/time-picker";
+import { canManageDiagnosticSetup } from "@/features/dashboard/lib/diagnostic-onboarding";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, MapPin, Clock3, Phone, ArrowUpRight } from "lucide-react";
@@ -74,7 +79,10 @@ export function PathologyProfile({ tenant }: { tenant: ErpTenantContext }) {
       icon: Clock3,
       rows: [
         ["Working days", data.workingDays.join(" · ")],
-        ["Hours · Asia/Kolkata", `${data.openingTime} – ${data.closingTime}`],
+        [
+          "Hours · Asia/Kolkata",
+          `${formatTime(data.openingTime)} – ${formatTime(data.closingTime)}`,
+        ],
         ["Home collection", data.homeCollection ? "Available" : "Unavailable"],
         [
           "Walk-in appointments",
@@ -92,78 +100,55 @@ export function PathologyProfile({ tenant }: { tenant: ErpTenantContext }) {
     ["Branch map", data.mapsLocation],
   ].filter(([, url]) => url && /^https?:\/\//i.test(url));
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-8">
-      <header className="relative overflow-hidden rounded-3xl border border-orange-200 bg-orange-50 p-8 dark:border-orange-900 dark:bg-orange-950/30 sm:p-12">
-        <div className="absolute -right-16 -top-24 size-80 rounded-full border-[40px] border-orange-200/40 dark:border-orange-800/20" />
-        <div className="relative flex flex-wrap items-center gap-6">
-          <div className="flex size-24 items-center justify-center overflow-hidden rounded-2xl border bg-white text-orange-700 shadow-sm">
-            {data.logoUrl && /^https?:\/\//i.test(data.logoUrl) ? (
-              <Image
-                src={data.logoUrl}
-                alt={`${data.centreName} logo`}
-                width={96}
-                height={96}
-                unoptimized
-                className="size-full object-contain"
-              />
-            ) : (
-              <Building2 size={36} />
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-700 dark:text-orange-300">
-              Pathology · Organization profile
-            </p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-              {data.centreName}
-            </h1>
-            <p className="mt-3 text-sm text-muted-foreground">
-              {[
-                data.city,
-                data.state,
-                data.establishedYear && `Established ${data.establishedYear}`,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
-          </div>
+    <div className="vh-onboarding vh-onboarding--pathology mx-auto min-h-full w-[calc(100%-8px)] max-w-[1440px] space-y-6 rounded-[24px] bg-[var(--onboarding-shell)] p-5 text-[var(--onboarding-text)] sm:w-[calc(100%-16px)] lg:w-[calc(100%-24px)] lg:p-8">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--onboarding-accent)]">
+            Pathology workspace
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+            Organization profile
+          </h1>
+          <p className="mt-2 text-sm text-[var(--onboarding-muted)]">
+            Your practice details, kept in sync across this organization.
+          </p>
+        </div>
+        {canManageDiagnosticSetup(tenant.role) && (
           <Link
             href={tenant.buildRoute("onboarding")}
-            className="rounded-xl bg-orange-700 px-5 py-3 text-sm font-medium text-white hover:bg-orange-800"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--onboarding-accent-deep)] px-4 py-2.5 text-sm font-semibold text-white"
           >
-            Edit profile
+            Edit details
           </Link>
-        </div>
+        )}
       </header>
-      <div className="grid gap-5 md:grid-cols-2">
-        {sections.map(({ title, icon: Icon, rows }) => (
-          <section key={title} className="rounded-2xl border bg-card p-6">
-            <h2 className="flex items-center gap-3 text-lg font-semibold">
-              <Icon
-                size={19}
-                className="text-orange-700 dark:text-orange-300"
-              />
-              {title}
-            </h2>
-            <dl className="mt-6 space-y-4">
-              {rows
-                .filter(([, value]) => value)
-                .map(([label, value]) => (
-                  <div
-                    key={label}
-                    className="grid grid-cols-[1fr_1.5fr] gap-4 border-b pb-3 last:border-0"
-                  >
-                    <dt className="text-sm text-muted-foreground">{label}</dt>
-                    <dd className="break-words text-sm font-medium">{value}</dd>
-                  </div>
-                ))}
-            </dl>
-          </section>
+      <ProfileHero
+        name={data.centreName}
+        logoUrl={
+          data.logoUrl && /^https?:\/\//i.test(data.logoUrl)
+            ? data.logoUrl
+            : undefined
+        }
+        subtitle={[
+          data.city,
+          data.state,
+          data.establishedYear && `Established ${data.establishedYear}`,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      />
+      <div className="grid gap-5 lg:grid-cols-2">
+        {sections.map(({ title, rows }) => (
+          <ProfileDetailPanel
+            key={title}
+            title={title}
+            fields={rows.map(([label, value]) => [label, value] as const)}
+          />
         ))}
       </div>
       {links.length > 0 && (
-        <section className="rounded-2xl border bg-card p-6">
-          <h2 className="text-lg font-semibold">Online presence & documents</h2>
+        <section className="rounded-2xl border border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] p-5">
+          <h2 className="font-semibold">Online presence & documents</h2>
           <div className="mt-5 flex flex-wrap gap-3">
             {links.map(([label, url]) => (
               <a

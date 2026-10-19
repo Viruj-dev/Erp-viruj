@@ -19,6 +19,7 @@ import {
 } from "@/features/dashboard/lib/diagnostics";
 import { pathologyServicePresets } from "@/features/dashboard/lib/pathology-services";
 import { virujBackend } from "@/lib/viruj-backend";
+import { DashboardPageShell } from "../dashboard-page-shell";
 
 export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
   const client = useQueryClient();
@@ -49,22 +50,22 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
     `${s.name} ${s.code}`.toLowerCase().includes(search.toLowerCase())
   );
   return (
-    <section className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold">
-            {pathology ? "Services" : "Scan catalogue"}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Configure services, preparation, pricing and turnaround time.
-          </p>
-        </div>
-        {canManage && (
-          <Button className={accent} onClick={() => setEditing("new")}>
+    <DashboardPageShell
+      eyebrow="Services"
+      title={pathology ? "Services" : "Scan catalogue"}
+      tone={pathology ? "orange" : "slate"}
+      subtitle="Showcase your care. Manage the services patients can discover and book."
+      actions={
+        canManage && (
+          <Button
+            className={`${accent} h-11 rounded-xl px-4`}
+            onClick={() => setEditing("new")}
+          >
             Add {pathology ? "service" : "scan"}
           </Button>
-        )}
-      </div>
+        )
+      }
+    >
       <Input
         aria-label="Search catalogue"
         placeholder="Search by name or code"
@@ -168,7 +169,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
           )}
         </DialogContent>
       </Dialog>
-    </section>
+    </DashboardPageShell>
   );
 }
 

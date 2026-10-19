@@ -1,5 +1,8 @@
 "use client";
-import Image from "next/image";
+import {
+  ProfileHero,
+  ProfileDetailPanel as DetailPanel,
+} from "./profile-presentation";
 import { useEffect, useState } from "react";
 import {
   Building2,
@@ -259,57 +262,28 @@ export function WorkspaceSection({
                     {notice}
                   </p>
                 )}
-                <section className="relative overflow-hidden rounded-3xl bg-[var(--onboarding-accent-deep)] p-6 text-white sm:p-8">
-                  {data.profile.coverUrl && (
-                    <Image
-                      src={data.profile.coverUrl}
-                      alt=""
-                      fill
-                      unoptimized
-                      className="object-cover opacity-20"
-                      sizes="100vw"
-                    />
-                  )}
-                  <div className="relative flex flex-wrap items-center gap-5">
-                    <div className="relative flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-3xl bg-white/15 ring-1 ring-white/25">
-                      {data.profile.logoUrl ? (
-                        <Image
-                          src={data.profile.logoUrl}
-                          alt={`${data.profile.hospitalName} logo`}
-                          fill
-                          unoptimized
-                          className="object-cover"
-                          sizes="96px"
-                        />
-                      ) : (
-                        <Building2 size={40} />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <VerificationBadge
-                        status={workspace.verificationStatus}
-                      />
-                      <h2 className="mt-3 text-2xl font-semibold sm:text-3xl">
-                        {data.profile.hospitalName}
-                      </h2>
-                      <p className="mt-2 text-sm text-white/75">
-                        {[data.profile.hospitalType, data.branches[0]?.city]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
-                    </div>
-                    <div className="flex gap-5 text-sm">
-                      <span className="flex items-center gap-2">
-                        <Stethoscope size={18} />
-                        {data.departments.length} departments
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <Users size={18} />
-                        {data.doctors.length} doctors
-                      </span>
-                    </div>
+                <ProfileHero
+                  name={data.profile.hospitalName}
+                  logoUrl={data.profile.logoUrl}
+                  coverUrl={data.profile.coverUrl}
+                  subtitle={[data.profile.hospitalType, data.branches[0]?.city]
+                    .filter(Boolean)
+                    .join(" · ")}
+                  badge={
+                    <VerificationBadge status={workspace.verificationStatus} />
+                  }
+                >
+                  <div className="flex gap-5 text-sm">
+                    <span className="flex items-center gap-2">
+                      <Stethoscope size={18} />
+                      {data.departments.length} departments
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Users size={18} />
+                      {data.doctors.length} doctors
+                    </span>
                   </div>
-                </section>
+                </ProfileHero>
                 <div className="grid gap-5 lg:grid-cols-2">
                   <DetailPanel
                     title="Practice identity"
@@ -579,29 +553,6 @@ export function WorkspaceSection({
         </Dialog>
       </div>
     </OnboardingTheme.Provider>
-  );
-}
-function DetailPanel({
-  title,
-  fields,
-}: {
-  title: string;
-  fields: (readonly [string, string])[];
-}) {
-  return (
-    <section className={panel}>
-      <h2 className="mb-4 font-semibold">{title}</h2>
-      <dl className="grid gap-4 sm:grid-cols-2">
-        {fields.map(([label, value]) => (
-          <div key={label}>
-            <dt className="text-xs text-[var(--onboarding-muted)]">{label}</dt>
-            <dd className="mt-1 break-words text-sm font-medium">
-              {value || "Not provided"}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </section>
   );
 }
 function LocationList({ data }: { data: OnboardingState }) {
