@@ -1,7 +1,7 @@
 import type { DashboardOrganizationType, DashboardPage } from "./routing";
 import { buildDashboardPath, buildTenantDashboardPath } from "./routing";
 
-export type ErpProviderType = "clinic" | "hospital" | "doctor";
+export type ErpProviderType = DashboardOrganizationType;
 
 export type ProviderCapabilities = {
   appointments: {
@@ -48,7 +48,36 @@ export type ErpTenantContext = {
   terminology: ProviderTerminology;
 };
 
+const diagnosticCapabilities: ProviderCapabilities = {
+  appointments: {
+    enabled: true,
+    supportsBeds: false,
+    supportsDepartments: false,
+    supportsDoctorAssignment: false,
+    supportsMultipleLocations: true,
+    supportsWalkIns: true,
+  },
+  facilities: {
+    enabled: false,
+    supportsBeds: false,
+    supportsEmergencyInfrastructure: false,
+    supportsMultipleLocations: true,
+    supportsOperatingTheatres: false,
+    supportsWards: false,
+  },
+  services: {
+    enabled: false,
+    supportsConsultationModes: false,
+    supportsDepartmentAssignment: false,
+    supportsMultipleLocations: true,
+    supportsOfferings: true,
+    supportsPractitionerAssignment: false,
+  },
+};
+
 const providerCapabilities: Record<ErpProviderType, ProviderCapabilities> = {
+  pathology: diagnosticCapabilities,
+  radiology: diagnosticCapabilities,
   doctor: {
     appointments: {
       enabled: true,
@@ -130,6 +159,18 @@ const providerCapabilities: Record<ErpProviderType, ProviderCapabilities> = {
 };
 
 const providerTerminology: Record<ErpProviderType, ProviderTerminology> = {
+  pathology: {
+    departmentLabel: "Laboratory section",
+    locationLabel: "Collection centre",
+    organizationLabel: "Pathology laboratory",
+    practitionerLabel: "Pathologist",
+  },
+  radiology: {
+    departmentLabel: "Modality",
+    locationLabel: "Imaging centre",
+    organizationLabel: "Radiology centre",
+    practitionerLabel: "Radiologist",
+  },
   doctor: {
     departmentLabel: "Specialty",
     locationLabel: "Practice location",
@@ -153,7 +194,13 @@ const providerTerminology: Record<ErpProviderType, ProviderTerminology> = {
 export function isReusableErpProvider(
   value?: string | null
 ): value is ErpProviderType {
-  return value === "clinic" || value === "hospital" || value === "doctor";
+  return (
+    value === "clinic" ||
+    value === "hospital" ||
+    value === "doctor" ||
+    value === "pathology" ||
+    value === "radiology"
+  );
 }
 
 export function getProviderCapabilities(providerType: ErpProviderType) {

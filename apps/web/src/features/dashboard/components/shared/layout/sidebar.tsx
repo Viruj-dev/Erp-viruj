@@ -20,6 +20,8 @@ import {
   Database,
   FileBadge,
   FileText,
+  FlaskConical,
+  ScanLine,
   HeartPulse,
   CircleHelp,
   History,
@@ -180,11 +182,28 @@ export function ErpDemoSidebar({
   const workspaceTheme = getWorkspaceTheme(organizationLabel);
   const isDoctorWorkspace = organizationLabel.toLowerCase() === "doctor";
   const isClinicWorkspace = organizationLabel.toLowerCase() === "clinic";
+  const isPathologyWorkspace = organizationLabel.toLowerCase() === "pathology";
+  const isRadiologyWorkspace = organizationLabel.toLowerCase() === "radiology";
+  const isDiagnosticWorkspace = isPathologyWorkspace || isRadiologyWorkspace;
+  const diagnosticNavItems: NavItem[] = [
+    { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+    {
+      id: isPathologyWorkspace ? "pathology" : "radiology",
+      label: isPathologyWorkspace ? "Lab reception" : "Imaging reception",
+      icon: isPathologyWorkspace ? FlaskConical : ScanLine,
+    },
+    { id: "appointments", label: "Bookings", icon: ClipboardCheck },
+    { id: "patients", label: "Patients", icon: Users },
+    { id: "staff", label: "Team", icon: BadgeCheck },
+    { id: "activity-logs", label: "Activity Logs", icon: History },
+  ];
   const navItems = isDoctorWorkspace
     ? doctorNavItems
     : isClinicWorkspace
       ? clinicNavItems
-      : mainNavItems;
+      : isDiagnosticWorkspace
+        ? diagnosticNavItems
+        : mainNavItems;
   const nestedProfileOptions = isClinicWorkspace
     ? clinicProfileOptions
     : doctorProfileOptions;
@@ -192,7 +211,7 @@ export function ErpDemoSidebar({
     {
       id: isClinicWorkspace
         ? "clinic-profile"
-        : isDoctorWorkspace
+        : isDoctorWorkspace || isDiagnosticWorkspace
           ? "profile"
           : "hospital-profile",
       label: "Profile",
@@ -379,7 +398,7 @@ export function ErpDemoSidebar({
                   onPageChange(
                     isClinicWorkspace
                       ? "clinic-profile"
-                      : isDoctorWorkspace
+                      : isDoctorWorkspace || isDiagnosticWorkspace
                         ? "profile"
                         : "hospital-profile"
                   )

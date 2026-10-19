@@ -92,7 +92,43 @@ describe("shared ERP tenant helpers", () => {
       createErpTenantContext({
         organizationId: "radio-a",
         providerType: "radiology",
-      })
-    ).toBeNull();
+      })?.providerType
+    ).toBe("radiology");
+  });
+
+  test("diagnostic tenants have their own routes and do not inherit inpatient capabilities", () => {
+    for (const providerType of ["pathology", "radiology"] as const) {
+      const tenant = createErpTenantContext({
+        organizationId: `${providerType}-a`,
+        organizationSlug: "main-centre",
+        providerType,
+        permissions: ["appointments.read"],
+      });
+      expect(tenant?.buildRoute("appointments-review")).toBe(
+        `/${providerType}/main-centre/appointments/review`
+      );
+      expect(tenant?.organizationId).toBe(`${providerType}-a`);
+      expect(tenant?.permissions).toEqual(["appointments.read"]);
+      expect(tenant?.capabilities.appointments.enabled).toBe(true);
+      expect(tenant?.capabilities.appointments.supportsDoctorAssignment).toBe(
+        false
+      );
+      expect(tenant?.capabilities.facilities.supportsBeds).toBe(false);
+      expect(tenant?.capabilities.facilities.enabled).toBe(false);
+      expect(tenant?.capabilities.services.enabled).toBe(false);
+      expect(tenant?.capabilities.facilities.supportsWards).toBe(false);
+      expect(tenant?.capabilities.facilities.supportsOperatingTheatres).toBe(
+        false
+      );
+      expect(tenant?.capabilities.services.supportsConsultationModes).toBe(
+        false
+      );
+    }
+    expect(getProviderTerminology("pathology").practitionerLabel).toBe(
+      "Pathologist"
+    );
+    expect(getProviderTerminology("radiology").practitionerLabel).toBe(
+      "Radiologist"
+    );
   });
 });

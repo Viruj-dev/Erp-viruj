@@ -1,5 +1,7 @@
 "use client";
 
+import { DiagnosticWorkspace } from "@/features/dashboard/components/shared/modules/diagnostic-workspace";
+
 import { shouldStartOrganizationOnboarding } from "@/features/dashboard/lib/onboarding";
 import { ActivityLogsPage } from "@/features/dashboard/components/shared/activity";
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
@@ -569,6 +571,23 @@ function PageContent({
   routeSegments: string[];
   appointmentTenant: ErpTenantContext | null;
 }) {
+  const isDiagnosticTenant =
+    appointmentTenant?.providerType === "pathology" ||
+    appointmentTenant?.providerType === "radiology";
+  if (
+    appointmentTenant &&
+    isDiagnosticTenant &&
+    (currentPage === "dashboard" ||
+      currentPage === appointmentTenant.providerType)
+  ) {
+    return (
+      <DiagnosticWorkspace
+        key={appointmentTenant.organizationId}
+        tenant={appointmentTenant}
+        organizationName={organizationName}
+      />
+    );
+  }
   switch (currentPage) {
     case "onboarding":
       return (

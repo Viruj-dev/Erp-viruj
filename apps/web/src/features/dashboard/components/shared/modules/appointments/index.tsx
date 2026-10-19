@@ -2,7 +2,6 @@
 
 import { ErpSelect } from "@/components/ui/erp/select";
 
-
 import { Button } from "@/components/ui/button";
 import {
   Search,
@@ -93,11 +92,15 @@ export function ErpDemoAppointments({
       style={
         {
           "--appointment-accent":
-            tenant.providerType === "clinic"
-              ? "#7c3aed"
-              : tenant.providerType === "hospital"
-                ? "#2563eb"
-                : "#15803d",
+            tenant.providerType === "pathology"
+              ? "#c2410c"
+              : tenant.providerType === "radiology"
+                ? "#52525b"
+                : tenant.providerType === "clinic"
+                  ? "#7c3aed"
+                  : tenant.providerType === "hospital"
+                    ? "#2563eb"
+                    : "#15803d",
         } as CSSProperties
       }
       className="erp-appointment-list mx-auto w-[calc(100%-8px)] max-w-[1440px] space-y-5 py-3 sm:w-[calc(100%-16px)] lg:w-[calc(100%-24px)]"
