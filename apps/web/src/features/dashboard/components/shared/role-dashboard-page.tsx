@@ -95,12 +95,12 @@ type ProfileVisibilityControl = {
   statusLabel?: string;
 };
 const panel =
-  "erp-bento overflow-hidden rounded-2xl border border-slate-200/80 bg-white dark:border-white/10 dark:bg-[#17191e]";
-const subtle = "text-slate-600 dark:text-slate-400";
+  "erp-bento overflow-hidden rounded-[22px] border border-slate-200/80 bg-white dark:border-white/10 dark:bg-[#17191e]";
+const subtle = "text-slate-500 dark:text-slate-400";
 const textLink =
-  "inline-flex min-h-11 items-center gap-1.5 text-xs font-medium text-[var(--dashboard-accent)] hover:underline underline-offset-4";
+  "inline-flex items-center gap-1.5 text-xs font-medium text-[var(--dashboard-accent)] hover:underline underline-offset-4";
 const control =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium hover:bg-slate-50 disabled:opacity-50 dark:border-white/15 dark:bg-white/5 dark:hover:bg-white/10";
+  "inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium transition hover:bg-slate-50 disabled:opacity-50 dark:border-white/15 dark:bg-white/5 dark:hover:bg-white/10";
 
 export function RoleDashboardPage({
   analytics,
@@ -216,7 +216,7 @@ export function RoleDashboardPage({
                 : tone === "clinic"
                   ? "#7855c7"
                   : tone === "hospital"
-                    ? "#2c5cd6"
+                    ? "#3569ba"
                     : "#278565",
         } as CSSProperties
       }
@@ -225,20 +225,21 @@ export function RoleDashboardPage({
       <div className="mx-auto max-w-[1440px] space-y-6">
         <header className="erp-overview-heading flex flex-wrap items-end justify-between gap-5">
           <div>
-            <h1 className="font-headline text-3xl font-semibold tracking-tight">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--dashboard-accent)]">
+              Your care workspace
+            </p>
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               {diagnostic
-                ? "Diagnostics overview"
+                ? "Your diagnostics, at a glance."
                 : pathology
-                  ? "Pathology overview"
-                  : tone === "hospital"
-                    ? "Hospital overview"
-                    : "Practice overview"}
+                  ? "Your pathology centre, at a glance."
+                  : "Your practice, at a glance."}
             </h1>
             <p className={`mt-1.5 text-sm ${subtle}`}>
               {userName
                 ? `Welcome back, ${userName.split(" ")[0]}.`
                 : "Your workspace overview."}{" "}
-              Your appointments, team and patient-app presence
+              Here’s where things stand
               {organizationName ? ` at ${organizationName}` : ""}.
             </p>
           </div>
@@ -252,14 +253,14 @@ export function RoleDashboardPage({
               >
                 <RefreshCw
                   size={14}
-                  className={refreshing ? "motion-safe:animate-spin" : ""}
+                  className={refreshing ? "animate-spin" : ""}
                 />
                 {refreshing ? "Refreshing" : "Refresh"}
               </button>
             )}
             <Link
               href={href("appointments")}
-              className="erp-overview-action inline-flex min-h-11 items-center gap-2 rounded-lg bg-[var(--dashboard-brand)] px-4 py-2.5 text-xs font-semibold text-white hover:opacity-90"
+              className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--dashboard-brand)] px-5 py-2.5 text-xs font-semibold text-white transition hover:opacity-90"
             >
               Open appointments
               <ArrowUpRight size={14} />
@@ -278,7 +279,7 @@ export function RoleDashboardPage({
         <section
           aria-label="Workspace summary"
           aria-busy={loading}
-          className={`grid grid-cols-2 gap-3 ${tone === "doctor" ? "" : "xl:grid-cols-4"}`}
+          className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
         >
           {[
             {
@@ -287,7 +288,6 @@ export function RoleDashboardPage({
               source: "appointments",
               page: "appointments-dashboard",
               icon: CalendarDays,
-              trendIndex: 0,
             },
             {
               key: "Patients",
@@ -295,7 +295,6 @@ export function RoleDashboardPage({
               source: "appointments",
               page: pathology ? "appointments" : "patients",
               icon: Users,
-              trendIndex: null,
             },
             {
               key: "Active Doctors",
@@ -307,7 +306,6 @@ export function RoleDashboardPage({
               source: diagnostic ? "orders" : "doctors",
               page: pathology ? "facilities" : diagnostic ? tone : "doctors",
               icon: Stethoscope,
-              trendIndex: 1,
             },
             {
               key: "Active Services",
@@ -315,7 +313,6 @@ export function RoleDashboardPage({
               source: diagnostic ? "orders" : "services",
               page: diagnostic ? "reports" : servicesPage,
               icon: HeartPulse,
-              trendIndex: 2,
             },
           ]
             .filter(
@@ -328,34 +325,40 @@ export function RoleDashboardPage({
               const stat = analytics?.stats?.find(
                 (item) => item.label === metric.key
               );
-              const metricTrend =
-                ready &&
-                !unavailable.includes(metric.source) &&
-                !unavailable.includes("analytics") &&
-                metric.trendIndex !== null
-                  ? analytics?.charts?.[metric.trendIndex]
-                  : undefined;
               return (
                 <Link
                   href={href(metric.page as DashboardPage)}
                   key={metric.key}
-                  className="erp-metric group rounded-2xl border border-slate-200/80 bg-white p-5 dark:border-white/10 dark:bg-[#17191e]"
+                  data-featured={
+                    metric.source === "appointments" &&
+                    metric.page === "appointments-dashboard"
+                  }
+                  className="erp-metric group rounded-[22px] border border-slate-200/80 bg-white p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 dark:border-white/10 dark:bg-[#17191e] motion-reduce:transform-none"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <span
-                      className={`erp-metric-label text-xs font-medium ${subtle}`}
-                    >
-                      {metric.label}
-                    </span>
-                    <span className="erp-metric-icon flex size-9 shrink-0 items-center justify-center rounded-lg">
+                  <div className="mb-5 flex items-center justify-between">
+                    <span className="erp-metric-icon flex size-10 items-center justify-center rounded-2xl">
                       <MetricIcon
                         size={19}
                         strokeWidth={1.6}
                         aria-hidden="true"
                       />
                     </span>
+                    <ArrowUpRight
+                      size={17}
+                      className="opacity-50"
+                      aria-hidden="true"
+                    />
                   </div>
-                  <p className="mt-3 font-headline text-4xl font-semibold tracking-tight tabular-nums">
+                  <div
+                    className={`erp-metric-label flex items-center gap-2 text-xs ${subtle}`}
+                  >
+                    {metric.label}
+                    <ArrowUpRight
+                      size={12}
+                      className="opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100"
+                    />
+                  </div>
+                  <p className="mt-2 text-4xl font-semibold tracking-tight tabular-nums">
                     {ready && !unavailable.includes(metric.source)
                       ? (stat?.value ?? "—")
                       : "—"}
@@ -369,218 +372,19 @@ export function RoleDashboardPage({
                         ? "Unavailable"
                         : (stat?.note ?? "No information yet")}
                   </p>
-                  {metricTrend?.values.some((value) => value > 0) && (
-                    <div className="erp-metric-trend" aria-hidden="true">
-                      <ResponsiveContainer
-                        width="100%"
-                        height="100%"
-                        initialDimension={{ width: 240, height: 42 }}
-                      >
-                        <BarChart
-                          data={metricTrend.values.map((value) => ({ value }))}
-                          barCategoryGap="22%"
-                        >
-                          <Bar
-                            dataKey="value"
-                            fill="var(--dashboard-accent)"
-                            radius={[3, 3, 0, 0]}
-                            isAnimationActive={false}
-                          />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  )}
                 </Link>
               );
             })}
         </section>
         <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="min-w-0 space-y-5">
-            <section
-              className={`${panel} erp-review-card`}
-              aria-label="Requests to review"
-            >
-              <div className="flex min-w-0 items-center gap-4">
-                <span className="erp-review-count flex size-14 shrink-0 items-center justify-center rounded-xl font-headline text-2xl font-semibold tabular-nums">
-                  {ready && !appointmentsUnavailable ? pending : "—"}
-                </span>
-                <div>
-                  <h2 className="text-sm font-semibold">
-                    {loading
-                      ? "Loading requests…"
-                      : appointmentsUnavailable
-                        ? "Requests unavailable"
-                        : pending > 0
-                          ? "Patient requests need your review"
-                          : "No requests awaiting approval"}
-                  </h2>
-                  <p className={`mt-1 text-xs leading-5 ${subtle}`}>
-                    Confirm appointment details before approving a visit.
-                  </p>
-                </div>
-              </div>
-              <Link
-                href={href("appointments-review")}
-                className="erp-overview-action inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-[var(--dashboard-brand)] px-4 text-xs font-semibold text-white hover:opacity-90"
-              >
-                <ClipboardCheck size={15} aria-hidden="true" />
-                Review appointments
-                <ArrowUpRight size={16} />
-              </Link>
-            </section>
-            <section className={panel} aria-label="Recent appointments">
-              <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-                <div className="flex items-center gap-2.5">
-                  <h2 className="text-sm font-semibold">Appointment inbox</h2>
-                  {ready && !appointmentsUnavailable && pending > 0 && (
-                    <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-200">
-                      {pending} to review
-                    </span>
-                  )}
-                </div>
-                <Link
-                  href={href("appointments-dashboard")}
-                  className={textLink}
-                >
-                  View all
-                  <ArrowUpRight size={13} />
-                </Link>
-              </div>
-              <div className="flex gap-5 border-b border-slate-100 px-5 dark:border-white/10">
-                {(
-                  [
-                    { id: "all", label: "Recent requests" },
-                    { id: "pending", label: "Awaiting approval" },
-                  ] as const
-                ).map((filter) => (
-                  <button
-                    type="button"
-                    key={filter.id}
-                    aria-pressed={requestFilter === filter.id}
-                    onClick={() => setRequestFilter(filter.id)}
-                    className={`min-h-11 border-b-2 pb-3 text-xs font-medium ${requestFilter === filter.id ? "border-[var(--dashboard-accent)] text-[var(--dashboard-accent)]" : "border-transparent text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"}`}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-              {loading ? (
-                <EmptyBlock title="Loading appointments…" />
-              ) : appointmentsUnavailable ? (
-                <EmptyBlock
-                  title="Appointments are unavailable"
-                  description="Refresh to reconnect to your appointment inbox."
-                />
-              ) : rows.length ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[560px] text-left text-xs">
-                    <thead
-                      className={`bg-slate-50/60 text-[11px] dark:bg-white/[0.02] ${subtle}`}
-                    >
-                      <tr>
-                        {["Patient", "Requested slot", "Doctor", "Status"].map(
-                          (label) => (
-                            <th
-                              scope="col"
-                              key={label}
-                              className="px-5 py-3 font-medium"
-                            >
-                              {label}
-                            </th>
-                          )
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                      {rows.map((item) => (
-                        <tr
-                          key={item.id}
-                          className="hover:bg-slate-50/60 dark:hover:bg-white/[0.02]"
-                        >
-                          <td className="px-5 py-4">
-                            <button
-                              type="button"
-                              disabled={!organizationId}
-                              onClick={() =>
-                                (onAppointmentSelect ?? setSelectedAppointment)(
-                                  item.id
-                                )
-                              }
-                              className="min-h-11 text-left font-medium hover:text-[var(--dashboard-accent)] hover:underline disabled:cursor-default"
-                              aria-label={`Review appointment for ${item.patientName}`}
-                            >
-                              {item.patientName}
-                            </button>
-                            <p
-                              className={`mt-1 max-w-40 truncate text-[11px] ${subtle}`}
-                            >
-                              {item.reason || item.appointmentMode}
-                            </p>
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-4">
-                            <p>
-                              {formatDate(item.appointmentDate, item.timezone)}
-                            </p>
-                            <p className={`mt-1 text-[11px] ${subtle}`}>
-                              {item.appointmentTime}
-                            </p>
-                          </td>
-                          <td className="px-5 py-4">{item.doctorName}</td>
-                          <td className="px-5 py-4">
-                            <span className={statusClassName(item.status)}>
-                              {getStatusLabel(item.status)}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="flex min-h-[230px] flex-col items-center justify-center px-5 py-9 text-center">
-                  <CalendarDays
-                    size={27}
-                    strokeWidth={1.3}
-                    className="mb-4 text-slate-400"
-                  />
-                  <h3 className="text-sm font-medium">
-                    {requestFilter === "pending"
-                      ? "You’re all caught up"
-                      : "No appointment requests yet"}
-                  </h3>
-                  <p className={`mt-2 max-w-xs text-xs leading-5 ${subtle}`}>
-                    {requestFilter === "pending"
-                      ? "New requests that need your approval will appear here."
-                      : "When patients request a visit, you’ll see their details and requested time here."}
-                  </p>
-                  <Link
-                    href={href(
-                      requestFilter === "pending"
-                        ? "appointments-dashboard"
-                        : profilePage
-                    )}
-                    className={`${textLink} mt-5`}
-                  >
-                    {requestFilter === "pending"
-                      ? "Open appointments"
-                      : "Review your patient-app listing"}
-                    <ArrowRight size={13} />
-                  </Link>
-                </div>
-              )}
-              <div
-                className={`flex items-center gap-1.5 border-t border-slate-100 px-5 py-2.5 text-[10px] dark:border-white/5 ${subtle}`}
-              >
-                <Clock3 size={12} />
-                Requested times are confirmed after approval.
-              </div>
-            </section>
-          </div>
-          <aside className="min-w-0 space-y-5">
             <section className={panel}>
               <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-4">
                 <div>
-                  <h2 className="text-sm font-semibold">Activity overview</h2>
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--dashboard-accent)]">
+                    Practice insights
+                  </p>
+                  <h2 className="text-base font-semibold">Activity overview</h2>
                   <p className={`mt-1 text-[11px] ${subtle}`}>
                     {chart?.period ?? "Recent activity"}
                   </p>
@@ -652,7 +456,7 @@ export function RoleDashboardPage({
                   aria-label={points
                     .map((point) => `${point.label}: ${point.value}`)
                     .join(", ")}
-                  className="mt-5 h-44 pr-5"
+                  className="mt-5 h-60 pr-5"
                 >
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
@@ -670,13 +474,13 @@ export function RoleDashboardPage({
                         axisLine={false}
                         tickLine={false}
                         minTickGap={30}
-                        tick={{ fontSize: 11, fill: "var(--dashboard-muted)" }}
+                        tick={{ fontSize: 10, fill: "#94a3b8" }}
                       />
                       <YAxis
                         allowDecimals={false}
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fontSize: 11, fill: "var(--dashboard-muted)" }}
+                        tick={{ fontSize: 10, fill: "#94a3b8" }}
                       />
                       <Tooltip
                         cursor={{ fill: "#94a3b812" }}
@@ -688,7 +492,13 @@ export function RoleDashboardPage({
                       />
                       <Bar
                         dataKey="value"
-                        name={chartLabels[chartIndex]}
+                        name={
+                          [
+                            "Requests",
+                            "Doctors published",
+                            "Services published",
+                          ][chartIndex]
+                        }
                         fill="var(--dashboard-accent)"
                         radius={[7, 7, 0, 0]}
                         maxBarSize={32}
@@ -701,7 +511,7 @@ export function RoleDashboardPage({
               {appointmentTotal > 0 && !appointmentsUnavailable && (
                 <div className="border-t border-slate-100 p-5 dark:border-white/5">
                   <p className={`mb-3 text-[11px] ${subtle}`}>
-                    Status of loaded appointment requests
+                    Appointment status · all loaded requests
                   </p>
                   <div
                     aria-label="Appointment status distribution"
@@ -742,6 +552,197 @@ export function RoleDashboardPage({
                 </div>
               )}
             </section>
+            <section className={panel} aria-label="Recent appointments">
+              <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-sm font-semibold">Appointment inbox</h2>
+                  {ready && !appointmentsUnavailable && pending > 0 && (
+                    <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                      {pending} to review
+                    </span>
+                  )}
+                </div>
+                <Link
+                  href={href("appointments-dashboard")}
+                  className={textLink}
+                >
+                  View all
+                  <ArrowUpRight size={13} />
+                </Link>
+              </div>
+              <div className="flex gap-5 border-b border-slate-100 px-5 dark:border-white/10">
+                {(
+                  [
+                    { id: "all", label: "Recent requests" },
+                    { id: "pending", label: "Awaiting approval" },
+                  ] as const
+                ).map((filter) => (
+                  <button
+                    type="button"
+                    key={filter.id}
+                    aria-pressed={requestFilter === filter.id}
+                    onClick={() => setRequestFilter(filter.id)}
+                    className={`border-b-2 pb-3 text-xs font-medium transition ${requestFilter === filter.id ? "border-[var(--dashboard-accent)] text-[var(--dashboard-accent)]" : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"}`}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+              {loading ? (
+                <EmptyBlock title="Loading appointments…" />
+              ) : appointmentsUnavailable ? (
+                <EmptyBlock
+                  title="Appointments are unavailable"
+                  description="Refresh to reconnect to your appointment inbox."
+                />
+              ) : rows.length ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[560px] text-left text-xs">
+                    <thead
+                      className={`bg-slate-50/60 text-[11px] dark:bg-white/[0.02] ${subtle}`}
+                    >
+                      <tr>
+                        {["Patient", "Requested slot", "Doctor", "Status"].map(
+                          (label) => (
+                            <th
+                              scope="col"
+                              key={label}
+                              className="px-5 py-3 font-medium"
+                            >
+                              {label}
+                            </th>
+                          )
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                      {rows.map((item) => (
+                        <tr
+                          key={item.id}
+                          className="hover:bg-slate-50/60 dark:hover:bg-white/[0.02]"
+                        >
+                          <td className="px-5 py-4">
+                            <button
+                              type="button"
+                              disabled={!organizationId}
+                              onClick={() =>
+                                (onAppointmentSelect ?? setSelectedAppointment)(
+                                  item.id
+                                )
+                              }
+                              className="text-left font-medium hover:text-[var(--dashboard-accent)] hover:underline disabled:cursor-default"
+                              aria-label={`Review appointment for ${item.patientName}`}
+                            >
+                              {item.patientName}
+                            </button>
+                            <p
+                              className={`mt-1 max-w-40 truncate text-[11px] ${subtle}`}
+                            >
+                              {item.reason || item.appointmentMode}
+                            </p>
+                          </td>
+                          <td className="whitespace-nowrap px-5 py-4">
+                            <p>
+                              {formatDate(item.appointmentDate, item.timezone)}
+                            </p>
+                            <p className={`mt-1 text-[11px] ${subtle}`}>
+                              {item.appointmentTime}
+                            </p>
+                          </td>
+                          <td className="px-5 py-4">{item.doctorName}</td>
+                          <td className="px-5 py-4">
+                            <span className={statusClassName(item.status)}>
+                              {getStatusLabel(item.status)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="flex min-h-[230px] flex-col items-center justify-center px-5 py-9 text-center">
+                  <CalendarDays
+                    size={27}
+                    strokeWidth={1.3}
+                    className="mb-4 text-slate-400"
+                  />
+                  <h3 className="text-sm font-medium">
+                    {requestFilter === "pending"
+                      ? "You’re all caught up"
+                      : "No appointment requests yet"}
+                  </h3>
+                  <p className={`mt-2 max-w-xs text-xs leading-5 ${subtle}`}>
+                    {requestFilter === "pending"
+                      ? "New requests that need your approval will appear here."
+                      : "When patients request a visit, you’ll see their details and requested time here."}
+                  </p>
+                  <Link
+                    href={href(
+                      requestFilter === "pending"
+                        ? "appointments-dashboard"
+                        : profilePage
+                    )}
+                    className={`${textLink} mt-5`}
+                  >
+                    {requestFilter === "pending"
+                      ? "Open appointments"
+                      : "Review your patient-app listing"}
+                    <ArrowRight size={13} />
+                  </Link>
+                </div>
+              )}
+              <div
+                className={`flex items-center gap-1.5 border-t border-slate-100 px-5 py-2.5 text-[10px] dark:border-white/5 ${subtle}`}
+              >
+                <Clock3 size={12} />
+                Requested times are confirmed after approval.
+              </div>
+            </section>
+          </div>
+          <aside className="min-w-0 space-y-5">
+            <section
+              className={`${panel} erp-review-card`}
+              aria-label="Requests to review"
+            >
+              <div className="flex items-center justify-between">
+                <span className="erp-metric-icon flex size-11 items-center justify-center rounded-2xl">
+                  <ClipboardCheck
+                    size={21}
+                    strokeWidth={1.5}
+                    aria-hidden="true"
+                  />
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--dashboard-accent)]">
+                  Needs your attention
+                </span>
+              </div>
+              <h2 className="mt-5 text-lg font-semibold">
+                Make room for better care.
+              </h2>
+              <p className="mt-2 text-xs leading-6 text-slate-500 dark:text-slate-400">
+                Review patient requests and help them take their next step.
+              </p>
+              <div className="my-5 flex items-end gap-3">
+                <span className="text-5xl font-semibold tracking-tight tabular-nums">
+                  {ready && !appointmentsUnavailable ? pending : "—"}
+                </span>
+                <span className="pb-1 text-xs text-slate-500 dark:text-slate-400">
+                  {loading
+                    ? "Loading requests…"
+                    : appointmentsUnavailable
+                      ? "Requests unavailable"
+                      : "awaiting approval"}
+                </span>
+              </div>
+              <Link
+                href={href("appointments-review")}
+                className="flex min-h-11 items-center justify-between rounded-full bg-[var(--dashboard-brand)] px-4 text-xs font-semibold text-white transition hover:opacity-90"
+              >
+                Review appointments
+                <ArrowUpRight size={16} />
+              </Link>
+            </section>
             <section className={panel}>
               <div className="flex items-center justify-between px-5 pt-4">
                 <h2 className="text-sm font-semibold">Patient-app listing</h2>
@@ -767,163 +768,168 @@ export function RoleDashboardPage({
                       aria-checked={visibility.isPublic}
                       disabled={visibility.isUpdating}
                       onClick={visibility.onToggle}
-                      className="flex size-11 items-center justify-center rounded-lg disabled:opacity-50"
+                      className={`relative h-5 w-9 rounded-full transition disabled:opacity-50 ${visibility.isPublic ? "bg-[var(--dashboard-brand)]" : "bg-slate-300 dark:bg-slate-600"}`}
                     >
                       <span
-                        aria-hidden="true"
-                        className={`relative block h-5 w-9 rounded-full ${visibility.isPublic ? "bg-[var(--dashboard-brand)]" : "bg-slate-300 dark:bg-slate-600"}`}
-                      >
-                        <span
-                          className={`absolute top-0.5 size-4 rounded-full bg-white shadow-sm ${visibility.isPublic ? "left-0.5 translate-x-4" : "left-0.5"}`}
-                        />
-                      </span>
+                        className={`absolute top-0.5 size-4 rounded-full bg-white shadow-sm transition-transform ${visibility.isPublic ? "left-0.5 translate-x-4" : "left-0.5"}`}
+                      />
                     </button>
                   )}
                 </div>
               </div>
             </section>
+            {tone !== "doctor" && (
+              <>
+                <section className={panel}>
+                  <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/5">
+                    <h2 className="text-sm font-semibold">
+                      {pathology
+                        ? "Your branches"
+                        : diagnostic
+                          ? "Reporting team"
+                          : "Your doctors"}
+                    </h2>
+                    <Link
+                      href={href(
+                        pathology
+                          ? "facilities"
+                          : diagnostic
+                            ? "staff"
+                            : "doctors"
+                      )}
+                      className={textLink}
+                    >
+                      Manage
+                      <ArrowUpRight size={13} />
+                    </Link>
+                  </div>
+                  {loading ||
+                  unavailable.includes("doctors") ||
+                  !team.length ? (
+                    <EmptyBlock
+                      title={
+                        loading
+                          ? pathology
+                            ? "Loading branches…"
+                            : "Loading doctors…"
+                          : unavailable.includes("doctors")
+                            ? pathology
+                              ? "Branch list is unavailable"
+                              : "Doctor list is unavailable"
+                            : pathology
+                              ? "Add your first branch"
+                              : diagnostic
+                                ? "Manage your reporting team"
+                                : "Build your care team"
+                      }
+                      description={
+                        !loading && !unavailable.includes("doctors")
+                          ? pathology
+                            ? "Add and publish your branches from Facilities."
+                            : diagnostic
+                              ? "Manage laboratory and reporting staff from Team."
+                              : "Add doctor profiles so patients can find the right specialist."
+                          : undefined
+                      }
+                    />
+                  ) : (
+                    <ul className="divide-y divide-slate-100 px-5 dark:divide-white/5">
+                      {team.slice(0, 4).map((doctor, index) => (
+                        <li
+                          key={doctor.id ?? `${doctor.title}-${index}`}
+                          className="flex items-center gap-3 py-4"
+                        >
+                          <DoctorAvatar
+                            name={doctor.title}
+                            imageUrl={doctor.imageUrl}
+                            gender={doctor.gender}
+                            tone={tone}
+                            className="size-10"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-medium">
+                              {doctor.title}
+                            </p>
+                            <p
+                              className={`mt-1 truncate text-[11px] ${subtle}`}
+                            >
+                              {doctor.subtitle}
+                            </p>
+                          </div>
+                          {doctor.badge === "Shown in app" ? (
+                            <Check
+                              size={14}
+                              aria-label="Published"
+                              className="shrink-0 text-emerald-600"
+                            />
+                          ) : (
+                            <span className={`text-[10px] ${subtle}`}>
+                              {doctor.badge}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+                <section className={panel}>
+                  <div className="flex items-center justify-between px-5 py-4">
+                    <h2 className="text-sm font-semibold">Services</h2>
+                    <Link href={href(servicesPage)} className={textLink}>
+                      Manage
+                      <ArrowUpRight size={13} />
+                    </Link>
+                  </div>
+                  {loading ||
+                  unavailable.includes("services") ||
+                  !services.length ? (
+                    <div className="px-5 pb-5">
+                      <p className={`text-xs leading-5 ${subtle}`}>
+                        {loading
+                          ? "Loading services…"
+                          : unavailable.includes("services")
+                            ? "Services are unavailable."
+                            : "List the care you offer, with fees and consultation details."}
+                      </p>
+                      {!loading && !unavailable.includes("services") && (
+                        <Link
+                          className={`${textLink} mt-3`}
+                          href={href(servicesPage)}
+                        >
+                          Add a service
+                          <ArrowRight size={13} />
+                        </Link>
+                      )}
+                    </div>
+                  ) : (
+                    <ul className="divide-y divide-slate-100 px-5 dark:divide-white/5">
+                      {services.slice(0, 3).map((service, index) => (
+                        <li
+                          key={service.id ?? `${service.title}-${index}`}
+                          className="flex items-start justify-between gap-3 py-3 first:pt-0"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-medium">
+                              {service.title}
+                            </p>
+                            <p
+                              className={`mt-1 truncate text-[11px] ${subtle}`}
+                            >
+                              {service.subtitle}
+                            </p>
+                          </div>
+                          <span className={`shrink-0 text-[11px] ${subtle}`}>
+                            {service.meta || service.badge}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              </>
+            )}
           </aside>
         </div>
-        {tone !== "doctor" && (
-          <div className="grid gap-5 md:grid-cols-2">
-            <section className={panel}>
-              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/5">
-                <h2 className="text-sm font-semibold">
-                  {pathology
-                    ? "Your branches"
-                    : diagnostic
-                      ? "Reporting team"
-                      : "Your doctors"}
-                </h2>
-                <Link
-                  href={href(
-                    pathology ? "facilities" : diagnostic ? "staff" : "doctors"
-                  )}
-                  className={textLink}
-                >
-                  Manage
-                  <ArrowUpRight size={13} />
-                </Link>
-              </div>
-              {loading || unavailable.includes("doctors") || !team.length ? (
-                <EmptyBlock
-                  title={
-                    loading
-                      ? pathology
-                        ? "Loading branches…"
-                        : "Loading doctors…"
-                      : unavailable.includes("doctors")
-                        ? pathology
-                          ? "Branch list is unavailable"
-                          : "Doctor list is unavailable"
-                        : pathology
-                          ? "Add your first branch"
-                          : diagnostic
-                            ? "Manage your reporting team"
-                            : "Build your care team"
-                  }
-                  description={
-                    !loading && !unavailable.includes("doctors")
-                      ? pathology
-                        ? "Add and publish your branches from Facilities."
-                        : diagnostic
-                          ? "Manage laboratory and reporting staff from Team."
-                          : "Add doctor profiles so patients can find the right specialist."
-                      : undefined
-                  }
-                />
-              ) : (
-                <ul className="divide-y divide-slate-100 px-5 dark:divide-white/5">
-                  {team.slice(0, 4).map((doctor, index) => (
-                    <li
-                      key={doctor.id ?? `${doctor.title}-${index}`}
-                      className="flex items-center gap-3 py-4"
-                    >
-                      <DoctorAvatar
-                        name={doctor.title}
-                        imageUrl={doctor.imageUrl}
-                        gender={doctor.gender}
-                        tone={tone}
-                        className="size-10"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-medium">
-                          {doctor.title}
-                        </p>
-                        <p className={`mt-1 truncate text-[11px] ${subtle}`}>
-                          {doctor.subtitle}
-                        </p>
-                      </div>
-                      {doctor.badge === "Shown in app" ? (
-                        <Check
-                          size={14}
-                          aria-label="Published"
-                          className="shrink-0 text-emerald-600"
-                        />
-                      ) : (
-                        <span className={`text-[10px] ${subtle}`}>
-                          {doctor.badge}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-            <section className={panel}>
-              <div className="flex items-center justify-between px-5 py-4">
-                <h2 className="text-sm font-semibold">Services</h2>
-                <Link href={href(servicesPage)} className={textLink}>
-                  Manage
-                  <ArrowUpRight size={13} />
-                </Link>
-              </div>
-              {loading ||
-              unavailable.includes("services") ||
-              !services.length ? (
-                <div className="px-5 pb-5">
-                  <p className={`text-xs leading-5 ${subtle}`}>
-                    {loading
-                      ? "Loading services…"
-                      : unavailable.includes("services")
-                        ? "Services are unavailable."
-                        : "List the care you offer, with fees and consultation details."}
-                  </p>
-                  {!loading && !unavailable.includes("services") && (
-                    <Link
-                      className={`${textLink} mt-3`}
-                      href={href(servicesPage)}
-                    >
-                      Add a service
-                      <ArrowRight size={13} />
-                    </Link>
-                  )}
-                </div>
-              ) : (
-                <ul className="divide-y divide-slate-100 px-5 dark:divide-white/5">
-                  {services.slice(0, 3).map((service, index) => (
-                    <li
-                      key={service.id ?? `${service.title}-${index}`}
-                      className="flex items-start justify-between gap-3 py-3 first:pt-0"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-medium">
-                          {service.title}
-                        </p>
-                        <p className={`mt-1 truncate text-[11px] ${subtle}`}>
-                          {service.subtitle}
-                        </p>
-                      </div>
-                      <span className={`shrink-0 text-[11px] ${subtle}`}>
-                        {service.meta || service.badge}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </div>
-        )}
         {analytics?.activity?.length ? (
           <section className="border-t border-slate-200/80 pt-5 dark:border-white/10">
             <h2 className="text-sm font-semibold">Recent updates</h2>
