@@ -458,9 +458,6 @@ function SetupForm({
                     type: "number",
                   })}
                   {field("website", "Website", { type: "url" })}
-                  {field("instagram", "Instagram", { type: "url" })}
-                  {field("facebook", "Facebook", { type: "url" })}
-                  {field("linkedin", "LinkedIn", { type: "url" })}
                 </>
               )}
               <div className="sm:col-span-2">
@@ -502,9 +499,7 @@ function SetupForm({
                   />
                   Primary branch
                 </h3>
-                <p className="text-sm text-muted-foreground">
-                  Fetch your branch location, then confirm the address below.
-                </p>
+
                 <Button
                   type="button"
                   variant="outline"
@@ -791,9 +786,6 @@ function SetupForm({
                   : [
                       ["Established", data.establishedYear],
                       ["Website", data.website],
-                      ["Instagram", data.instagram],
-                      ["Facebook", data.facebook],
-                      ["LinkedIn", data.linkedin],
                       ["Logo", data.logoName],
                       ["License / certificate", data.certificateName],
                     ]),

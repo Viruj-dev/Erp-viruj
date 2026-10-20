@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CompleteProfileOption } from "./complete-profile-option";
 import { VirujLogo } from "@/components/brand/viruj-logo";
 
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
@@ -17,7 +18,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ClipboardCheck,
-  Database,
   FileBadge,
   FileText,
   FlaskConical,
@@ -132,6 +132,7 @@ export function ErpDemoSidebar({
   onPageChange: navigate,
   onToggle,
   organizationLabel,
+  organizationId,
 }: {
   allowedPages: ErpDemoPage[];
   currentPage: string;
@@ -141,6 +142,7 @@ export function ErpDemoSidebar({
   onPageChange: (page: ErpDemoPage) => void;
   onToggle: () => void;
   organizationLabel: string;
+  organizationId?: string;
 }) {
   const compact = useSyncExternalStore(
     subscribeToViewport,
@@ -232,15 +234,6 @@ export function ErpDemoSidebar({
     ? clinicProfileOptions
     : doctorProfileOptions;
   const systemItems = [
-    ...(isDiagnosticWorkspace
-      ? [
-          {
-            id: "onboarding" as const,
-            label: isPathologyWorkspace ? "Organization setup" : "Centre setup",
-            icon: Building2,
-          },
-        ]
-      : []),
     {
       id: isClinicWorkspace
         ? "clinic-profile"
@@ -255,7 +248,6 @@ export function ErpDemoSidebar({
       label: "Settings",
       icon: Settings,
     },
-    { id: "settings-data-export", label: "Data", icon: Database },
   ] satisfies readonly NavItem[];
   const userName =
     sessionState.data?.user?.name ||
@@ -407,6 +399,27 @@ export function ErpDemoSidebar({
               theme={workspaceTheme}
             />
           </nav>
+
+          {organizationId &&
+            !isDoctorWorkspace &&
+            allowedPages.includes("onboarding") && (
+              <div className="mt-4">
+                <CompleteProfileOption
+                  organizationId={organizationId}
+                  kind={
+                    isPathologyWorkspace
+                      ? "pathology"
+                      : isRadiologyWorkspace
+                        ? "radiology"
+                        : isClinicWorkspace
+                          ? "clinic"
+                          : "hospital"
+                  }
+                  collapsed={isCollapsed}
+                  onContinue={() => onPageChange("onboarding")}
+                />
+              </div>
+            )}
 
           <div className="erp-sidebar-account relative mt-4 space-y-2 border-t border-slate-200/80 pt-4 dark:border-white/[0.08]">
             <Link

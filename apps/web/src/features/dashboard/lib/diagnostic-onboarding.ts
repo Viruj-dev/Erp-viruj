@@ -82,3 +82,42 @@ export function canManageDiagnosticSetup(role?: string | null) {
 }
 export const diagnosticSetupKey = (id: string) =>
   ["diagnostic-onboarding", id] as const;
+
+export function needsDiagnosticProfileCompletion(
+  setup: DiagnosticOnboardingState,
+  kind: "pathology" | "radiology"
+) {
+  const data = setup.data;
+  if (!setup.completedAt || !data) return true;
+  const requiredFields: (keyof DiagnosticSetup)[] = [
+    "centreName",
+    "registrationNumber",
+    "phone",
+    "email",
+    "branchName",
+    "address",
+    "city",
+    "state",
+    "postalCode",
+    "openingTime",
+    "closingTime",
+    ...(kind === "radiology"
+      ? ([
+          "legalName",
+          "registrationAuthority",
+          "reportingName",
+          "reportingRegistration",
+          "reportingEmail",
+          "equipment",
+          "referralPolicy",
+          "screeningProcess",
+          "imageWorkflow",
+        ] as const)
+      : []),
+  ];
+  return (
+    requiredFields.some((field) => !String(data[field] ?? "").trim()) ||
+    !data.workingDays?.length ||
+    (kind === "radiology" && !data.modalities?.length)
+  );
+}

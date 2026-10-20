@@ -355,17 +355,7 @@ function ServiceForm({
             defaultValue={pathology ? undefined : service?.name}
           />
         </Label>
-        <Label className="block space-y-1 text-sm">
-          Service code
-          <Input
-            disabled={detailsDisabled}
-            required
-            maxLength={40}
-            name="code"
-            value={serviceCode}
-            onChange={(event) => setServiceCode(event.target.value)}
-          />
-        </Label>
+
         <Label className="block space-y-1 text-sm">
           Price (₹)
           <Input

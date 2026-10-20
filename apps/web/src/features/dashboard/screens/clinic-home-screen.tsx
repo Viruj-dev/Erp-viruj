@@ -387,6 +387,7 @@ export function ClinicHomeScreen({
       className={`erp-workspace flex h-dvh min-h-dvh bg-surface text-on-surface transition-colors dark:bg-[#0b0d10] dark:text-slate-100 ${workspaceTheme.selection}`}
     >
       <ErpDemoSidebar
+        organizationId={activeOrganization.id}
         allowedPages={allowedPages}
         currentPage={resolvedPage}
         isCollapsed={isSidebarCollapsed}

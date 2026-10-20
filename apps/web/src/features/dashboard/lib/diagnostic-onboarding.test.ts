@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
 import {
   canManageDiagnosticSetup,
+  needsDiagnosticProfileCompletion,
+  type DiagnosticOnboardingState,
   diagnosticSetupKey,
   emptyDiagnosticSetup,
 } from "./diagnostic-onboarding";
@@ -60,4 +62,62 @@ test("all organization types include shared sidebar destinations with billing pe
       "subscription"
     );
   }
+});
+
+function completedSetup(): DiagnosticOnboardingState {
+  return {
+    completedAt: "2026-10-20T00:00:00Z",
+    version: 1,
+    data: {
+      ...emptyDiagnosticSetup("Test lab", "lab@example.com"),
+      registrationNumber: "LAB-123",
+      phone: "9876543210",
+      address: "Main Road",
+      city: "Delhi",
+      state: "Delhi",
+      postalCode: "110001",
+    },
+  };
+}
+
+test("prompts for absent setup and unfinished drafts", () => {
+  expect(
+    needsDiagnosticProfileCompletion(
+      { data: null, completedAt: null, version: 0 },
+      "pathology"
+    )
+  ).toBe(true);
+  expect(
+    needsDiagnosticProfileCompletion(
+      { ...completedSetup(), completedAt: null },
+      "pathology"
+    )
+  ).toBe(true);
+});
+
+test("detects missing required fields even when setup was marked complete", () => {
+  const setup = completedSetup();
+  setup.data!.registrationNumber = "  ";
+  expect(needsDiagnosticProfileCompletion(setup, "pathology")).toBe(true);
+});
+
+test("hides the prompt for complete pathology and checks radiology-specific fields", () => {
+  const setup = completedSetup();
+  expect(needsDiagnosticProfileCompletion(setup, "pathology")).toBe(false);
+  expect(needsDiagnosticProfileCompletion(setup, "radiology")).toBe(true);
+  Object.assign(setup.data!, {
+    legalName: "Test Imaging",
+    registrationAuthority: "Authority",
+    reportingName: "Doctor",
+    reportingRegistration: "REG-123",
+    reportingEmail: "doctor@example.com",
+    equipment: "MRI",
+    referralPolicy: "Referral",
+    screeningProcess: "Screening",
+    imageWorkflow: "PACS",
+    modalities: ["MRI"],
+  });
+  expect(needsDiagnosticProfileCompletion(setup, "radiology")).toBe(false);
+  setup.data!.workingDays = [];
+  expect(needsDiagnosticProfileCompletion(setup, "radiology")).toBe(true);
 });
