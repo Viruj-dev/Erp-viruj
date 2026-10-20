@@ -3,7 +3,17 @@ import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/erp/input";
-import { ErpSelect } from "@/components/ui/erp/select";
+import { Textarea } from "@/components/ui/erp/textarea";
+import { Label } from "@/components/ui/erp/label";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -85,7 +95,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
     >
       <section className="rounded-2xl border border-slate-200/70 bg-white p-3 dark:border-white/[0.08] dark:bg-[#111418]">
         <div className="flex flex-wrap items-center gap-3">
-          <label className="relative min-w-60 flex-1">
+          <Label className="relative min-w-60 flex-1">
             <Search
               size={17}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -97,17 +107,20 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
               onChange={(event) => setSearch(event.target.value)}
               className="h-11 rounded-xl pl-10"
             />
-          </label>
-          <ErpSelect
-            aria-label="Service status"
-            value={status}
-            onChange={(event) => setStatus(event.target.value)}
-            className="h-11 rounded-xl border bg-transparent px-3 text-sm"
-          >
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="archived">Archived</option>
-          </ErpSelect>
+          </Label>
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger
+              aria-label="Service status"
+              className="h-11 rounded-xl"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="archived">Archived</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </section>
       {query.isPending ? (
@@ -208,6 +221,13 @@ function ServiceForm({
       (tenant.providerType === "radiology" ? "radiology" : "pathology")
   );
   const pathology = kind === "pathology";
+  const [selectedService, setSelectedService] = useState(
+    pathologyServicePresets.find(
+      (item) => item.name === service?.name || item.code === service?.code
+    )?.name ?? ""
+  );
+  const detailsDisabled = pathology && !selectedService;
+  const [serviceCode, setServiceCode] = useState(service?.code ?? "");
   const save = useMutation({
     mutationFn: (data: DiagnosticServiceInput) =>
       virujBackend.diagnostics.saveService(
@@ -241,33 +261,79 @@ function ServiceForm({
   return (
     <form onSubmit={submit} className="space-y-4">
       {tenant.providerType !== "pathology" && (
-        <label className="block space-y-1 text-sm">
+        <Label className="block space-y-1 text-sm">
           Service type
-          <ErpSelect
-            className="w-full rounded-lg border bg-background p-2"
+          <Select
             disabled={Boolean(service)}
             value={kind}
-            onChange={(e) =>
-              setKind(e.target.value as "pathology" | "radiology")
+            onValueChange={(value) =>
+              setKind(value as "pathology" | "radiology")
             }
           >
-            <option value="pathology">Pathology test / panel</option>
-            <option value="radiology">Radiology scan</option>
-          </ErpSelect>
-        </label>
+            <SelectTrigger aria-label="Service type" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pathology">Pathology test / panel</SelectItem>
+              <SelectItem value="radiology">Radiology scan</SelectItem>
+            </SelectContent>
+          </Select>
+        </Label>
       )}
-      <label className="block space-y-1 text-sm">
+      {pathology && (
+        <div className="space-y-1 text-sm">
+          <Label htmlFor="pathology-service">Choose a test or service</Label>
+          <Select
+            name="pathologyService"
+            required
+            value={selectedService}
+            onValueChange={(value) => {
+              const preset = pathologyServicePresets.find(
+                (item) => item.name === value
+              );
+              if (!preset) return;
+              setSelectedService(preset.name);
+              setServiceCode(preset.code);
+            }}
+          >
+            <SelectTrigger id="pathology-service" className="w-full">
+              <SelectValue placeholder="Select a service" />
+            </SelectTrigger>
+            <SelectContent>
+              {[
+                ...new Set(
+                  pathologyServicePresets.map((item) => item.category)
+                ),
+              ].map((category) => (
+                <SelectGroup key={category}>
+                  <SelectLabel>{category}</SelectLabel>
+                  {pathologyServicePresets
+                    .filter((item) => item.category === category)
+                    .map((item) => (
+                      <SelectItem key={item.code} value={item.name}>
+                        {item.name}
+                      </SelectItem>
+                    ))}
+                </SelectGroup>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <Label className="block space-y-1 text-sm">
         Description
-        <textarea
+        <Textarea
+          disabled={detailsDisabled}
           name="description"
           maxLength={3000}
           defaultValue={service?.description}
           className="min-h-20 w-full rounded-lg border bg-transparent p-3"
         />
-      </label>
-      <label className="block space-y-1 text-sm">
+      </Label>
+      <Label className="block space-y-1 text-sm">
         Appointment duration (minutes)
         <Input
+          disabled={detailsDisabled}
           name="durationMinutes"
           type="number"
           min="1"
@@ -275,75 +341,35 @@ function ServiceForm({
           required
           defaultValue={service?.durationMinutes ?? 30}
         />
-      </label>
-      {pathology && (
-        <label className="block space-y-1 text-sm">
-          Choose a test or service
-          <select
-            name="pathologyService"
-            required
-            className="w-full rounded-lg border bg-background p-2"
-            defaultValue={
-              pathologyServicePresets.find(
-                (item) =>
-                  item.name === service?.name || item.code === service?.code
-              )?.name ?? ""
-            }
-            onChange={(event) => {
-              const preset = pathologyServicePresets.find(
-                (item) => item.name === event.target.value
-              );
-              const form = event.currentTarget.form;
-              if (!preset || !form) return;
-              for (const key of ["name", "code"] as const) {
-                const input = form.elements.namedItem(key);
-                if (input instanceof HTMLInputElement)
-                  input.value = preset[key];
-              }
-            }}
-          >
-            <option value="" disabled>
-              Select a service
-            </option>
-            {[
-              ...new Set(pathologyServicePresets.map((item) => item.category)),
-            ].map((category) => (
-              <optgroup key={category} label={category}>
-                {pathologyServicePresets
-                  .filter((item) => item.category === category)
-                  .map((item) => (
-                    <option key={item.code} value={item.name}>
-                      {item.name}
-                    </option>
-                  ))}
-              </optgroup>
-            ))}
-          </select>
-        </label>
-      )}
+      </Label>
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="space-y-1 text-sm">
+        <Label className="block space-y-1 text-sm">
           Service name
           <Input
+            disabled={detailsDisabled}
             required
             maxLength={150}
             name="name"
             readOnly={pathology}
-            defaultValue={service?.name}
+            value={pathology ? selectedService : undefined}
+            defaultValue={pathology ? undefined : service?.name}
           />
-        </label>
-        <label className="space-y-1 text-sm">
+        </Label>
+        <Label className="block space-y-1 text-sm">
           Service code
           <Input
+            disabled={detailsDisabled}
             required
             maxLength={40}
             name="code"
-            defaultValue={service?.code}
+            value={serviceCode}
+            onChange={(event) => setServiceCode(event.target.value)}
           />
-        </label>
-        <label className="space-y-1 text-sm">
+        </Label>
+        <Label className="block space-y-1 text-sm">
           Price (₹)
           <Input
+            disabled={detailsDisabled}
             required
             type="number"
             min="0"
@@ -352,10 +378,11 @@ function ServiceForm({
             name="price"
             defaultValue={(service?.pricePaise ?? 0) / 100}
           />
-        </label>
-        <label className="space-y-1 text-sm">
+        </Label>
+        <Label className="block space-y-1 text-sm">
           Turnaround (hours)
           <Input
+            disabled={detailsDisabled}
             required
             type="number"
             min="1"
@@ -364,10 +391,11 @@ function ServiceForm({
             name="turnaroundHours"
             defaultValue={service?.turnaroundHours ?? 24}
           />
-        </label>
-        <label className="space-y-1 text-sm">
+        </Label>
+        <Label className="block space-y-1 text-sm">
           {pathology ? "Specimen" : "Modality"}
           <Input
+            disabled={detailsDisabled}
             required
             name={pathology ? "specimen" : "modality"}
             defaultValue={
@@ -375,24 +403,25 @@ function ServiceForm({
             }
             placeholder={pathology ? "Whole blood" : "CT, MRI, X-ray…"}
           />
-        </label>
+        </Label>
       </div>
-      <label className="block space-y-1 text-sm">
+      <Label className="block space-y-1 text-sm">
         Preparation instructions
-        <textarea
+        <Textarea
+          disabled={detailsDisabled}
           name="preparation"
           maxLength={3000}
           defaultValue={service?.preparation}
           className="min-h-20 w-full rounded-lg border bg-transparent p-3"
         />
-      </label>
+      </Label>
       {save.isError && (
         <p role="alert" className="text-sm text-destructive">
           {save.error.message}
         </p>
       )}
       <Button
-        disabled={save.isPending}
+        disabled={save.isPending || detailsDisabled}
         type="submit"
         className={
           pathology
