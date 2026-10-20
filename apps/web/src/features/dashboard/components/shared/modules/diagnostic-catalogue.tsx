@@ -220,9 +220,13 @@ function ServiceForm({
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const preset = pathologyServicePresets.find(
+      (item) => item.name === form.get("pathologyService")
+    );
+    if (pathology && !preset) return;
     save.mutate({
       kind,
-      name: String(form.get("name")),
+      name: preset?.name ?? String(form.get("name")),
       code: String(form.get("code")),
       pricePaise: Math.round(Number(form.get("price")) * 100),
       turnaroundHours: Number(form.get("turnaroundHours")),
@@ -275,22 +279,32 @@ function ServiceForm({
       {pathology && (
         <label className="block space-y-1 text-sm">
           Choose a test or service
-          <ErpSelect
-            defaultValue=""
+          <select
+            name="pathologyService"
+            required
+            className="w-full rounded-lg border bg-background p-2"
+            defaultValue={
+              pathologyServicePresets.find(
+                (item) =>
+                  item.name === service?.name || item.code === service?.code
+              )?.name ?? ""
+            }
             onChange={(event) => {
               const preset = pathologyServicePresets.find(
                 (item) => item.name === event.target.value
               );
               const form = event.currentTarget.form;
               if (!preset || !form) return;
-              for (const key of ["name", "code", "specimen"] as const) {
+              for (const key of ["name", "code"] as const) {
                 const input = form.elements.namedItem(key);
                 if (input instanceof HTMLInputElement)
                   input.value = preset[key];
               }
             }}
           >
-            <option value="">Custom service / choose from the list</option>
+            <option value="" disabled>
+              Select a service
+            </option>
             {[
               ...new Set(pathologyServicePresets.map((item) => item.category)),
             ].map((category) => (
@@ -304,7 +318,7 @@ function ServiceForm({
                   ))}
               </optgroup>
             ))}
-          </ErpSelect>
+          </select>
         </label>
       )}
       <div className="grid gap-4 sm:grid-cols-2">
@@ -314,6 +328,7 @@ function ServiceForm({
             required
             maxLength={150}
             name="name"
+            readOnly={pathology}
             defaultValue={service?.name}
           />
         </label>
