@@ -12,7 +12,6 @@ import { Building2, MapPin, Clock3, Phone, ArrowUpRight } from "lucide-react";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import { diagnosticSetupKey } from "@/features/dashboard/lib/diagnostic-onboarding";
 import { virujBackend } from "@/lib/viruj-backend";
-import { DiagnosticPublishingStatus } from "./diagnostic-publishing-status";
 
 export function PathologyProfile({ tenant }: { tenant: ErpTenantContext }) {
   const query = useQuery({
@@ -123,7 +122,6 @@ export function PathologyProfile({ tenant }: { tenant: ErpTenantContext }) {
           </Link>
         )}
       </header>
-      <DiagnosticPublishingStatus tenant={tenant} />
       <ProfileHero
         name={data.centreName}
         logoUrl={

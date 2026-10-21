@@ -830,8 +830,8 @@ function SetupForm({
             <div className="rounded-xl border border-dashed p-5 text-sm leading-7 text-muted-foreground">
               Completing setup saves your primary branch as private. Next, add
               your services and prices, configure appointment slots, and publish
-              your branch from App publishing to accept app bookings. Add your
-              team from Staff.
+              your branch in Facilities to accept app bookings. Add your team
+              from Staff.
             </div>
             <label className="flex items-start gap-2 text-sm">
               <input

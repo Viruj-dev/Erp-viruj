@@ -197,7 +197,6 @@ export function ErpDemoSidebar({
       icon: isPathologyWorkspace ? FlaskConical : ScanLine,
     },
     { id: "appointments", label: "Bookings", icon: ClipboardCheck },
-    { id: "facilities", label: "App publishing", icon: MapPinned },
     { id: "patients", label: "Patients", icon: Users },
     { id: "staff", label: "Team", icon: BadgeCheck },
     { id: "activity-logs", label: "Activity Logs", icon: History },
@@ -206,7 +205,7 @@ export function ErpDemoSidebar({
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "appointments", label: "Appointments", icon: ClipboardCheck },
     { id: "services", label: "Services", icon: FlaskConical },
-    { id: "facilities", label: "App publishing & branches", icon: MapPinned },
+    { id: "facilities", label: "Facilities", icon: HeartPulse },
     { id: "staff", label: "Staff", icon: BadgeCheck },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
   ];
