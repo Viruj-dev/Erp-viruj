@@ -31,6 +31,7 @@ import { virujBackend } from "@/lib/viruj-backend";
 import { ClinicServiceList } from "../facilities/_components/catalog";
 import { Search } from "lucide-react";
 import { DashboardPageShell } from "../dashboard-page-shell";
+import { TimePicker } from "../../hospital/pages/onboarding/time-picker";
 
 export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
   const client = useQueryClient();
@@ -39,6 +40,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
   );
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
+  const [deleting, setDeleting] = useState<DiagnosticService | null>(null);
   const canManage = diagnosticPermissions(tenant.role).catalogue;
   const key = virujBackend.diagnostics.key(tenant.organizationId, "services");
   const query = useQuery({
@@ -53,6 +55,14 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
         !service.active
       ),
     onSuccess: () => client.invalidateQueries({ queryKey: key }),
+  });
+  const remove = useMutation({
+    mutationFn: (service: DiagnosticService) =>
+      virujBackend.diagnostics.deleteService(tenant.organizationId, service.id),
+    onSuccess: () => {
+      setDeleting(null);
+      void client.invalidateQueries({ queryKey: key });
+    },
   });
   const pathology = tenant.providerType === "pathology";
   const accent = pathology
@@ -157,13 +167,28 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
               update: canManage,
               publish: canManage,
               archive: canManage,
-              delete: false,
+              delete: canManage,
             }}
-            isUpdatingId={archive.isPending ? archive.variables?.id : null}
+            actionLabels={{
+              edit: "Edit",
+              activate: "Publish",
+              deactivate: "Unpublish",
+              delete: "Delete",
+            }}
+            isUpdatingId={
+              archive.isPending
+                ? archive.variables?.id
+                : remove.isPending
+                  ? remove.variables?.id
+                  : null
+            }
             onActivate={(service) => archive.mutate(service)}
             onDeactivate={(service) => archive.mutate(service)}
             onEdit={(service) => setEditing(service)}
-            onDelete={() => {}}
+            onDelete={(service) => {
+              remove.reset();
+              setDeleting(service);
+            }}
           />
         </section>
       )}
@@ -174,8 +199,47 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
       )}
       <p className="text-xs text-muted-foreground">
         Showing up to 200 catalogue entries. Existing orders retain their
-        original service configuration.
+        original service configuration. Published services appear in the app
+        when their branch is published.
       </p>
+      <Dialog
+        open={Boolean(deleting)}
+        onOpenChange={(open) => {
+          if (!open && !remove.isPending) setDeleting(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogTitle>Delete service?</DialogTitle>
+          <DialogDescription>
+            Delete {deleting?.name} and its unused appointment slots? This
+            cannot be undone. Services linked to patient orders cannot be
+            deleted; unpublish them instead.
+          </DialogDescription>
+          {remove.isError && (
+            <p role="alert" className="text-sm text-destructive">
+              {remove.error.message}
+            </p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              disabled={remove.isPending}
+              onClick={() => setDeleting(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={remove.isPending || !deleting}
+              onClick={() => {
+                if (deleting) remove.mutate(deleting);
+              }}
+            >
+              {remove.isPending ? "Deleting…" : "Delete service"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       <Dialog
         open={editing !== null}
         onOpenChange={(open) => {
@@ -229,6 +293,12 @@ function ServiceForm({
   const detailsDisabled = pathology && !selectedService;
   const [serviceCode, setServiceCode] = useState(service?.code ?? "");
   const [scheduled, setScheduled] = useState(Boolean(service?.availability));
+  const [availableFrom, setAvailableFrom] = useState(
+    service?.availability?.startsAt ?? "09:00"
+  );
+  const [availableUntil, setAvailableUntil] = useState(
+    service?.availability?.endsAt ?? "17:00"
+  );
   const [workingDays, setWorkingDays] = useState(
     service?.availability?.days ?? [1, 2, 3, 4, 5, 6]
   );
@@ -263,8 +333,8 @@ function ServiceForm({
       availability: scheduled
         ? {
             days: workingDays,
-            startsAt: String(form.get("availableFrom")),
-            endsAt: String(form.get("availableUntil")),
+            startsAt: availableFrom,
+            endsAt: availableUntil,
           }
         : null,
     });
@@ -415,25 +485,23 @@ function ServiceForm({
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Label className="space-y-1 text-sm">
-                From (IST)
-                <Input
-                  type="time"
-                  name="availableFrom"
-                  required
-                  defaultValue={service?.availability?.startsAt ?? "09:00"}
-                />
-              </Label>
-              <Label className="space-y-1 text-sm">
-                Until (IST)
-                <Input
-                  type="time"
-                  name="availableUntil"
-                  required
-                  defaultValue={service?.availability?.endsAt ?? "17:00"}
-                />
-              </Label>
+            <div
+              className={`vh-onboarding vh-onboarding--${kind} grid grid-cols-2 gap-3`}
+            >
+              <TimePicker
+                label="From (IST)"
+                value={availableFrom}
+                onChange={setAvailableFrom}
+                disabled={detailsDisabled}
+                themeClassName={`vh-onboarding--${kind}`}
+              />
+              <TimePicker
+                label="Until (IST)"
+                value={availableUntil}
+                onChange={setAvailableUntil}
+                disabled={detailsDisabled}
+                themeClassName={`vh-onboarding--${kind}`}
+              />
             </div>
             <p className="text-xs text-muted-foreground">
               Patients choose a time within these hours for the next 7 days.

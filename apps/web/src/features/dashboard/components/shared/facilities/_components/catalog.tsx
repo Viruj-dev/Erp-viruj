@@ -273,6 +273,7 @@ export function ClinicServiceList<T extends ServiceListRow>({
   onDelete,
   onEdit,
   permissions,
+  actionLabels,
 }: {
   facilities: T[];
   tone?: "violet" | "orange";
@@ -284,6 +285,12 @@ export function ClinicServiceList<T extends ServiceListRow>({
   onDelete: (facility: T) => void;
   onEdit: (facility: T) => void;
   permissions: Record<FacilityAction, boolean>;
+  actionLabels?: {
+    activate: string;
+    deactivate: string;
+    edit: string;
+    delete: string;
+  };
 }) {
   return (
     <div className="overflow-x-auto">
@@ -380,8 +387,8 @@ export function ClinicServiceList<T extends ServiceListRow>({
                         aria-label={`Edit ${facility.name}`}
                         className={
                           tone === "orange"
-                            ? "inline-flex size-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-orange-400/10 dark:hover:text-orange-200"
-                            : "inline-flex size-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-violet-400/10 dark:hover:text-violet-200"
+                            ? "inline-flex h-9 min-w-9 gap-1.5 px-2 items-center justify-center rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-orange-400/10 dark:hover:text-orange-200"
+                            : "inline-flex h-9 min-w-9 gap-1.5 px-2 items-center justify-center rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-violet-400/10 dark:hover:text-violet-200"
                         }
                         disabled={updating}
                         onClick={() => onEdit(facility)}
@@ -389,6 +396,7 @@ export function ClinicServiceList<T extends ServiceListRow>({
                         type="button"
                       >
                         <Edit3 size={15} />
+                        {actionLabels?.edit}
                       </button>
                     ) : null}
                     {permissions.publish ? (
@@ -408,19 +416,21 @@ export function ClinicServiceList<T extends ServiceListRow>({
                         {updating
                           ? "Saving…"
                           : active
-                            ? "Deactivate"
-                            : "Activate"}
+                            ? (actionLabels?.deactivate ?? "Deactivate")
+                            : (actionLabels?.activate ?? "Activate")}
                       </button>
                     ) : null}
                     {permissions.delete ? (
                       <button
                         aria-label={`Delete ${facility.name}`}
-                        className="inline-flex size-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-400/10 dark:hover:text-red-300"
+                        className="inline-flex h-9 min-w-9 gap-1.5 px-2 items-center justify-center rounded-lg text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-400/10 dark:text-red-300"
+                        disabled={updating}
                         onClick={() => onDelete(facility)}
                         title="Delete service"
                         type="button"
                       >
                         <Trash2 size={15} />
+                        {actionLabels?.delete}
                       </button>
                     ) : null}
                   </div>

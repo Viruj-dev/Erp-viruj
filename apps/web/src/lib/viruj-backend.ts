@@ -905,6 +905,33 @@ export const virujBackend = {
         `/diagnostics/bookings/${encodeURIComponent(id)}`,
         { organizationId, method: "PATCH", body }
       ),
+    requestDiagnosticArrival: (
+      organizationId: string,
+      id: string,
+      expectedVersion: number
+    ) =>
+      request<{ expiresAt: string }>(
+        `/diagnostics/bookings/${encodeURIComponent(id)}/arrival-otp`,
+        {
+          organizationId,
+          method: "POST",
+          body: { expectedVersion },
+        }
+      ),
+    verifyDiagnosticArrival: (
+      organizationId: string,
+      id: string,
+      expectedVersion: number,
+      otp: string
+    ) =>
+      request<{ arrivalVerifiedAt: string; version: number }>(
+        `/diagnostics/bookings/${encodeURIComponent(id)}/arrival-verify`,
+        {
+          organizationId,
+          method: "POST",
+          body: { expectedVersion, otp },
+        }
+      ),
     key: (organizationId: string, resource: "orders" | "services") =>
       ["viruj-backend", "diagnostics", organizationId, resource] as const,
     services: (organizationId: string) =>
@@ -925,6 +952,11 @@ export const virujBackend = {
       request<{ success: boolean }>(
         `/diagnostics/services/${encodeURIComponent(id)}`,
         { organizationId, method: "PATCH", body: { active } }
+      ),
+    deleteService: (organizationId: string, id: string) =>
+      request<{ success: boolean }>(
+        `/diagnostics/services/${encodeURIComponent(id)}`,
+        { organizationId, method: "DELETE" }
       ),
     orders: (organizationId: string) =>
       request<DiagnosticOrder[]>("/diagnostics/orders", {

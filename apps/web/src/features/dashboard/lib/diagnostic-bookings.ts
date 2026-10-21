@@ -21,6 +21,7 @@ export type DiagnosticSlot = {
   branch: { name: string };
 };
 export type DiagnosticBooking = {
+  arrivalVerifiedAt?: string | null;
   id: string;
   status: "requested" | "accepted" | "declined" | "cancelled";
   version: number;

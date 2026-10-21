@@ -101,7 +101,9 @@ function BookingCard({
       ),
     onSuccess: refresh,
   });
-  const active = ["requested", "accepted"].includes(booking.status);
+  const active =
+    ["requested", "accepted"].includes(booking.status) &&
+    !booking.arrivalVerifiedAt;
   return (
     <article className="space-y-4 rounded-2xl border bg-card p-5">
       <div className="flex flex-wrap justify-between gap-3">
@@ -130,6 +132,24 @@ function BookingCard({
           : "At-centre appointment"}
       </p>
       {booking.note && <p className="text-sm">Reason: {booking.note}</p>}
+      {booking.arrivalVerifiedAt ? (
+        <p role="status" className="text-sm font-medium text-emerald-700">
+          Arrival verified ·{" "}
+          {new Date(booking.arrivalVerifiedAt).toLocaleString("en-IN", {
+            timeZone: "Asia/Kolkata",
+          })}
+        </p>
+      ) : (
+        booking.status === "accepted" &&
+        booking.collectionMode === "centre" &&
+        ["ordered", "scheduled"].includes(booking.order.status) && (
+          <ArrivalVerification
+            booking={booking}
+            tenant={tenant}
+            refresh={refresh}
+          />
+        )
+      )}
       {active && (
         <div className="space-y-3 border-t pt-4">
           <Input
@@ -182,5 +202,85 @@ function BookingCard({
         </p>
       )}
     </article>
+  );
+}
+
+function ArrivalVerification({
+  booking,
+  tenant,
+  refresh,
+}: {
+  booking: DiagnosticBooking;
+  tenant: ErpTenantContext;
+  refresh(): void;
+}) {
+  const [otp, setOtp] = useState("");
+  const [requested, setRequested] = useState(false);
+  const action = useMutation({
+    mutationFn: async (verify: boolean) => {
+      if (verify) {
+        await virujBackend.diagnostics.verifyDiagnosticArrival(
+          tenant.organizationId,
+          booking.id,
+          booking.version,
+          otp
+        );
+        refresh();
+      } else {
+        await virujBackend.diagnostics.requestDiagnosticArrival(
+          tenant.organizationId,
+          booking.id,
+          booking.version
+        );
+        setRequested(true);
+      }
+    },
+  });
+  return (
+    <section
+      className="space-y-3 rounded-xl border bg-muted/30 p-4"
+      aria-label="Patient arrival verification"
+    >
+      <p className="text-sm font-semibold">Verify patient arrival</p>
+      <p className="text-xs text-muted-foreground">
+        Request a code, then enter the four digits shown in the patient's My
+        Health booking. Valid for five minutes.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant="outline"
+          disabled={action.isPending}
+          onClick={() => action.mutate(false)}
+        >
+          {requested ? "Request a new code" : "Request arrival code"}
+        </Button>
+        <Input
+          aria-label="Four-digit arrival code"
+          inputMode="numeric"
+          autoComplete="off"
+          maxLength={4}
+          value={otp}
+          onChange={(event) => setOtp(event.target.value.replace(/\D/g, ""))}
+          placeholder="4-digit code"
+          className="w-32 tabular-nums"
+        />
+        <Button
+          disabled={action.isPending || !/^\d{4}$/.test(otp)}
+          onClick={() => action.mutate(true)}
+        >
+          Verify arrival
+        </Button>
+      </div>
+      {requested && (
+        <p role="status" className="text-xs text-muted-foreground">
+          Code is available in the patient's app.
+        </p>
+      )}
+      {action.isError && (
+        <p role="alert" className="text-sm text-destructive">
+          {action.error.message}
+        </p>
+      )}
+    </section>
   );
 }
