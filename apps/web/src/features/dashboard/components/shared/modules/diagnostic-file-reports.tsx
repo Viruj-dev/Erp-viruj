@@ -22,7 +22,7 @@ export function DiagnosticFileReports({
       virujBackend.diagnostics.reports(tenant.organizationId, page),
   });
   return (
-    <section className="space-y-5">
+    <section className="mx-auto w-[calc(100%-8px)] max-w-[1440px] space-y-5 sm:w-[calc(100%-16px)] lg:w-[calc(100%-24px)]">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
