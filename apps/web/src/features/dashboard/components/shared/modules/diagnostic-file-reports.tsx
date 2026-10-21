@@ -42,11 +42,6 @@ export function DiagnosticFileReports({
           Refresh
         </Button>
       </div>
-      <p className="text-sm text-muted-foreground">
-        PDF, DOC or DOCX up to 10 MB. Larger reports are prepared to 3 MB or
-        less where possible. Preview the prepared report before sending; sent
-        reports cannot be replaced.
-      </p>
       {query.isPending && <p role="status">Loading confirmed tests…</p>}
       {query.isError && (
         <p role="alert" className="text-destructive">
