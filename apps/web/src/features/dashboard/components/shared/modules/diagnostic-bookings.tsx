@@ -10,6 +10,7 @@ import {
 } from "@/features/dashboard/lib/diagnostics";
 import {
   diagnosticBookingAppointment,
+  canVerifyDiagnosticArrival,
   type DiagnosticBooking,
 } from "@/features/dashboard/lib/diagnostic-bookings";
 import { virujBackend } from "@/lib/viruj-backend";
@@ -55,6 +56,13 @@ export function DiagnosticBookingInbox({
           isFetching: query.isFetching,
           refetch: query.refetch,
           onSelect: setSelectedId,
+          canVerifyArrival: (id) =>
+            Boolean(
+              query.data?.some(
+                (booking) =>
+                  booking.id === id && canVerifyDiagnosticArrival(booking)
+              )
+            ),
         }}
       />
       <Dialog
@@ -64,7 +72,7 @@ export function DiagnosticBookingInbox({
         }}
       >
         <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
-          <DialogTitle>Appointment details</DialogTitle>
+          <DialogTitle>Booking details</DialogTitle>
           <DialogDescription>
             Review the patient, service and requested time.
           </DialogDescription>
@@ -129,7 +137,7 @@ function BookingCard({
       <p className="text-sm text-muted-foreground">
         {booking.collectionMode === "home"
           ? `Home collection: ${booking.collectionAddress}`
-          : "At-centre appointment"}
+          : "At-centre booking"}
       </p>
       {booking.note && <p className="text-sm">Reason: {booking.note}</p>}
       {booking.arrivalVerifiedAt ? (
@@ -140,9 +148,7 @@ function BookingCard({
           })}
         </p>
       ) : (
-        booking.status === "accepted" &&
-        booking.collectionMode === "centre" &&
-        ["ordered", "scheduled"].includes(booking.order.status) && (
+        canVerifyDiagnosticArrival(booking) && (
           <ArrivalVerification
             booking={booking}
             tenant={tenant}

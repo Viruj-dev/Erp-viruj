@@ -55,6 +55,7 @@ export function ErpDemoAppointments({
     isFetching: boolean;
     refetch: () => unknown;
     onSelect: (id: string) => void;
+    canVerifyArrival?: (id: string) => boolean;
   };
 }) {
   const [page, setPage] = useState(1);
@@ -340,8 +341,22 @@ export function ErpDemoAppointments({
                       >
                         {getStatusLabel(appointment.status)}
                       </span>
+                      {appointment.arrivalVerifiedAt && (
+                        <p className="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                          Arrival verified
+                        </p>
+                      )}
                     </td>
                     <td className="px-5 py-3.5">
+                      {source?.canVerifyArrival?.(appointment.id) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => selectAppointment(appointment.id)}
+                        >
+                          Verify arrival
+                        </Button>
+                      )}
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           render={

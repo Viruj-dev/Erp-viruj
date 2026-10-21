@@ -45,6 +45,7 @@ export function diagnosticBookingAppointment(
   return {
     id: booking.id,
     version: booking.version,
+    arrivalVerifiedAt: booking.arrivalVerifiedAt ?? undefined,
     patientName: booking.order.patientName,
     patientPhone: booking.order.patientPhone,
     patientEmail: "",
@@ -70,4 +71,13 @@ export function diagnosticBookingAppointment(
       cancelled: "cancelled",
     }[booking.status] as VirujAppointment["status"],
   };
+}
+
+export function canVerifyDiagnosticArrival(booking: DiagnosticBooking) {
+  return (
+    booking.status === "accepted" &&
+    booking.collectionMode === "centre" &&
+    !booking.arrivalVerifiedAt &&
+    ["ordered", "scheduled"].includes(booking.order.status)
+  );
 }
