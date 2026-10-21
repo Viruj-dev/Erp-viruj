@@ -857,12 +857,22 @@ export const virujBackend = {
     prepareReport: (organizationId: string, file: File) => {
       const form = new FormData();
       form.set("file", file);
-      return formRequest<Blob>("/diagnostics/reports/prepare", form, {
-        organizationId,
-        method: "POST",
-        responseType: "blob",
-        suppressToast: true,
-      });
+      // Large originals bypass the frontend proxy; only the <=3 MB prepared file is sent onward.
+      return centralApiRequest<Blob>(
+        `${directApiUrl.replace(/\/$/, "")}/api/erp/diagnostics/reports/prepare`,
+        "/diagnostics/reports/prepare",
+        {
+          organizationId,
+          method: "POST",
+          responseType: "blob",
+          suppressToast: true,
+        },
+        {
+          body: form,
+          organizationId,
+          fallbackMessage: "Could not prepare report",
+        }
+      );
     },
     reports: (organizationId: string, page: number) =>
       request<{ data: DiagnosticBooking[]; hasMore: boolean }>(
