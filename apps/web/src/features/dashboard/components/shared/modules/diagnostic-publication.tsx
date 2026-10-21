@@ -49,8 +49,8 @@ export function DiagnosticPublication({
       <p className="text-sm text-muted-foreground">
         Publish a branch to show your centre profile, contact details, and
         active tests with prices in the mobile app. Saved changes appear
-        automatically while the branch is published. Add appointment slots for
-        booking.
+        automatically while the branch is published. Set booking hours on each
+        service so patients can choose an appointment time.
       </p>
       {branches.isPending || services.isPending ? (
         <p role="status">Loading publication status…</p>

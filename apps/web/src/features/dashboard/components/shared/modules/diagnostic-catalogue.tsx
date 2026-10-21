@@ -228,6 +228,10 @@ function ServiceForm({
   );
   const detailsDisabled = pathology && !selectedService;
   const [serviceCode, setServiceCode] = useState(service?.code ?? "");
+  const [scheduled, setScheduled] = useState(Boolean(service?.availability));
+  const [workingDays, setWorkingDays] = useState(
+    service?.availability?.days ?? [1, 2, 3, 4, 5, 6]
+  );
   const save = useMutation({
     mutationFn: (data: DiagnosticServiceInput) =>
       virujBackend.diagnostics.saveService(
@@ -256,10 +260,31 @@ function ServiceForm({
       specimen: pathology ? String(form.get("specimen")) : null,
       modality: pathology ? null : String(form.get("modality")),
       parameters: pathology ? (service?.parameters ?? []) : [],
+      availability: scheduled
+        ? {
+            days: workingDays,
+            startsAt: String(form.get("availableFrom")),
+            endsAt: String(form.get("availableUntil")),
+          }
+        : null,
     });
   }
   return (
     <form onSubmit={submit} className="space-y-4">
+      {pathology ? (
+        <input type="hidden" name="code" value={serviceCode} />
+      ) : (
+        <Label className="block space-y-1 text-sm">
+          Service code
+          <Input
+            name="code"
+            required
+            maxLength={40}
+            value={serviceCode}
+            onChange={(event) => setServiceCode(event.target.value)}
+          />
+        </Label>
+      )}
       {tenant.providerType !== "pathology" && (
         <Label className="block space-y-1 text-sm">
           Service type
@@ -342,6 +367,82 @@ function ServiceForm({
           defaultValue={service?.durationMinutes ?? 30}
         />
       </Label>
+      <fieldset
+        disabled={detailsDisabled}
+        className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10"
+      >
+        <legend className="px-1 text-sm font-medium">
+          Mobile booking hours
+        </legend>
+        <Label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={scheduled}
+            onChange={(event) => setScheduled(event.target.checked)}
+          />
+          Offer recurring appointment times for this service
+        </Label>
+        {scheduled && (
+          <>
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-label="Service working days"
+            >
+              {[
+                [1, "Mon"],
+                [2, "Tue"],
+                [3, "Wed"],
+                [4, "Thu"],
+                [5, "Fri"],
+                [6, "Sat"],
+                [0, "Sun"],
+              ].map(([day, name]) => (
+                <button
+                  key={day}
+                  type="button"
+                  aria-pressed={workingDays.includes(Number(day))}
+                  onClick={() =>
+                    setWorkingDays((days) =>
+                      days.includes(Number(day))
+                        ? days.filter((value) => value !== day)
+                        : [...days, Number(day)]
+                    )
+                  }
+                  className={`rounded-lg border px-3 py-2 text-xs font-medium ${workingDays.includes(Number(day)) ? "border-orange-700 bg-orange-50 text-orange-800" : "border-slate-200 text-muted-foreground"}`}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Label className="space-y-1 text-sm">
+                From (IST)
+                <Input
+                  type="time"
+                  name="availableFrom"
+                  required
+                  defaultValue={service?.availability?.startsAt ?? "09:00"}
+                />
+              </Label>
+              <Label className="space-y-1 text-sm">
+                Until (IST)
+                <Input
+                  type="time"
+                  name="availableUntil"
+                  required
+                  defaultValue={service?.availability?.endsAt ?? "17:00"}
+                />
+              </Label>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Patients choose a time within these hours for the next 7 days.
+              Appointment duration sets the spacing. Applies to all published
+              branches; existing bookings are kept.
+            </p>
+          </>
+        )}
+      </fieldset>
       <div className="grid gap-4 sm:grid-cols-2">
         <Label className="block space-y-1 text-sm">
           Service name
@@ -411,7 +512,11 @@ function ServiceForm({
         </p>
       )}
       <Button
-        disabled={save.isPending || detailsDisabled}
+        disabled={
+          save.isPending ||
+          detailsDisabled ||
+          (scheduled && !workingDays.length)
+        }
         type="submit"
         className={
           pathology

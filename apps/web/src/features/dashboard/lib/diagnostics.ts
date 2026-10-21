@@ -5,6 +5,7 @@ export type DiagnosticParameter = {
   reference: string;
 };
 export type DiagnosticService = {
+  availability?: { days: number[]; startsAt: string; endsAt: string } | null;
   description?: string;
   durationMinutes?: number;
   id: string;

@@ -108,7 +108,8 @@ export function DiagnosticAvailability({
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Only published branches and active services appear in the patient app.
-          Add appointment slots so patients can book a visit.
+          Set recurring booking hours in Services. You can also add individual
+          appointment slots here.
         </p>
       </header>
       {[branches, slots, services].some((q) => q.isError) && (
