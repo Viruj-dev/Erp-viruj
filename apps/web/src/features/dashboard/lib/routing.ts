@@ -667,7 +667,7 @@ export function getAllowedDashboardPages(
         "appointments-review",
         "services",
         "facilities",
-          "reports",
+        "reports",
         "staff",
         "analytics",
         "community",

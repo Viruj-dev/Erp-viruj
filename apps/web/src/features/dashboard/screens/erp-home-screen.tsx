@@ -630,7 +630,12 @@ function PageContent({
     appointmentTenant?.providerType === "radiology";
   if (appointmentTenant?.providerType === "pathology") {
     if (currentPage === "reports")
-      return <DiagnosticFileReports key={appointmentTenant.organizationId} tenant={appointmentTenant} />;
+      return (
+        <DiagnosticFileReports
+          key={appointmentTenant.organizationId}
+          tenant={appointmentTenant}
+        />
+      );
     if (currentPage === "profile")
       return <PathologyProfile tenant={appointmentTenant} />;
     if (currentPage === "services" || currentPage === "pathology")
