@@ -205,7 +205,7 @@ export function ErpDemoSidebar({
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "appointments", label: "Appointments", icon: ClipboardCheck },
     { id: "services", label: "Services", icon: FlaskConical },
-    { id: "facilities", label: "Facilities", icon: HeartPulse },
+    { id: "reports", label: "Reports", icon: FileText },
     { id: "staff", label: "Staff", icon: BadgeCheck },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
   ];

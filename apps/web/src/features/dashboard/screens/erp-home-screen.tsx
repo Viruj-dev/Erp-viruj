@@ -1,4 +1,5 @@
 "use client";
+import { DiagnosticFileReports } from "../components/shared/modules/diagnostic-file-reports";
 import { PathologyProfile } from "@/features/dashboard/components/shared/modules/pathology-profile";
 import { DiagnosticCatalogue } from "@/features/dashboard/components/shared/modules/diagnostic-catalogue";
 import { DiagnosticAvailability } from "@/features/dashboard/components/shared/modules/diagnostic-availability";
@@ -628,6 +629,8 @@ function PageContent({
     appointmentTenant?.providerType === "pathology" ||
     appointmentTenant?.providerType === "radiology";
   if (appointmentTenant?.providerType === "pathology") {
+    if (currentPage === "reports")
+      return <DiagnosticFileReports key={appointmentTenant.organizationId} tenant={appointmentTenant} />;
     if (currentPage === "profile")
       return <PathologyProfile tenant={appointmentTenant} />;
     if (currentPage === "services" || currentPage === "pathology")

@@ -21,6 +21,7 @@ export type DiagnosticSlot = {
   branch: { name: string };
 };
 export type DiagnosticBooking = {
+  reportFile?: { filename: string; contentType: string; size: number; createdAt: string } | null;
   arrivalVerifiedAt?: string | null;
   id: string;
   status: "requested" | "accepted" | "declined" | "cancelled";

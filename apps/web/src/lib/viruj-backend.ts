@@ -849,6 +849,17 @@ function compactObject<T extends Record<string, unknown>>(value: T) {
 }
 export const virujBackend = {
   diagnostics: {
+    reports: (organizationId: string, page: number) =>
+      request<{ data: DiagnosticBooking[]; hasMore: boolean }>(`/diagnostics/reports?page=${page}`, { organizationId, suppressToast: true }),
+    sendReport: (organizationId: string, bookingId: string, file: File) => {
+      const form = new FormData();
+      form.set("file", file);
+      return formRequest(`/diagnostics/bookings/${encodeURIComponent(bookingId)}/report-file`, form, {
+        organizationId, method: "POST", successMessage: "Report sent to the patient's My Health",
+      });
+    },
+    reportDownload: (organizationId: string, bookingId: string) =>
+      request<{ url: string }>(`/diagnostics/bookings/${encodeURIComponent(bookingId)}/report-file`, { organizationId, suppressToast: true }),
     onboarding: (organizationId: string) =>
       request<DiagnosticOnboardingState>("/diagnostics/onboarding", {
         organizationId,
