@@ -8,6 +8,9 @@ export type DiagnosticBranch = {
   phone: string;
   published: boolean;
   homeCollection: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+  publicationIssues?: string[];
 };
 export type DiagnosticSlot = {
   id: string;

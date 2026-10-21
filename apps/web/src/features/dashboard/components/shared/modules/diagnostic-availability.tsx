@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/erp/input";
 import { ErpSelect } from "@/components/ui/erp/select";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import { diagnosticPermissions } from "@/features/dashboard/lib/diagnostics";
+import type { DiagnosticBranch } from "@/features/dashboard/lib/diagnostic-bookings";
+import Link from "next/link";
 import { virujBackend } from "@/lib/viruj-backend";
 import { DateTimePicker } from "../../hospital/pages/onboarding/date-time-picker";
 import { appointmentUtcDateTime } from "./appointments/utils";
@@ -33,6 +35,9 @@ export function DiagnosticAvailability({
   });
   const [showBranch, setShowBranch] = useState(false),
     [showSlot, setShowSlot] = useState(false);
+  const [editingBranch, setEditingBranch] = useState<DiagnosticBranch | null>(
+    null
+  );
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [slotError, setSlotError] = useState("");
@@ -49,6 +54,7 @@ export function DiagnosticAvailability({
     }) => virujBackend.diagnostics.saveBranch(tenant.organizationId, body, id),
     onSuccess: () => {
       setShowBranch(false);
+      setEditingBranch(null);
       refresh();
     },
   });
@@ -65,13 +71,18 @@ export function DiagnosticAvailability({
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     branchMutation.mutate({
+      id: editingBranch?.id,
       body: {
-        centreName: organizationName || "Diagnostic centre",
+        ...(editingBranch
+          ? {}
+          : { centreName: organizationName || "Diagnostic centre" }),
         name: f.get("name"),
         address: f.get("address"),
         phone: f.get("phone"),
         published: f.get("published") === "on",
         homeCollection: f.get("homeCollection") === "on",
+        latitude: Number(f.get("latitude")),
+        longitude: Number(f.get("longitude")),
       },
     });
   }
@@ -104,13 +115,30 @@ export function DiagnosticAvailability({
     <section className="space-y-6">
       <header>
         <h2 className="text-2xl font-semibold">
-          Branches & appointment availability
+          Publish your centre to the patient app
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Only published branches and active services appear in the patient app.
-          Add appointment slots so patients can book a visit.
+          Complete organization setup, add an active service with its price, and
+          save your branch location. Publish when ready so nearby patients can
+          find your centre. Appointment slots let them request a booking.
         </p>
       </header>
+      <div className="flex flex-wrap gap-4 text-sm">
+        <Link
+          className="underline underline-offset-4"
+          href={tenant.buildRoute("onboarding")}
+        >
+          Organization setup & primary location
+        </Link>
+        <Link
+          className="underline underline-offset-4"
+          href={tenant.buildRoute(
+            tenant.providerType === "pathology" ? "services" : "radiology"
+          )}
+        >
+          Services & prices
+        </Link>
+      </div>
       {[branches, slots, services].some((q) => q.isError) && (
         <p role="alert" className="text-destructive">
           Unable to load availability. Refresh this page.
@@ -119,7 +147,13 @@ export function DiagnosticAvailability({
       <div className="flex flex-wrap gap-3">
         {manage && (
           <>
-            <Button variant="outline" onClick={() => setShowBranch((v) => !v)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditingBranch(null);
+                setShowBranch((v) => !v);
+              }}
+            >
               Add branch
             </Button>
             <Button variant="outline" onClick={() => setShowSlot((v) => !v)}>
@@ -128,37 +162,113 @@ export function DiagnosticAvailability({
           </>
         )}
       </div>
+      {!branches.isPending && !branches.isError && !branches.data?.length && (
+        <p className="rounded-2xl border p-5 text-sm text-muted-foreground">
+          No branches yet. Complete organization setup to create your primary
+          branch, or add a branch above.
+        </p>
+      )}
       {showBranch && (
         <form
+          key={editingBranch?.id ?? "new"}
           onSubmit={branchSubmit}
           className="space-y-4 rounded-2xl border p-5"
         >
-          <h3 className="font-semibold">New branch</h3>
+          <h3 className="font-semibold">
+            {editingBranch ? "Edit branch & map location" : "New branch"}
+          </h3>
           <label className="block text-sm">
             Branch name
-            <Input name="name" required maxLength={150} />
+            <Input
+              name="name"
+              required
+              maxLength={150}
+              defaultValue={editingBranch?.name}
+            />
           </label>
           <label className="block text-sm">
             Full address
-            <Input name="address" required maxLength={1000} />
+            <Input
+              name="address"
+              required
+              maxLength={1000}
+              defaultValue={editingBranch?.address}
+            />
           </label>
           <label className="block text-sm">
             Phone
-            <Input name="phone" type="tel" maxLength={30} />
+            <Input
+              name="phone"
+              type="tel"
+              maxLength={30}
+              defaultValue={editingBranch?.phone}
+            />
           </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block text-sm">
+              Latitude
+              <Input
+                name="latitude"
+                type="number"
+                step="any"
+                min={-90}
+                max={90}
+                required
+                defaultValue={editingBranch?.latitude ?? ""}
+                placeholder="e.g. 28.6139"
+              />
+            </label>
+            <label className="block text-sm">
+              Longitude
+              <Input
+                name="longitude"
+                type="number"
+                step="any"
+                min={-180}
+                max={180}
+                required
+                defaultValue={editingBranch?.longitude ?? ""}
+                placeholder="e.g. 77.2090"
+              />
+            </label>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Use the coordinates of this branch's map pin. Patients only see
+            centres within their selected search radius.
+          </p>
           <label className="flex gap-2 text-sm">
-            <input type="checkbox" name="published" />
+            <input
+              type="checkbox"
+              name="published"
+              defaultChecked={editingBranch?.published}
+            />
             Publish this branch and its active catalogue in the patient app
           </label>
           {tenant.providerType === "pathology" && (
             <label className="flex gap-2 text-sm">
-              <input type="checkbox" name="homeCollection" />
+              <input
+                type="checkbox"
+                name="homeCollection"
+                defaultChecked={editingBranch?.homeCollection}
+              />
               Offer home collection
             </label>
           )}
-          <Button type="submit" disabled={branchMutation.isPending}>
-            Save branch
-          </Button>
+          <div className="flex gap-3">
+            <Button type="submit" disabled={branchMutation.isPending}>
+              Save branch
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowBranch(false);
+                setEditingBranch(null);
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
         </form>
       )}
       {branchMutation.isError && (
@@ -172,24 +282,87 @@ export function DiagnosticAvailability({
             <h3 className="font-semibold">{branch.name}</h3>
             <p className="text-sm text-muted-foreground">{branch.address}</p>
             <p className="text-sm">
-              {branch.published ? "Published in app" : "Private"} ·{" "}
+              {branch.published && !branch.publicationIssues?.length
+                ? "Published for nearby patients"
+                : branch.published
+                  ? "Published, but not visible yet"
+                  : "Private — not visible in the app"}{" "}
+              ·{" "}
               {branch.homeCollection
                 ? "Home collection available"
                 : "Centre visits"}
             </p>
+            {branch.latitude != null && branch.longitude != null && (
+              <p className="text-xs text-muted-foreground">
+                Map location: {branch.latitude}, {branch.longitude}
+              </p>
+            )}
+            {!!branch.publicationIssues?.length && (
+              <div className="rounded-xl bg-muted p-3 text-sm">
+                <p className="font-medium">
+                  Before this branch can appear in the app:
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-5">
+                  {branch.publicationIssues.map((issue) => (
+                    <li key={issue}>{issue}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {branch.published &&
+              !branch.publicationIssues?.length &&
+              !slots.isPending &&
+              !slots.isError &&
+              !slots.data?.some(
+                (slot) =>
+                  slot.branchId === branch.id &&
+                  !slot.blocked &&
+                  !slot.reserved &&
+                  new Date(slot.startsAt).getTime() > Date.now()
+              ) && (
+                <p className="text-sm text-muted-foreground">
+                  Published, but no available appointment slots are listed. Add
+                  slots to accept app bookings.
+                </p>
+              )}
             {manage && (
-              <Button
-                variant="outline"
-                disabled={branchMutation.isPending}
-                onClick={() =>
-                  branchMutation.mutate({
-                    id: branch.id,
-                    body: { ...branch, published: !branch.published },
-                  })
-                }
-              >
-                {branch.published ? "Unpublish" : "Publish"}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  disabled={branchMutation.isPending}
+                  onClick={() => {
+                    branchMutation.reset();
+                    setEditingBranch(branch);
+                    setShowBranch(true);
+                  }}
+                >
+                  Edit branch & location
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={
+                    branchMutation.isPending ||
+                    (!branch.published &&
+                      Boolean(branch.publicationIssues?.length))
+                  }
+                  onClick={() =>
+                    branchMutation.mutate({
+                      id: branch.id,
+                      body: {
+                        name: branch.name,
+                        address: branch.address,
+                        phone: branch.phone,
+                        homeCollection: branch.homeCollection,
+                        published: !branch.published,
+                      },
+                    })
+                  }
+                >
+                  {branch.published
+                    ? "Unpublish from app"
+                    : "Publish to patient app"}
+                </Button>
+              </div>
             )}
           </article>
         ))}

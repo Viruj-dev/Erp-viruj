@@ -6,6 +6,7 @@ import { diagnosticMoney } from "@/features/dashboard/lib/diagnostics";
 import { virujBackend } from "@/lib/viruj-backend";
 import { useRouter } from "next/navigation";
 import { diagnosticBookingAppointment } from "@/features/dashboard/lib/diagnostic-bookings";
+import { DiagnosticPublishingStatus } from "./diagnostic-publishing-status";
 
 export function DiagnosticWorkspace({
   tenant,
@@ -16,18 +17,23 @@ export function DiagnosticWorkspace({
   organizationName?: string;
   userName: string;
 }) {
-  return tenant.providerType === "pathology" ? (
-    <PathologyWorkspace
-      tenant={tenant}
-      organizationName={organizationName}
-      userName={userName}
-    />
-  ) : (
-    <DiagnosticOverview
-      tenant={tenant}
-      organizationName={organizationName}
-      userName={userName}
-    />
+  return (
+    <div className="space-y-6">
+      <DiagnosticPublishingStatus tenant={tenant} />
+      {tenant.providerType === "pathology" ? (
+        <PathologyWorkspace
+          tenant={tenant}
+          organizationName={organizationName}
+          userName={userName}
+        />
+      ) : (
+        <DiagnosticOverview
+          tenant={tenant}
+          organizationName={organizationName}
+          userName={userName}
+        />
+      )}
+    </div>
   );
 }
 

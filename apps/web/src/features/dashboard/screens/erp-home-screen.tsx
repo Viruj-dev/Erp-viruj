@@ -627,32 +627,25 @@ function PageContent({
   const isDiagnosticTenant =
     appointmentTenant?.providerType === "pathology" ||
     appointmentTenant?.providerType === "radiology";
+  if (appointmentTenant && isDiagnosticTenant && currentPage === "facilities")
+    return (
+      <div className="space-y-6">
+        <DiagnosticAvailability
+          tenant={appointmentTenant}
+          organizationName={organizationName}
+        />
+        <FacilitiesPage
+          routeBasePath={routeBasePath}
+          routeSegments={routeSegments}
+          tenant={appointmentTenant}
+        />
+      </div>
+    );
   if (appointmentTenant?.providerType === "pathology") {
     if (currentPage === "profile")
       return <PathologyProfile tenant={appointmentTenant} />;
     if (currentPage === "services" || currentPage === "pathology")
       return <DiagnosticCatalogue tenant={appointmentTenant} />;
-    if (currentPage === "facilities")
-      return (
-        <div className="space-y-6">
-          <details className="rounded-2xl border bg-card p-5">
-            <summary className="cursor-pointer font-semibold">
-              Branches & appointment availability
-            </summary>
-            <div className="mt-6">
-              <DiagnosticAvailability
-                tenant={appointmentTenant}
-                organizationName={organizationName}
-              />
-            </div>
-          </details>
-          <FacilitiesPage
-            routeBasePath={routeBasePath}
-            routeSegments={routeSegments}
-            tenant={appointmentTenant}
-          />
-        </div>
-      );
     if (currentPage.startsWith("appointments"))
       return <DiagnosticBookingInbox tenant={appointmentTenant} />;
     if (currentPage === "analytics")
