@@ -123,7 +123,6 @@ function ReportRow({
   const client = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [prepared, setPrepared] = useState<File | null>(null);
-  const [previewed, setPreviewed] = useState(false);
   const [error, setError] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
   useEffect(() => {
@@ -160,14 +159,12 @@ function ReportRow({
     },
     onSuccess: (value) => {
       setPrepared(value);
-      setPreviewed(false);
     },
     onError: (failure) => setError(failure.message),
   });
   const send = useMutation({
     mutationFn: async () => {
-      if (!prepared || !previewed)
-        throw new Error("Preview the prepared report before sending.");
+      if (!prepared) throw new Error("Prepare the report before sending.");
       await virujBackend.diagnostics.sendReport(
         organizationId,
         booking.id,
@@ -275,7 +272,6 @@ function ReportRow({
               onChange={(event) => {
                 setFile(event.target.files?.[0] ?? null);
                 setPrepared(null);
-                setPreviewed(false);
                 setError("");
               }}
             />
@@ -306,13 +302,12 @@ function ReportRow({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs font-medium underline"
-                    onClick={() => setPreviewed(true)}
                   >
                     Preview · {(prepared.size / 1_000_000).toFixed(2)} MB
                   </a>
                   <Button
                     size="sm"
-                    disabled={!previewed || busy}
+                    disabled={busy}
                     onClick={() => {
                       setError("");
                       send.mutate();
