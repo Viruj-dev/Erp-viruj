@@ -12,6 +12,7 @@ import { Building2, MapPin, Clock3, Phone, ArrowUpRight } from "lucide-react";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import { diagnosticSetupKey } from "@/features/dashboard/lib/diagnostic-onboarding";
 import { virujBackend } from "@/lib/viruj-backend";
+import { DiagnosticPublication } from "./diagnostic-publication";
 
 export function PathologyProfile({ tenant }: { tenant: ErpTenantContext }) {
   const query = useQuery({
@@ -137,6 +138,7 @@ export function PathologyProfile({ tenant }: { tenant: ErpTenantContext }) {
           .filter(Boolean)
           .join(" · ")}
       />
+      <DiagnosticPublication key={tenant.organizationId} tenant={tenant} />
       <div className="grid gap-5 lg:grid-cols-2">
         {sections.map(({ title, rows }) => (
           <ProfileDetailPanel

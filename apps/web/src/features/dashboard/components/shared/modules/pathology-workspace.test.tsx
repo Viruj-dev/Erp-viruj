@@ -8,6 +8,7 @@ import {
 } from "@/features/dashboard/lib/diagnostic-onboarding";
 import { virujBackend } from "@/lib/viruj-backend";
 import { PathologyProfile } from "./pathology-profile";
+import { DiagnosticPublication } from "./diagnostic-publication";
 mock.module("next/navigation", () => ({
   useRouter: () => ({ push() {}, replace() {} }),
   usePathname: () => "/pathology/lab-a/dashboard",
@@ -37,6 +38,59 @@ test("pathology dashboard counts services and branches without loading laborator
   expect(html).toContain("Your branches");
   expect(html).not.toContain("Reports");
   expect(client.getQueryCache().getAll()).toHaveLength(3);
+  client.clear();
+});
+
+test("publication controls reflect branch visibility and restrict publishing to managers with active tests", () => {
+  const client = new QueryClient();
+  const branchKey = ["diagnostic-availability", "lab-a", "branches"];
+  const serviceKey = virujBackend.diagnostics.key("lab-a", "services");
+  client.setQueryData(branchKey, [
+    {
+      id: "private",
+      tenantId: "lab-a",
+      name: "Main branch",
+      address: "Delhi",
+      phone: "",
+      published: false,
+      homeCollection: false,
+    },
+    {
+      id: "public",
+      tenantId: "lab-a",
+      name: "City branch",
+      address: "Delhi",
+      phone: "",
+      published: true,
+      homeCollection: true,
+    },
+  ]);
+  const render = (role = "OWNER") =>
+    renderToStaticMarkup(
+      <QueryClientProvider client={client}>
+        <DiagnosticPublication tenant={{ ...tenant, role }} />
+      </QueryClientProvider>
+    );
+  client.setQueryData(serviceKey, [{ id: "cbc", active: true }]);
+  const published = render();
+  expect(published).toContain("Publish to mobile app");
+  expect(published).toContain("Unpublish");
+  expect(published).toContain("Private · ERP only");
+  expect(published).toContain("Published to mobile app");
+  expect(published).not.toMatch(/<button[^>]*\sdisabled=/);
+  const staff = render("TECHNICIAN");
+  expect(staff).not.toContain("<button");
+  expect(staff).toContain("Published to mobile app");
+  client.setQueryData(serviceKey, [{ id: "cbc", active: false }]);
+  const noTests = render();
+  expect(noTests).toMatch(
+    /<button[^>]*aria-label="Publish Main branch to mobile app"[^>]*disabled/
+  );
+  expect(noTests).not.toMatch(
+    /<button[^>]*aria-label="Unpublish City branch from mobile app"[^>]*disabled/
+  );
+  client.setQueryData(branchKey, []);
+  expect(render()).toContain("add a branch before publishing");
   client.clear();
 });
 
@@ -71,5 +125,6 @@ test("pathology profile displays saved identity and contact details for its tena
   ])
     expect(html).toContain(value);
   expect(html).not.toContain("Other tenant");
+  expect(html).toContain("Mobile app publishing");
   client.clear();
 });
