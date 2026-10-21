@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -122,19 +122,8 @@ function ReportRow({
 }) {
   const client = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
-  const [prepared, setPrepared] = useState<File | null>(null);
   const [error, setError] = useState("");
-  const [previewUrl, setPreviewUrl] = useState("");
-  useEffect(() => {
-    if (!prepared) {
-      setPreviewUrl("");
-      return;
-    }
-    const url = URL.createObjectURL(prepared);
-    setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [prepared]);
-  const prepare = useMutation({
+  const send = useMutation({
     mutationFn: async () => {
       if (
         !file ||
@@ -148,32 +137,26 @@ function ReportRow({
         file
       );
       if (!blob.size || blob.size > 3_000_000)
-        throw new Error("Could not prepare a report under 3 MB.");
+        throw new Error("Could not compress the report under 3 MB.");
       const extension =
         blob.type === "application/pdf"
           ? "pdf"
           : blob.type === "application/msword"
             ? "doc"
             : "docx";
-      return new File([blob], `report.${extension}`, { type: blob.type });
-    },
-    onSuccess: (value) => {
-      setPrepared(value);
-    },
-    onError: (failure) => setError(failure.message),
-  });
-  const send = useMutation({
-    mutationFn: async () => {
-      if (!prepared) throw new Error("Prepare the report before sending.");
+      const compressed = new File(
+        [blob],
+        `${file.name.replace(/\.(pdf|doc|docx)$/i, "")}.${extension}`,
+        { type: blob.type }
+      );
       await virujBackend.diagnostics.sendReport(
         organizationId,
         booking.id,
-        prepared
+        compressed
       );
     },
     onSuccess: () => {
       setFile(null);
-      setPrepared(null);
       void client.invalidateQueries({
         queryKey: ["diagnostic-file-reports", organizationId],
       });
@@ -193,7 +176,7 @@ function ReportRow({
     },
     onError: (failure) => setError(failure.message),
   });
-  const busy = prepare.isPending || send.isPending;
+  const busy = send.isPending;
   return (
     <tr className="align-top hover:bg-muted/20">
       <td className="px-4 py-4">
@@ -271,52 +254,21 @@ function ReportRow({
               disabled={busy}
               onChange={(event) => {
                 setFile(event.target.files?.[0] ?? null);
-                setPrepared(null);
                 setError("");
               }}
             />
             <div className="flex flex-wrap items-center gap-2">
-              {!prepared && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={!file || busy}
-                  onClick={() => {
-                    setError("");
-                    prepare.mutate();
-                  }}
-                >
-                  <Upload size={14} />
-                  {prepare.isPending ? "Preparing…" : "Prepare report"}
-                </Button>
-              )}
-              {prepared && (
-                <>
-                  <a
-                    href={previewUrl || undefined}
-                    download={
-                      prepared.type === "application/pdf"
-                        ? undefined
-                        : prepared.name
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-medium underline"
-                  >
-                    Preview · {(prepared.size / 1_000_000).toFixed(2)} MB
-                  </a>
-                  <Button
-                    size="sm"
-                    disabled={busy}
-                    onClick={() => {
-                      setError("");
-                      send.mutate();
-                    }}
-                  >
-                    {send.isPending ? "Sending…" : "Send to patient"}
-                  </Button>
-                </>
-              )}
+              <Button
+                size="sm"
+                disabled={!file || busy}
+                onClick={() => {
+                  setError("");
+                  send.mutate();
+                }}
+              >
+                <Upload size={14} />
+                {send.isPending ? "Sending…" : "Send to patient"}
+              </Button>
             </div>
           </div>
         )}

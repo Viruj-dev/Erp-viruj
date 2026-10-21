@@ -39,7 +39,7 @@ mock.module("@/lib/viruj-backend", () => ({
 }));
 const { DiagnosticFileReports } =
   await import("../components/shared/modules/diagnostic-file-reports");
-test("reports render compact table rows with preparation and download actions", () => {
+test("reports render compact table rows with upload and send actions", () => {
   const html = renderToStaticMarkup(
     <DiagnosticFileReports
       tenant={{ organizationId: "tenant-a", role: "OWNER" } as ErpTenantContext}
@@ -49,6 +49,9 @@ test("reports render compact table rows with preparation and download actions", 
   expect(html).not.toContain("<article");
   expect(html).toContain("Patient A");
   expect(html).toContain("Patient B");
-  expect(html).toContain("Prepare report");
+  expect(html).toContain('type="file"');
+  expect(html).toContain("Send to patient");
+  expect(html).not.toContain("Prepare report");
+  expect(html).not.toContain("Preview");
   expect(html).toContain("Download");
 });
