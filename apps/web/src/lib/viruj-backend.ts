@@ -214,6 +214,7 @@ export type VirujAppointmentStatus =
   | "no_show";
 
 export type VirujAppointment = {
+  statusLabel?: string;
   version?: number;
   bookingSource?: string;
   startsAt?: string;

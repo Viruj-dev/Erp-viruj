@@ -187,7 +187,9 @@ export function ErpDemoAppointments({
                   ]
               ).map((value) => (
                 <option key={value} value={value}>
-                  {getStatusLabel(value)}
+                  {source && value === "approved"
+                    ? "Accepted / confirmed"
+                    : getStatusLabel(value)}
                 </option>
               ))}
             </ErpSelect>
@@ -339,7 +341,8 @@ export function ErpDemoAppointments({
                       <span
                         className={`inline-flex whitespace-nowrap rounded border px-2 py-1 text-[10px] font-medium ${appointmentBadgeColors[appointment.status] ?? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"}`}
                       >
-                        {getStatusLabel(appointment.status)}
+                        {appointment.statusLabel ??
+                          getStatusLabel(appointment.status)}
                       </span>
                       {appointment.arrivalVerifiedAt && (
                         <p className="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">

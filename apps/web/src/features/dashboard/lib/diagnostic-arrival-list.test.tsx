@@ -59,6 +59,8 @@ test("pathology and radiology lists expose arrival verification and retain the v
       );
       expect(html.includes(">Verify arrival<")).toBe(!verified);
       expect(html.includes("Arrival verified")).toBe(verified);
+      expect(html.includes(">Confirmed<")).toBe(verified);
+      expect(html.includes(">Awaiting verification<")).toBe(!verified);
     }
   }
 });

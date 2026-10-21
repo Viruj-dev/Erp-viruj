@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/erp/input";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import type { DiagnosticBooking } from "@/features/dashboard/lib/diagnostic-bookings";
+import { diagnosticBookingStatusLabel } from "@/features/dashboard/lib/diagnostic-bookings";
 import { diagnosticPermissions } from "@/features/dashboard/lib/diagnostics";
 import { virujBackend } from "@/lib/viruj-backend";
 
@@ -30,7 +31,7 @@ export function DiagnosticFileReports({
           </p>
           <h1 className="mt-2 text-3xl font-semibold">Reports</h1>
           <p className="mt-2 text-muted-foreground">
-            Send completed reports to confirmed test bookings in My Health.
+            Send completed reports to accepted test bookings in My Health.
           </p>
         </div>
         <Button
@@ -42,16 +43,16 @@ export function DiagnosticFileReports({
           Refresh
         </Button>
       </div>
-      {query.isPending && <p role="status">Loading confirmed tests…</p>}
+      {query.isPending && <p role="status">Loading accepted tests…</p>}
       {query.isError && (
         <p role="alert" className="text-destructive">
-          Could not load confirmed tests. Refresh to try again.
+          Could not load accepted tests. Refresh to try again.
         </p>
       )}
       <div className="overflow-x-auto rounded-xl border bg-card">
         <table className="w-full min-w-[960px] text-left text-sm">
           <caption className="sr-only">
-            Confirmed pathology tests and patient report delivery
+            Accepted pathology tests and patient report delivery
           </caption>
           <thead className="border-b bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
@@ -83,7 +84,7 @@ export function DiagnosticFileReports({
                   colSpan={5}
                   className="px-4 py-10 text-center text-muted-foreground"
                 >
-                  No confirmed tests on this page.
+                  No accepted tests on this page.
                 </td>
               </tr>
             )}
@@ -214,7 +215,7 @@ function ReportRow({
         <span className="whitespace-nowrap rounded-full bg-muted px-2.5 py-1 text-xs font-semibold">
           {booking.reportFile || booking.order.status === "released"
             ? "Report sent"
-            : "Confirmed"}
+            : diagnosticBookingStatusLabel(booking)}
         </span>
       </td>
       <td className="w-[360px] px-4 py-3">

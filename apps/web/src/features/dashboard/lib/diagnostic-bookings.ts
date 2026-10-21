@@ -1,5 +1,6 @@
 import type { DiagnosticOrder } from "./diagnostics";
 import type { VirujAppointment } from "@/lib/viruj-backend";
+import { diagnosticLabel } from "./diagnostics";
 export type DiagnosticBranch = {
   id: string;
   tenantId: string;
@@ -45,6 +46,7 @@ export function diagnosticBookingAppointment(
   return {
     id: booking.id,
     version: booking.version,
+    statusLabel: diagnosticBookingStatusLabel(booking),
     arrivalVerifiedAt: booking.arrivalVerifiedAt ?? undefined,
     patientName: booking.order.patientName,
     patientPhone: booking.order.patientPhone,
@@ -71,6 +73,14 @@ export function diagnosticBookingAppointment(
       cancelled: "cancelled",
     }[booking.status] as VirujAppointment["status"],
   };
+}
+
+export function diagnosticBookingStatusLabel(booking: DiagnosticBooking) {
+  if (booking.status !== "accepted") return diagnosticLabel(booking.status);
+  if (booking.arrivalVerifiedAt) return "Confirmed";
+  return booking.collectionMode === "home"
+    ? "Accepted"
+    : "Awaiting verification";
 }
 
 export function canVerifyDiagnosticArrival(booking: DiagnosticBooking) {

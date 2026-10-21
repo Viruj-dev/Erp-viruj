@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import {
   canVerifyDiagnosticArrival,
   diagnosticBookingAppointment,
+  diagnosticBookingStatusLabel,
   type DiagnosticBooking,
 } from "./diagnostic-bookings";
 
@@ -43,6 +44,16 @@ test("arrival verification is available before an accepted centre test starts", 
     arrivalVerifiedAt: null,
     order: { status: "ordered" },
   } as DiagnosticBooking;
+  expect(diagnosticBookingStatusLabel(booking)).toBe("Awaiting verification");
+  expect(
+    diagnosticBookingStatusLabel({ ...booking, collectionMode: "home" })
+  ).toBe("Accepted");
+  expect(
+    diagnosticBookingStatusLabel({
+      ...booking,
+      arrivalVerifiedAt: "2026-10-21T10:00:00Z",
+    })
+  ).toBe("Confirmed");
   expect(canVerifyDiagnosticArrival(booking)).toBe(true);
   expect(
     canVerifyDiagnosticArrival({

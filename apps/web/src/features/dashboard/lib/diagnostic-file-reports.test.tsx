@@ -7,6 +7,8 @@ mock.module("@tanstack/react-query", () => ({
       data: [
         {
           id: "booking-a",
+          status: "accepted",
+          collectionMode: "centre",
           order: {
             patientName: "Patient A",
             patientPhone: "1234567890",
@@ -19,6 +21,8 @@ mock.module("@tanstack/react-query", () => ({
         },
         {
           id: "booking-b",
+          status: "accepted",
+          collectionMode: "centre",
           order: {
             patientName: "Patient B",
             status: "released",

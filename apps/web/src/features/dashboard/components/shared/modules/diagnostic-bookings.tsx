@@ -4,13 +4,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/erp/input";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
-import {
-  diagnosticLabel,
-  diagnosticMoney,
-} from "@/features/dashboard/lib/diagnostics";
+import { diagnosticMoney } from "@/features/dashboard/lib/diagnostics";
 import {
   diagnosticBookingAppointment,
   canVerifyDiagnosticArrival,
+  diagnosticBookingStatusLabel,
   type DiagnosticBooking,
 } from "@/features/dashboard/lib/diagnostic-bookings";
 import { virujBackend } from "@/lib/viruj-backend";
@@ -117,7 +115,7 @@ function BookingCard({
       <div className="flex flex-wrap justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            {diagnosticLabel(booking.status)}
+            {diagnosticBookingStatusLabel(booking)}
           </p>
           <h3 className="mt-1 text-lg font-semibold">
             {booking.order.serviceSnapshot.name} ·{" "}
@@ -177,7 +175,7 @@ function BookingCard({
                   }
                   onClick={() => save.mutate("accepted")}
                 >
-                  Confirm booking
+                  Accept booking
                 </Button>
                 <Button
                   variant="outline"
