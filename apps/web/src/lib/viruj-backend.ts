@@ -41,6 +41,7 @@ const erpApiUrl = `${apiBaseUrl.replace(/\/$/, "")}${apiPathPrefix}/erp`;
 const commonApiUrl = `${apiBaseUrl.replace(/\/$/, "")}${apiPathPrefix}/common`;
 
 type RequestOptions = {
+  responseType?: "blob";
   body?: unknown;
   errorMessage?: string;
   method?: "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
@@ -99,7 +100,9 @@ async function centralApiRequest<T>(
 
     if (retry.ok) {
       emitApiSuccess(path, options);
-      return retry.json() as Promise<T>;
+      return (
+        options.responseType === "blob" ? retry.blob() : retry.json()
+      ) as Promise<T>;
     }
 
     await signOutAfterCentralApiUnauthorized();
@@ -123,7 +126,9 @@ async function centralApiRequest<T>(
   }
 
   emitApiSuccess(path, options);
-  return response.json() as Promise<T>;
+  return (
+    options.responseType === "blob" ? response.blob() : response.json()
+  ) as Promise<T>;
 }
 
 async function fetchWithCentralApiToken(
@@ -849,6 +854,16 @@ function compactObject<T extends Record<string, unknown>>(value: T) {
 }
 export const virujBackend = {
   diagnostics: {
+    prepareReport: (organizationId: string, file: File) => {
+      const form = new FormData();
+      form.set("file", file);
+      return formRequest<Blob>("/diagnostics/reports/prepare", form, {
+        organizationId,
+        method: "POST",
+        responseType: "blob",
+        suppressToast: true,
+      });
+    },
     reports: (organizationId: string, page: number) =>
       request<{ data: DiagnosticBooking[]; hasMore: boolean }>(
         `/diagnostics/reports?page=${page}`,

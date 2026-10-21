@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileText, RefreshCw, Upload } from "lucide-react";
+import { RefreshCw, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/erp/input";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
@@ -22,7 +22,7 @@ export function DiagnosticFileReports({
       virujBackend.diagnostics.reports(tenant.organizationId, page),
   });
   return (
-    <section className="space-y-6">
+    <section className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -30,8 +30,7 @@ export function DiagnosticFileReports({
           </p>
           <h1 className="mt-2 text-3xl font-semibold">Reports</h1>
           <p className="mt-2 text-muted-foreground">
-            Send a completed laboratory report to a confirmed test booking.
-            Patients receive it in My Health with a notification.
+            Send completed reports to confirmed test bookings in My Health.
           </p>
         </div>
         <Button
@@ -39,12 +38,14 @@ export function DiagnosticFileReports({
           disabled={query.isFetching}
           onClick={() => void query.refetch()}
         >
-          <RefreshCw size={16} /> Refresh
+          <RefreshCw size={16} />
+          Refresh
         </Button>
       </div>
-      <p className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
-        PDF, DOC or DOCX · Maximum 2 MB. Check the patient and document before
-        sending. Sent reports cannot be replaced.
+      <p className="text-sm text-muted-foreground">
+        PDF, DOC or DOCX up to 10 MB. Larger reports are prepared to 3 MB or
+        less where possible. Preview the prepared report before sending; sent
+        reports cannot be replaced.
       </p>
       {query.isPending && <p role="status">Loading confirmed tests…</p>}
       {query.isError && (
@@ -52,24 +53,47 @@ export function DiagnosticFileReports({
           Could not load confirmed tests. Refresh to try again.
         </p>
       )}
-      {query.data && !query.data.data.length && (
-        <div className="rounded-2xl border bg-card p-8 text-center">
-          <FileText className="mx-auto mb-3 text-muted-foreground" />
-          <h2 className="font-semibold">No confirmed tests on this page</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Accepted test bookings will appear here for report delivery.
-          </p>
-        </div>
-      )}
-      <div className="space-y-4">
-        {query.data?.data.map((booking) => (
-          <ReportRow
-            key={booking.id}
-            booking={booking}
-            organizationId={tenant.organizationId}
-            canSend={diagnosticPermissions(tenant.role).results}
-          />
-        ))}
+      <div className="overflow-x-auto rounded-xl border bg-card">
+        <table className="w-full min-w-[960px] text-left text-sm">
+          <caption className="sr-only">
+            Confirmed pathology tests and patient report delivery
+          </caption>
+          <thead className="border-b bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+            <tr>
+              {[
+                "Patient",
+                "Test / branch",
+                "Booked for",
+                "Status",
+                "Report / actions",
+              ].map((label) => (
+                <th key={label} scope="col" className="px-4 py-3 font-semibold">
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {query.data?.data.map((booking) => (
+              <ReportRow
+                key={booking.id}
+                booking={booking}
+                organizationId={tenant.organizationId}
+                canSend={diagnosticPermissions(tenant.role).results}
+              />
+            ))}
+            {query.data && !query.data.data.length && (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="px-4 py-10 text-center text-muted-foreground"
+                >
+                  No confirmed tests on this page.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
       <div className="flex items-center justify-end gap-3">
         <Button
@@ -103,24 +127,61 @@ function ReportRow({
 }) {
   const client = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
+  const [prepared, setPrepared] = useState<File | null>(null);
+  const [previewed, setPreviewed] = useState(false);
   const [error, setError] = useState("");
-  const send = useMutation({
+  const [previewUrl, setPreviewUrl] = useState("");
+  useEffect(() => {
+    if (!prepared) {
+      setPreviewUrl("");
+      return;
+    }
+    const url = URL.createObjectURL(prepared);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [prepared]);
+  const prepare = useMutation({
     mutationFn: async () => {
       if (
         !file ||
         !file.size ||
-        file.size > 2_000_000 ||
+        file.size > 10_000_000 ||
         !/\.(pdf|doc|docx)$/i.test(file.name)
       )
-        throw new Error("Choose a PDF, DOC or DOCX under 2 MB.");
+        throw new Error("Choose a PDF, DOC or DOCX up to 10 MB.");
+      const blob = await virujBackend.diagnostics.prepareReport(
+        organizationId,
+        file
+      );
+      if (!blob.size || blob.size > 3_000_000)
+        throw new Error("Could not prepare a report under 3 MB.");
+      const extension =
+        blob.type === "application/pdf"
+          ? "pdf"
+          : blob.type === "application/msword"
+            ? "doc"
+            : "docx";
+      return new File([blob], `report.${extension}`, { type: blob.type });
+    },
+    onSuccess: (value) => {
+      setPrepared(value);
+      setPreviewed(false);
+    },
+    onError: (failure) => setError(failure.message),
+  });
+  const send = useMutation({
+    mutationFn: async () => {
+      if (!prepared || !previewed)
+        throw new Error("Preview the prepared report before sending.");
       await virujBackend.diagnostics.sendReport(
         organizationId,
         booking.id,
-        file
+        prepared
       );
     },
     onSuccess: () => {
       setFile(null);
+      setPrepared(null);
       void client.invalidateQueries({
         queryKey: ["diagnostic-file-reports", organizationId],
       });
@@ -140,96 +201,141 @@ function ReportRow({
     },
     onError: (failure) => setError(failure.message),
   });
+  const busy = prepare.isPending || send.isPending;
   return (
-    <article className="rounded-2xl border bg-card p-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold">{booking.order.patientName}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {booking.order.patientPhone} · {booking.order.patientAge ?? "—"}{" "}
-            years · {booking.order.patientSex}
-          </p>
-          <p className="mt-3 font-medium">
-            {booking.order.serviceSnapshot.name}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {booking.slot.branch.name} ·{" "}
-            {new Date(booking.slot.startsAt).toLocaleString("en-IN", {
-              timeZone: "Asia/Kolkata",
-            })}{" "}
-            IST
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Booking {booking.id}
-          </p>
-        </div>
-        <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold">
-          {booking.reportFile ? "Report sent" : "Confirmed"}
+    <tr className="align-top hover:bg-muted/20">
+      <td className="px-4 py-4">
+        <p className="font-semibold">{booking.order.patientName}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {booking.order.patientPhone} · {booking.order.patientAge ?? "—"} ·{" "}
+          {booking.order.patientSex}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground" title={booking.id}>
+          #{booking.id.slice(0, 8)}
+        </p>
+      </td>
+      <td className="px-4 py-4">
+        <p className="font-medium">{booking.order.serviceSnapshot.name}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {booking.slot.branch.name}
+        </p>
+      </td>
+      <td className="whitespace-nowrap px-4 py-4">
+        <p>
+          {new Date(booking.slot.startsAt).toLocaleDateString("en-IN", {
+            timeZone: "Asia/Kolkata",
+          })}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {new Date(booking.slot.startsAt).toLocaleTimeString("en-IN", {
+            timeZone: "Asia/Kolkata",
+            hour: "numeric",
+            minute: "2-digit",
+          })}{" "}
+          IST
+        </p>
+      </td>
+      <td className="px-4 py-4">
+        <span className="whitespace-nowrap rounded-full bg-muted px-2.5 py-1 text-xs font-semibold">
+          {booking.reportFile || booking.order.status === "released"
+            ? "Report sent"
+            : "Confirmed"}
         </span>
-      </div>
-      {booking.reportFile ? (
-        <div className="mt-4 flex flex-wrap items-center gap-4">
-          <p className="text-sm">
-            {booking.reportFile.filename} ·{" "}
-            {Math.ceil(booking.reportFile.size / 1000)} KB · Sent{" "}
-            {new Date(booking.reportFile.createdAt).toLocaleDateString("en-IN")}
-          </p>
-          <Button
-            variant="outline"
-            disabled={download.isPending}
-            onClick={() => {
-              setError("");
-              download.mutate();
-            }}
-          >
-            Download sent report
-          </Button>
-        </div>
-      ) : booking.order.status === "released" ? (
-        <p className="mt-4 text-sm">
-          A report has already been released for this test.
-        </p>
-      ) : !canSend ? (
-        <p className="mt-4 text-sm text-muted-foreground">
-          A laboratory manager or clinical team member can send this report.
-        </p>
-      ) : (
-        <div className="mt-4 flex flex-wrap items-end gap-3">
-          <div className="min-w-0 flex-1">
-            <label
-              htmlFor={`report-${booking.id}`}
-              className="mb-2 block text-sm font-medium"
+      </td>
+      <td className="w-[360px] px-4 py-3">
+        {booking.reportFile ? (
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs text-muted-foreground">
+              {booking.reportFile.filename} ·{" "}
+              {Math.ceil(booking.reportFile.size / 1000)} KB
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={download.isPending}
+              onClick={() => {
+                setError("");
+                download.mutate();
+              }}
             >
-              Completed report for {booking.order.patientName}
-            </label>
+              Download
+            </Button>
+          </div>
+        ) : booking.order.status === "released" ? (
+          <span className="text-xs text-muted-foreground">
+            Report already released
+          </span>
+        ) : !canSend ? (
+          <span className="text-xs text-muted-foreground">
+            A manager or clinical team member can upload.
+          </span>
+        ) : (
+          <div className="space-y-2">
             <Input
-              id={`report-${booking.id}`}
+              aria-label={`Report for ${booking.order.patientName}, booking ${booking.id}`}
               type="file"
               accept=".pdf,.doc,.docx"
-              disabled={send.isPending}
+              className="h-9 text-xs"
+              disabled={busy}
               onChange={(event) => {
                 setFile(event.target.files?.[0] ?? null);
+                setPrepared(null);
+                setPreviewed(false);
                 setError("");
               }}
             />
+            <div className="flex flex-wrap items-center gap-2">
+              {!prepared && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!file || busy}
+                  onClick={() => {
+                    setError("");
+                    prepare.mutate();
+                  }}
+                >
+                  <Upload size={14} />
+                  {prepare.isPending ? "Preparing…" : "Prepare report"}
+                </Button>
+              )}
+              {prepared && (
+                <>
+                  <a
+                    href={previewUrl || undefined}
+                    download={
+                      prepared.type === "application/pdf"
+                        ? undefined
+                        : prepared.name
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-medium underline"
+                    onClick={() => setPreviewed(true)}
+                  >
+                    Preview · {(prepared.size / 1_000_000).toFixed(2)} MB
+                  </a>
+                  <Button
+                    size="sm"
+                    disabled={!previewed || busy}
+                    onClick={() => {
+                      setError("");
+                      send.mutate();
+                    }}
+                  >
+                    {send.isPending ? "Sending…" : "Send to patient"}
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
-          <Button
-            disabled={!file || send.isPending}
-            onClick={() => {
-              setError("");
-              send.mutate();
-            }}
-          >
-            <Upload size={16} />
-            {send.isPending ? "Sending…" : "Send report to patient"}
-          </Button>
-        </div>
-      )}
-      {!!error && (
-        <p role="alert" className="mt-3 text-sm text-destructive">
-          {error}
-        </p>
-      )}
-    </article>
+        )}
+        {!!error && (
+          <p role="alert" className="mt-2 max-w-sm text-xs text-destructive">
+            {error}
+          </p>
+        )}
+      </td>
+    </tr>
   );
 }
