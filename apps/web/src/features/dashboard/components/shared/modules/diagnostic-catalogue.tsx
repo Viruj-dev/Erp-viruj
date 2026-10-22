@@ -70,7 +70,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
   const pathology = tenant.providerType === "pathology";
   const accent = pathology
     ? "bg-orange-700 text-white hover:bg-orange-800"
-    : "bg-zinc-700 text-white hover:bg-zinc-800";
+    : "bg-teal-700 text-white hover:bg-teal-800";
   const rows = (query.data ?? []).filter(
     (s) =>
       `${s.name} ${s.code}`.toLowerCase().includes(search.toLowerCase()) &&
@@ -93,7 +93,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
     <DashboardPageShell
       eyebrow="Services"
       title={pathology ? "Services" : "Radiology services"}
-      tone={pathology ? "orange" : "slate"}
+      tone={pathology ? "orange" : "teal"}
       subtitle="Showcase your care. Manage the services patients can discover and book."
       actions={
         canManage && (
@@ -154,7 +154,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
       ) : (
         <section className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white dark:border-white/[0.08] dark:bg-[#111418]">
           <ClinicServiceList
-            tone={pathology ? "orange" : "violet"}
+            tone={pathology ? "orange" : "teal"}
             categoryLabel={pathology ? "Test branch" : "Category"}
             facilities={serviceRows}
             categoryName={(service) =>
@@ -307,9 +307,7 @@ export function DiagnosticServiceForm({
     ? !selectedService
     : !radiologyService && !service;
   const [serviceCode, setServiceCode] = useState(service?.code ?? "");
-  const [scheduled, setScheduled] = useState(
-    pathology && Boolean(service?.availability)
-  );
+  const [scheduled, setScheduled] = useState(Boolean(service?.availability));
   const [availableFrom, setAvailableFrom] = useState(
     service?.availability?.startsAt ?? "09:00"
   );
@@ -464,82 +462,80 @@ export function DiagnosticServiceForm({
           defaultValue={service?.durationMinutes ?? 30}
         />
       </Label>
-      {pathology && (
-        <fieldset
-          disabled={detailsDisabled}
-          className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10"
-        >
-          <legend className="px-1 text-sm font-medium">
-            Mobile booking hours
-          </legend>
-          <Label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={scheduled}
-              onChange={(event) => setScheduled(event.target.checked)}
-            />
-            Offer recurring appointment times for this service
-          </Label>
-          {scheduled && (
-            <>
-              <div
-                className="flex flex-wrap gap-2"
-                role="group"
-                aria-label="Service working days"
-              >
-                {[
-                  [1, "Mon"],
-                  [2, "Tue"],
-                  [3, "Wed"],
-                  [4, "Thu"],
-                  [5, "Fri"],
-                  [6, "Sat"],
-                  [0, "Sun"]
-                ].map(([day, name]) => (
-                  <button
-                    key={day}
-                    type="button"
-                    aria-pressed={workingDays.includes(Number(day))}
-                    onClick={() =>
-                      setWorkingDays((days) =>
-                        days.includes(Number(day))
-                          ? days.filter((value) => value !== day)
-                          : [...days, Number(day)]
-                      )
-                    }
-                    className={`rounded-lg border px-3 py-2 text-xs font-medium ${workingDays.includes(Number(day)) ? "border-orange-700 bg-orange-50 text-orange-800" : "border-slate-200 text-muted-foreground"}`}
-                  >
-                    {name}
-                  </button>
-                ))}
-              </div>
-              <div
-                className={`vh-onboarding vh-onboarding--${kind} grid grid-cols-2 gap-3`}
-              >
-                <TimePicker
-                  label="From (IST)"
-                  value={availableFrom}
-                  onChange={setAvailableFrom}
-                  disabled={detailsDisabled}
-                  themeClassName={`vh-onboarding--${kind}`}
-                />
-                <TimePicker
-                  label="Until (IST)"
-                  value={availableUntil}
-                  onChange={setAvailableUntil}
-                  disabled={detailsDisabled}
-                  themeClassName={`vh-onboarding--${kind}`}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Patients choose a time within these hours for the next 7 days.
-                Appointment duration sets the spacing. Applies to all published
-                branches; existing bookings are kept.
-              </p>
-            </>
-          )}
-        </fieldset>
-      )}
+      <fieldset
+        disabled={detailsDisabled}
+        className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10"
+      >
+        <legend className="px-1 text-sm font-medium">
+          Mobile booking hours
+        </legend>
+        <Label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={scheduled}
+            onChange={(event) => setScheduled(event.target.checked)}
+          />
+          Offer recurring appointment times for this service
+        </Label>
+        {scheduled && (
+          <>
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-label="Service working days"
+            >
+              {[
+                [1, "Mon"],
+                [2, "Tue"],
+                [3, "Wed"],
+                [4, "Thu"],
+                [5, "Fri"],
+                [6, "Sat"],
+                [0, "Sun"]
+              ].map(([day, name]) => (
+                <button
+                  key={day}
+                  type="button"
+                  aria-pressed={workingDays.includes(Number(day))}
+                  onClick={() =>
+                    setWorkingDays((days) =>
+                      days.includes(Number(day))
+                        ? days.filter((value) => value !== day)
+                        : [...days, Number(day)]
+                    )
+                  }
+                  className={`rounded-lg border px-3 py-2 text-xs font-medium ${workingDays.includes(Number(day)) ? (pathology ? "border-orange-700 bg-orange-50 text-orange-800" : "border-teal-700 bg-teal-50 text-teal-800 dark:border-teal-400 dark:bg-teal-400/10 dark:text-teal-200") : "border-slate-200 text-muted-foreground"}`}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+            <div
+              className={`vh-onboarding vh-onboarding--${kind} grid grid-cols-2 gap-3`}
+            >
+              <TimePicker
+                label="From (IST)"
+                value={availableFrom}
+                onChange={setAvailableFrom}
+                disabled={detailsDisabled}
+                themeClassName={`vh-onboarding--${kind}`}
+              />
+              <TimePicker
+                label="Until (IST)"
+                value={availableUntil}
+                onChange={setAvailableUntil}
+                disabled={detailsDisabled}
+                themeClassName={`vh-onboarding--${kind}`}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Patients choose a time within these hours for the next 7 days.
+              Appointment duration sets the spacing. Applies to all published
+              branches; existing bookings are kept.
+            </p>
+          </>
+        )}
+      </fieldset>
       <div className="grid gap-4 sm:grid-cols-2">
         <Label className="block space-y-1 text-sm">
           Service name
@@ -654,7 +650,7 @@ export function DiagnosticServiceForm({
         className={
           pathology
             ? "bg-orange-700 text-white hover:bg-orange-800"
-            : "bg-zinc-700 text-white hover:bg-zinc-800"
+            : "bg-teal-700 text-white hover:bg-teal-800"
         }
       >
         {save.isPending ? "Saving…" : "Save service"}

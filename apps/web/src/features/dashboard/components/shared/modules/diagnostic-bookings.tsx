@@ -9,7 +9,7 @@ import {
   diagnosticBookingAppointment,
   canVerifyDiagnosticArrival,
   diagnosticBookingStatusLabel,
-  type DiagnosticBooking,
+  type DiagnosticBooking
 } from "@/features/dashboard/lib/diagnostic-bookings";
 import { virujBackend } from "@/lib/viruj-backend";
 
@@ -18,11 +18,11 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  DialogDescription,
+  DialogDescription
 } from "@/components/ui/erp/dialog";
 
 export function DiagnosticBookingInbox({
-  tenant,
+  tenant
 }: {
   tenant: ErpTenantContext;
 }) {
@@ -32,12 +32,12 @@ export function DiagnosticBookingInbox({
   const query = useQuery({
     queryKey: key,
     queryFn: () => virujBackend.diagnostics.bookings(tenant.organizationId),
-    refetchInterval: 15000,
+    refetchInterval: 15000
   });
   const refresh = () => {
     void client.invalidateQueries({ queryKey: key });
     void client.invalidateQueries({
-      queryKey: virujBackend.diagnostics.key(tenant.organizationId, "orders"),
+      queryKey: virujBackend.diagnostics.key(tenant.organizationId, "orders")
     });
   };
   const selected = query.data?.find((booking) => booking.id === selectedId);
@@ -60,7 +60,7 @@ export function DiagnosticBookingInbox({
                 (booking) =>
                   booking.id === id && canVerifyDiagnosticArrival(booking)
               )
-            ),
+            )
         }}
       />
       <Dialog
@@ -91,7 +91,7 @@ export function DiagnosticBookingInbox({
 function BookingCard({
   booking,
   tenant,
-  refresh,
+  refresh
 }: {
   booking: DiagnosticBooking;
   tenant: ErpTenantContext;
@@ -105,7 +105,7 @@ function BookingCard({
         booking.id,
         { status, note, version: booking.version }
       ),
-    onSuccess: refresh,
+    onSuccess: refresh
   });
   const active =
     ["requested", "accepted"].includes(booking.status) &&
@@ -142,7 +142,7 @@ function BookingCard({
         <p role="status" className="text-sm font-medium text-emerald-700">
           Arrival verified ·{" "}
           {new Date(booking.arrivalVerifiedAt).toLocaleString("en-IN", {
-            timeZone: "Asia/Kolkata",
+            timeZone: "Asia/Kolkata"
           })}
         </p>
       ) : (
@@ -171,7 +171,7 @@ function BookingCard({
                   className={
                     tenant.providerType === "pathology"
                       ? "bg-orange-700 text-white hover:bg-orange-800"
-                      : "bg-zinc-700 text-white hover:bg-zinc-800"
+                      : "bg-teal-700 text-white hover:bg-teal-800"
                   }
                   onClick={() => save.mutate("accepted")}
                 >
@@ -212,7 +212,7 @@ function BookingCard({
 function ArrivalVerification({
   booking,
   tenant,
-  refresh,
+  refresh
 }: {
   booking: DiagnosticBooking;
   tenant: ErpTenantContext;
@@ -238,7 +238,7 @@ function ArrivalVerification({
         );
         setRequested(true);
       }
-    },
+    }
   });
   return (
     <section

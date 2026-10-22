@@ -30,21 +30,21 @@ export const workspaceThemes: Record<WorkspaceRole, WorkspaceTheme> = {
       "bg-[conic-gradient(from_150deg,#fed7aa,#ea580c,#c2410c,#fed7aa)]",
     profileRing: "ring-orange-500/10",
     selection:
-      "selection:bg-orange-500/15 selection:text-orange-800 dark:selection:text-orange-100",
+      "selection:bg-orange-500/15 selection:text-orange-800 dark:selection:text-orange-100"
   },
   radiology: {
-    activeDot: "bg-zinc-500 shadow-[0_0_10px_2px_rgba(113,113,122,0.4)]",
-    activeIcon: "text-zinc-700 dark:text-zinc-200",
+    activeDot: "bg-teal-600 shadow-[0_0_10px_2px_rgba(13,148,136,0.4)]",
+    activeIcon: "text-teal-700 dark:text-teal-200",
     activeNav:
-      "bg-zinc-200/70 text-zinc-950 shadow-sm dark:bg-zinc-400/15 dark:text-zinc-100",
-    avatar: "bg-zinc-200 text-zinc-900 dark:bg-zinc-500/20 dark:text-zinc-200",
+      "bg-teal-50 text-teal-900 shadow-sm dark:bg-teal-400/15 dark:text-teal-100",
+    avatar: "bg-teal-100 text-teal-900 dark:bg-teal-500/20 dark:text-teal-200",
     contentFrame:
-      "border-zinc-300/70 bg-zinc-50/90 ring-white/60 dark:border-zinc-400/10 dark:bg-[#161618] dark:ring-white/[0.03]",
+      "border-teal-200/70 bg-white/90 ring-teal-50 dark:border-teal-400/10 dark:bg-[#101c1c] dark:ring-white/[0.03]",
     logoAura:
-      "bg-[conic-gradient(from_150deg,#e4e4e7,#71717a,#3f3f46,#e4e4e7)]",
-    profileRing: "ring-zinc-500/10",
+      "bg-[conic-gradient(from_150deg,#99f6e4,#0d9488,#115e59,#99f6e4)]",
+    profileRing: "ring-teal-500/10",
     selection:
-      "selection:bg-zinc-500/20 selection:text-zinc-900 dark:selection:text-zinc-100",
+      "selection:bg-teal-500/20 selection:text-teal-900 dark:selection:text-teal-100"
   },
   hospital: {
     activeDot: "bg-[#0f6cbf] shadow-[0_0_10px_2px_rgba(15,108,191,0.62)]",
@@ -59,7 +59,7 @@ export const workspaceThemes: Record<WorkspaceRole, WorkspaceTheme> = {
       "bg-[conic-gradient(from_150deg,#7cf4ff,#315bff,#93c5fd,#7cf4ff)]",
     profileRing: "ring-primary/10",
     selection:
-      "selection:bg-primary/15 selection:text-primary dark:selection:bg-blue-400/20 dark:selection:text-blue-100",
+      "selection:bg-primary/15 selection:text-primary dark:selection:bg-blue-400/20 dark:selection:text-blue-100"
   },
   doctor: {
     activeDot: "bg-[#10b981] shadow-[0_0_10px_2px_rgba(16,185,129,0.58)]",
@@ -74,7 +74,7 @@ export const workspaceThemes: Record<WorkspaceRole, WorkspaceTheme> = {
       "bg-[conic-gradient(from_150deg,#bbf7d0,#10b981,#047857,#bbf7d0)]",
     profileRing: "ring-emerald-500/10",
     selection:
-      "selection:bg-emerald-500/15 selection:text-emerald-700 dark:selection:bg-emerald-400/20 dark:selection:text-emerald-100",
+      "selection:bg-emerald-500/15 selection:text-emerald-700 dark:selection:bg-emerald-400/20 dark:selection:text-emerald-100"
   },
   clinic: {
     activeDot: "bg-[#766cff] shadow-[0_0_10px_2px_rgba(118,108,255,0.62)]",
@@ -89,8 +89,8 @@ export const workspaceThemes: Record<WorkspaceRole, WorkspaceTheme> = {
       "bg-[conic-gradient(from_150deg,#a78bfa,#7c3aed,#34d399,#a78bfa)]",
     profileRing: "ring-violet-500/10",
     selection:
-      "selection:bg-violet-500/15 selection:text-violet-700 dark:selection:bg-violet-400/20 dark:selection:text-violet-100",
-  },
+      "selection:bg-violet-500/15 selection:text-violet-700 dark:selection:bg-violet-400/20 dark:selection:text-violet-100"
+  }
 };
 
 export function resolveWorkspaceRole(organizationLabel: string): WorkspaceRole {

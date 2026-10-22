@@ -10,7 +10,7 @@ import {
   Search,
   Star,
   Trash2,
-  Zap,
+  Zap
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -29,7 +29,7 @@ export function Toolbar({
   onSortChange,
   query,
   sortKey,
-  tone = "blue",
+  tone = "blue"
 }: {
   filters: FilterState;
   onFilterChange: (filters: FilterState) => void;
@@ -66,7 +66,7 @@ export function Toolbar({
           onChange={(value) =>
             onFilterChange({
               ...filters,
-              category: value as FilterState["category"],
+              category: value as FilterState["category"]
             })
           }
           value={filters.category}
@@ -83,7 +83,7 @@ export function Toolbar({
           onChange={(value) =>
             onFilterChange({
               ...filters,
-              status: value as FilterState["status"],
+              status: value as FilterState["status"]
             })
           }
           value={filters.status}
@@ -117,7 +117,7 @@ export function FacilityBentoCard({
   onEdit,
   onPublish,
   permissions,
-  tone = "blue",
+  tone = "blue"
 }: {
   checked?: boolean;
   facility: VirujFacility;
@@ -273,10 +273,10 @@ export function ClinicServiceList<T extends ServiceListRow>({
   onDelete,
   onEdit,
   permissions,
-  actionLabels,
+  actionLabels
 }: {
   facilities: T[];
-  tone?: "violet" | "orange";
+  tone?: "violet" | "orange" | "teal";
   categoryLabel?: string;
   categoryName?: (facility: T) => string;
   isUpdatingId?: string | null;
@@ -318,9 +318,11 @@ export function ClinicServiceList<T extends ServiceListRow>({
             return (
               <tr
                 className={
-                  tone === "orange"
-                    ? "group transition-colors hover:bg-orange-50/40 dark:hover:bg-orange-400/[0.035]"
-                    : "group transition-colors hover:bg-violet-50/40 dark:hover:bg-violet-400/[0.035]"
+                  tone === "teal"
+                    ? "group transition-colors hover:bg-teal-50/40 dark:hover:bg-teal-400/[0.035]"
+                    : tone === "orange"
+                      ? "group transition-colors hover:bg-orange-50/40 dark:hover:bg-orange-400/[0.035]"
+                      : "group transition-colors hover:bg-violet-50/40 dark:hover:bg-violet-400/[0.035]"
                 }
                 key={facility.id}
               >
@@ -328,9 +330,11 @@ export function ClinicServiceList<T extends ServiceListRow>({
                   <div className="flex min-w-0 items-start gap-3">
                     <span
                       className={
-                        tone === "orange"
-                          ? "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-700 dark:bg-orange-400/10 dark:text-orange-300"
-                          : "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 dark:bg-violet-400/10 dark:text-violet-300"
+                        tone === "teal"
+                          ? "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 dark:bg-teal-400/10 dark:text-teal-300"
+                          : tone === "orange"
+                            ? "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-700 dark:bg-orange-400/10 dark:text-orange-300"
+                            : "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 dark:bg-violet-400/10 dark:text-violet-300"
                       }
                     >
                       <FileText size={16} aria-hidden="true" />
@@ -386,9 +390,11 @@ export function ClinicServiceList<T extends ServiceListRow>({
                       <button
                         aria-label={`Edit ${facility.name}`}
                         className={
-                          tone === "orange"
-                            ? "inline-flex h-9 min-w-9 gap-1.5 px-2 items-center justify-center rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-orange-400/10 dark:hover:text-orange-200"
-                            : "inline-flex h-9 min-w-9 gap-1.5 px-2 items-center justify-center rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-violet-400/10 dark:hover:text-violet-200"
+                          tone === "teal"
+                            ? "inline-flex h-9 min-w-9 gap-1.5 px-2 items-center justify-center rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-teal-400/10 dark:hover:text-teal-200"
+                            : tone === "orange"
+                              ? "inline-flex h-9 min-w-9 gap-1.5 px-2 items-center justify-center rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-orange-400/10 dark:hover:text-orange-200"
+                              : "inline-flex h-9 min-w-9 gap-1.5 px-2 items-center justify-center rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-violet-400/10 dark:hover:text-violet-200"
                         }
                         disabled={updating}
                         onClick={() => onEdit(facility)}
@@ -449,7 +455,7 @@ function CardButton({
   icon,
   label,
   onClick,
-  tone,
+  tone
 }: {
   disabled?: boolean;
   icon?: ReactNode;
@@ -481,7 +487,7 @@ export function StatCard({
   icon,
   label,
   tone = "blue",
-  value,
+  value
 }: {
   icon: ReactNode;
   label: string;
@@ -492,7 +498,7 @@ export function StatCard({
     "Total Services": "Your complete catalog",
     Active: "Currently active",
     Featured: "Highlighted for discovery",
-    "24x7": "Available around the clock",
+    "24x7": "Available around the clock"
   };
   return (
     <section className="rounded-[22px] border border-slate-200/60 bg-white p-5 dark:border-white/[0.08] dark:bg-[#111418]">
@@ -527,7 +533,7 @@ export function EmptyFacilities({
   onCreate,
   permissions,
   tone = "blue",
-  catalogKind = "services",
+  catalogKind = "services"
 }: {
   onCreate: () => void;
   permissions: Record<FacilityAction, boolean>;
@@ -588,13 +594,13 @@ export function EmptyFacilities({
         {[
           [
             "Add the essentials",
-            "Give patients a clear name, category, and description.",
+            "Give patients a clear name, category, and description."
           ],
           [
             "Set the details",
-            "Add pricing, availability, and booking preferences.",
+            "Add pricing, availability, and booking preferences."
           ],
-          ["Review and publish", "Make your offering visible when it’s ready."],
+          ["Review and publish", "Make your offering visible when it’s ready."]
         ].map(([title, description], index) => (
           <li key={title} className="flex gap-4">
             <span

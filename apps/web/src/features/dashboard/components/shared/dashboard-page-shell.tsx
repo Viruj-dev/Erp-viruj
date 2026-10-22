@@ -3,13 +3,14 @@
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
-type DashboardPageShellTone = "blue" | "slate" | "violet" | "orange";
+type DashboardPageShellTone = "blue" | "slate" | "violet" | "orange" | "teal";
 
 const eyebrowTone: Record<DashboardPageShellTone, string> = {
+  teal: "text-teal-700 dark:text-teal-300",
   blue: "text-blue-500 dark:text-blue-400",
   slate: "text-slate-400 dark:text-slate-600",
   violet: "text-violet-500",
-  orange: "text-orange-700 dark:text-orange-300",
+  orange: "text-orange-700 dark:text-orange-300"
 };
 
 export function DashboardPageShell({
@@ -20,7 +21,7 @@ export function DashboardPageShell({
   framed = false,
   subtitle,
   title,
-  tone = "blue",
+  tone = "blue"
 }: {
   actions?: ReactNode;
   children: ReactNode;
