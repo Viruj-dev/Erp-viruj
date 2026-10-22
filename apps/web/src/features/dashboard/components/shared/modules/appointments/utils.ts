@@ -73,7 +73,7 @@ export function matchesAppointmentSearch(
   }
 
   return [
-    appointment.appointmentNumber,
+    appointment.patientUserCode,
     appointment.patientName,
     appointment.patientPhone,
     appointment.doctorName,

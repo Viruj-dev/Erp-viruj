@@ -224,7 +224,7 @@ export function ErpDemoAppointments({
               <tr>
                 {[
                   "S. No.",
-                  "Appointment ID",
+                  "User ID",
                   "Patient name",
                   source ? "Type / service" : "Type / doctor",
                   "Requested time",
@@ -289,9 +289,9 @@ export function ErpDemoAppointments({
                     <td className="px-5 py-3.5 font-medium">
                       <span
                         className="block max-w-28 truncate"
-                        title={appointment.appointmentNumber?.toString()}
+                        title={appointment.patientUserCode ?? undefined}
                       >
-                        {appointment.appointmentNumber || "—"}
+                        {appointment.patientUserCode || "—"}
                       </span>
                     </td>
                     <td className="px-5 py-3.5">

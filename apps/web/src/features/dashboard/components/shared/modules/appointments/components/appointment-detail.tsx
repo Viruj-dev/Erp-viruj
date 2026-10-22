@@ -224,10 +224,10 @@ export function AppointmentDetail({
         </DialogDescription>
       </DialogHeader>
       <dl className="grid grid-cols-2 gap-3 text-sm">
-        {appointment.appointmentNumber && (
+        {appointment.patientUserCode && (
           <div>
-            <dt className="text-muted-foreground">Appointment ID</dt>
-            <dd>{appointment.appointmentNumber}</dd>
+            <dt className="text-muted-foreground">User ID</dt>
+            <dd>{appointment.patientUserCode}</dd>
           </div>
         )}
         <div>
