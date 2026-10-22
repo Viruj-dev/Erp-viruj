@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/erp/input";
 import { doctorWorkspaceRequest } from "@/lib/viruj-backend";
 export type RegistryRecord = {
   id: number;
@@ -65,7 +65,7 @@ export function DoctorRegistrationField({
         disabled={pending || !value.trim()}
         onClick={() => void lookup()}
       >
-        {pending ? "Checking NMC�" : "Check NMC register"}
+        {pending ? "Checking NMC..." : "Check NMC register"}
       </Button>
       {error && (
         <p role="alert" className="text-sm text-destructive">
@@ -81,11 +81,11 @@ export function DoctorRegistrationField({
             <div className="rounded-lg border p-3" key={row.id}>
               <p className="font-medium">{row.name}</p>
               <p>
-                {row.medicalCouncil} � {row.qualification}
+                {row.medicalCouncil} · {row.qualification}
               </p>
               {row.removed ? (
                 <p className="text-destructive">
-                  Removed from register � cannot use
+                  Removed from register · cannot use
                 </p>
               ) : (
                 <Button

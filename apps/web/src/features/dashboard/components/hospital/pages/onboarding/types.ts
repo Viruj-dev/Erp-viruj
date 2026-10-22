@@ -46,6 +46,7 @@ export type WorkingHour = {
 };
 
 export type OnboardingDoctor = {
+  medicalCouncil?: string;
   imageUrl?: string;
   gender?: string;
   id: string;

@@ -25,10 +25,17 @@ export function DoctorDashboardPage() {
   const appointments = useDoctorQuery<Page<DoctorAppointment>>(
     "/doctor/appointments?pageSize=5"
   );
+  const completion = useDoctorQuery<{ percentage: number }>(
+    "/doctor/profile/completion"
+  );
   const upcoming = (events.data || [])
     .filter((e) => Date.parse(e.endsAt) > Date.now())
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
     .slice(0, 5);
+  if (completion.isPending)
+    return <p className="p-6">Loading your practice…</p>;
+  if (completion.data && completion.data.percentage < 100)
+    return <DoctorProfileForm onboarding />;
   return (
     <DoctorPageShell
       eyebrow="Overview"

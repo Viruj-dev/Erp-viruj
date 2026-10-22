@@ -266,7 +266,7 @@ export function DoctorCalendarPage() {
           day: "numeric",
           month: "long",
         })}
-        subtitle={`${selectedEvents.reduce((sum, e) => sum + e.patientsAttended, 0)} attended patients recorded on your events`}
+        subtitle={`${selectedEvents.filter((e) => localDate(new Date(e.startsAt)) === selected).reduce((sum, e) => sum + e.patientsAttended, 0)} attended patients recorded on your events`}
       >
         {!selectedEvents.length && (
           <p className="text-sm text-muted-foreground">

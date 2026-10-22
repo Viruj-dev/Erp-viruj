@@ -5,6 +5,7 @@ import { SectionSkeleton } from "@/features/dashboard/components/shared/page-ske
 import { ErpSelect } from "@/components/ui/erp/select";
 
 import { DoctorAvatar } from "../../shared/workspace/doctor-avatar";
+import { DoctorRegistrationField } from "../../shared/workspace/doctor-registration-field";
 import { DoctorPhotoField } from "../../shared/workspace/doctor-photo-field";
 import { useWorkspaceProfile } from "../../shared/workspace/use-workspace-profile";
 
@@ -408,12 +409,25 @@ export function DoctorsManagementPage({
                     setForm((current) => ({ ...current, ...patch }))
                   }
                 />
-                <DoctorInput
-                  label="Registration number"
-                  required={isClinicTone}
+                <DoctorRegistrationField
                   value={form.registrationNumber || ""}
+                  organizationId={organizationId || ""}
                   onChange={(value) => updateField("registrationNumber", value)}
-                  placeholder="Medical council registration number"
+                  onSelect={(record) =>
+                    setForm((current) => ({
+                      ...current,
+                      name: record.name,
+                      registrationNumber: record.registrationNumber,
+                      medicalCouncil: record.medicalCouncil,
+                      qualification: record.qualification,
+                    }))
+                  }
+                />
+                <DoctorInput
+                  label="Medical council"
+                  value={form.medicalCouncil || ""}
+                  onChange={(value) => updateField("medicalCouncil", value)}
+                  placeholder="State medical council"
                 />
                 <DoctorInput
                   label="Doctor name"

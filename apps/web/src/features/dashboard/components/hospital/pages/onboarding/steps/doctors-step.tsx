@@ -1,3 +1,4 @@
+import { DoctorRegistrationField } from "../../../../shared/workspace/doctor-registration-field";
 import { ErpSelect } from "@/components/ui/erp/select";
 import { DoctorPhotoField } from "../../../../shared/workspace/doctor-photo-field";
 import { Plus, Trash2, UserPlus } from "lucide-react";
@@ -115,13 +116,26 @@ export function DoctorsStep({
                   placeholder="Dr. Asha Mehta"
                   value={doctor.name}
                 />
-                <TextField
-                  required
-                  label="Registration Number"
-                  placeholder="Medical council registration number"
+                <DoctorRegistrationField
                   value={doctor.registrationNumber}
+                  organizationId={organizationId || ""}
                   onChange={(value) =>
                     updateDoctor(doctor.id, { registrationNumber: value })
+                  }
+                  onSelect={(record) =>
+                    updateDoctor(doctor.id, {
+                      name: record.name,
+                      registrationNumber: record.registrationNumber,
+                      medicalCouncil: record.medicalCouncil,
+                    })
+                  }
+                />
+                <TextField
+                  placeholder="State medical council"
+                  label="Medical council"
+                  value={doctor.medicalCouncil || ""}
+                  onChange={(value) =>
+                    updateDoctor(doctor.id, { medicalCouncil: value })
                   }
                 />
                 <TextField

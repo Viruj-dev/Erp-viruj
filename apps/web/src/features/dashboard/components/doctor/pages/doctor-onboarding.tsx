@@ -55,7 +55,10 @@ function ProfileForm({
   initial: DoctorProfile;
   onboarding: boolean;
 }) {
-  const [profile, setProfile] = useState(initial);
+  const [profile, setProfile] = useState({
+    ...initial,
+    fullName: initial.fullName === "Individual Doctor" ? "" : initial.fullName,
+  });
   const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
