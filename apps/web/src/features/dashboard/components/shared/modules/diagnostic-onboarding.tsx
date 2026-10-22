@@ -649,6 +649,14 @@ function SetupForm({
                 "MRI",
                 "Mammography",
                 "Doppler",
+                "DEXA",
+                "Fluoroscopy",
+                "Echocardiography",
+                "PET-CT",
+                "SPECT",
+                "Nuclear medicine",
+                "Interventional radiology",
+                "Teleradiology",
                 "Other"
               ])}
             </fieldset>

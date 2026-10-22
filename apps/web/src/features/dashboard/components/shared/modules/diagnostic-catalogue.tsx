@@ -28,6 +28,7 @@ import {
   type DiagnosticService,
   type DiagnosticServiceInput
 } from "@/features/dashboard/lib/diagnostics";
+import { radiologyServicePresets } from "@/features/dashboard/lib/radiology-services";
 import { pathologyServicePresets } from "@/features/dashboard/lib/pathology-services";
 import { virujBackend } from "@/lib/viruj-backend";
 import { ClinicServiceList } from "../facilities/_components/catalog";
@@ -91,7 +92,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
   return (
     <DashboardPageShell
       eyebrow="Services"
-      title={pathology ? "Services" : "Scan catalogue"}
+      title={pathology ? "Services" : "Radiology services"}
       tone={pathology ? "orange" : "slate"}
       subtitle="Showcase your care. Manage the services patients can discover and book."
       actions={
@@ -100,7 +101,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
             className={`${accent} h-11 rounded-xl px-4`}
             onClick={() => setEditing("new")}
           >
-            Add {pathology ? "service" : "scan"}
+            Add service
           </Button>
         )
       }
@@ -154,12 +155,13 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
         <section className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white dark:border-white/[0.08] dark:bg-[#111418]">
           <ClinicServiceList
             tone={pathology ? "orange" : "violet"}
-            categoryLabel={pathology ? "Test branch" : "Modality"}
+            categoryLabel={pathology ? "Test branch" : "Category"}
             facilities={serviceRows}
             categoryName={(service) =>
-              pathologyServicePresets.find(
-                (preset) => preset.code === service.code
-              )?.category ||
+              (pathology
+                ? pathologyServicePresets
+                : radiologyServicePresets
+              ).find((preset) => preset.code === service.code)?.category ||
               service.modality ||
               "Custom service"
             }
@@ -257,7 +259,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
             branch and add appointment availability when you are ready.
           </DialogDescription>
           {editing && (
-            <ServiceForm
+            <DiagnosticServiceForm
               key={editing === "new" ? "new" : editing.id}
               tenant={tenant}
               service={editing === "new" ? undefined : editing}
@@ -273,7 +275,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
   );
 }
 
-function ServiceForm({
+export function DiagnosticServiceForm({
   tenant,
   service,
   onSaved
@@ -292,6 +294,15 @@ function ServiceForm({
       (item) => item.name === service?.name || item.code === service?.code
     )?.name ?? ""
   );
+  const [radiologyService, setRadiologyService] = useState(
+    (
+      radiologyServicePresets.find((preset) => preset.code === service?.code) ??
+      radiologyServicePresets.find((preset) => preset.name === service?.name)
+    )?.code ?? ""
+  );
+  const [radiologyName, setRadiologyName] = useState(service?.name ?? "");
+  const [modality, setModality] = useState(service?.modality ?? "");
+  const [contrast, setContrast] = useState(service?.contrast ?? false);
   const detailsDisabled = pathology && !selectedService;
   const [serviceCode, setServiceCode] = useState(service?.code ?? "");
   const [scheduled, setScheduled] = useState(
@@ -397,6 +408,51 @@ function ServiceForm({
               ))}
             </SelectContent>
           </Select>
+        </div>
+      )}
+      {!pathology && (
+        <div className="space-y-1 text-sm">
+          <Label htmlFor="radiology-service">
+            Choose an imaging or support service
+          </Label>
+          <Select
+            value={radiologyService}
+            onValueChange={(code) => {
+              const preset = radiologyServicePresets.find(
+                (item) => item.code === code
+              );
+              if (!preset) return;
+              setRadiologyService(preset.code);
+              setRadiologyName(preset.name);
+              setServiceCode(preset.code);
+              setModality(preset.modality);
+              setContrast(preset.contrast);
+            }}
+          >
+            <SelectTrigger id="radiology-service" className="w-full">
+              <SelectValue placeholder="Select a radiology service" />
+            </SelectTrigger>
+            <SelectContent>
+              {[
+                ...new Set(radiologyServicePresets.map((item) => item.category))
+              ].map((category) => (
+                <SelectGroup key={category}>
+                  <SelectLabel>{category}</SelectLabel>
+                  {radiologyServicePresets
+                    .filter((item) => item.category === category)
+                    .map((item) => (
+                      <SelectItem key={item.code} value={item.code}>
+                        {item.name}
+                      </SelectItem>
+                    ))}
+                </SelectGroup>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Choose from the list or enter a custom service below. Confirm the
+            modality, body part and contrast details for your centre.
+          </p>
         </div>
       )}
       <Label className="block space-y-1 text-sm">
@@ -512,8 +568,8 @@ function ServiceForm({
             maxLength={150}
             name="name"
             readOnly={pathology}
-            value={pathology ? selectedService : undefined}
-            defaultValue={pathology ? undefined : service?.name}
+            value={pathology ? selectedService : radiologyName}
+            onChange={(event) => setRadiologyName(event.target.value)}
           />
         </Label>
 
@@ -549,8 +605,10 @@ function ServiceForm({
             disabled={detailsDisabled}
             required
             name={pathology ? "specimen" : "modality"}
-            defaultValue={
-              (pathology ? service?.specimen : service?.modality) ?? ""
+            defaultValue={pathology ? (service?.specimen ?? "") : undefined}
+            value={pathology ? undefined : modality}
+            onChange={
+              pathology ? undefined : (event) => setModality(event.target.value)
             }
             placeholder={pathology ? "Whole blood" : "CT, MRI, X-ray…"}
           />
@@ -562,7 +620,11 @@ function ServiceForm({
             Body part
             <Input
               name="bodyPart"
-              required
+              required={
+                radiologyServicePresets.find(
+                  (preset) => preset.code === radiologyService
+                )?.category !== "Radiology Support Services"
+              }
               maxLength={150}
               defaultValue={service?.bodyPart ?? ""}
               placeholder="Chest, brain, abdomen�"
@@ -572,7 +634,8 @@ function ServiceForm({
             <input
               type="checkbox"
               name="contrast"
-              defaultChecked={service?.contrast ?? false}
+              checked={contrast}
+              onChange={(event) => setContrast(event.target.checked)}
             />
             With contrast
           </Label>
