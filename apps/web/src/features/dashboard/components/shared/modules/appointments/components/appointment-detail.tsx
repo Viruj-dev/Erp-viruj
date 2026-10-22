@@ -222,6 +222,12 @@ export function AppointmentDetail({
         </DialogDescription>
       </DialogHeader>
       <dl className="grid grid-cols-2 gap-3 text-sm">
+        {appointment.appointmentNumber && (
+          <div>
+            <dt className="text-muted-foreground">Appointment ID</dt>
+            <dd>{appointment.appointmentNumber}</dd>
+          </div>
+        )}
         <div>
           <dt className="text-muted-foreground">Date</dt>
           <dd>{formatDate(appointment.appointmentDate, timezone)}</dd>

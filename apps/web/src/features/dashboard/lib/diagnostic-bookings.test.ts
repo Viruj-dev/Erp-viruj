@@ -9,6 +9,7 @@ import {
 test("service appointments retain their booking ID and IST time in the shared appointment view", () => {
   const booking = {
     id: "booking-1",
+    appointmentNumber: 654321,
     version: 3,
     status: "requested",
     createdAt: "2026-10-20T00:00:00Z",
@@ -27,6 +28,7 @@ test("service appointments retain their booking ID and IST time in the shared ap
   } as DiagnosticBooking;
   const row = diagnosticBookingAppointment(booking);
   expect(row.id).toBe("booking-1");
+  expect(row.appointmentNumber).toBe(654321);
   expect(row.status).toBe("pending_approval");
   expect(row.appointmentTime.toLowerCase()).toBe("9:30 am");
   expect(row.timezone).toBe("Asia/Kolkata");

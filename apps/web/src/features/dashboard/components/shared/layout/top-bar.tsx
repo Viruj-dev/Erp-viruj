@@ -7,10 +7,14 @@ import {
 import { ProfileDropdown } from "@/features/dashboard/components/shared/profile/profile-dropdown";
 import { NotificationCenter } from "@/features/notifications";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
+import { diagnosticSetupKey } from "@/features/dashboard/lib/diagnostic-onboarding";
 import { authClient } from "@/lib/auth-client";
+import { virujBackend } from "@/lib/viruj-backend";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme-provider";
+import { useQuery } from "@tanstack/react-query";
 import { Building2, ChevronDown, Moon, Sun } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 export function ErpDemoTopBar({
@@ -33,7 +37,25 @@ export function ErpDemoTopBar({
   const { theme, toggleTheme } = useTheme();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
+  const [failedLogoUrl, setFailedLogoUrl] = useState("");
   const headerRef = useRef<HTMLElement>(null);
+  const kind = organizationLabel.toLowerCase();
+  const diagnostic = kind === "pathology" || kind === "radiology";
+  const setup = useQuery({
+    queryKey: diagnosticSetupKey(organizationId ?? "none"),
+    queryFn: () => virujBackend.diagnostics.onboarding(organizationId!),
+    enabled: Boolean(organizationId) && diagnostic,
+    retry: false,
+  });
+  const workspace = useQuery({
+    queryKey: ["viruj-backend", "workspace-profile", organizationId],
+    queryFn: () => virujBackend.directory.workspace(organizationId),
+    enabled: Boolean(organizationId) && (kind === "hospital" || kind === "clinic"),
+    retry: false,
+  });
+  const logoUrl = diagnostic
+    ? setup.data?.data?.logoUrl
+    : workspace.data?.data.profile?.logoUrl;
 
   useEffect(() => {
     const scroller = headerRef.current?.closest(".erp-scroll");
@@ -64,11 +86,23 @@ export function ErpDemoTopBar({
           role="img"
           aria-label={`${title} workspace`}
           className={cn(
-            "erp-topbar-workspace-icon hidden size-10 shrink-0 items-center justify-center rounded-xl sm:flex",
+            "erp-topbar-workspace-icon hidden size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl sm:flex",
             workspaceTheme.avatar
           )}
         >
-          <Building2 size={19} strokeWidth={1.6} aria-hidden="true" />
+          {logoUrl && failedLogoUrl !== logoUrl ? (
+            <Image
+              src={logoUrl}
+              alt=""
+              width={40}
+              height={40}
+              unoptimized
+              className="size-full object-contain"
+              onError={() => setFailedLogoUrl(logoUrl)}
+            />
+          ) : (
+            <Building2 size={19} strokeWidth={1.6} aria-hidden="true" />
+          )}
         </div>
         <div
           className="erp-topbar-workspace-label min-w-0"

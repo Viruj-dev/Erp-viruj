@@ -22,6 +22,7 @@ export type DiagnosticSlot = {
   branch: { name: string };
 };
 export type DiagnosticBooking = {
+  appointmentNumber?: number | null;
   reportFile?: {
     filename: string;
     contentType: string;
@@ -45,6 +46,7 @@ export function diagnosticBookingAppointment(
 ): VirujAppointment {
   return {
     id: booking.id,
+    appointmentNumber: booking.appointmentNumber,
     version: booking.version,
     statusLabel: diagnosticBookingStatusLabel(booking),
     arrivalVerifiedAt: booking.arrivalVerifiedAt ?? undefined,

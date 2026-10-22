@@ -221,7 +221,7 @@ export function ErpDemoAppointments({
             <thead className="border-b border-slate-200/70 bg-slate-50/70 text-[11px] text-slate-500 dark:border-white/10 dark:bg-white/[0.025]">
               <tr>
                 {[
-                  "Patient ID",
+                  "Appointment ID",
                   "Patient name",
                   source ? "Type / service" : "Type / doctor",
                   "Requested time",
@@ -278,9 +278,9 @@ export function ErpDemoAppointments({
                     <td className="px-5 py-3.5 font-medium">
                       <span
                         className="block max-w-28 truncate"
-                        title={appointment.patientUserId ?? undefined}
+                        title={appointment.appointmentNumber?.toString()}
                       >
-                        {appointment.patientUserId || "—"}
+                        {appointment.appointmentNumber || "—"}
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
