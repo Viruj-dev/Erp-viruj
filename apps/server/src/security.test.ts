@@ -232,3 +232,40 @@ test("errors are generic and central API tokens cannot be cached", async () => {
   const tokenResponse = await createApp().request("/auth/central-api-token");
   expect(tokenResponse.headers.get("Cache-Control")).toBe("no-store");
 });
+
+test("doctor owner token carries doctor workspace identity and onboarding permissions", async () => {
+  session = {
+    user: { id: "doctor-owner" },
+    activeOrganization: { id: "doctor-workspace", organizationType: "doctor" },
+  };
+  selectResults = [
+    [
+      {
+        organizationId: "doctor-workspace",
+        organizationType: "doctor",
+        role: "OWNER",
+      },
+    ],
+  ];
+  const response = await createApp().request("/auth/central-api-token");
+  expect(response.status).toBe(200);
+  const { token } = (await response.json()) as { token: string };
+  const { jwtVerify } = await import("jose");
+  const { payload } = await jwtVerify(
+    token,
+    new TextEncoder().encode(Bun.env.CENTRAL_API_JWT_SECRET),
+    { issuer: "viruj-auth", audience: "viruj-central-api" }
+  );
+  expect(payload.organization_type).toBe("doctor");
+  expect(payload.tenant_id).toBe("doctor-workspace");
+  for (const permission of [
+    "doctor.profile.read",
+    "doctor.profile.update",
+    "doctor.dashboard.read",
+    "doctor.location.read",
+    "doctor.verification.read",
+    "doctor.verification.submit",
+    "doctor.file.create",
+  ])
+    expect(payload.permissions).toContain(permission);
+});

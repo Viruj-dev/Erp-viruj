@@ -282,3 +282,46 @@ describe("subscription billing RBAC", () => {
     );
   });
 });
+
+test("doctor workspace owners receive every permission required by onboarding and dashboard", async () => {
+  const { getCentralApiPermissions } = await authModule;
+  const required = [
+    "doctor.dashboard.read",
+    "doctor.profile.read",
+    "doctor.profile.update",
+    "doctor.verification.read",
+    "doctor.verification.submit",
+    "doctor.location.read",
+    "doctor.location.create",
+    "doctor.location.update",
+    "doctor.location.delete",
+    "doctor.availability.read",
+    "doctor.availability.create",
+    "doctor.availability.update",
+    "doctor.availability.delete",
+    "doctor.appointment.read",
+    "doctor.appointment.update",
+    "doctor.patient.read",
+    "doctor.consultation.read",
+    "doctor.consultation.create",
+    "doctor.consultation.update",
+    "doctor.settings.read",
+    "doctor.settings.update",
+    "doctor.file.read",
+    "doctor.file.create",
+    "doctor.file.delete",
+  ];
+  for (const role of ["OWNER", "owner", "ADMIN", "admin"]) {
+    const granted = getCentralApiPermissions(role);
+    for (const permission of required) expect(granted).toContain(permission);
+  }
+  for (const role of ["RECEPTIONIST", "unknown"]) {
+    const granted = getCentralApiPermissions(role);
+    for (const permission of [
+      "doctor.verification.submit",
+      "doctor.file.create",
+      "doctor.file.delete",
+    ])
+      expect(granted).not.toContain(permission);
+  }
+});

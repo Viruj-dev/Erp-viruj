@@ -16,6 +16,32 @@ import {
   type Page,
 } from "@/features/dashboard/lib/doctor-workspace";
 export function DoctorDashboardPage() {
+  const completion = useDoctorQuery<{ percentage: number }>(
+    "/doctor/profile/completion"
+  );
+  if (completion.isPending)
+    return (
+      <p className="p-6" role="status">
+        Loading your practice…
+      </p>
+    );
+  if (completion.isError)
+    return (
+      <DoctorPageShell
+        eyebrow="Workspace"
+        title="Unable to load your doctor workspace"
+        subtitle="Your setup status could not be loaded."
+      >
+        <p role="alert" className="text-sm">
+          {completion.error.message}
+        </p>
+        <Button onClick={() => void completion.refetch()}>Retry</Button>
+      </DoctorPageShell>
+    );
+  if (completion.data.percentage < 100) return <DoctorProfileForm onboarding />;
+  return <DoctorOverview />;
+}
+function DoctorOverview() {
   const tenant = useDoctorTenant();
   const profile = useDoctorQuery<DoctorProfile>("/doctor/profile");
   const stats =
@@ -25,17 +51,10 @@ export function DoctorDashboardPage() {
   const appointments = useDoctorQuery<Page<DoctorAppointment>>(
     "/doctor/appointments?pageSize=5"
   );
-  const completion = useDoctorQuery<{ percentage: number }>(
-    "/doctor/profile/completion"
-  );
   const upcoming = (events.data || [])
     .filter((e) => Date.parse(e.endsAt) > Date.now())
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
     .slice(0, 5);
-  if (completion.isPending)
-    return <p className="p-6">Loading your practice…</p>;
-  if (completion.data && completion.data.percentage < 100)
-    return <DoctorProfileForm onboarding />;
   return (
     <DoctorPageShell
       eyebrow="Overview"

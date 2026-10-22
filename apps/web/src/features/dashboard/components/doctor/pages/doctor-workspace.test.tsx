@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DoctorWorkspaceContext } from "@/features/dashboard/lib/doctor-workspace";
 import { createErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
+import { DoctorDashboardPage } from "./doctor-overview-pages";
 import { DoctorProfileForm } from "./doctor-onboarding";
 import {
   DoctorCalendarPage,
@@ -108,4 +109,43 @@ test("consultations show actual patient and organisation without decision button
   expect(html).toContain("Linked Hospital");
   expect(html).not.toContain(">Confirm<");
   expect(html).not.toContain(">Decline<");
+});
+
+test("new doctor dashboard opens onboarding before mounting dashboard queries", () => {
+  const html = render(<DoctorDashboardPage />, {
+    "/doctor/profile/completion": { percentage: 0 },
+    "/doctor/profile": {
+      id: "a",
+      fullName: "",
+      languages: [],
+      isPublic: false,
+    },
+    "/doctor/verification": { status: "NOT_SUBMITTED", documents: [] },
+  });
+  expect(html).toContain("Doctor onboarding");
+  expect(html).not.toContain("Appointments today");
+  expect(html).not.toContain("Unavailable");
+});
+test("failed setup check shows one retry state instead of an unavailable dashboard", () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, retryOnMount: false } },
+  });
+  const key = ["doctor-workspace", "doctor-a", "/doctor/profile/completion"];
+  const query = client.getQueryCache().build(client, { queryKey: key });
+  query.setState({
+    status: "error",
+    fetchStatus: "idle",
+    error: new Error("Permission denied"),
+  });
+  const html = renderToStaticMarkup(
+    <QueryClientProvider client={client}>
+      <DoctorWorkspaceContext.Provider value={tenant}>
+        <DoctorDashboardPage />
+      </DoctorWorkspaceContext.Provider>
+    </QueryClientProvider>
+  );
+  expect(html).toContain("Unable to load your doctor workspace");
+  expect(html).toContain("Retry");
+  expect(html).not.toContain("Appointments today");
+  client.clear();
 });

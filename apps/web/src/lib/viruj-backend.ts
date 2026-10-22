@@ -1785,5 +1785,10 @@ export function doctorWorkspaceRequest<T>(
   body?: unknown,
   method: "GET" | "POST" | "PATCH" | "DELETE" = "GET"
 ) {
-  return request<T>(path, { organizationId, body, method });
+  return request<T>(path, {
+    organizationId,
+    body,
+    method,
+    suppressToast: method === "GET",
+  });
 }
