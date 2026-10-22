@@ -200,18 +200,7 @@ export function ErpDemoSidebar({
     { id: "analytics", label: "Analytics", icon: BarChart3 }
   ];
   const baseNavItems = isDiagnosticWorkspace
-    ? [
-        ...pathologyNavItems,
-        ...(isRadiologyWorkspace
-          ? [
-              {
-                id: "radiology" as const,
-                label: "Imaging operations",
-                icon: ScanLine
-              }
-            ]
-          : [])
-      ]
+    ? pathologyNavItems
     : isDoctorWorkspace
       ? doctorNavItems
       : isClinicWorkspace

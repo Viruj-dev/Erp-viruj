@@ -49,14 +49,14 @@ test("radiology offers its own service picker and preserves saved service fields
     (item) => item.name === "MRI Brain"
   )!;
   const html = render("radiology", preset);
-  expect(html).toContain("Choose an imaging or support service");
+  expect(html).toContain("Choose a test or service");
   expect(html).toContain(`value="${preset.code}"`);
   expect(html).toContain('value="MRI Brain"');
   expect(html).toContain('value="MRI"');
-  expect(html).not.toContain("Choose a test or service");
-  expect(render("pathology")).not.toContain(
-    "Choose an imaging or support service"
-  );
+  expect(html).toContain('type="hidden" name="code"');
+  expect(html).not.toContain("Service code");
+  expect(html).toContain("Imaging details");
+  expect(render("pathology")).toContain("Choose a test or service");
 });
 
 test("support services do not require a body part and duplicate names keep their saved category", () => {
@@ -73,7 +73,7 @@ test("support services do not require a body part and duplicate names keep their
   )!;
   const html = render("radiology", breast);
   expect(html).toContain(`value="${breast.code}"`);
-  expect(html).toMatch(/<input(?=[^>]*name="bodyPart")(?=[^>]*required)[^>]*>/);
+  expect(html).toContain("Imaging details");
 });
 
 test("existing custom radiology services retain their name, code and modality", () => {
@@ -85,4 +85,18 @@ test("existing custom radiology services retain their name, code and modality", 
   });
   for (const value of ["Custom scan", "CUSTOM-1", "CT"])
     expect(html).toContain(`value="${value}"`);
+});
+
+test("both service cards start with a picker and lock details until selection", () => {
+  for (const kind of ["pathology", "radiology"] as const) {
+    const html = render(kind);
+    expect(html).not.toContain("Service code");
+    expect(html).toMatch(
+      /<textarea(?=[^>]*name="description")(?=[^>]*disabled)[^>]*>/
+    );
+    expect(html).toMatch(/<input(?=[^>]*name="name")(?=[^>]*readOnly)[^>]*>/i);
+    expect(html).toMatch(
+      /<button(?=[^>]*type="submit")(?=[^>]*disabled)[^>]*>/
+    );
+  }
 });

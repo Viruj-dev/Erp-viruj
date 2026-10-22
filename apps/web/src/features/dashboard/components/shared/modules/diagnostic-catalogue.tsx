@@ -303,7 +303,9 @@ export function DiagnosticServiceForm({
   const [radiologyName, setRadiologyName] = useState(service?.name ?? "");
   const [modality, setModality] = useState(service?.modality ?? "");
   const [contrast, setContrast] = useState(service?.contrast ?? false);
-  const detailsDisabled = pathology && !selectedService;
+  const detailsDisabled = pathology
+    ? !selectedService
+    : !radiologyService && !service;
   const [serviceCode, setServiceCode] = useState(service?.code ?? "");
   const [scheduled, setScheduled] = useState(
     pathology && Boolean(service?.availability)
@@ -358,20 +360,7 @@ export function DiagnosticServiceForm({
   }
   return (
     <form onSubmit={submit} className="space-y-4">
-      {pathology ? (
-        <input type="hidden" name="code" value={serviceCode} />
-      ) : (
-        <Label className="block space-y-1 text-sm">
-          Service code
-          <Input
-            name="code"
-            required
-            maxLength={40}
-            value={serviceCode}
-            onChange={(event) => setServiceCode(event.target.value)}
-          />
-        </Label>
-      )}
+      <input type="hidden" name="code" value={serviceCode} />
       {pathology && (
         <div className="space-y-1 text-sm">
           <Label htmlFor="pathology-service">Choose a test or service</Label>
@@ -412,11 +401,10 @@ export function DiagnosticServiceForm({
       )}
       {!pathology && (
         <div className="space-y-1 text-sm">
-          <Label htmlFor="radiology-service">
-            Choose an imaging or support service
-          </Label>
+          <Label htmlFor="radiology-service">Choose a test or service</Label>
           <Select
-            value={radiologyService}
+            required
+            value={radiologyService || (service ? serviceCode : "")}
             onValueChange={(code) => {
               const preset = radiologyServicePresets.find(
                 (item) => item.code === code
@@ -433,6 +421,9 @@ export function DiagnosticServiceForm({
               <SelectValue placeholder="Select a radiology service" />
             </SelectTrigger>
             <SelectContent>
+              {service && !radiologyService && (
+                <SelectItem value={serviceCode}>{service.name}</SelectItem>
+              )}
               {[
                 ...new Set(radiologyServicePresets.map((item) => item.category))
               ].map((category) => (
@@ -449,10 +440,6 @@ export function DiagnosticServiceForm({
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">
-            Choose from the list or enter a custom service below. Confirm the
-            modality, body part and contrast details for your centre.
-          </p>
         </div>
       )}
       <Label className="block space-y-1 text-sm">
@@ -553,12 +540,6 @@ export function DiagnosticServiceForm({
           )}
         </fieldset>
       )}
-      {!pathology && (
-        <p className="rounded-xl border p-4 text-sm text-muted-foreground">
-          In-person only. Add fixed appointment slots for a machine or room in
-          Facilities. Block unavailable slots for maintenance.
-        </p>
-      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <Label className="block space-y-1 text-sm">
           Service name
@@ -567,7 +548,7 @@ export function DiagnosticServiceForm({
             required
             maxLength={150}
             name="name"
-            readOnly={pathology}
+            readOnly
             value={pathology ? selectedService : radiologyName}
             onChange={(event) => setRadiologyName(event.target.value)}
           />
@@ -599,48 +580,19 @@ export function DiagnosticServiceForm({
             defaultValue={service?.turnaroundHours ?? 24}
           />
         </Label>
-        <Label className="block space-y-1 text-sm">
-          {pathology ? "Specimen" : "Modality"}
-          <Input
-            disabled={detailsDisabled}
-            required
-            name={pathology ? "specimen" : "modality"}
-            defaultValue={pathology ? (service?.specimen ?? "") : undefined}
-            value={pathology ? undefined : modality}
-            onChange={
-              pathology ? undefined : (event) => setModality(event.target.value)
-            }
-            placeholder={pathology ? "Whole blood" : "CT, MRI, X-ray…"}
-          />
-        </Label>
-      </div>
-      {!pathology && (
-        <>
+        {pathology && (
           <Label className="block space-y-1 text-sm">
-            Body part
+            Specimen
             <Input
-              name="bodyPart"
-              required={
-                radiologyServicePresets.find(
-                  (preset) => preset.code === radiologyService
-                )?.category !== "Radiology Support Services"
-              }
-              maxLength={150}
-              defaultValue={service?.bodyPart ?? ""}
-              placeholder="Chest, brain, abdomen�"
+              disabled={detailsDisabled}
+              required
+              name="specimen"
+              defaultValue={service?.specimen ?? ""}
+              placeholder="Whole blood"
             />
           </Label>
-          <Label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              name="contrast"
-              checked={contrast}
-              onChange={(event) => setContrast(event.target.checked)}
-            />
-            With contrast
-          </Label>
-        </>
-      )}
+        )}
+      </div>
       <Label className="block space-y-1 text-sm">
         Preparation instructions
         <Textarea
@@ -651,6 +603,42 @@ export function DiagnosticServiceForm({
           className="min-h-20 w-full rounded-lg border bg-transparent p-3"
         />
       </Label>
+      {!pathology && (
+        <details className="rounded-xl border border-slate-200 p-4 dark:border-white/10">
+          <summary className="cursor-pointer text-sm font-medium">
+            Imaging details
+          </summary>
+          <fieldset disabled={detailsDisabled} className="mt-4 space-y-4">
+            <Label className="block space-y-1 text-sm">
+              Modality
+              <Input
+                name="modality"
+                value={modality}
+                onChange={(event) => setModality(event.target.value)}
+                placeholder="CT, MRI, X-ray..."
+              />
+            </Label>
+            <Label className="block space-y-1 text-sm">
+              Body part
+              <Input
+                name="bodyPart"
+                maxLength={150}
+                defaultValue={service?.bodyPart ?? ""}
+                placeholder="Chest, brain, abdomen..."
+              />
+            </Label>
+            <Label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="contrast"
+                checked={contrast}
+                onChange={(event) => setContrast(event.target.checked)}
+              />
+              With contrast
+            </Label>
+          </fieldset>
+        </details>
+      )}
       {save.isError && (
         <p role="alert" className="text-sm text-destructive">
           {save.error.message}
