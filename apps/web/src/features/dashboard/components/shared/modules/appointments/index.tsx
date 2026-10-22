@@ -223,6 +223,7 @@ export function ErpDemoAppointments({
             <thead className="border-b border-slate-200/70 bg-slate-50/70 text-[11px] text-slate-500 dark:border-white/10 dark:bg-white/[0.025]">
               <tr>
                 {[
+                  "S. No.",
                   "Appointment ID",
                   "Patient name",
                   source ? "Type / service" : "Type / doctor",
@@ -247,7 +248,7 @@ export function ErpDemoAppointments({
               !rows.length ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className={appointments.isPending ? "px-6 py-5" : "px-6 py-20 text-center"}
                   >
                     {!appointments.isPending && (
@@ -277,11 +278,14 @@ export function ErpDemoAppointments({
                   </td>
                 </tr>
               ) : (
-                visibleRows.map((appointment) => (
+                visibleRows.map((appointment, index) => (
                   <tr
                     key={appointment.id}
                     className="transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.025]"
                   >
+                    <td className="px-5 py-3.5 tabular-nums text-slate-500">
+                      {start + index + 1}
+                    </td>
                     <td className="px-5 py-3.5 font-medium">
                       <span
                         className="block max-w-28 truncate"
