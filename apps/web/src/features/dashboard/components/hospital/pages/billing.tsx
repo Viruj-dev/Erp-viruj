@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
+
 import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import { virujBackend } from "@/lib/viruj-backend";
 import { useQuery } from "@tanstack/react-query";
@@ -78,6 +80,8 @@ export function ErpDemoBilling() {
     queryFn: () => virujBackend.modules.summary("billing"),
     queryKey: virujBackend.modules.key("billing"),
   });
+
+  if (billingStatusQuery.isLoading) return <PageSkeleton />;
 
   return (
     <DashboardPageShell

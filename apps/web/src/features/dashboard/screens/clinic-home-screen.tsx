@@ -41,7 +41,7 @@ import {
   isDashboardPage,
   organizationTypeLabels,
 } from "@/features/dashboard/lib/routing";
-import { LoadingScreen } from "@/features/shell/components/loading-screen";
+import { WorkspaceSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import { activateOrganization, authClient } from "@/lib/auth-client";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -306,15 +306,15 @@ export function ClinicHomeScreen({
   ]);
 
   if (!isHydrated || isAuthPending || shouldRedirectToOnboarding) {
-    return <LoadingScreen />;
+    return <WorkspaceSkeleton />;
   }
 
   if (!sessionState.data?.user) {
-    return <LoadingScreen />;
+    return <WorkspaceSkeleton />;
   }
 
   if (activeOrganizationType && activeOrganizationType !== "clinic") {
-    return <LoadingScreen />;
+    return <WorkspaceSkeleton />;
   }
 
   if (!activeOrganization || !activeMember) {
@@ -366,7 +366,7 @@ export function ClinicHomeScreen({
 
   if (resolvedPage === "onboarding") {
     if (!canRenderSignupOnboarding) {
-      return <LoadingScreen />;
+      return <WorkspaceSkeleton />;
     }
 
     return (

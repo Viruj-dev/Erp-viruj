@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
+
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -194,6 +196,7 @@ export function RoleDashboardPage({
   const team = analytics?.doctors ?? [];
   const services = analytics?.services ?? [];
   const ready = !loading && !!analytics;
+  if (loading) return <PageSkeleton dashboard />;
   return (
     <div
       style={

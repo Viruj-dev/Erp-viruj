@@ -1,5 +1,7 @@
 "use client";
 
+import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
+
 import { ErpSelect } from "@/components/ui/erp/select";
 
 import { DoctorAvatar } from "../../shared/workspace/doctor-avatar";
@@ -334,7 +336,7 @@ export function DoctorsManagementPage({
 
         <div className="flex-1 divide-y divide-slate-200 dark:divide-white/[0.08]">
           {doctorsQuery.isLoading ? (
-            <DirectoryState label="Loading doctor directory..." />
+            <SectionSkeleton />
           ) : doctorsQuery.isError ? (
             <DirectoryState label="Doctor backend is not reachable right now." />
           ) : filteredDoctors.length ? (

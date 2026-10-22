@@ -270,7 +270,7 @@ function InlineBanner({ tone = "amber", icon: Icon = AlertTriangle, title, child
 }
 
 function Skeleton({ className }) {
-  return <div className={cx("animate-pulse rounded-md bg-slate-200/70 dark:bg-white/[0.08]", className)} />;
+  return <div className={cx("animate-pulse motion-reduce:animate-none rounded-md bg-slate-200/70 dark:bg-white/[0.08]", className)} />;
 }
 
 function EmptyState({ icon: Icon = Info, title, description, action }) {

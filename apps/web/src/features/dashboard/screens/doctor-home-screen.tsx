@@ -40,7 +40,7 @@ import {
   isDashboardPage,
   organizationTypeLabels,
 } from "@/features/dashboard/lib/routing";
-import { LoadingScreen } from "@/features/shell/components/loading-screen";
+import { WorkspaceSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import { activateOrganization, authClient } from "@/lib/auth-client";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -198,15 +198,15 @@ export function DoctorHomeScreen({
   ]);
 
   if (!isHydrated || isAuthPending) {
-    return <LoadingScreen />;
+    return <WorkspaceSkeleton />;
   }
 
   if (!sessionState.data?.user) {
-    return <LoadingScreen />;
+    return <WorkspaceSkeleton />;
   }
 
   if (activeOrganizationType && activeOrganizationType !== "doctor") {
-    return <LoadingScreen />;
+    return <WorkspaceSkeleton />;
   }
 
   if (!activeOrganization || !activeMember) {

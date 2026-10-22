@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton, SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
+
 import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import { authClient } from "@/lib/auth-client";
 import { virujBackend } from "@/lib/viruj-backend";
@@ -168,6 +170,8 @@ export function ErpDemoStaff({
     });
   };
 
+  if (membersQuery.isLoading) return <PageSkeleton />;
+
   return (
     <DashboardPageShell
       eyebrow="Staff"
@@ -333,7 +337,7 @@ export function ErpDemoStaff({
             </div>
             <div className="mt-4 space-y-3">
               {invitationsQuery.isPending ? (
-                <EmptyState text="Loading invitations..." compact />
+                <SectionSkeleton />
               ) : pendingInvitations.length === 0 ? (
                 <EmptyState text="No pending invitations." compact />
               ) : (
@@ -380,7 +384,7 @@ export function ErpDemoStaff({
             </div>
             <div className="mt-4 space-y-3">
               {auditQuery.isPending ? (
-                <EmptyState text="Loading audit events..." compact />
+                <SectionSkeleton />
               ) : auditLogs.length === 0 ? (
                 <EmptyState text="No audit events yet." compact />
               ) : (

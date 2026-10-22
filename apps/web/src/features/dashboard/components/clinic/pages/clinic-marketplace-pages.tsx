@@ -1,4 +1,6 @@
 "use client";
+
+import { PageSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import { WorkspaceSection } from "../../shared/workspace/workspace-sections";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -1118,6 +1120,7 @@ export function ClinicGalleryPage({
   }
 
   const previewUrl = previewItem ? imageUrlsById[previewItem.id] : undefined;
+  if (galleryQuery.isLoading) return <PageSkeleton />;
 
   return (
     <ClinicPageShell

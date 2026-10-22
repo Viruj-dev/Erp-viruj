@@ -625,7 +625,7 @@ export function FacilitySkeletonGrid() {
     <div className="grid gap-4 p-4 md:grid-cols-2 2xl:grid-cols-3">
       {Array.from({ length: 6 }).map((_, index) => (
         <div
-          className="h-64 animate-pulse rounded-2xl bg-slate-100 dark:bg-white/[0.06]"
+          className="h-64 animate-pulse motion-reduce:animate-none rounded-2xl bg-slate-100 dark:bg-white/[0.06]"
           key={index}
         />
       ))}

@@ -1,4 +1,6 @@
 "use client";
+
+import { PageSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -100,6 +102,9 @@ export function DiagnosticAvailability({
       blocked: f.get("blocked") === "on",
     });
   }
+  if ([branches, slots, services].some((query) => query.isLoading))
+    return <PageSkeleton />;
+
   return (
     <section className="space-y-6">
       <header>

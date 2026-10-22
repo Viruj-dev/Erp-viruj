@@ -371,7 +371,7 @@ function LoadingList() {
     <div className="space-y-3 p-5">
       {Array.from({ length: 7 }, (_, index) => (
         <div
-          className="h-36 animate-pulse rounded-xl bg-slate-100 dark:bg-white/[0.04]"
+          className="h-36 animate-pulse motion-reduce:animate-none rounded-xl bg-slate-100 dark:bg-white/[0.04]"
           key={index}
         />
       ))}

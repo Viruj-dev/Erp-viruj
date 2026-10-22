@@ -1,5 +1,7 @@
 "use client";
 
+import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
+
 import { ErpSelect } from "@/components/ui/erp/select";
 
 import { Button } from "@/components/ui/button";
@@ -244,15 +246,20 @@ export function ErpDemoAppointments({
               appointments.isError ||
               !rows.length ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-20 text-center">
-                    <CalendarDays
-                      size={28}
-                      strokeWidth={1.4}
-                      className="mx-auto mb-4 text-slate-400"
-                      aria-hidden="true"
-                    />
+                  <td
+                    colSpan={7}
+                    className={appointments.isPending ? "px-6 py-5" : "px-6 py-20 text-center"}
+                  >
+                    {!appointments.isPending && (
+                      <CalendarDays
+                        size={28}
+                        strokeWidth={1.4}
+                        className="mx-auto mb-4 text-slate-400"
+                        aria-hidden="true"
+                      />
+                    )}
                     {appointments.isPending ? (
-                      <p role="status">Loading appointments…</p>
+                      <SectionSkeleton rows={5} className="px-0" />
                     ) : appointments.isError ? (
                       <p role="alert" className="text-error">
                         {appointments.error?.message} Use Refresh to retry.

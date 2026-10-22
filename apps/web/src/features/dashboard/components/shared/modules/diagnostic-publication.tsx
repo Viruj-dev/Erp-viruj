@@ -1,5 +1,7 @@
 "use client";
 
+import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
+
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -53,7 +55,7 @@ export function DiagnosticPublication({
         service so patients can choose an appointment time.
       </p>
       {branches.isPending || services.isPending ? (
-        <p role="status">Loading publication status…</p>
+        <SectionSkeleton />
       ) : branches.isError || services.isError ? (
         <div role="alert">
           <p>Unable to load publication status.</p>

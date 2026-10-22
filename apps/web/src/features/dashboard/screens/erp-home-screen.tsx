@@ -56,7 +56,7 @@ import {
   organizationTypeLabels,
   resolveAccessibleDashboardPage,
 } from "@/features/dashboard/lib/routing";
-import { LoadingScreen } from "@/features/shell/components/loading-screen";
+import { PageSkeleton, WorkspaceSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import {
   billingQueryOptions,
   needsAnalyticsSubscription,
@@ -405,11 +405,11 @@ export function ErpHomeScreen({
   ]);
 
   if (!isHydrated || isAuthPending || shouldRedirectToOnboarding) {
-    return <LoadingScreen />;
+    return <WorkspaceSkeleton />;
   }
 
   if (!sessionState.data?.user) {
-    return <LoadingScreen />;
+    return <WorkspaceSkeleton />;
   }
 
   if (!activeOrganization || !activeMember || !activeOrganizationType) {
@@ -471,7 +471,7 @@ export function ErpHomeScreen({
         />
       );
     if (!canRenderSignupOnboarding) {
-      return <LoadingScreen />;
+      return <WorkspaceSkeleton />;
     }
 
     return (
@@ -577,7 +577,7 @@ export function ErpHomeScreen({
                 }
               >
                 {checkingAnalyticsAccess ? (
-                  <LoadingScreen />
+                  <PageSkeleton />
                 ) : (
                   <PageContent
                     currentPage={resolvedPage}

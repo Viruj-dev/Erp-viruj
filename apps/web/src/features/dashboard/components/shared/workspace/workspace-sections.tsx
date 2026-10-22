@@ -1,4 +1,6 @@
 "use client";
+
+import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import {
   ProfileHero,
   ProfileDetailPanel as DetailPanel,
@@ -203,7 +205,7 @@ export function WorkspaceSection({
           )}
         </header>
         {workspace.isPending ? (
-          <p role="status">Loading organization details…</p>
+          <SectionSkeleton />
         ) : workspace.isError ? (
           <div role="alert" className={panel}>
             <p>{workspace.error.message}</p>

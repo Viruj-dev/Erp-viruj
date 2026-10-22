@@ -1,5 +1,7 @@
 "use client";
 
+import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/erp/input";
 import {
@@ -169,7 +171,7 @@ export function AppointmentDetail({
             Loading patient and appointment...
           </DialogDescription>
         </DialogHeader>
-        <p role="status">Loading...</p>
+        <SectionSkeleton />
       </>
     );
   if (details.isError)

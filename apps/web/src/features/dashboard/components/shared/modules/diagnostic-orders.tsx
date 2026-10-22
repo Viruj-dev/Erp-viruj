@@ -1,4 +1,6 @@
 "use client";
+
+import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -152,9 +154,7 @@ export function DiagnosticOrders({
             </Button>
           </div>
           {orders.isPending ? (
-            <p className="p-8" role="status">
-              Loading diagnostic orders…
-            </p>
+            <SectionSkeleton />
           ) : orders.isError ? (
             <p className="p-8 text-sm text-destructive" role="alert">
               {orders.error.message}
@@ -242,7 +242,7 @@ export function DiagnosticOrders({
             Register the patient and select one test panel or scan.
           </DialogDescription>
           {services.isPending ? (
-            <p>Loading services…</p>
+            <SectionSkeleton />
           ) : services.isError ? (
             <p role="alert">
               Unable to load services. Close this form and refresh.

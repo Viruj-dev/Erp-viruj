@@ -1,4 +1,6 @@
 "use client";
+
+import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -134,7 +136,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
         </div>
       </section>
       {query.isPending ? (
-        <p role="status">Loading catalogue…</p>
+        <SectionSkeleton />
       ) : query.isError ? (
         <div role="alert" className="rounded-xl border p-5">
           <p>Unable to load the catalogue.</p>

@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
+
 import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import { virujBackend } from "@/lib/viruj-backend";
 import { useQuery } from "@tanstack/react-query";
@@ -202,6 +204,8 @@ export function ErpDemoCommunity() {
         : communityFeed.posts.filter((post) => post.category === activeTab),
     [activeTab]
   );
+
+  if (communityStatusQuery.isLoading) return <PageSkeleton />;
 
   return (
     <DashboardPageShell

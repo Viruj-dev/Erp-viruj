@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
+
 import {
   ProfileHero,
   ProfileDetailPanel,
@@ -22,9 +24,7 @@ export function PathologyProfile({ tenant }: { tenant: ErpTenantContext }) {
   });
   if (query.isPending)
     return (
-      <p role="status" className="p-8">
-        Loading organization profile…
-      </p>
+      <PageSkeleton />
     );
   if (query.isError)
     return (

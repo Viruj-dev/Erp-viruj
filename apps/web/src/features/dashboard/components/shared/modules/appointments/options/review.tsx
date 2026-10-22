@@ -1,3 +1,4 @@
+import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import {
   CheckCircle,
   XCircle,
@@ -143,7 +144,7 @@ export function ReviewQueue({
       {isLoading ? (
         <Card>
           <CardContent className="p-8 text-center">
-            <p className="text-muted-foreground">Loading pending requests...</p>
+            <SectionSkeleton />
           </CardContent>
         </Card>
       ) : filteredAppointments.length ? (

@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
+
 import { virujBackend } from "@/lib/viruj-backend";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -118,6 +120,8 @@ function PatientAppointments({
     );
     if (confirmed) deletion.mutate(selected);
   };
+  if (appointments.isLoading) return <PageSkeleton />;
+
   return (
     <DashboardPageShell
       eyebrow="Patients"
@@ -125,9 +129,6 @@ function PatientAppointments({
       title="Patient Directory"
       tone={tone}
     >
-      {appointments.isPending ? (
-        <p role="status">Loading patient appointments...</p>
-      ) : null}
       {appointments.isError ? (
         <p role="alert" className="text-error">
           {appointments.error.message} Use Reload to retry.

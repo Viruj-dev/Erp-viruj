@@ -1,4 +1,6 @@
 "use client";
+
+import { PageSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import {
   UploadField,
   TextField,
@@ -61,9 +63,7 @@ export function DiagnosticOnboarding({
     );
   if (query.isPending)
     return (
-      <p role="status" className="m-auto p-8">
-        Loading centre setup…
-      </p>
+      <PageSkeleton />
     );
   if (query.isError)
     return (

@@ -1,3 +1,4 @@
+import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { Check, Search, Stethoscope, Trash2 } from "lucide-react";
 import {
@@ -132,9 +133,7 @@ export function DepartmentsStep({
             </label>
             <div className="max-h-[50vh] overflow-y-auto">
               {loading ? (
-                <p role="status" className="p-6 text-center">
-                  Loading departments…
-                </p>
+                <SectionSkeleton />
               ) : error ? (
                 <div role="alert" className="p-5 text-center">
                   <p>{error}</p>

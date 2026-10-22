@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
+
 import { useQuery } from "@tanstack/react-query";
 import {
   CalendarDays,
@@ -119,6 +121,8 @@ export function ErpDemoAnalytics({
     () => buildAnalyticsViewModel(analyticsQuery.data),
     [analyticsQuery.data]
   );
+
+  if (analyticsQuery.isLoading) return <PageSkeleton />;
 
   return (
     <DashboardPageShell

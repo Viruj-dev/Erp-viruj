@@ -1,5 +1,7 @@
 "use client";
 
+import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
+
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw, Upload } from "lucide-react";
@@ -43,7 +45,7 @@ export function DiagnosticFileReports({
           Refresh
         </Button>
       </div>
-      {query.isPending && <p role="status">Loading accepted tests…</p>}
+      {query.isPending && <SectionSkeleton />}
       {query.isError && (
         <p role="alert" className="text-destructive">
           Could not load accepted tests. Refresh to try again.
