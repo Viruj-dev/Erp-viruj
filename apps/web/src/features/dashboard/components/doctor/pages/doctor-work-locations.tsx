@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/erp/checkbox";
 import { Input } from "@/components/ui/erp/input";
 import { ErpSelect } from "@/components/ui/erp/select";
 import {
@@ -148,11 +149,10 @@ export function DoctorWorkLocationsPage() {
                 </label>
               ))}
               <label className="flex gap-2">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={draft.currentlyWorking !== false}
-                  onChange={(e) =>
-                    setDraft({ ...draft, currentlyWorking: e.target.checked })
+                  onCheckedChange={(checked) =>
+                    setDraft({ ...draft, currentlyWorking: checked === true })
                   }
                 />
                 Currently working here

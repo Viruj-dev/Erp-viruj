@@ -198,8 +198,8 @@ export function DoctorsManagementPage({
   const canSubmit = Boolean(
     form.name.trim() &&
     form.specialty.trim() &&
-    (!isClinicTone ||
-      (form.registrationNumber?.trim() && form.department.trim()))
+    form.registrationNumber?.trim() &&
+    (!isClinicTone || form.department.trim())
   );
 
   function updateField(field: keyof VirujDoctorInput, value: string) {
@@ -233,6 +233,8 @@ export function DoctorsManagementPage({
       imageUrl: doctor.imageUrl || "",
       gender: doctor.gender || "unspecified",
       registrationNumber: doctor.registrationNumber || "",
+      medicalCouncil: doctor.medicalCouncil || "",
+      inviteEmail: doctor.inviteEmail || "",
       availability: doctor.availability,
       department: doctor.department,
       experience: doctor.experience,
@@ -428,6 +430,12 @@ export function DoctorsManagementPage({
                   value={form.medicalCouncil || ""}
                   onChange={(value) => updateField("medicalCouncil", value)}
                   placeholder="State medical council"
+                />
+                <DoctorInput
+                  label="Doctor email"
+                  value={form.inviteEmail || ""}
+                  onChange={(value) => updateField("inviteEmail", value)}
+                  placeholder="Verified account email for access to this practice"
                 />
                 <DoctorInput
                   label="Doctor name"

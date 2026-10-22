@@ -8,17 +8,14 @@ import {
   type DoctorAppointment,
   type Page,
 } from "@/features/dashboard/lib/doctor-workspace";
-import { Plus, Save } from "lucide-react";
-import { consultations } from "@/features/dashboard/components/doctor/_components/doctor-mock-data";
+import { Save } from "lucide-react";
 import {
-  DataTable,
   DetailRows,
   DoctorPageShell,
   FilterBar,
   HospitalPanel,
   PatientRow,
   PrimaryAction,
-  RowActions,
   SecondaryAction,
   StatusBadge,
   TextBlock,

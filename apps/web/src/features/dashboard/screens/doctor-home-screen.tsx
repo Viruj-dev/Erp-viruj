@@ -3,10 +3,7 @@
 import { DoctorWorkspaceContext } from "@/features/dashboard/lib/doctor-workspace";
 import { DoctorReminders } from "@/features/dashboard/components/doctor/pages/doctor-calendar";
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
-import {
-  ErpDemoAppointments,
-  ErpEnterpriseModule,
-} from "@/features/dashboard/components/shared/modules";
+import { ErpEnterpriseModule } from "@/features/dashboard/components/shared/modules";
 import { ClinicGalleryPage } from "@/features/dashboard/components/clinic/pages";
 import {
   DoctorAvailabilityPage,
@@ -413,30 +410,10 @@ function DoctorPageBody({
   switch (currentPage) {
     case "appointments":
     case "appointments-dashboard":
-      return (
-        <ErpDemoAppointments
-          initialAppointmentId={detailId}
-          key={organizationId}
-          section="dashboard"
-          tenant={tenant}
-        />
-      );
-    case "appointments-patients":
-      return (
-        <ErpDemoAppointments
-          key={organizationId}
-          section="patients"
-          tenant={tenant}
-        />
-      );
     case "appointments-review":
-      return (
-        <ErpDemoAppointments
-          key={organizationId}
-          section="review"
-          tenant={tenant}
-        />
-      );
+      return <DoctorConsultationsPage />;
+    case "appointments-patients":
+      return <DoctorPatientDirectoryPage />;
     case "patients":
       return detailId ? (
         <DoctorPatientDetailPage id={detailId} />

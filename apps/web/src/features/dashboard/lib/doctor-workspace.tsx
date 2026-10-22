@@ -66,6 +66,7 @@ export type DoctorAppointment = {
 };
 export type Page<T> = {
   data: T[];
+  summary?: { patientsAttended: number };
   pagination: { total: number; page: number; totalPages: number };
 };
 export function useDoctorTenant() {
@@ -79,6 +80,7 @@ export function useDoctorQuery<T>(path: string) {
     queryKey: ["doctor-workspace", tenant.organizationId, path],
     queryFn: () => doctorWorkspaceRequest<T>(path, tenant.organizationId),
     retry: false,
+    refetchInterval: path === "/doctor/calendar" ? 60000 : false,
   });
 }
 export function useDoctorSave() {

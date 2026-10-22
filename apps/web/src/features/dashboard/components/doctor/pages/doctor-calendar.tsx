@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Pin, Bell, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/erp/checkbox";
 import { Input } from "@/components/ui/erp/input";
 import { Textarea } from "@/components/ui/erp/textarea";
 import { ErpSelect } from "@/components/ui/erp/select";
@@ -19,6 +20,7 @@ import {
 import {
   useDoctorQuery,
   useDoctorSave,
+  useDoctorTenant,
   type CalendarEvent,
   type WorkLocation,
   type DoctorAppointment,
@@ -48,6 +50,12 @@ const emptyEvent = (d: Date): CalendarEvent => ({
   reminderMinutes: 15,
   patientsAttended: 0,
 });
+export function doctorDayAppointmentsPath(date: string, page = 1) {
+  const from = new Date(`${date}T00:00:00`);
+  const until = new Date(from);
+  until.setDate(until.getDate() + 1);
+  return `/doctor/appointments?page=${page}&pageSize=100&from=${encodeURIComponent(from.toISOString())}&until=${encodeURIComponent(until.toISOString())}`;
+}
 export function DoctorCalendarPage() {
   const query = useDoctorQuery<CalendarEvent[]>("/doctor/calendar");
   const locations = useDoctorQuery<WorkLocation[]>("/doctor/locations");
@@ -58,8 +66,12 @@ export function DoctorCalendarPage() {
   const save = useDoctorSave();
   const [appointmentPage, setAppointmentPage] = useState(1);
   const appointments = useDoctorQuery<Page<DoctorAppointment>>(
-    `/doctor/appointments?page=${appointmentPage}&pageSize=100`
+    doctorDayAppointmentsPath(selected, appointmentPage)
   );
+  function selectDate(date: string) {
+    setSelected(date);
+    setAppointmentPage(1);
+  }
   const start = new Date(
     cursor.getFullYear(),
     cursor.getMonth(),
@@ -134,7 +146,7 @@ export function DoctorCalendarPage() {
             variant="outline"
             onClick={() => {
               setCursor(new Date());
-              setSelected(localDate(new Date()));
+              selectDate(localDate(new Date()));
             }}
           >
             Today
@@ -216,7 +228,7 @@ export function DoctorCalendarPage() {
                     aria-label={`View ${d.toDateString()}`}
                     aria-pressed={selected === key}
                     className={`mb-2 flex size-8 items-center justify-center rounded-full text-sm ${key === localDate(new Date()) ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
-                    onClick={() => setSelected(key)}
+                    onClick={() => selectDate(key)}
                   >
                     {d.getDate()}
                   </button>
@@ -247,7 +259,7 @@ export function DoctorCalendarPage() {
                     {entries.length > 3 && (
                       <button
                         type="button"
-                        onClick={() => setSelected(key)}
+                        onClick={() => selectDate(key)}
                         className="text-xs text-primary"
                       >
                         +{entries.length - 3} more
@@ -304,7 +316,7 @@ export function DoctorCalendarPage() {
       </HospitalPanel>
       <HospitalPanel
         title="Appointments from your practices"
-        subtitle="Organisation staff manage booking decisions. These records are read-only here."
+        subtitle={`${appointments.data?.summary?.patientsAttended ?? 0} patients attended from completed appointments. Organisation staff manage booking decisions.`}
       >
         {appointments.isError ? (
           <p role="alert">Unable to load appointments.</p>
@@ -495,11 +507,10 @@ export function DoctorCalendarPage() {
                 </ErpSelect>
               </label>
               <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={draft.pinned}
-                  onChange={(e) =>
-                    setDraft({ ...draft, pinned: e.target.checked })
+                  onCheckedChange={(checked) =>
+                    setDraft({ ...draft, pinned: checked === true })
                   }
                 />
                 Pin event
@@ -662,18 +673,30 @@ function BookingHours() {
 }
 export function DoctorReminders() {
   const q = useDoctorQuery<CalendarEvent[]>("/doctor/calendar");
+  const tenant = useDoctorTenant();
   const delivered = useRef(new Set<string>());
   useEffect(() => {
     const check = () => {
       for (const e of q.data || []) {
         const due = Date.parse(e.startsAt) - e.reminderMinutes * 60000;
-        const key = `${e.id}:${e.startsAt}:${e.reminderMinutes}`;
+        const key = `viruj:doctor-reminder:${tenant.organizationId}:${e.id}:${e.startsAt}:${e.reminderMinutes}`;
+        let alreadyDelivered = delivered.current.has(key);
+        try {
+          alreadyDelivered ||= sessionStorage.getItem(key) === "1";
+        } catch {
+          /* Memory deduplication still works if storage is unavailable. */
+        }
         if (
           due <= Date.now() &&
-          Date.parse(e.endsAt) > Date.now() &&
-          !delivered.current.has(key)
+          Date.parse(e.startsAt) + 60000 > Date.now() &&
+          !alreadyDelivered
         ) {
           delivered.current.add(key);
+          try {
+            sessionStorage.setItem(key, "1");
+          } catch {
+            /* Memory deduplication still works. */
+          }
           toast.info(`Reminder: ${e.title}`);
           if (
             "Notification" in window &&
@@ -694,6 +717,6 @@ export function DoctorReminders() {
     check();
     const timer = setInterval(check, 30000);
     return () => clearInterval(timer);
-  }, [q.data]);
+  }, [q.data, tenant.organizationId]);
   return null;
 }
