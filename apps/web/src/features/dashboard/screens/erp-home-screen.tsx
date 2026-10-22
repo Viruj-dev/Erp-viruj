@@ -1,13 +1,13 @@
 "use client";
 import { DiagnosticFileReports } from "../components/shared/modules/diagnostic-file-reports";
-import { PathologyProfile } from "@/features/dashboard/components/shared/modules/pathology-profile";
+import { DiagnosticProfile } from "@/features/dashboard/components/shared/modules/diagnostic-profile";
 import { DiagnosticCatalogue } from "@/features/dashboard/components/shared/modules/diagnostic-catalogue";
 import { DiagnosticAvailability } from "@/features/dashboard/components/shared/modules/diagnostic-availability";
 import { DiagnosticBookingInbox } from "@/features/dashboard/components/shared/modules/diagnostic-bookings";
 import { DiagnosticOnboarding } from "@/features/dashboard/components/shared/modules/diagnostic-onboarding";
 import {
   canManageDiagnosticSetup,
-  diagnosticSetupKey,
+  diagnosticSetupKey
 } from "@/features/dashboard/lib/diagnostic-onboarding";
 import { virujBackend } from "@/lib/viruj-backend";
 
@@ -19,17 +19,17 @@ import { ActivityLogsPage } from "@/features/dashboard/components/shared/activit
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import {
   ErpDemoSidebar,
-  ErpDemoTopBar,
+  ErpDemoTopBar
 } from "@/features/dashboard/components/shared/layout";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
 import {
   createErpTenantContext,
-  type ErpTenantContext,
+  type ErpTenantContext
 } from "@/features/dashboard/lib/erp-tenant";
 import { ClinicGalleryPage } from "@/features/dashboard/components/clinic/pages";
 import {
   ErpDemoAppointments,
-  ErpEnterpriseModule,
+  ErpEnterpriseModule
 } from "@/features/dashboard/components/shared/modules";
 import {
   ErpDemoAnalytics,
@@ -43,7 +43,7 @@ import {
   ErpDemoStaff,
   HospitalProfilePage,
   OrganizationOnboardingPage,
-  PricingPage,
+  PricingPage
 } from "@/features/dashboard/components/hospital/pages";
 import { ErpUserProfilePage } from "@/features/dashboard/components/shared/profile";
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
@@ -54,18 +54,21 @@ import {
   isDashboardOrganizationType,
   isDashboardPage,
   organizationTypeLabels,
-  resolveAccessibleDashboardPage,
+  resolveAccessibleDashboardPage
 } from "@/features/dashboard/lib/routing";
-import { PageSkeleton, WorkspaceSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
+import {
+  PageSkeleton,
+  WorkspaceSkeleton
+} from "@/features/dashboard/components/shared/page-skeleton";
 import {
   billingQueryOptions,
-  needsAnalyticsSubscription,
+  needsAnalyticsSubscription
 } from "@/features/subscription/utils/billing-query-options";
 import { subscriptionBillingApi } from "@/features/subscription/api/subscription.api";
 import {
   getBillingPermissionsFromMember,
   hasBillingPermission,
-  hasFeature,
+  hasFeature
 } from "@/features/subscription/utils/subscription-access";
 import { activateOrganization, authClient } from "@/lib/auth-client";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -78,7 +81,7 @@ const fallbackPage: ErpDemoPage = "dashboard";
 export function ErpHomeScreen({
   currentPage: requestedPage,
   routeOrganizationType,
-  routeSegments = [],
+  routeSegments = []
 }: {
   currentPage: string;
   routeOrganizationType: string;
@@ -127,13 +130,13 @@ export function ErpHomeScreen({
 
     setIsActivatingOnlyOrganization(true);
     void activateOrganization({
-      organizationId: organizations[0].id,
+      organizationId: organizations[0].id
     })
       .then(() =>
         Promise.all([
           sessionState.refetch(),
           activeOrganizationState.refetch(),
-          activeMemberState.refetch(),
+          activeMemberState.refetch()
         ])
       )
       .finally(() => setIsActivatingOnlyOrganization(false));
@@ -144,7 +147,7 @@ export function ErpHomeScreen({
     isActivatingOnlyOrganization,
     organizationsState.data,
     sessionState.data?.user,
-    sessionState,
+    sessionState
   ]);
 
   const currentPage = isErpDemoPage(requestedPage)
@@ -179,13 +182,13 @@ export function ErpHomeScreen({
     ...billingQueryOptions,
     enabled: checkAnalyticsSubscription,
     queryFn: subscriptionBillingApi.current,
-    queryKey: subscriptionBillingApi.currentKey,
+    queryKey: subscriptionBillingApi.currentKey
   });
   const plansQuery = useQuery({
     ...billingQueryOptions,
     enabled: checkAnalyticsSubscription,
     queryFn: subscriptionBillingApi.plans,
-    queryKey: subscriptionBillingApi.plansKey,
+    queryKey: subscriptionBillingApi.plansKey
   });
   const checkingAnalyticsAccess =
     checkAnalyticsSubscription &&
@@ -230,7 +233,7 @@ export function ErpHomeScreen({
           organizationSlug: activeOrganizationSlug,
           permissions: activeMemberPermissions,
           providerType: activeOrganizationType,
-          role: activeMemberRole,
+          role: activeMemberRole
         })
       : null;
   const workspaceTheme = getWorkspaceTheme(organizationLabel);
@@ -251,7 +254,7 @@ export function ErpHomeScreen({
       !isAuthPending &&
       canSetupDiagnostics &&
       Boolean(activeOrganization?.id),
-    retry: false,
+    retry: false
   });
   const shouldRedirectToOnboarding =
     isHydrated &&
@@ -306,7 +309,7 @@ export function ErpHomeScreen({
     isHydrated,
     requestedPage,
     router,
-    shouldRedirectToOnboarding,
+    shouldRedirectToOnboarding
   ]);
   useEffect(() => {
     if (
@@ -361,7 +364,7 @@ export function ErpHomeScreen({
     isAuthPending,
     isHydrated,
     requestedPage,
-    router,
+    router
   ]);
   useEffect(() => {
     if (
@@ -401,7 +404,7 @@ export function ErpHomeScreen({
     shouldRedirectToOnboarding,
     routeDashboardOrganizationType,
     routeOrganizationType,
-    router,
+    router
   ]);
 
   if (!isHydrated || isAuthPending || shouldRedirectToOnboarding) {
@@ -428,7 +431,7 @@ export function ErpHomeScreen({
           );
 
           await activateOrganization({
-            organizationId,
+            organizationId
           });
           await sessionState.refetch();
           await activeOrganizationState.refetch();
@@ -566,7 +569,7 @@ export function ErpHomeScreen({
               initial={{ opacity: 0, y: reduceMotion ? 0 : 10 }}
               transition={{
                 duration: reduceMotion ? 0 : 0.22,
-                ease: "easeOut",
+                ease: "easeOut"
               }}
             >
               <div
@@ -613,7 +616,7 @@ function PageContent({
   organizationName,
   routeBasePath,
   routeSegments,
-  appointmentTenant,
+  appointmentTenant
 }: {
   currentPage: ErpDemoPage;
   organizationLabel: string;
@@ -628,8 +631,10 @@ function PageContent({
   const isDiagnosticTenant =
     appointmentTenant?.providerType === "pathology" ||
     appointmentTenant?.providerType === "radiology";
-  if (appointmentTenant?.providerType === "pathology") {
-    if (currentPage === "reports")
+  if (appointmentTenant && isDiagnosticTenant) {
+    if (
+      currentPage === "reports"
+    )
       return (
         <DiagnosticFileReports
           key={appointmentTenant.organizationId}
@@ -637,7 +642,7 @@ function PageContent({
         />
       );
     if (currentPage === "profile")
-      return <PathologyProfile tenant={appointmentTenant} />;
+      return <DiagnosticProfile tenant={appointmentTenant} />;
     if (currentPage === "services" || currentPage === "pathology")
       return <DiagnosticCatalogue tenant={appointmentTenant} />;
     if (currentPage === "facilities")

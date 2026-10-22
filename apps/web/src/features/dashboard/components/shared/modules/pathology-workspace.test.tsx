@@ -4,21 +4,21 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import {
   diagnosticSetupKey,
-  emptyDiagnosticSetup,
+  emptyDiagnosticSetup
 } from "@/features/dashboard/lib/diagnostic-onboarding";
 import { virujBackend } from "@/lib/viruj-backend";
-import { PathologyProfile } from "./pathology-profile";
+import { DiagnosticProfile } from "./diagnostic-profile";
 import { DiagnosticPublication } from "./diagnostic-publication";
 mock.module("next/navigation", () => ({
   useRouter: () => ({ push() {}, replace() {} }),
-  usePathname: () => "/pathology/lab-a/dashboard",
+  usePathname: () => "/pathology/lab-a/dashboard"
 }));
 const { DiagnosticWorkspace } = await import("./diagnostic-workspace");
 
 const tenant = createErpTenantContext({
   organizationId: "lab-a",
   providerType: "pathology",
-  role: "OWNER",
+  role: "OWNER"
 })!;
 
 test("pathology dashboard counts services and branches without loading laboratory orders", () => {
@@ -53,7 +53,7 @@ test("publication controls reflect branch visibility and restrict publishing to 
       address: "Delhi",
       phone: "",
       published: false,
-      homeCollection: false,
+      homeCollection: false
     },
     {
       id: "public",
@@ -62,8 +62,8 @@ test("publication controls reflect branch visibility and restrict publishing to 
       address: "Delhi",
       phone: "",
       published: true,
-      homeCollection: true,
-    },
+      homeCollection: true
+    }
   ]);
   const render = (role = "OWNER") =>
     renderToStaticMarkup(
@@ -102,18 +102,18 @@ test("pathology profile displays saved identity and contact details for its tena
       registrationNumber: "REG-001",
       establishedYear: "2005",
       website: "https://example.com",
-      city: "Delhi",
+      city: "Delhi"
     },
     completedAt: "2026-01-01",
-    version: 1,
+    version: 1
   });
   client.setQueryData(diagnosticSetupKey("lab-b"), {
     data: emptyDiagnosticSetup("Other tenant"),
-    version: 1,
+    version: 1
   });
   const html = renderToStaticMarkup(
     <QueryClientProvider client={client}>
-      <PathologyProfile tenant={tenant} />
+      <DiagnosticProfile tenant={tenant} />
     </QueryClientProvider>
   );
   for (const value of [
@@ -121,10 +121,54 @@ test("pathology profile displays saved identity and contact details for its tena
     "REG-001",
     "2005",
     "lab@example.com",
-    "https://example.com",
+    "https://example.com"
   ])
     expect(html).toContain(value);
   expect(html).not.toContain("Other tenant");
   expect(html).toContain("Mobile app publishing");
+  client.clear();
+});
+
+test("radiology matches the dashboard UI while reading only its own organization data", () => {
+  const radiology = { ...tenant, organizationId: "scan-a", providerType: "radiology" as const };
+  const client = new QueryClient();
+  client.setQueryData(["diagnostic-bookings", "scan-a"], []);
+  client.setQueryData(virujBackend.diagnostics.key("scan-a", "services"), []);
+  client.setQueryData(["diagnostic-availability", "scan-a", "branches"], []);
+  client.setQueryData(diagnosticSetupKey("lab-a"), { data: emptyDiagnosticSetup("Pathology only"), completedAt: "2026-01-01", version: 1 });
+  const html = renderToStaticMarkup(
+    <QueryClientProvider client={client}>
+      <DiagnosticWorkspace tenant={radiology} userName="Owner" />
+    </QueryClientProvider>
+  );
+  expect(html).toContain("Live services");
+  expect(html).toContain("Published branches");
+  expect(html).toContain("Your branches");
+  expect(client.getQueryCache().getAll()).toHaveLength(4);
+  client.setQueryData(diagnosticSetupKey("scan-a"), {
+    data: {
+      ...emptyDiagnosticSetup("Imaging Centre"),
+      modalities: ["MRI"],
+      equipment: "MRI-1",
+      reportingName: "Dr Scan"
+    },
+    completedAt: "2026-01-01",
+    version: 1
+  });
+  const profile = renderToStaticMarkup(
+    <QueryClientProvider client={client}>
+      <DiagnosticProfile tenant={radiology} />
+    </QueryClientProvider>
+  );
+  for (const value of [
+    "Radiology",
+    "vh-onboarding--radiology",
+    "MRI-1",
+    "Dr Scan",
+    "In-person only"
+  ])
+    expect(profile).toContain(value);
+  expect(profile).not.toContain("Home collection");
+  expect(profile).not.toContain("Pathology only");
   client.clear();
 });

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export function DiagnosticReport({
   order,
-  organizationName,
+  organizationName
 }: {
   order: DiagnosticOrder;
   organizationName?: string;
@@ -55,7 +55,9 @@ export function DiagnosticReport({
             <dd>{order.referringDoctor || "Self-referred"}</dd>
           </div>
           <div>
-            <dt className="text-zinc-500">Order reference</dt>
+            <dt className="text-zinc-500">
+              {order.kind === "radiology" ? "Study ID" : "Order reference"}
+            </dt>
             <dd className="break-all">{order.id}</dd>
           </div>
           {order.barcode && (
@@ -96,6 +98,27 @@ export function DiagnosticReport({
           </div>
         ) : (
           <>
+            <p className="text-sm">
+              {[
+                order.serviceSnapshot.modality,
+                order.serviceSnapshot.bodyPart,
+                order.serviceSnapshot.contrast
+                  ? "With contrast"
+                  : "Without contrast"
+              ]
+                .filter(Boolean)
+                .join(" � ")}
+            </p>
+            {order.imageUrl && /^https?:\/\//i.test(order.imageUrl) && (
+              <a
+                href={order.imageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm underline"
+              >
+                Open study images
+              </a>
+            )}
             <section>
               <h3 className="font-semibold">Findings</h3>
               <p className="mt-2 whitespace-pre-wrap text-sm leading-7">

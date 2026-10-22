@@ -14,19 +14,19 @@ import {
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
-  DialogDescription,
+  DialogDescription
 } from "@/components/ui/erp/dialog";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import {
   diagnosticPermissions,
   type DiagnosticService,
-  type DiagnosticServiceInput,
+  type DiagnosticServiceInput
 } from "@/features/dashboard/lib/diagnostics";
 import { pathologyServicePresets } from "@/features/dashboard/lib/pathology-services";
 import { virujBackend } from "@/lib/viruj-backend";
@@ -47,7 +47,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
   const key = virujBackend.diagnostics.key(tenant.organizationId, "services");
   const query = useQuery({
     queryKey: key,
-    queryFn: () => virujBackend.diagnostics.services(tenant.organizationId),
+    queryFn: () => virujBackend.diagnostics.services(tenant.organizationId)
   });
   const archive = useMutation({
     mutationFn: (service: DiagnosticService) =>
@@ -56,7 +56,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
         service.id,
         !service.active
       ),
-    onSuccess: () => client.invalidateQueries({ queryKey: key }),
+    onSuccess: () => client.invalidateQueries({ queryKey: key })
   });
   const remove = useMutation({
     mutationFn: (service: DiagnosticService) =>
@@ -64,7 +64,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
     onSuccess: () => {
       setDeleting(null);
       void client.invalidateQueries({ queryKey: key });
-    },
+    }
   });
   const pathology = tenant.providerType === "pathology";
   const accent = pathology
@@ -86,7 +86,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
     onlineBooking: false,
     appointmentRequired: true,
     status: service.active ? ("active" as const) : ("archived" as const),
-    isAvailable: service.active,
+    isAvailable: service.active
   }));
   return (
     <DashboardPageShell
@@ -169,13 +169,13 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
               update: canManage,
               publish: canManage,
               archive: canManage,
-              delete: canManage,
+              delete: canManage
             }}
             actionLabels={{
               edit: "Edit",
               activate: "Publish",
               deactivate: "Unpublish",
-              delete: "Delete",
+              delete: "Delete"
             }}
             isUpdatingId={
               archive.isPending
@@ -276,13 +276,13 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
 function ServiceForm({
   tenant,
   service,
-  onSaved,
+  onSaved
 }: {
   tenant: ErpTenantContext;
   service?: DiagnosticService;
   onSaved: () => void;
 }) {
-  const [kind, setKind] = useState<"pathology" | "radiology">(
+  const [kind] = useState<"pathology" | "radiology">(
     service?.kind ??
       (tenant.providerType === "radiology" ? "radiology" : "pathology")
   );
@@ -294,7 +294,9 @@ function ServiceForm({
   );
   const detailsDisabled = pathology && !selectedService;
   const [serviceCode, setServiceCode] = useState(service?.code ?? "");
-  const [scheduled, setScheduled] = useState(Boolean(service?.availability));
+  const [scheduled, setScheduled] = useState(
+    pathology && Boolean(service?.availability)
+  );
   const [availableFrom, setAvailableFrom] = useState(
     service?.availability?.startsAt ?? "09:00"
   );
@@ -311,7 +313,7 @@ function ServiceForm({
         data,
         service?.id
       ),
-    onSuccess: onSaved,
+    onSuccess: onSaved
   });
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -331,14 +333,16 @@ function ServiceForm({
       preparation: String(form.get("preparation")),
       specimen: pathology ? String(form.get("specimen")) : null,
       modality: pathology ? null : String(form.get("modality")),
+      bodyPart: pathology ? null : String(form.get("bodyPart")),
+      contrast: !pathology && form.get("contrast") === "on",
       parameters: pathology ? (service?.parameters ?? []) : [],
       availability: scheduled
         ? {
             days: workingDays,
             startsAt: availableFrom,
-            endsAt: availableUntil,
+            endsAt: availableUntil
           }
-        : null,
+        : null
     });
   }
   return (
@@ -355,26 +359,6 @@ function ServiceForm({
             value={serviceCode}
             onChange={(event) => setServiceCode(event.target.value)}
           />
-        </Label>
-      )}
-      {tenant.providerType !== "pathology" && (
-        <Label className="block space-y-1 text-sm">
-          Service type
-          <Select
-            disabled={Boolean(service)}
-            value={kind}
-            onValueChange={(value) =>
-              setKind(value as "pathology" | "radiology")
-            }
-          >
-            <SelectTrigger aria-label="Service type" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pathology">Pathology test / panel</SelectItem>
-              <SelectItem value="radiology">Radiology scan</SelectItem>
-            </SelectContent>
-          </Select>
         </Label>
       )}
       {pathology && (
@@ -398,9 +382,7 @@ function ServiceForm({
             </SelectTrigger>
             <SelectContent>
               {[
-                ...new Set(
-                  pathologyServicePresets.map((item) => item.category)
-                ),
+                ...new Set(pathologyServicePresets.map((item) => item.category))
               ].map((category) => (
                 <SelectGroup key={category}>
                   <SelectLabel>{category}</SelectLabel>
@@ -439,80 +421,88 @@ function ServiceForm({
           defaultValue={service?.durationMinutes ?? 30}
         />
       </Label>
-      <fieldset
-        disabled={detailsDisabled}
-        className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10"
-      >
-        <legend className="px-1 text-sm font-medium">
-          Mobile booking hours
-        </legend>
-        <Label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={scheduled}
-            onChange={(event) => setScheduled(event.target.checked)}
-          />
-          Offer recurring appointment times for this service
-        </Label>
-        {scheduled && (
-          <>
-            <div
-              className="flex flex-wrap gap-2"
-              role="group"
-              aria-label="Service working days"
-            >
-              {[
-                [1, "Mon"],
-                [2, "Tue"],
-                [3, "Wed"],
-                [4, "Thu"],
-                [5, "Fri"],
-                [6, "Sat"],
-                [0, "Sun"],
-              ].map(([day, name]) => (
-                <button
-                  key={day}
-                  type="button"
-                  aria-pressed={workingDays.includes(Number(day))}
-                  onClick={() =>
-                    setWorkingDays((days) =>
-                      days.includes(Number(day))
-                        ? days.filter((value) => value !== day)
-                        : [...days, Number(day)]
-                    )
-                  }
-                  className={`rounded-lg border px-3 py-2 text-xs font-medium ${workingDays.includes(Number(day)) ? "border-orange-700 bg-orange-50 text-orange-800" : "border-slate-200 text-muted-foreground"}`}
-                >
-                  {name}
-                </button>
-              ))}
-            </div>
-            <div
-              className={`vh-onboarding vh-onboarding--${kind} grid grid-cols-2 gap-3`}
-            >
-              <TimePicker
-                label="From (IST)"
-                value={availableFrom}
-                onChange={setAvailableFrom}
-                disabled={detailsDisabled}
-                themeClassName={`vh-onboarding--${kind}`}
-              />
-              <TimePicker
-                label="Until (IST)"
-                value={availableUntil}
-                onChange={setAvailableUntil}
-                disabled={detailsDisabled}
-                themeClassName={`vh-onboarding--${kind}`}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Patients choose a time within these hours for the next 7 days.
-              Appointment duration sets the spacing. Applies to all published
-              branches; existing bookings are kept.
-            </p>
-          </>
-        )}
-      </fieldset>
+      {pathology && (
+        <fieldset
+          disabled={detailsDisabled}
+          className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10"
+        >
+          <legend className="px-1 text-sm font-medium">
+            Mobile booking hours
+          </legend>
+          <Label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={scheduled}
+              onChange={(event) => setScheduled(event.target.checked)}
+            />
+            Offer recurring appointment times for this service
+          </Label>
+          {scheduled && (
+            <>
+              <div
+                className="flex flex-wrap gap-2"
+                role="group"
+                aria-label="Service working days"
+              >
+                {[
+                  [1, "Mon"],
+                  [2, "Tue"],
+                  [3, "Wed"],
+                  [4, "Thu"],
+                  [5, "Fri"],
+                  [6, "Sat"],
+                  [0, "Sun"]
+                ].map(([day, name]) => (
+                  <button
+                    key={day}
+                    type="button"
+                    aria-pressed={workingDays.includes(Number(day))}
+                    onClick={() =>
+                      setWorkingDays((days) =>
+                        days.includes(Number(day))
+                          ? days.filter((value) => value !== day)
+                          : [...days, Number(day)]
+                      )
+                    }
+                    className={`rounded-lg border px-3 py-2 text-xs font-medium ${workingDays.includes(Number(day)) ? "border-orange-700 bg-orange-50 text-orange-800" : "border-slate-200 text-muted-foreground"}`}
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
+              <div
+                className={`vh-onboarding vh-onboarding--${kind} grid grid-cols-2 gap-3`}
+              >
+                <TimePicker
+                  label="From (IST)"
+                  value={availableFrom}
+                  onChange={setAvailableFrom}
+                  disabled={detailsDisabled}
+                  themeClassName={`vh-onboarding--${kind}`}
+                />
+                <TimePicker
+                  label="Until (IST)"
+                  value={availableUntil}
+                  onChange={setAvailableUntil}
+                  disabled={detailsDisabled}
+                  themeClassName={`vh-onboarding--${kind}`}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Patients choose a time within these hours for the next 7 days.
+                Appointment duration sets the spacing. Applies to all published
+                branches; existing bookings are kept.
+              </p>
+            </>
+          )}
+        </fieldset>
+      )}
+      {!pathology && (
+        <p className="rounded-xl border p-4 text-sm text-muted-foreground">
+          In-person only. Add fixed appointment slots for a machine or room in
+          Facilities. Block unavailable slots for maintenance.
+        </p>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <Label className="block space-y-1 text-sm">
           Service name
@@ -566,6 +556,28 @@ function ServiceForm({
           />
         </Label>
       </div>
+      {!pathology && (
+        <>
+          <Label className="block space-y-1 text-sm">
+            Body part
+            <Input
+              name="bodyPart"
+              required
+              maxLength={150}
+              defaultValue={service?.bodyPart ?? ""}
+              placeholder="Chest, brain, abdomen�"
+            />
+          </Label>
+          <Label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="contrast"
+              defaultChecked={service?.contrast ?? false}
+            />
+            With contrast
+          </Label>
+        </>
+      )}
       <Label className="block space-y-1 text-sm">
         Preparation instructions
         <Textarea

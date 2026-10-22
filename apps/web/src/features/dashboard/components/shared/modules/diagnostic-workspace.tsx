@@ -10,31 +10,7 @@ import { diagnosticBookingAppointment } from "@/features/dashboard/lib/diagnosti
 export function DiagnosticWorkspace({
   tenant,
   organizationName,
-  userName,
-}: {
-  tenant: ErpTenantContext;
-  organizationName?: string;
-  userName: string;
-}) {
-  return tenant.providerType === "pathology" ? (
-    <PathologyWorkspace
-      tenant={tenant}
-      organizationName={organizationName}
-      userName={userName}
-    />
-  ) : (
-    <DiagnosticOverview
-      tenant={tenant}
-      organizationName={organizationName}
-      userName={userName}
-    />
-  );
-}
-
-function PathologyWorkspace({
-  tenant,
-  organizationName,
-  userName,
+  userName
 }: {
   tenant: ErpTenantContext;
   organizationName?: string;
@@ -43,15 +19,15 @@ function PathologyWorkspace({
   const router = useRouter();
   const bookings = useQuery({
     queryKey: ["diagnostic-bookings", tenant.organizationId],
-    queryFn: () => virujBackend.diagnostics.bookings(tenant.organizationId),
+    queryFn: () => virujBackend.diagnostics.bookings(tenant.organizationId)
   });
   const services = useQuery({
     queryKey: virujBackend.diagnostics.key(tenant.organizationId, "services"),
-    queryFn: () => virujBackend.diagnostics.services(tenant.organizationId),
+    queryFn: () => virujBackend.diagnostics.services(tenant.organizationId)
   });
   const branches = useQuery({
     queryKey: ["diagnostic-availability", tenant.organizationId, "branches"],
-    queryFn: () => virujBackend.diagnostics.branches(tenant.organizationId),
+    queryFn: () => virujBackend.diagnostics.branches(tenant.organizationId)
   });
   const rows = (bookings.data ?? []).map(diagnosticBookingAppointment);
   const activeServices = (services.data ?? []).filter(
@@ -62,15 +38,15 @@ function PathologyWorkspace({
     "pending_approval",
     "approved",
     "rejected",
-    "cancelled",
+    "cancelled"
   ].map((status, index) => ({
     label: ["Awaiting approval", "Approved", "Rejected", "Cancelled"][index],
     value: rows.filter((row) => row.status === status).length,
-    color: "var(--dashboard-brand)",
+    color: "var(--dashboard-brand)"
   }));
   return (
     <RoleDashboardPage
-      tone="pathology"
+      tone={tenant.providerType === "radiology" ? "radiology" : "pathology"}
       organizationId={tenant.organizationId}
       organizationName={organizationName}
       userName={userName}
@@ -81,7 +57,7 @@ function PathologyWorkspace({
       unavailable={[
         ...(bookings.isError ? ["appointments"] : []),
         ...(services.isError ? ["services"] : []),
-        ...(branches.isError ? ["doctors"] : []),
+        ...(branches.isError ? ["doctors"] : [])
       ]}
       onRefresh={() => {
         void bookings.refetch();
@@ -96,7 +72,7 @@ function PathologyWorkspace({
           {
             label: "Appointment Requests",
             value: String(rows.length),
-            note: "Latest service bookings",
+            note: "Latest service bookings"
           },
           {
             label: "Patients",
@@ -104,184 +80,54 @@ function PathologyWorkspace({
               new Set(rows.map((row) => row.patientPhone || row.patientName))
                 .size
             ),
-            note: "Patients with bookings",
+            note: "Patients with bookings"
           },
           {
             label: "Active Doctors",
             value: String(published.length),
-            note: "Branches visible in the app",
+            note: "Branches visible in the app"
           },
           {
             label: "Active Services",
             value: String(activeServices.length),
-            note: "Services offered by your centre",
-          },
+            note: "Services offered by your centre"
+          }
         ],
         charts: [
           {
             title: "Appointments",
             labels: statuses.map((status) => status.label),
-            values: statuses.map((status) => status.value),
+            values: statuses.map((status) => status.value)
           },
           {
             title: "Branches",
             labels: ["Published", "Private"],
             values: [
               published.length,
-              (branches.data?.length ?? 0) - published.length,
-            ],
+              (branches.data?.length ?? 0) - published.length
+            ]
           },
           {
             title: "Services",
             labels: ["Active", "Archived"],
             values: [
               activeServices.length,
-              (services.data?.length ?? 0) - activeServices.length,
-            ],
-          },
+              (services.data?.length ?? 0) - activeServices.length
+            ]
+          }
         ],
         doctors: (branches.data ?? []).map((branch) => ({
           id: branch.id,
           title: branch.name,
           subtitle: branch.address,
-          meta: branch.published ? "Published" : "Private",
+          meta: branch.published ? "Published" : "Private"
         })),
         services: activeServices.map((service) => ({
           id: service.id,
           title: service.name,
           subtitle: service.preparation || service.code,
-          meta: diagnosticMoney(service.pricePaise),
-        })),
-      }}
-    />
-  );
-}
-
-function DiagnosticOverview({
-  tenant,
-  organizationName,
-  userName,
-}: {
-  tenant: ErpTenantContext;
-  organizationName?: string;
-  userName: string;
-}) {
-  const organizationId = tenant.organizationId;
-  const appointments = useQuery({
-    queryKey: virujBackend.appointments.key({ organizationId }),
-    queryFn: () => virujBackend.appointments.list({ organizationId }),
-    retry: false,
-  });
-  const diagnosticOrders = useQuery({
-    queryKey: virujBackend.diagnostics.key(organizationId, "orders"),
-    queryFn: () => virujBackend.diagnostics.orders(organizationId),
-    retry: false,
-  });
-  const catalogue = useQuery({
-    queryKey: virujBackend.diagnostics.key(organizationId, "services"),
-    queryFn: () => virujBackend.diagnostics.services(organizationId),
-    retry: false,
-  });
-  const rows = appointments.data ?? [];
-  const orders = diagnosticOrders.data ?? [];
-  const released = orders.filter((order) => order.status === "released");
-  const active = orders.filter(
-    (order) => !["released", "cancelled"].includes(order.status)
-  );
-  const statuses = [...new Set(rows.map((row) => row.status))].map(
-    (status) => ({
-      label:
-        status === "pending_approval"
-          ? "Awaiting approval"
-          : status.replaceAll("_", " "),
-      value: rows.filter((row) => row.status === status).length,
-      color: "var(--dashboard-brand)",
-    })
-  );
-  return (
-    <RoleDashboardPage
-      tone={tenant.providerType === "radiology" ? "radiology" : "pathology"}
-      organizationId={organizationId}
-      organizationName={organizationName}
-      userName={userName}
-      loading={[appointments, diagnosticOrders, catalogue].some(
-        (query) => query.isPending
-      )}
-      refreshing={[appointments, diagnosticOrders, catalogue].some(
-        (query) => query.isFetching
-      )}
-      unavailable={[
-        ...(appointments.isError ? ["appointments"] : []),
-        ...(diagnosticOrders.isError ? ["orders"] : []),
-        ...(catalogue.isError ? ["services"] : []),
-      ]}
-      onRefresh={() => {
-        void Promise.all([
-          appointments.refetch(),
-          diagnosticOrders.refetch(),
-          catalogue.refetch(),
-        ]);
-      }}
-      analytics={{
-        appointments: rows,
-        appointmentStatuses: statuses,
-        stats: [
-          {
-            label: "Appointment Requests",
-            value: String(rows.length),
-            note: "Bookings for this organisation",
-          },
-          {
-            label: "Patients",
-            value: String(
-              new Set(rows.map((row) => row.patientPhone || row.patientName))
-                .size
-            ),
-            note: "Patients with bookings",
-          },
-          {
-            label: "Active Doctors",
-            value: String(active.length),
-            note: "Across the latest 200 orders",
-          },
-          {
-            label: "Active Services",
-            value: String(released.length),
-            note: "Across the latest 200 orders",
-          },
-        ],
-        charts: [
-          {
-            title: "Bookings",
-            labels: statuses.map((status) => status.label),
-            values: statuses.map((status) => status.value),
-          },
-          {
-            title: "Orders",
-            labels: ["Active", "Review", "Released"],
-            values: [
-              active.length,
-              orders.filter((order) => order.status === "review").length,
-              released.length,
-            ],
-          },
-          {
-            title: "Reports",
-            labels: ["Review", "Released"],
-            values: [
-              orders.filter((order) => order.status === "review").length,
-              released.length,
-            ],
-          },
-        ],
-        services: (catalogue.data ?? [])
-          .filter((service) => service.active)
-          .map((service) => ({
-            id: service.id,
-            title: service.name,
-            subtitle: service.modality || service.specimen || service.code,
-            meta: diagnosticMoney(service.pricePaise),
-          })),
+          meta: diagnosticMoney(service.pricePaise)
+        }))
       }}
     />
   );

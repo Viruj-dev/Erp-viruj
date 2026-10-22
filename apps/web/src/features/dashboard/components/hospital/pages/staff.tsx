@@ -1,6 +1,9 @@
 "use client";
 
-import { PageSkeleton, SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
+import {
+  PageSkeleton,
+  SectionSkeleton
+} from "@/features/dashboard/components/shared/page-skeleton";
 
 import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import { authClient } from "@/lib/auth-client";
@@ -13,7 +16,7 @@ import {
   Filter,
   Search,
   Trash2,
-  UserPlus,
+  UserPlus
 } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
@@ -29,11 +32,11 @@ import {
   isStaffRole,
   RolePill,
   StaffAvatar,
-  type StaffRole,
+  type StaffRole
 } from "./_documents";
 
 export function ErpDemoStaff({
-  organizationLabel,
+  organizationLabel
 }: {
   organizationLabel: string;
 }) {
@@ -63,7 +66,10 @@ export function ErpDemoStaff({
       setRole(availableRoleOptions[0] ?? "STAFF");
     }
 
-    if (roleFilter !== "all" && !availableRoleOptions.includes(roleFilter as StaffRole)) {
+    if (
+      roleFilter !== "all" &&
+      !availableRoleOptions.includes(roleFilter as StaffRole)
+    ) {
       setRoleFilter("all");
     }
   }, [availableRoleOptions, role, roleFilter]);
@@ -72,32 +78,33 @@ export function ErpDemoStaff({
     enabled: Boolean(activeOrganizationId),
     queryFn: () =>
       virujBackend.staff.listMembers({ organizationId: activeOrganizationId }),
-    queryKey: virujBackend.staff.membersKey(activeOrganizationId),
+    queryKey: virujBackend.staff.membersKey(activeOrganizationId)
   });
   const invitationsQuery = useQuery({
     enabled: Boolean(activeOrganizationId),
     queryFn: () =>
       virujBackend.staff.listInvitations({
-        organizationId: activeOrganizationId,
+        organizationId: activeOrganizationId
       }),
-    queryKey: virujBackend.staff.invitationsKey(activeOrganizationId),
+    queryKey: virujBackend.staff.invitationsKey(activeOrganizationId)
   });
   const auditQuery = useQuery({
     enabled: Boolean(activeOrganizationId),
-    queryFn: () => virujBackend.audit.recent({ organizationId: activeOrganizationId }),
-    queryKey: virujBackend.audit.key(activeOrganizationId),
+    queryFn: () =>
+      virujBackend.audit.recent({ organizationId: activeOrganizationId }),
+    queryKey: virujBackend.audit.key(activeOrganizationId)
   });
   const invalidateStaffData = async () => {
     await Promise.all([
       queryClient.invalidateQueries({
-        queryKey: virujBackend.audit.key(activeOrganizationId),
+        queryKey: virujBackend.audit.key(activeOrganizationId)
       }),
       queryClient.invalidateQueries({
-        queryKey: virujBackend.staff.invitationsKey(activeOrganizationId),
+        queryKey: virujBackend.staff.invitationsKey(activeOrganizationId)
       }),
       queryClient.invalidateQueries({
-        queryKey: virujBackend.staff.membersKey(activeOrganizationId),
-      }),
+        queryKey: virujBackend.staff.membersKey(activeOrganizationId)
+      })
     ]);
   };
   const inviteMutation = useMutation({
@@ -107,19 +114,19 @@ export function ErpDemoStaff({
       setEmail("");
       setIsEntryDialogOpen(false);
       await invalidateStaffData();
-    },
+    }
   });
   const updateRoleMutation = useMutation({
     mutationFn: virujBackend.staff.updateRole,
-    onSuccess: invalidateStaffData,
+    onSuccess: invalidateStaffData
   });
   const removeStaffMutation = useMutation({
     mutationFn: virujBackend.staff.remove,
-    onSuccess: invalidateStaffData,
+    onSuccess: invalidateStaffData
   });
   const cancelInvitationMutation = useMutation({
     mutationFn: virujBackend.staff.cancelInvitation,
-    onSuccess: invalidateStaffData,
+    onSuccess: invalidateStaffData
   });
 
   const members = membersQuery.data ?? [];
@@ -166,7 +173,7 @@ export function ErpDemoStaff({
       email,
       name,
       organizationId: activeOrganizationId,
-      role,
+      role
     });
   };
 
@@ -182,9 +189,7 @@ export function ErpDemoStaff({
         <div
           className={`overflow-hidden rounded-xl ${theme.hero} p-7 text-white ${theme.shadow}`}
         >
-          <p className="font-headline text-2xl font-semibold">
-            {theme.title}
-          </p>
+          <p className="font-headline text-2xl font-semibold">{theme.title}</p>
           <p className="mt-2 max-w-2xl text-sm font-medium text-white/65">
             {theme.description}
           </p>
@@ -361,7 +366,7 @@ export function ErpDemoStaff({
                       onClick={() =>
                         cancelInvitationMutation.mutate({
                           invitationId: invitation.id,
-                          organizationId: activeOrganizationId,
+                          organizationId: activeOrganizationId
                         })
                       }
                       type="button"
@@ -441,10 +446,10 @@ export function ErpDemoStaff({
               {
                 memberId: editingStaff.id,
                 organizationId: activeOrganizationId,
-                role: editRole,
+                role: editRole
               },
               {
-                onSuccess: () => setEditingStaff(null),
+                onSuccess: () => setEditingStaff(null)
               }
             );
           }}
@@ -461,10 +466,10 @@ export function ErpDemoStaff({
             removeStaffMutation.mutate(
               {
                 memberId: deletingStaff.id,
-                organizationId: activeOrganizationId,
+                organizationId: activeOrganizationId
               },
               {
-                onSuccess: () => setDeletingStaff(null),
+                onSuccess: () => setDeletingStaff(null)
               }
             );
           }}
@@ -516,7 +521,7 @@ function getRoleOptionsForOrganization(
       "CLINIC_ADMIN",
       "CLINIC_STAFF",
       "DOCTOR",
-      "RECEPTIONIST",
+      "RECEPTIONIST"
     ];
   }
 
@@ -524,7 +529,18 @@ function getRoleOptionsForOrganization(
     return ["DOCTOR", "RECEPTIONIST", "STAFF"];
   }
 
-  if (organizationType === "pathology" || organizationType === "radiology") {
+  if (organizationType === "radiology") {
+    return [
+      "ADMIN",
+      "MANAGER",
+      "DOCTOR",
+      "TECHNICIAN",
+      "RECEPTIONIST",
+      "STAFF"
+    ];
+  }
+
+  if (organizationType === "pathology") {
     return ["ADMIN", "MANAGER", "TECHNICIAN", "RECEPTIONIST", "STAFF"];
   }
 
@@ -536,7 +552,7 @@ function getRoleOptionsForOrganization(
     "DOCTOR",
     "STAFF",
     "RECEPTIONIST",
-    "TECHNICIAN",
+    "TECHNICIAN"
   ];
 }
 
@@ -547,7 +563,7 @@ function getStaffWorkspaceTheme(organizationLabel: string) {
         "Real-time status of clinic owners, admins, doctors, reception, and front-desk coverage.",
       hero: "bg-gradient-to-br from-[#35206f] via-[#5b32b4] to-[#8b5cf6]",
       shadow: "shadow-[0_20px_60px_rgba(91,50,180,0.22)]",
-      title: "Clinic Staff Overview",
+      title: "Clinic Staff Overview"
     };
   }
 
@@ -556,6 +572,6 @@ function getStaffWorkspaceTheme(organizationLabel: string) {
       "Real-time status of clinical and administrative personnel across all active departments.",
     hero: "bg-[#002a52]",
     shadow: "shadow-sm",
-    title: "Staff Workforce Overview",
+    title: "Staff Workforce Overview"
   };
 }

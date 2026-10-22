@@ -4,7 +4,7 @@ import { DiagnosticReport } from "../components/shared/modules/diagnostic-report
 import {
   diagnosticPermissions,
   diagnosticMoney,
-  type DiagnosticOrder,
+  type DiagnosticOrder
 } from "./diagnostics";
 import { virujBackend } from "@/lib/viruj-backend";
 import { getAllowedDashboardPages } from "./routing";
@@ -28,8 +28,8 @@ const order: DiagnosticOrder = {
       name: "Haemoglobin",
       unit: "g/dL",
       reference: "Configured range",
-      value: "12",
-    },
+      value: "12"
+    }
   ],
   findings: "",
   impression: "",
@@ -48,9 +48,9 @@ const order: DiagnosticOrder = {
     pricePaise: 50000,
     turnaroundHours: 24,
     parameters: [
-      { name: "Haemoglobin", unit: "g/dL", reference: "Configured range" },
-    ],
-  },
+      { name: "Haemoglobin", unit: "g/dL", reference: "Configured range" }
+    ]
+  }
 };
 describe("diagnostic UI boundaries", () => {
   test("clinical and reception teams can reach their diagnostic workspace", () => {
@@ -61,7 +61,7 @@ describe("diagnostic UI boundaries", () => {
       "STAFF",
       "doctor",
       "receptionist",
-      "lab_tech",
+      "lab_tech"
     ]) {
       expect(getAllowedDashboardPages(role, [], "pathology")).toContain(
         "services"
@@ -107,11 +107,14 @@ describe("diagnostic UI boundaries", () => {
         order={{
           ...order,
           kind: "radiology",
+          imageUrl: "https://pacs.example.com/study/123",
           findings: "Test findings",
-          impression: "Test impression",
+          impression: "Test impression"
         }}
       />
     );
+    expect(html).toContain("Study ID");
+    expect(html).toContain("https://pacs.example.com/study/123");
     expect(html).toContain("Test findings");
     expect(html).toContain("Test impression");
   });

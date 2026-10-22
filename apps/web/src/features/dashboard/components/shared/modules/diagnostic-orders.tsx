@@ -10,7 +10,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  DialogDescription,
+  DialogDescription
 } from "@/components/ui/erp/dialog";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import {
@@ -19,7 +19,7 @@ import {
   diagnosticStages,
   diagnosticMoney,
   type DiagnosticOrder,
-  type DiagnosticService,
+  type DiagnosticService
 } from "@/features/dashboard/lib/diagnostics";
 import { virujBackend } from "@/lib/viruj-backend";
 import { DiagnosticCatalogue } from "./diagnostic-catalogue";
@@ -30,7 +30,7 @@ import { DiagnosticAvailability } from "./diagnostic-availability";
 export function DiagnosticOrders({
   tenant,
   organizationName,
-  initialTab = "orders",
+  initialTab = "orders"
 }: {
   tenant: ErpTenantContext;
   organizationName?: string;
@@ -47,11 +47,11 @@ export function DiagnosticOrders({
   const key = virujBackend.diagnostics.key(tenant.organizationId, "orders");
   const orders = useQuery({
     queryKey: key,
-    queryFn: () => virujBackend.diagnostics.orders(tenant.organizationId),
+    queryFn: () => virujBackend.diagnostics.orders(tenant.organizationId)
   });
   const services = useQuery({
     queryKey: virujBackend.diagnostics.key(tenant.organizationId, "services"),
-    queryFn: () => virujBackend.diagnostics.services(tenant.organizationId),
+    queryFn: () => virujBackend.diagnostics.services(tenant.organizationId)
   });
   const selected = orders.data?.find((order) => order.id === selectedId);
   const pathology = tenant.providerType === "pathology";
@@ -94,7 +94,7 @@ export function DiagnosticOrders({
             "bookings",
             "orders",
             "reports",
-            "availability",
+            "availability"
           ] as const
         ).map((value) => (
           <Button
@@ -176,7 +176,7 @@ export function DiagnosticOrders({
                       "Priority",
                       "Status",
                       "Created",
-                      "Action",
+                      "Action"
                     ].map((label) => (
                       <th key={label} scope="col" className="px-5 py-3">
                         {label}
@@ -290,7 +290,7 @@ export function DiagnosticOrders({
 function NewOrder({
   tenant,
   services,
-  onSaved,
+  onSaved
 }: {
   tenant: ErpTenantContext;
   services: DiagnosticService[];
@@ -303,7 +303,7 @@ function NewOrder({
     mutationFn: (
       body: Parameters<typeof virujBackend.diagnostics.createOrder>[1]
     ) => virujBackend.diagnostics.createOrder(tenant.organizationId, body),
-    onSuccess: onSaved,
+    onSuccess: onSaved
   });
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -317,7 +317,7 @@ function NewOrder({
       patientSex: String(f.get("patientSex")),
       referringDoctor: String(f.get("referringDoctor")),
       branch: String(f.get("branch")),
-      priority: String(f.get("priority")),
+      priority: String(f.get("priority"))
     });
   }
   if (!active.length)
@@ -409,7 +409,7 @@ function OrderDetail({
   order,
   tenant,
   organizationName,
-  onSaved,
+  onSaved
 }: {
   order: DiagnosticOrder;
   tenant: ErpTenantContext;
@@ -424,9 +424,9 @@ function OrderDetail({
     mutationFn: (body: Record<string, unknown>) =>
       virujBackend.diagnostics.updateOrder(tenant.organizationId, order.id, {
         ...body,
-        version: order.version,
+        version: order.version
       }),
-    onSuccess: onSaved,
+    onSuccess: onSaved
   });
   const stages = diagnosticStages[order.kind];
   const next = stages[stages.indexOf(order.status) + 1];
@@ -454,11 +454,12 @@ function OrderDetail({
       action: "results",
       results: order.serviceSnapshot.parameters.map((p, i) => ({
         ...p,
-        value: String(f.get(`result-${i}`) ?? ""),
+        value: String(f.get(`result-${i}`) ?? "")
       })),
       findings: String(f.get("findings") ?? ""),
+      imageUrl: String(f.get("imageUrl") ?? ""),
       impression: String(f.get("impression") ?? ""),
-      reportNote: String(f.get("reportNote") ?? ""),
+      reportNote: String(f.get("reportNote") ?? "")
     });
   }
   return (
@@ -475,7 +476,9 @@ function OrderDetail({
       </div>
       <dl className="grid gap-3 rounded-xl bg-muted/40 p-4 text-sm sm:grid-cols-2">
         <div>
-          <dt className="text-muted-foreground">Order ID</dt>
+          <dt className="text-muted-foreground">
+            {order.kind === "radiology" ? "Study ID" : "Order ID"}
+          </dt>
           <dd className="break-all">{order.id}</dd>
         </div>
         <div>
@@ -544,6 +547,16 @@ function OrderDetail({
                 ))
               ) : (
                 <>
+                  <label className="block space-y-1 text-sm">
+                    Secure image / DICOM viewer link
+                    <Input
+                      name="imageUrl"
+                      type="url"
+                      maxLength={2000}
+                      defaultValue={order.imageUrl ?? ""}
+                      placeholder="https://�"
+                    />
+                  </label>
                   {(["findings", "impression"] as const).map((field) => (
                     <label key={field} className="block space-y-1 text-sm">
                       {diagnosticLabel(field)}
@@ -602,6 +615,18 @@ function OrderDetail({
                   </p>
                 </>
               )}
+              {order.kind === "radiology" &&
+                order.imageUrl &&
+                /^https?:\/\//i.test(order.imageUrl) && (
+                  <a
+                    href={order.imageUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm underline"
+                  >
+                    Open study images
+                  </a>
+                )}
               {order.reportNote && (
                 <p className="whitespace-pre-wrap text-sm">
                   {order.reportNote}
@@ -616,7 +641,7 @@ function OrderDetail({
                     update.mutate({
                       action: "transition",
                       status:
-                        order.kind === "pathology" ? "processing" : "reporting",
+                        order.kind === "pathology" ? "processing" : "reporting"
                     })
                   }
                 >
@@ -667,7 +692,7 @@ function OrderDetail({
                     status: next,
                     ...(scheduledAt
                       ? { scheduledAt: new Date(scheduledAt).toISOString() }
-                      : {}),
+                      : {})
                   })
                 }
               >
@@ -705,7 +730,7 @@ function OrderDetail({
                     update.mutate({
                       action: "transition",
                       status: "cancelled",
-                      note,
+                      note
                     })
                   }
                 >
@@ -721,7 +746,7 @@ function OrderDetail({
                         update.mutate({
                           action: "transition",
                           status: "ordered",
-                          note,
+                          note
                         })
                       }
                     >

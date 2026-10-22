@@ -14,6 +14,8 @@ export type DiagnosticService = {
   name: string;
   specimen: string | null;
   modality: string | null;
+  bodyPart?: string | null;
+  contrast?: boolean;
   preparation: string;
   pricePaise: number;
   turnaroundHours: number;
@@ -40,6 +42,7 @@ export type DiagnosticOrder = {
   barcode: string | null;
   sampleNote: string;
   results: (DiagnosticParameter & { value: string })[];
+  imageUrl?: string;
   findings: string;
   impression: string;
   reportNote: string;
@@ -56,7 +59,7 @@ export const diagnosticStages: Record<DiagnosticKind, readonly string[]> = {
     "received",
     "processing",
     "review",
-    "released",
+    "released"
   ],
   radiology: [
     "ordered",
@@ -65,8 +68,8 @@ export const diagnosticStages: Record<DiagnosticKind, readonly string[]> = {
     "scanning",
     "reporting",
     "review",
-    "released",
-  ],
+    "released"
+  ]
 };
 export function diagnosticPermissions(role?: string | null) {
   const manager = [
@@ -76,14 +79,14 @@ export function diagnosticPermissions(role?: string | null) {
     "MANAGER",
     "owner",
     "admin",
-    "manager",
+    "manager"
   ].includes(role ?? "");
   const doctor = role === "DOCTOR" || role === "doctor";
   const technician = role === "TECHNICIAN" || role === "lab_tech";
   return {
     catalogue: manager,
     results: manager || doctor || technician,
-    release: doctor,
+    release: doctor
   };
 }
 export function diagnosticLabel(value: string) {
@@ -94,6 +97,6 @@ export function diagnosticLabel(value: string) {
 export function diagnosticMoney(paise: number) {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency: "INR",
+    currency: "INR"
   }).format(paise / 100);
 }

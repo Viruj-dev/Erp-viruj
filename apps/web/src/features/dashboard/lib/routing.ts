@@ -6,7 +6,7 @@ export const organizationTypeOptions = [
   "clinic",
   "doctor",
   "pathology",
-  "radiology",
+  "radiology"
 ] as const;
 
 export type DashboardOrganizationType =
@@ -56,7 +56,7 @@ export const dashboardPageOptions = [
   "pharmacy",
   "notifications",
   "reports",
-  "profile",
+  "profile"
 ] as const;
 
 export type DashboardPage = (typeof dashboardPageOptions)[number];
@@ -75,7 +75,7 @@ export const organizationTypeLabels: Record<DashboardOrganizationType, string> =
     doctor: "Doctor",
     hospital: "Hospital",
     pathology: "Pathology",
-    radiology: "Radiology",
+    radiology: "Radiology"
   };
 
 export const defaultDashboardPageByRole: Record<
@@ -101,7 +101,7 @@ export const defaultDashboardPageByRole: Record<
   lab_tech: "pathology",
   manager: "staff",
   owner: "dashboard",
-  receptionist: "appointments-dashboard",
+  receptionist: "appointments-dashboard"
 };
 
 export const allowedDashboardPagesByRole: Record<
@@ -140,7 +140,7 @@ export const allowedDashboardPagesByRole: Record<
     "pharmacy",
     "notifications",
     "reports",
-    "profile",
+    "profile"
   ],
   ADMIN: [
     "dashboard",
@@ -174,7 +174,7 @@ export const allowedDashboardPagesByRole: Record<
     "pharmacy",
     "notifications",
     "reports",
-    "profile",
+    "profile"
   ],
   CLINIC_ADMIN: [
     "dashboard",
@@ -198,7 +198,7 @@ export const allowedDashboardPagesByRole: Record<
     "settings",
     "analytics",
     "activity-logs",
-    "profile",
+    "profile"
   ],
   CLINIC_OWNER: [
     "dashboard",
@@ -222,7 +222,7 @@ export const allowedDashboardPagesByRole: Record<
     "settings",
     "analytics",
     "activity-logs",
-    "profile",
+    "profile"
   ],
   CLINIC_STAFF: [
     "dashboard",
@@ -240,7 +240,7 @@ export const allowedDashboardPagesByRole: Record<
     "reviews",
     "analytics",
     "activity-logs",
-    "profile",
+    "profile"
   ],
   MANAGER: [
     "dashboard",
@@ -267,7 +267,7 @@ export const allowedDashboardPagesByRole: Record<
     "radiology",
     "pathology",
     "reports",
-    "profile",
+    "profile"
   ],
   DOCTOR: [
     "dashboard",
@@ -287,7 +287,7 @@ export const allowedDashboardPagesByRole: Record<
     "verification",
     "doctor-settings",
     "reports",
-    "profile",
+    "profile"
   ],
   STAFF: ["dashboard", "appointments", "patients", "reports", "profile"],
   RECEPTIONIST: [
@@ -298,7 +298,7 @@ export const allowedDashboardPagesByRole: Record<
     "appointments-patients",
     "patients",
     "notifications",
-    "profile",
+    "profile"
   ],
   TECHNICIAN: [
     "dashboard",
@@ -306,7 +306,7 @@ export const allowedDashboardPagesByRole: Record<
     "radiology",
     "patients",
     "reports",
-    "profile",
+    "profile"
   ],
   APPOINTMENT_HANDLER: [
     "dashboard",
@@ -316,7 +316,7 @@ export const allowedDashboardPagesByRole: Record<
     "appointments-patients",
     "appointments-settings",
     "patients",
-    "profile",
+    "profile"
   ],
   COMMUNITY_MANAGER: ["dashboard", "community", "profile"],
   ORG_ADMIN: [
@@ -351,7 +351,7 @@ export const allowedDashboardPagesByRole: Record<
     "pharmacy",
     "notifications",
     "reports",
-    "profile",
+    "profile"
   ],
   admin: [
     "dashboard",
@@ -385,7 +385,7 @@ export const allowedDashboardPagesByRole: Record<
     "pharmacy",
     "notifications",
     "reports",
-    "profile",
+    "profile"
   ],
   billing: [
     "dashboard",
@@ -395,7 +395,7 @@ export const allowedDashboardPagesByRole: Record<
     "subscription",
     "reports",
     "settings",
-    "profile",
+    "profile"
   ],
   doctor: [
     "dashboard",
@@ -416,7 +416,7 @@ export const allowedDashboardPagesByRole: Record<
     "verification",
     "doctor-settings",
     "reports",
-    "profile",
+    "profile"
   ],
   lab_tech: ["dashboard", "pathology", "patients", "reports", "profile"],
   manager: [
@@ -451,7 +451,7 @@ export const allowedDashboardPagesByRole: Record<
     "pharmacy",
     "notifications",
     "reports",
-    "profile",
+    "profile"
   ],
   owner: [
     "dashboard",
@@ -485,7 +485,7 @@ export const allowedDashboardPagesByRole: Record<
     "pharmacy",
     "notifications",
     "reports",
-    "profile",
+    "profile"
   ],
   receptionist: [
     "dashboard",
@@ -496,8 +496,8 @@ export const allowedDashboardPagesByRole: Record<
     "appointments-settings",
     "patients",
     "notifications",
-    "profile",
-  ],
+    "profile"
+  ]
 };
 
 export function isDashboardOrganizationType(
@@ -635,7 +635,7 @@ export function getAllowedDashboardPages(
     "manager",
     "doctor",
     "receptionist",
-    "lab_tech",
+    "lab_tech"
   ].includes(role ?? "");
   const diagnosticPages: DashboardPage[] =
     diagnosticRole &&
@@ -645,8 +645,8 @@ export function getAllowedDashboardPages(
             ...pages,
             organizationType,
             "reports",
-            ...(canManageDiagnosticSetup(role) ? ["onboarding" as const] : []),
-          ]),
+            ...(canManageDiagnosticSetup(role) ? ["onboarding" as const] : [])
+          ])
         ]
       : pages;
   const workspacePages = [
@@ -655,10 +655,13 @@ export function getAllowedDashboardPages(
       "community",
       "gallery",
       "activity-logs",
-      "subscription",
-    ]),
+      "subscription"
+    ])
   ];
-  if (organizationType === "pathology" && diagnosticRole) {
+  if (
+    (organizationType === "pathology" || organizationType === "radiology") &&
+    diagnosticRole
+  ) {
     return filterSubscriptionPage(
       [
         "dashboard",
@@ -666,6 +669,7 @@ export function getAllowedDashboardPages(
         "appointments-dashboard",
         "appointments-review",
         "services",
+        ...(organizationType === "radiology" ? ["radiology" as const] : []),
         "facilities",
         "reports",
         "staff",
@@ -677,7 +681,7 @@ export function getAllowedDashboardPages(
         "profile",
         "settings",
         "settings-data-export",
-        ...(canManageDiagnosticSetup(role) ? ["onboarding" as const] : []),
+        ...(canManageDiagnosticSetup(role) ? ["onboarding" as const] : [])
       ],
       permissions
     );

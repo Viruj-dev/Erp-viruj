@@ -5,18 +5,18 @@ import {
   UploadField,
   TextField,
   FieldLabel,
-  fieldClassName,
+  fieldClassName
 } from "@/features/dashboard/components/hospital/pages/onboarding/fields";
 import { TimePicker } from "@/features/dashboard/components/hospital/pages/onboarding/time-picker";
 import {
   getCurrentPosition,
-  reverseGeocodeLocation,
+  reverseGeocodeLocation
 } from "@/features/dashboard/components/hospital/pages/onboarding/steps/locations-step";
 import { OnboardingFrame } from "@/features/dashboard/components/hospital/pages/onboarding/onboarding-frame";
 import { OnboardingSuccessScreen } from "@/features/dashboard/components/hospital/pages/onboarding/onboarding-success-screen";
 import type {
   StepDefinition,
-  StepId,
+  StepId
 } from "@/features/dashboard/components/hospital/pages/onboarding/types";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,14 +30,14 @@ import {
   diagnosticSetupKey,
   emptyDiagnosticSetup,
   type DiagnosticSetup,
-  type DiagnosticOnboardingState,
+  type DiagnosticOnboardingState
 } from "@/features/dashboard/lib/diagnostic-onboarding";
 import { virujBackend } from "@/lib/viruj-backend";
 
 export function DiagnosticOnboarding({
   tenant,
   organizationName,
-  userEmail = "",
+  userEmail = ""
 }: {
   tenant: ErpTenantContext;
   organizationName?: string;
@@ -47,7 +47,7 @@ export function DiagnosticOnboarding({
     queryKey: diagnosticSetupKey(tenant.organizationId),
     queryFn: () => virujBackend.diagnostics.onboarding(tenant.organizationId),
     enabled: canManageDiagnosticSetup(tenant.role),
-    retry: false,
+    retry: false
   });
   if (!canManageDiagnosticSetup(tenant.role))
     return (
@@ -61,10 +61,7 @@ export function DiagnosticOnboarding({
         </p>
       </div>
     );
-  if (query.isPending)
-    return (
-      <PageSkeleton />
-    );
+  if (query.isPending) return <PageSkeleton />;
   if (query.isError)
     return (
       <div role="alert" className="m-auto space-y-4 rounded-2xl border p-8">
@@ -87,7 +84,7 @@ function SetupForm({
   tenant,
   initial,
   organizationName,
-  userEmail,
+  userEmail
 }: {
   tenant: ErpTenantContext;
   initial: DiagnosticOnboardingState;
@@ -100,7 +97,7 @@ function SetupForm({
     client = useQueryClient();
   const [data, setData] = useState<DiagnosticSetup>(() => ({
     ...emptyDiagnosticSetup(organizationName, userEmail),
-    ...initial.data,
+    ...initial.data
   }));
   const [version, setVersion] = useState(initial.version),
     [step, setStep] = useState(0),
@@ -116,10 +113,11 @@ function SetupForm({
     ? ["Identity", "Branch", "Contact & hours", "Review"]
     : [
         "Centre identity",
-        "Branch & contact",
+        "Branch",
+        "Contact & hours",
         "Reporting team",
         pathology ? "Laboratory setup" : "Imaging setup",
-        "Review",
+        "Review"
       ];
   const save = useMutation({
     mutationFn: (complete: boolean) =>
@@ -136,11 +134,11 @@ function SetupForm({
       if (complete) {
         window.localStorage.removeItem(draftKey);
         void client.invalidateQueries({
-          queryKey: ["diagnostic-availability", tenant.organizationId],
+          queryKey: ["diagnostic-availability", tenant.organizationId]
         });
         setComplete(true);
       }
-    },
+    }
   });
   useEffect(() => {
     try {
@@ -271,14 +269,21 @@ function SetupForm({
   }
   const ids: StepId[] = pathology
     ? ["profile", "locations", "contact", "review"]
-    : ["profile", "contact", "doctors", "departments", "review"];
+    : ["profile", "locations", "contact", "doctors", "departments", "review"];
   const kickers = pathology
     ? ["Identity", "Location", "Contact", "Launch"]
-    : ["Identity", "Branch", "Clinical team", "Operations", "Launch"];
+    : [
+        "Identity",
+        "Location",
+        "Contact",
+        "Clinical team",
+        "Operations",
+        "Launch"
+      ];
   const definitions: StepDefinition[] = steps.map((label, index) => ({
     id: ids[index]!,
     label,
-    kicker: kickers[index]!,
+    kicker: kickers[index]!
   }));
   const descriptions = Object.fromEntries([
     ["profile", "Register the centre and facility credentials"],
@@ -287,16 +292,16 @@ function SetupForm({
       "contact",
       pathology
         ? "Add contact details and choose your opening hours"
-        : "Add the main branch, contact details and opening hours",
+        : "Add the main branch, contact details and opening hours"
     ],
     ["doctors", "Add the professional responsible for approved reports"],
     [
       "departments",
       pathology
         ? "Choose lab sections, accepted samples and collection procedures"
-        : "Choose imaging services, equipment and patient preparation",
+        : "Choose imaging services, equipment and patient preparation"
     ],
-    ["review", "Review the centre details before completing setup"],
+    ["review", "Review the centre details before completing setup"]
   ]) as Record<StepId, string>;
   const themeClassName = pathology
     ? "vh-onboarding--pathology"
@@ -306,13 +311,13 @@ function SetupForm({
     { label: "Branch", value: data.branchName || "Not provided" },
     {
       label: pathology ? "Contact" : "Reporting professional",
-      value: (pathology ? data.email : data.reportingName) || "Not provided",
-    },
+      value: (pathology ? data.email : data.reportingName) || "Not provided"
+    }
   ];
   const validateCurrentStep = () => {
     setValidationError("");
     if (!formRef.current?.reportValidity()) return false;
-    if (step === (pathology ? 2 : 1)) {
+    if (step === 2) {
       if (data.workingDays.length === 0) {
         setValidationError("Select at least one working day to continue.");
         return false;
@@ -322,7 +327,7 @@ function SetupForm({
         return false;
       }
     }
-    if (step === 3 && !pathology && data.modalities.length === 0) {
+    if (step === 4 && !pathology && data.modalities.length === 0) {
       setValidationError("Select at least one imaging modality.");
       return false;
     }
@@ -332,7 +337,7 @@ function SetupForm({
     if (!validateCurrentStep()) return;
     save.mutate(false, {
       onSuccess: () =>
-        setStep((current) => Math.min(current + 1, steps.length - 1)),
+        setStep((current) => Math.min(current + 1, steps.length - 1))
     });
   };
   const handleLaunch = () => {
@@ -341,7 +346,7 @@ function SetupForm({
 
   async function locateBranch() {
     setLocating(true);
-    setLocationStatus("Finding your branch location…");
+    setLocationStatus("Finding your branch location�");
     try {
       const position = await getCurrentPosition();
       const latitude = position.coords.latitude.toFixed(6);
@@ -358,7 +363,7 @@ function SetupForm({
         address: address.address || current.address,
         city: address.city || current.city,
         state: address.state || current.state,
-        postalCode: address.postalCode || current.postalCode,
+        postalCode: address.postalCode || current.postalCode
       }));
       setLocationStatus("Location found. Check the address before continuing.");
     } catch {
@@ -378,7 +383,7 @@ function SetupForm({
           const media = await virujBackend.organizationProfile.uploadMedia({
             file,
             kind,
-            organizationId: tenant.organizationId,
+            organizationId: tenant.organizationId
           });
           update(kind === "logo" ? "logoUrl" : "certificateUrl", media.url);
           update(kind === "logo" ? "logoName" : "certificateName", name);
@@ -448,24 +453,24 @@ function SetupForm({
               )}
               {!pathology &&
                 field("registrationAuthority", "Issuing authority", {
-                  required: true,
+                  required: true
                 })}
-              {pathology && (
+              {
                 <>
                   {upload("logo")}
                   {upload("certificate")}
                   {field("establishedYear", "Year of establishment", {
-                    type: "number",
+                    type: "number"
                   })}
                   {field("website", "Website", { type: "url" })}
                 </>
-              )}
+              }
               <div className="sm:col-span-2">
                 {field(
                   "additionalCertificates",
                   "Additional certificates / accreditation identifiers",
                   {
-                    hint: "Optional. Enter identifiers and issuing bodies where applicable. This does not verify or approve them.",
+                    hint: "Optional. Enter identifiers and issuing bodies where applicable. This does not verify or approve them."
                   }
                 )}
               </div>
@@ -481,7 +486,7 @@ function SetupForm({
                 <p className="mt-1 text-xs text-[var(--onboarding-muted)]">
                   {data.registrationNumber || "Registration pending"}
                   {data.establishedYear
-                    ? ` · Established ${data.establishedYear}`
+                    ? ` � Established ${data.establishedYear}`
                     : ""}
                 </p>
               </div>
@@ -490,7 +495,7 @@ function SetupForm({
         )}
         {step === 1 && (
           <div className="space-y-5 rounded-[26px] border border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] p-5 shadow-sm">
-            {pathology && (
+            {
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--onboarding-border)] pb-4">
                 <h3 className="flex items-center gap-2 font-semibold">
                   <MapPin
@@ -507,7 +512,7 @@ function SetupForm({
                   disabled={locating}
                   onClick={() => void locateBranch()}
                 >
-                  {locating ? "Finding location…" : "Use current location"}
+                  {locating ? "Finding location�" : "Use current location"}
                 </Button>
                 <p role="status" className="text-sm">
                   {locationStatus}
@@ -523,63 +528,23 @@ function SetupForm({
                   </a>
                 )}
               </div>
-            )}
+            }
             <div className="grid gap-4 md:grid-cols-2">
-              {!pathology && (
-                <>
-                  {field("phone", "Centre phone", {
-                    required: true,
-                    type: "tel",
-                  })}
-                  {field("email", "Centre email", {
-                    required: true,
-                    type: "email",
-                  })}
-                </>
-              )}
               {field("branchName", "Primary branch name", { required: true })}
               {field("address", "Street address", { required: true })}
               {field("city", "City", { required: true })}
               {field("state", "State", { required: true })}
               {field("postalCode", "PIN code", { required: true })}
             </div>
-            {!pathology && (
-              <>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {field("openingTime", "Opening time", {
-                    required: true,
-                    type: "time",
-                  })}
-                  {field("closingTime", "Closing time", {
-                    required: true,
-                    type: "time",
-                  })}
-                </div>
-                <fieldset className="space-y-3">
-                  <legend className="mb-3 text-sm font-medium">
-                    Working days · Asia/Kolkata
-                  </legend>
-                  {choices("workingDays", [
-                    "Mon",
-                    "Tue",
-                    "Wed",
-                    "Thu",
-                    "Fri",
-                    "Sat",
-                    "Sun",
-                  ])}
-                </fieldset>
-              </>
-            )}
           </div>
         )}
-        {pathology && step === 2 && (
+        {step === 2 && (
           <div className="space-y-5">
             <section className="grid gap-4 rounded-[26px] border border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] p-5 shadow-sm md:grid-cols-2">
               {field("phone", "Contact phone", { required: true, type: "tel" })}
               {field("email", "Contact email", {
                 required: true,
-                type: "email",
+                type: "email"
               })}
             </section>
             <section className="space-y-4 rounded-2xl border border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] p-4">
@@ -589,22 +554,22 @@ function SetupForm({
                   Opening hours
                 </p>
                 <p className="mt-1 text-xs text-[var(--onboarding-muted-strong)]">
-                  12-hour time · Indian Standard Time (IST, UTC+05:30)
+                  12-hour time � Indian Standard Time (IST, UTC+05:30)
                 </p>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 {field("openingTime", "Opening time", {
                   required: true,
-                  type: "time",
+                  type: "time"
                 })}
                 {field("closingTime", "Closing time", {
                   required: true,
-                  type: "time",
+                  type: "time"
                 })}
               </div>
               <fieldset>
                 <legend className="mb-3 text-sm font-medium">
-                  Working days · Asia/Kolkata
+                  Working days � Asia/Kolkata
                 </legend>
                 {choices("workingDays", [
                   "Mon",
@@ -613,19 +578,21 @@ function SetupForm({
                   "Thu",
                   "Fri",
                   "Sat",
-                  "Sun",
+                  "Sun"
                 ])}
               </fieldset>
             </section>
-            <label className="flex gap-2 text-sm">
-              <input
-                type="checkbox"
-                className="accent-[var(--onboarding-accent)]"
-                checked={data.homeCollection}
-                onChange={(e) => update("homeCollection", e.target.checked)}
-              />
-              Offer home collection
-            </label>
+            {pathology && (
+              <label className="flex gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="accent-[var(--onboarding-accent)]"
+                  checked={data.homeCollection}
+                  onChange={(e) => update("homeCollection", e.target.checked)}
+                />
+                Offer home collection
+              </label>
+            )}
             <label className="flex gap-2 text-sm">
               <input
                 type="checkbox"
@@ -636,7 +603,7 @@ function SetupForm({
             </label>
           </div>
         )}
-        {!pathology && step === 2 && (
+        {!pathology && step === 3 && (
           <div className="space-y-5">
             <p className="text-sm text-muted-foreground">
               Enter the professional responsible for{" "}
@@ -660,7 +627,7 @@ function SetupForm({
             )}
             {field("reportingEmail", "Reporting professional email", {
               required: true,
-              type: "email",
+              type: "email"
             })}
             <p className="rounded-xl bg-muted p-4 text-xs leading-6 text-muted-foreground">
               Saving these details does not invite staff, grant permissions or
@@ -669,101 +636,48 @@ function SetupForm({
             </p>
           </div>
         )}
-        {!pathology && step === 3 && (
+        {!pathology && step === 4 && (
           <div className="space-y-5">
-            {pathology ? (
-              <>
-                <fieldset>
-                  <legend className="mb-3 text-sm font-medium">
-                    Laboratory sections offered *
-                  </legend>
-                  {choices("sections", [
-                    "Haematology",
-                    "Biochemistry",
-                    "Microbiology",
-                    "Immunology",
-                    "Histopathology",
-                    "Molecular testing",
-                  ])}
-                </fieldset>
-                <fieldset>
-                  <legend className="mb-3 text-sm font-medium">
-                    Specimens accepted *
-                  </legend>
-                  {choices("specimens", [
-                    "Blood",
-                    "Urine",
-                    "Stool",
-                    "Swab",
-                    "Tissue",
-                    "Other",
-                  ])}
-                </fieldset>
-                {field(
-                  "sampleHandling",
-                  "Sample handling, containers and rejection process",
-                  { required: true, multiline: true }
-                )}
-                {field(
-                  "collectionInstructions",
-                  "Patient preparation and collection instructions",
-                  { required: true, multiline: true }
-                )}
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    className="accent-[var(--onboarding-accent)]"
-                    checked={data.homeCollection}
-                    onChange={(e) => update("homeCollection", e.target.checked)}
-                  />
-                  Offer home sample collection
-                </label>
-              </>
-            ) : (
-              <>
-                <fieldset>
-                  <legend className="mb-3 text-sm font-medium">
-                    Imaging modalities offered *
-                  </legend>
-                  {choices("modalities", [
-                    "X-ray",
-                    "Ultrasound",
-                    "CT",
-                    "MRI",
-                    "Mammography",
-                    "Doppler",
-                    "Other",
-                  ])}
-                </fieldset>
-                {field(
-                  "equipment",
-                  "Machines / room identifiers and available modalities",
-                  {
-                    required: true,
-                    multiline: true,
-                    hint: "Use the same machine identifiers when creating appointment slots.",
-                  }
-                )}
-                {field(
-                  "referralPolicy",
-                  "Referral / prescription requirements",
-                  { required: true, multiline: true }
-                )}
-                {field(
-                  "screeningProcess",
-                  "Patient preparation, screening and consent process",
-                  { required: true, multiline: true }
-                )}
-                {field(
-                  "imageWorkflow",
-                  "Secure image storage / PACS and reporting workflow",
-                  {
-                    required: true,
-                    multiline: true,
-                    hint: "Describe your workflow. Do not enter passwords, access tokens or patient records.",
-                  }
-                )}
-              </>
+            <fieldset>
+              <legend className="mb-3 text-sm font-medium">
+                Imaging modalities offered *
+              </legend>
+              {choices("modalities", [
+                "X-ray",
+                "Ultrasound",
+                "CT",
+                "MRI",
+                "Mammography",
+                "Doppler",
+                "Other"
+              ])}
+            </fieldset>
+            {field(
+              "equipment",
+              "Machines, rooms, capacity and available modalities",
+              {
+                required: true,
+                multiline: true,
+                hint: "List capacity and maintenance arrangements. Use the same machine identifiers for appointment slots and maintenance blocks."
+              }
+            )}
+            {field("referralPolicy", "Referral / prescription requirements", {
+              required: true,
+              multiline: true
+            })}
+            {field(
+              "screeningProcess",
+              "Patient preparation, contrast screening, consent and radiation safety",
+              { required: true, multiline: true }
+            )}
+            {field(
+              "imageWorkflow",
+              "Secure image storage / PACS and reporting workflow",
+              {
+                required: true,
+                multiline: true,
+                hint: "Describe your workflow. Do not enter passwords, access tokens or patient records."
+              }
             )}
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -781,43 +695,40 @@ function SetupForm({
             <dl className="grid gap-5 text-sm sm:grid-cols-2">
               {[
                 ["Centre", data.centreName],
-                ...(!pathology
-                  ? [["Legal business", data.legalName]]
-                  : [
-                      ["Established", data.establishedYear],
-                      ["Website", data.website],
-                      ["Logo", data.logoName],
-                      ["License / certificate", data.certificateName],
-                    ]),
+                ...(!pathology ? [["Legal business", data.legalName]] : []),
+                ...[
+                  ["Established", data.establishedYear],
+                  ["Website", data.website],
+                  ["Logo", data.logoName],
+                  ["License / certificate", data.certificateName]
+                ],
                 [
                   "Registration",
                   [data.registrationNumber, data.registrationAuthority]
                     .filter(Boolean)
-                    .join(" · "),
+                    .join(" � ")
                 ],
-                ["Contact", `${data.phone} · ${data.email}`],
+                ["Contact", `${data.phone} � ${data.email}`],
                 [
                   "Branch",
-                  `${data.branchName}, ${data.address}, ${data.city}, ${data.state} ${data.postalCode}`,
+                  `${data.branchName}, ${data.address}, ${data.city}, ${data.state} ${data.postalCode}`
                 ],
                 [
                   "Hours",
-                  `${data.workingDays.join(", ")} · ${data.openingTime}–${data.closingTime}`,
+                  `${data.workingDays.join(", ")} � ${data.openingTime}�${data.closingTime}`
                 ],
                 ...(!pathology
                   ? [
                       [
                         "Reporting professional",
-                        `${data.reportingName} · ${data.reportingRegistration}`,
+                        `${data.reportingName} � ${data.reportingRegistration}`
                       ],
                       [
                         pathology ? "Laboratory sections" : "Modalities",
-                        (pathology ? data.sections : data.modalities).join(
-                          ", "
-                        ),
-                      ],
+                        (pathology ? data.sections : data.modalities).join(", ")
+                      ]
                     ]
-                  : []),
+                  : [])
               ].map(([label, value]) => (
                 <div key={label}>
                   <dt className="text-muted-foreground">{label}</dt>

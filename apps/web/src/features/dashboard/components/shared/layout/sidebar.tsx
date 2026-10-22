@@ -38,7 +38,7 @@ import {
   Stethoscope,
   Timer,
   UserRound,
-  Users,
+  Users
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { useState, useSyncExternalStore } from "react";
@@ -66,7 +66,7 @@ const mainNavItems = [
   { id: "gallery", label: "Gallery", icon: Image },
   { id: "community", label: "Community", icon: MessagesSquare, badge: "2" },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
-  { id: "activity-logs", label: "Activity Logs", icon: History },
+  { id: "activity-logs", label: "Activity Logs", icon: History }
 ] as const;
 
 const clinicNavItems = [
@@ -77,7 +77,7 @@ const clinicNavItems = [
   { id: "services", label: "Services", icon: HeartPulse },
   { id: "gallery", label: "Gallery", icon: Image },
   { id: "community", label: "Community", icon: MessagesSquare },
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
+  { id: "analytics", label: "Analytics", icon: BarChart3 }
 ] as const;
 
 const doctorNavItems = [
@@ -89,13 +89,13 @@ const doctorNavItems = [
   { id: "gallery", label: "Gallery", icon: Image },
   { id: "community", label: "Community", icon: MessagesSquare },
   { id: "profile", label: "Profile", icon: Stethoscope },
-  { id: "doctor-settings", label: "Settings", icon: Settings },
+  { id: "doctor-settings", label: "Settings", icon: Settings }
 ] as const;
 
 const doctorProfileOptions = [
   { id: "profile", label: "Profile Details", icon: Stethoscope },
   { id: "verification", label: "Verification", icon: FileBadge },
-  { id: "documents", label: "Documents", icon: FileText },
+  { id: "documents", label: "Documents", icon: FileText }
 ] as const;
 
 const clinicProfileOptions = [
@@ -103,24 +103,24 @@ const clinicProfileOptions = [
   { id: "locations", label: "Locations", icon: MapPin },
   { id: "working-hours", label: "Working Hours", icon: Timer },
   { id: "facilities", label: "Facilities", icon: Sparkles },
-  { id: "reviews", label: "Reviews", icon: Star },
+  { id: "reviews", label: "Reviews", icon: Star }
 ] as const;
 
 const operationsItems = [
-  { id: "subscription", label: "Plans & Subscription", icon: BadgeIndianRupee },
+  { id: "subscription", label: "Plans & Subscription", icon: BadgeIndianRupee }
 ] as const;
 
 const appointmentOptions = [
   { id: "appointments-review", label: "Review", icon: ClipboardCheck },
   { id: "appointments-patients", label: "Patient Details", icon: FileText },
-  { id: "appointments-settings", label: "Settings", icon: Settings },
+  { id: "appointments-settings", label: "Settings", icon: Settings }
 ] as const;
 
 const comingSoonNavItems = new Set<ErpDemoPage>([
   "gallery",
   "community",
   "analytics",
-  "activity-logs",
+  "activity-logs"
 ]);
 
 export function ErpDemoSidebar({
@@ -132,7 +132,7 @@ export function ErpDemoSidebar({
   onPageChange: navigate,
   onToggle,
   organizationLabel,
-  organizationId,
+  organizationId
 }: {
   allowedPages: ErpDemoPage[];
   currentPage: string;
@@ -187,48 +187,47 @@ export function ErpDemoSidebar({
   const isPathologyWorkspace = organizationLabel.toLowerCase() === "pathology";
   const isRadiologyWorkspace = organizationLabel.toLowerCase() === "radiology";
   const isDiagnosticWorkspace = isPathologyWorkspace || isRadiologyWorkspace;
-  const diagnosticNavItems: NavItem[] = [
-    { id: "dashboard", label: "Overview", icon: LayoutDashboard },
-    {
-      id: isPathologyWorkspace ? "pathology" : "radiology",
-      label: isPathologyWorkspace
-        ? "Laboratory operations"
-        : "Imaging operations",
-      icon: isPathologyWorkspace ? FlaskConical : ScanLine,
-    },
-    { id: "appointments", label: "Bookings", icon: ClipboardCheck },
-    { id: "patients", label: "Patients", icon: Users },
-    { id: "staff", label: "Team", icon: BadgeCheck },
-    { id: "activity-logs", label: "Activity Logs", icon: History },
-  ];
   const pathologyNavItems: NavItem[] = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "appointments", label: "Appointments", icon: ClipboardCheck },
-    { id: "services", label: "Services", icon: FlaskConical },
+    {
+      id: "services",
+      label: "Services",
+      icon: isRadiologyWorkspace ? ScanLine : FlaskConical
+    },
     { id: "reports", label: "Reports", icon: FileText },
     { id: "staff", label: "Staff", icon: BadgeCheck },
-    { id: "analytics", label: "Analytics", icon: BarChart3 },
+    { id: "analytics", label: "Analytics", icon: BarChart3 }
   ];
-  const baseNavItems = isPathologyWorkspace
-    ? pathologyNavItems
+  const baseNavItems = isDiagnosticWorkspace
+    ? [
+        ...pathologyNavItems,
+        ...(isRadiologyWorkspace
+          ? [
+              {
+                id: "radiology" as const,
+                label: "Imaging operations",
+                icon: ScanLine
+              }
+            ]
+          : [])
+      ]
     : isDoctorWorkspace
       ? doctorNavItems
       : isClinicWorkspace
         ? clinicNavItems
-        : isDiagnosticWorkspace
-          ? diagnosticNavItems
-          : mainNavItems;
+        : mainNavItems;
   const navItems: NavItem[] = [
     ...baseNavItems,
     ...(
       [
         { id: "community", label: "Community", icon: MessagesSquare },
         { id: "gallery", label: "Gallery", icon: Image },
-        { id: "activity-logs", label: "Activity Logs", icon: History },
+        { id: "activity-logs", label: "Activity Logs", icon: History }
       ] satisfies NavItem[]
     ).filter(
       (item) => !baseNavItems.some((existing) => existing.id === item.id)
-    ),
+    )
   ];
   const nestedProfileOptions = isClinicWorkspace
     ? clinicProfileOptions
@@ -241,13 +240,13 @@ export function ErpDemoSidebar({
           ? "profile"
           : "hospital-profile",
       label: "Profile",
-      icon: UserRound,
+      icon: UserRound
     },
     {
       id: isDoctorWorkspace ? "doctor-settings" : "settings",
       label: "Settings",
-      icon: Settings,
-    },
+      icon: Settings
+    }
   ] satisfies readonly NavItem[];
   const userName =
     sessionState.data?.user?.name ||
@@ -529,7 +528,7 @@ function SidebarSection({
   isDoctorProfileOpen = false,
   showDoctorProfileDropdown = false,
   showAppointmentDropdown = false,
-  theme,
+  theme
 }: {
   allowedPages: ErpDemoPage[];
   currentPage: string;
@@ -666,7 +665,7 @@ function NavButton({
   onClick,
   pulse,
   showChevron,
-  theme,
+  theme
 }: {
   active: boolean;
   badge?: string;

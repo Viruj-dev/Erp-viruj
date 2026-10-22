@@ -18,6 +18,7 @@ export function DiagnosticFileReports({
 }: {
   tenant: ErpTenantContext;
 }) {
+  const pathology = tenant.providerType === "pathology";
   const [page, setPage] = useState(1);
   const query = useQuery({
     queryKey: ["diagnostic-file-reports", tenant.organizationId, page],
@@ -33,7 +34,7 @@ export function DiagnosticFileReports({
           </p>
           <h1 className="mt-2 text-3xl font-semibold">Reports</h1>
           <p className="mt-2 text-muted-foreground">
-            Send completed reports to accepted test bookings in My Health.
+            Send completed reports to accepted bookings in My Health.
           </p>
         </div>
         <Button
@@ -48,19 +49,19 @@ export function DiagnosticFileReports({
       {query.isPending && <SectionSkeleton />}
       {query.isError && (
         <p role="alert" className="text-destructive">
-          Could not load accepted tests. Refresh to try again.
+          Could not load accepted bookings. Refresh to try again.
         </p>
       )}
       <div className="overflow-x-auto rounded-xl border bg-card">
         <table className="w-full min-w-[960px] text-left text-sm">
           <caption className="sr-only">
-            Accepted pathology tests and patient report delivery
+            Accepted diagnostic bookings and patient report delivery
           </caption>
           <thead className="border-b bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               {[
                 "Patient",
-                "Test / branch",
+                pathology ? "Test / branch" : "Scan / branch",
                 "Booked for",
                 "Status",
                 "Report / actions",
@@ -77,7 +78,7 @@ export function DiagnosticFileReports({
                 key={booking.id}
                 booking={booking}
                 organizationId={tenant.organizationId}
-                canSend={diagnosticPermissions(tenant.role).results}
+                canSend={pathology ? diagnosticPermissions(tenant.role).results : diagnosticPermissions(tenant.role).release}
               />
             ))}
             {query.data && !query.data.data.length && (
@@ -86,7 +87,7 @@ export function DiagnosticFileReports({
                   colSpan={5}
                   className="px-4 py-10 text-center text-muted-foreground"
                 >
-                  No accepted tests on this page.
+                  No accepted bookings on this page.
                 </td>
               </tr>
             )}

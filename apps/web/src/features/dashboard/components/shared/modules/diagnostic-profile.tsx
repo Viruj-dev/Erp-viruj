@@ -4,7 +4,7 @@ import { PageSkeleton } from "@/features/dashboard/components/shared/page-skelet
 
 import {
   ProfileHero,
-  ProfileDetailPanel,
+  ProfileDetailPanel
 } from "../workspace/profile-presentation";
 import { formatTime } from "../../hospital/pages/onboarding/time-picker";
 import { canManageDiagnosticSetup } from "@/features/dashboard/lib/diagnostic-onboarding";
@@ -16,16 +16,14 @@ import { diagnosticSetupKey } from "@/features/dashboard/lib/diagnostic-onboardi
 import { virujBackend } from "@/lib/viruj-backend";
 import { DiagnosticPublication } from "./diagnostic-publication";
 
-export function PathologyProfile({ tenant }: { tenant: ErpTenantContext }) {
+export function DiagnosticProfile({ tenant }: { tenant: ErpTenantContext }) {
+  const pathology = tenant.providerType === "pathology";
   const query = useQuery({
     queryKey: diagnosticSetupKey(tenant.organizationId),
     queryFn: () => virujBackend.diagnostics.onboarding(tenant.organizationId),
-    retry: false,
+    retry: false
   });
-  if (query.isPending)
-    return (
-      <PageSkeleton />
-    );
+  if (query.isPending) return <PageSkeleton />;
   if (query.isError)
     return (
       <div role="alert" className="space-y-3 p-8">
@@ -53,8 +51,8 @@ export function PathologyProfile({ tenant }: { tenant: ErpTenantContext }) {
         ["Registration number", data.registrationNumber],
         ["Issuing authority", data.registrationAuthority],
         ["Established", data.establishedYear],
-        ["Accreditations", data.additionalCertificates],
-      ],
+        ["Accreditations", data.additionalCertificates]
+      ]
     },
     {
       title: "Branch & location",
@@ -64,16 +62,16 @@ export function PathologyProfile({ tenant }: { tenant: ErpTenantContext }) {
         ["Address", data.address],
         ["City", data.city],
         ["State", data.state],
-        ["PIN code", data.postalCode],
-      ],
+        ["PIN code", data.postalCode]
+      ]
     },
     {
       title: "Contact details",
       icon: Phone,
       rows: [
         ["Phone", data.phone],
-        ["Email", data.email],
-      ],
+        ["Email", data.email]
+      ]
     },
     {
       title: "Opening hours",
@@ -82,15 +80,40 @@ export function PathologyProfile({ tenant }: { tenant: ErpTenantContext }) {
         ["Working days", data.workingDays.join(" · ")],
         [
           "Hours · Asia/Kolkata",
-          `${formatTime(data.openingTime)} – ${formatTime(data.closingTime)}`,
+          `${formatTime(data.openingTime)} – ${formatTime(data.closingTime)}`
         ],
-        ["Home collection", data.homeCollection ? "Available" : "Unavailable"],
+        ...(pathology
+          ? [
+              [
+                "Home collection",
+                data.homeCollection ? "Available" : "Unavailable"
+              ]
+            ]
+          : [["Visits", "In-person only"]]),
         [
           "Walk-in appointments",
-          data.walkIns ? "Welcome" : "Appointment required",
-        ],
-      ],
+          data.walkIns ? "Welcome" : "Appointment required"
+        ]
+      ]
     },
+    ...(!pathology
+      ? [
+          {
+            title: "Imaging operations",
+            icon: Building2,
+            rows: [
+              ["Modalities", data.modalities.join(" · ")],
+              ["Machines, rooms & capacity", data.equipment],
+              ["Reporting radiologist", data.reportingName],
+              ["Professional registration", data.reportingRegistration],
+              ["Reporting email", data.reportingEmail],
+              ["Referral policy", data.referralPolicy],
+              ["Preparation & safety", data.screeningProcess],
+              ["Image & reporting workflow", data.imageWorkflow]
+            ]
+          }
+        ]
+      : [])
   ];
   const links = [
     ["Website", data.website],
@@ -98,14 +121,16 @@ export function PathologyProfile({ tenant }: { tenant: ErpTenantContext }) {
     ["Facebook", data.facebook],
     ["LinkedIn", data.linkedin],
     ["License / certificate", data.certificateUrl],
-    ["Branch map", data.mapsLocation],
+    ["Branch map", data.mapsLocation]
   ].filter(([, url]) => url && /^https?:\/\//i.test(url));
   return (
-    <div className="vh-onboarding vh-onboarding--pathology mx-auto min-h-full w-[calc(100%-8px)] max-w-[1440px] space-y-6 rounded-[24px] bg-[var(--onboarding-shell)] p-5 text-[var(--onboarding-text)] sm:w-[calc(100%-16px)] lg:w-[calc(100%-24px)] lg:p-8">
+    <div
+      className={`vh-onboarding vh-onboarding--${pathology ? "pathology" : "radiology"} mx-auto min-h-full w-[calc(100%-8px)] max-w-[1440px] space-y-6 rounded-[24px] bg-[var(--onboarding-shell)] p-5 text-[var(--onboarding-text)] sm:w-[calc(100%-16px)] lg:w-[calc(100%-24px)] lg:p-8`}
+    >
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-[var(--onboarding-accent)]">
-            Pathology workspace
+            {pathology ? "Pathology" : "Radiology"} workspace
           </p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight">
             Organization profile
@@ -133,7 +158,7 @@ export function PathologyProfile({ tenant }: { tenant: ErpTenantContext }) {
         subtitle={[
           data.city,
           data.state,
-          data.establishedYear && `Established ${data.establishedYear}`,
+          data.establishedYear && `Established ${data.establishedYear}`
         ]
           .filter(Boolean)
           .join(" · ")}
