@@ -856,6 +856,16 @@ function compactObject<T extends Record<string, unknown>>(value: T) {
   };
 }
 export const virujBackend = {
+  doctorDocuments: {
+    upload: (file: File, organizationId: string) => {
+      const form = new FormData();
+      form.set("file", file);
+      return formRequest("/doctor/license", form, {
+        organizationId,
+        method: "POST",
+      });
+    },
+  },
   diagnostics: {
     prepareReport: (organizationId: string, file: File) => {
       const form = new FormData();
@@ -1766,3 +1776,12 @@ export const virujBackend = {
       }),
   },
 };
+
+export function doctorWorkspaceRequest<T>(
+  path: string,
+  organizationId: string,
+  body?: unknown,
+  method: "GET" | "POST" | "PATCH" | "DELETE" = "GET"
+) {
+  return request<T>(path, { organizationId, body, method });
+}

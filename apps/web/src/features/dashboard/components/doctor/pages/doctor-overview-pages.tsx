@@ -1,47 +1,132 @@
 "use client";
-
-import { CheckCircle } from "lucide-react";
-import { RoleDashboardPage } from "@/features/dashboard/components/shared/role-dashboard-page";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { DoctorProfileForm } from "./doctor-onboarding";
 import {
   DoctorPageShell,
   HospitalPanel,
-  StatusBadge,
-} from "@/features/dashboard/components/doctor/_components/doctor-shared-ui";
-
+} from "../_components/doctor-shared-ui";
+import {
+  useDoctorQuery,
+  useDoctorTenant,
+  type DoctorProfile,
+  type CalendarEvent,
+  type WorkLocation,
+  type DoctorAppointment,
+  type Page,
+} from "@/features/dashboard/lib/doctor-workspace";
 export function DoctorDashboardPage() {
-  return <RoleDashboardPage tone="doctor" userName="Dr. Aris Thorne" />;
-}
-export function DoctorOnboardingCenterPage() {
-  const steps = [
-    ["Profile Completed", "Done", "Professional profile is ready."],
-    ["Verification Submitted", "Done", "Documents submitted for review."],
-    ["Verification Approved", "Pending", "Compliance approval is still required."],
-    ["Practice Location Added", "Done", "Primary location is configured."],
-    ["Availability Configured", "Pending", "Add recurring weekly slots."],
-  ] as const;
-
+  const tenant = useDoctorTenant();
+  const profile = useDoctorQuery<DoctorProfile>("/doctor/profile");
+  const stats =
+    useDoctorQuery<Record<string, number | string>>("/doctor/dashboard");
+  const events = useDoctorQuery<CalendarEvent[]>("/doctor/calendar");
+  const locations = useDoctorQuery<WorkLocation[]>("/doctor/locations");
+  const appointments = useDoctorQuery<Page<DoctorAppointment>>(
+    "/doctor/appointments?pageSize=5"
+  );
+  const upcoming = (events.data || [])
+    .filter((e) => Date.parse(e.endsAt) > Date.now())
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
+    .slice(0, 5);
   return (
-    <DoctorPageShell eyebrow="Setup" title="Onboarding Center" subtitle="Complete the readiness checklist before opening the practice to patients.">
-      <HospitalPanel title="Progress Tracker" subtitle="60% setup completion">
-        <div className="mb-5 h-3 rounded-full bg-slate-100 dark:bg-white/[0.07]">
-          <div className="h-3 w-[60%] rounded-full bg-primary dark:bg-blue-500" />
-        </div>
-        <div className="divide-y divide-slate-200/70 dark:divide-white/[0.07]">
-          {steps.map((step, index) => (
-            <div className="flex items-center gap-4 py-4" key={step[0]}>
-              <span className={step[1] === "Done" ? "flex size-10 items-center justify-center rounded-xl bg-green-50 text-green-600" : "flex size-10 items-center justify-center rounded-xl bg-orange-50 text-orange-600"}>
-                {step[1] === "Done" ? <CheckCircle size={18} /> : index + 1}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold text-slate-950 dark:text-slate-100">{step[0]}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-500">{step[2]}</p>
+    <DoctorPageShell
+      eyebrow="Overview"
+      title={`Welcome, ${profile.data?.fullName || "Doctor"}`}
+      subtitle="Your practice, patients and schedule in one place."
+      actions={
+        <Button asChild>
+          <Link href={tenant.buildRoute("onboarding")}>
+            Complete onboarding
+          </Link>
+        </Button>
+      }
+    >
+      {stats.isError && (
+        <p role="alert">
+          Dashboard data could not load.{" "}
+          <Button variant="outline" onClick={() => void stats.refetch()}>
+            Retry
+          </Button>
+        </p>
+      )}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {(
+          [
+            ["appointmentsToday", "Appointments today"],
+            ["patientsSeenToday", "Patients treated today"],
+            ["completedAppointments", "Completed appointments"],
+            ["upcomingAppointments", "Upcoming appointments"],
+            ["pendingConsultations", "Pending consultations"],
+            ["newPatientsThisMonth", "New patients this month"],
+            ["profileCompletionPercentage", "Profile completion (%)"],
+            ["verificationStatus", "Credential review"],
+          ] as const
+        ).map(([key, label]) => (
+          <HospitalPanel title={label} key={key}>
+            <p className="text-2xl font-semibold">
+              {stats.isPending ? "…" : (stats.data?.[key] ?? "Unavailable")}
+            </p>
+          </HospitalPanel>
+        ))}
+      </div>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <HospitalPanel title="Your next events">
+          <div className="space-y-3">
+            {events.isError ? (
+              <p>Unable to load calendar.</p>
+            ) : upcoming.length ? (
+              upcoming.map((e) => (
+                <div className="rounded-lg border p-3" key={e.id}>
+                  <p className="text-sm font-semibold">
+                    {e.pinned ? "📌 " : ""}
+                    {e.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(e.startsAt).toLocaleString("en-IN")} ·{" "}
+                    {locations.data?.find((l) => l.id === e.locationId)?.name ||
+                      "Personal event"}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No upcoming calendar events.
+              </p>
+            )}
+            <Button variant="outline" asChild>
+              <Link href={tenant.buildRoute("availability")}>
+                Open calendar
+              </Link>
+            </Button>
+          </div>
+        </HospitalPanel>
+        <HospitalPanel title="Recent appointments">
+          {appointments.isError ? (
+            <p>Unable to load appointments.</p>
+          ) : (
+            appointments.data?.data.map((a) => (
+              <div className="border-b py-3 text-sm" key={a.id}>
+                <p>
+                  {a.patient?.name || a.patientDetails?.name || "Patient"} ·{" "}
+                  {a.clinic?.name || "Practice"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(a.startsAt).toLocaleString("en-IN")} · {a.status}
+                </p>
               </div>
-              <StatusBadge status={step[1]} />
-            </div>
-          ))}
-        </div>
-      </HospitalPanel>
+            ))
+          )}
+          <Button variant="outline" className="mt-3" asChild>
+            <Link href={tenant.buildRoute("consultations")}>
+              All consultations
+            </Link>
+          </Button>
+        </HospitalPanel>
+      </div>
     </DoctorPageShell>
   );
 }
-
+export function DoctorOnboardingCenterPage() {
+  return <DoctorProfileForm onboarding />;
+}

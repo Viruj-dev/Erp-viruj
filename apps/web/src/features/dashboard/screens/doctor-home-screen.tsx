@@ -1,5 +1,7 @@
 "use client";
 
+import { DoctorWorkspaceContext } from "@/features/dashboard/lib/doctor-workspace";
+import { DoctorReminders } from "@/features/dashboard/components/doctor/pages/doctor-calendar";
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import {
   ErpDemoAppointments,
@@ -370,6 +372,32 @@ export function DoctorHomeScreen({
 }
 
 function DoctorPageContent({
+  currentPage,
+  detailId,
+  organizationId,
+  roleLabel,
+  tenant,
+}: {
+  currentPage: ErpDemoPage;
+  detailId?: string;
+  organizationId?: string;
+  roleLabel: string;
+  tenant?: ErpTenantContext;
+}) {
+  return (
+    <DoctorWorkspaceContext.Provider value={tenant}>
+      <DoctorReminders />
+      <DoctorPageBody
+        currentPage={currentPage}
+        detailId={detailId}
+        organizationId={organizationId}
+        roleLabel={roleLabel}
+        tenant={tenant}
+      />
+    </DoctorWorkspaceContext.Provider>
+  );
+}
+function DoctorPageBody({
   currentPage,
   detailId,
   organizationId,
