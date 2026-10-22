@@ -859,7 +859,7 @@ export const virujBackend = {
     prepareReport: (organizationId: string, file: File) => {
       const form = new FormData();
       form.set("file", file);
-      // Large originals bypass the frontend proxy; only the <=3 MB prepared file is sent onward.
+      // Standalone preparation also bypasses the frontend proxy for large originals.
       return centralApiRequest<Blob>(
         `${directApiUrl.replace(/\/$/, "")}/api/erp/diagnostics/reports/prepare`,
         "/diagnostics/reports/prepare",
@@ -884,14 +884,17 @@ export const virujBackend = {
     sendReport: (organizationId: string, bookingId: string, file: File) => {
       const form = new FormData();
       form.set("file", file);
-      return formRequest(
-        `/diagnostics/bookings/${encodeURIComponent(bookingId)}/report-file`,
-        form,
+      const path = `/diagnostics/bookings/${encodeURIComponent(bookingId)}/report-file`;
+      // Upload the original once; the API compresses and delivers it without a browser round trip.
+      return centralApiRequest(
+        `${directApiUrl.replace(/\/$/, "")}/api/erp${path}`,
+        path,
         {
           organizationId,
           method: "POST",
           successMessage: "Report sent to the patient's My Health",
-        }
+        },
+        { body: form, organizationId, fallbackMessage: "Could not send report" }
       );
     },
     reportDownload: (organizationId: string, bookingId: string) =>

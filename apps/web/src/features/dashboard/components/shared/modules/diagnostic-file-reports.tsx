@@ -135,27 +135,10 @@ function ReportRow({
         !/\.(pdf|doc|docx)$/i.test(file.name)
       )
         throw new Error("Choose a PDF, DOC or DOCX up to 10 MB.");
-      const blob = await virujBackend.diagnostics.prepareReport(
-        organizationId,
-        file
-      );
-      if (!blob.size || blob.size > 3_000_000)
-        throw new Error("Could not compress the report under 3 MB.");
-      const extension =
-        blob.type === "application/pdf"
-          ? "pdf"
-          : blob.type === "application/msword"
-            ? "doc"
-            : "docx";
-      const compressed = new File(
-        [blob],
-        `${file.name.replace(/\.(pdf|doc|docx)$/i, "")}.${extension}`,
-        { type: blob.type }
-      );
       await virujBackend.diagnostics.sendReport(
         organizationId,
         booking.id,
-        compressed
+        file
       );
     },
     onSuccess: () => {
@@ -251,6 +234,7 @@ function ReportRow({
           <div className="space-y-2">
             <Input
               aria-label={`Report for ${booking.order.patientName}, booking ${booking.id}`}
+              aria-describedby={`report-upload-hint-${booking.id}`}
               type="file"
               accept=".pdf,.doc,.docx"
               className="h-9 text-xs"
@@ -260,17 +244,28 @@ function ReportRow({
                 setError("");
               }}
             />
+            <p
+              id={`report-upload-hint-${booking.id}`}
+              className="text-xs text-muted-foreground"
+              role="status"
+              aria-live="polite"
+            >
+              {busy
+                ? "Uploading, optimizing and sending your report. Please keep this page open."
+                : "PDF, DOC or DOCX up to 10 MB. Optimized automatically for the patient app."}
+            </p>
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 size="sm"
                 disabled={!file || busy}
+                aria-busy={busy}
                 onClick={() => {
                   setError("");
                   send.mutate();
                 }}
               >
                 <Upload size={14} />
-                {send.isPending ? "Sending…" : "Send to patient"}
+                {busy ? "Preparing & sending…" : "Send to patient"}
               </Button>
             </div>
           </div>

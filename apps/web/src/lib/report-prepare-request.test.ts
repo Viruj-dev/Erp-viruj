@@ -35,3 +35,19 @@ test("large originals go directly to the authenticated API and return binary pre
   expect(result.type).toBe("application/pdf");
   expect(await result.text()).toBe("%PDF-1.7 prepared");
 });
+
+test("sending uploads the original once directly to the API for compression and delivery", async () => {
+  const data = new Uint8Array(10_000_000);
+  const original = new File([data], "lab.pdf");
+  let requests = 0;
+  globalThis.fetch = mock(async (url: string, options: RequestInit) => {
+    requests++;
+    expect(url).toBe("https://api.example.test/api/erp/diagnostics/bookings/booking-a/report-file");
+    expect(new Headers(options.headers).get("Authorization")).toBe("Bearer fixture-token");
+    expect(new Headers(options.headers).get("X-Erp-Organization-Id")).toBe("tenant-a");
+    expect(((options.body as FormData).get("file") as File).size).toBe(10_000_000);
+    return Response.json({ filename: "report.pdf", size: 2_900_000 });
+  }) as unknown as typeof fetch;
+  await virujBackend.diagnostics.sendReport("tenant-a", "booking-a", original);
+  expect(requests).toBe(1);
+});
