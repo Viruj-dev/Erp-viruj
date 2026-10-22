@@ -276,7 +276,7 @@ export function ClinicServiceList<T extends ServiceListRow>({
   actionLabels
 }: {
   facilities: T[];
-  tone?: "violet" | "orange" | "teal";
+  tone?: "violet" | "orange" | "rose";
   categoryLabel?: string;
   categoryName?: (facility: T) => string;
   isUpdatingId?: string | null;
@@ -318,8 +318,8 @@ export function ClinicServiceList<T extends ServiceListRow>({
             return (
               <tr
                 className={
-                  tone === "teal"
-                    ? "group transition-colors hover:bg-teal-50/40 dark:hover:bg-teal-400/[0.035]"
+                  tone === "rose"
+                    ? "group transition-colors hover:bg-rose-50/40 dark:hover:bg-rose-400/[0.035]"
                     : tone === "orange"
                       ? "group transition-colors hover:bg-orange-50/40 dark:hover:bg-orange-400/[0.035]"
                       : "group transition-colors hover:bg-violet-50/40 dark:hover:bg-violet-400/[0.035]"
@@ -330,8 +330,8 @@ export function ClinicServiceList<T extends ServiceListRow>({
                   <div className="flex min-w-0 items-start gap-3">
                     <span
                       className={
-                        tone === "teal"
-                          ? "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 dark:bg-teal-400/10 dark:text-teal-300"
+                        tone === "rose"
+                          ? "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-700 dark:bg-rose-400/10 dark:text-rose-300"
                           : tone === "orange"
                             ? "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-700 dark:bg-orange-400/10 dark:text-orange-300"
                             : "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 dark:bg-violet-400/10 dark:text-violet-300"
@@ -390,8 +390,8 @@ export function ClinicServiceList<T extends ServiceListRow>({
                       <button
                         aria-label={`Edit ${facility.name}`}
                         className={
-                          tone === "teal"
-                            ? "inline-flex h-9 min-w-9 gap-1.5 px-2 items-center justify-center rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-teal-400/10 dark:hover:text-teal-200"
+                          tone === "rose"
+                            ? "inline-flex h-9 min-w-9 gap-1.5 px-2 items-center justify-center rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-rose-400/10 dark:hover:text-rose-200"
                             : tone === "orange"
                               ? "inline-flex h-9 min-w-9 gap-1.5 px-2 items-center justify-center rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-orange-400/10 dark:hover:text-orange-200"
                               : "inline-flex h-9 min-w-9 gap-1.5 px-2 items-center justify-center rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 disabled:opacity-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-violet-400/10 dark:hover:text-violet-200"

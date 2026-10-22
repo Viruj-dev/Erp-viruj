@@ -171,7 +171,7 @@ function BookingCard({
                   className={
                     tenant.providerType === "pathology"
                       ? "bg-orange-700 text-white hover:bg-orange-800"
-                      : "bg-teal-700 text-white hover:bg-teal-800"
+                      : "bg-rose-700 text-white hover:bg-rose-800"
                   }
                   onClick={() => save.mutate("accepted")}
                 >

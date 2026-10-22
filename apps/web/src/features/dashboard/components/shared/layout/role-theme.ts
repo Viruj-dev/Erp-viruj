@@ -33,18 +33,18 @@ export const workspaceThemes: Record<WorkspaceRole, WorkspaceTheme> = {
       "selection:bg-orange-500/15 selection:text-orange-800 dark:selection:text-orange-100"
   },
   radiology: {
-    activeDot: "bg-teal-600 shadow-[0_0_10px_2px_rgba(13,148,136,0.4)]",
-    activeIcon: "text-teal-700 dark:text-teal-200",
+    activeDot: "bg-rose-600 shadow-[0_0_10px_2px_rgba(225,29,72,0.4)]",
+    activeIcon: "text-rose-700 dark:text-rose-200",
     activeNav:
-      "bg-teal-50 text-teal-900 shadow-sm dark:bg-teal-400/15 dark:text-teal-100",
-    avatar: "bg-teal-100 text-teal-900 dark:bg-teal-500/20 dark:text-teal-200",
+      "bg-rose-50 text-rose-900 shadow-sm dark:bg-rose-400/15 dark:text-rose-100",
+    avatar: "bg-rose-100 text-rose-900 dark:bg-rose-500/20 dark:text-rose-200",
     contentFrame:
-      "border-teal-200/70 bg-white/90 ring-teal-50 dark:border-teal-400/10 dark:bg-[#101c1c] dark:ring-white/[0.03]",
+      "border-rose-200/70 bg-white/90 ring-rose-50 dark:border-rose-400/10 dark:bg-[#211319] dark:ring-white/[0.03]",
     logoAura:
-      "bg-[conic-gradient(from_150deg,#99f6e4,#0d9488,#115e59,#99f6e4)]",
-    profileRing: "ring-teal-500/10",
+      "bg-[conic-gradient(from_150deg,#fecdd3,#e11d48,#9f1239,#fecdd3)]",
+    profileRing: "ring-rose-500/10",
     selection:
-      "selection:bg-teal-500/20 selection:text-teal-900 dark:selection:text-teal-100"
+      "selection:bg-rose-500/20 selection:text-rose-900 dark:selection:text-rose-100"
   },
   hospital: {
     activeDot: "bg-[#0f6cbf] shadow-[0_0_10px_2px_rgba(15,108,191,0.62)]",

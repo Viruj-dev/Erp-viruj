@@ -118,5 +118,5 @@ test("saved radiology availability shows selected days and the original India-ti
   expect(html).toContain("From (IST): 10:00 AM");
   expect(html).toContain("Until (IST): 2:00 PM");
   expect(html).toContain('aria-pressed="true"');
-  expect(html).toContain("border-teal-700");
+  expect(html).toContain("border-rose-700");
 });

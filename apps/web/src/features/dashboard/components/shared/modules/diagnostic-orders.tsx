@@ -57,7 +57,7 @@ export function DiagnosticOrders({
   const pathology = tenant.providerType === "pathology";
   const accent = pathology
     ? "bg-orange-700 text-white hover:bg-orange-800"
-    : "bg-teal-700 text-white hover:bg-teal-800";
+    : "bg-rose-700 text-white hover:bg-rose-800";
   const kind = pathology ? "pathology" : "radiology";
   const rows = (orders.data ?? []).filter(
     (order) =>
@@ -396,7 +396,7 @@ function NewOrder({
         className={
           tenant.providerType === "pathology"
             ? "bg-orange-700 text-white hover:bg-orange-800"
-            : "bg-teal-700 text-white hover:bg-teal-800"
+            : "bg-rose-700 text-white hover:bg-rose-800"
         }
       >
         {save.isPending ? "Creating…" : "Create order"}
@@ -446,7 +446,7 @@ function OrderDetail({
   const accent =
     tenant.providerType === "pathology"
       ? "bg-orange-700 text-white hover:bg-orange-800"
-      : "bg-teal-700 text-white hover:bg-teal-800";
+      : "bg-rose-700 text-white hover:bg-rose-800";
   function results(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const f = new FormData(event.currentTarget);

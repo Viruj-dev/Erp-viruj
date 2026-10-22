@@ -70,7 +70,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
   const pathology = tenant.providerType === "pathology";
   const accent = pathology
     ? "bg-orange-700 text-white hover:bg-orange-800"
-    : "bg-teal-700 text-white hover:bg-teal-800";
+    : "bg-rose-700 text-white hover:bg-rose-800";
   const rows = (query.data ?? []).filter(
     (s) =>
       `${s.name} ${s.code}`.toLowerCase().includes(search.toLowerCase()) &&
@@ -93,7 +93,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
     <DashboardPageShell
       eyebrow="Services"
       title={pathology ? "Services" : "Radiology services"}
-      tone={pathology ? "orange" : "teal"}
+      tone={pathology ? "orange" : "rose"}
       subtitle="Showcase your care. Manage the services patients can discover and book."
       actions={
         canManage && (
@@ -154,7 +154,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
       ) : (
         <section className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white dark:border-white/[0.08] dark:bg-[#111418]">
           <ClinicServiceList
-            tone={pathology ? "orange" : "teal"}
+            tone={pathology ? "orange" : "rose"}
             categoryLabel={pathology ? "Test branch" : "Category"}
             facilities={serviceRows}
             categoryName={(service) =>
@@ -504,7 +504,7 @@ export function DiagnosticServiceForm({
                         : [...days, Number(day)]
                     )
                   }
-                  className={`rounded-lg border px-3 py-2 text-xs font-medium ${workingDays.includes(Number(day)) ? (pathology ? "border-orange-700 bg-orange-50 text-orange-800" : "border-teal-700 bg-teal-50 text-teal-800 dark:border-teal-400 dark:bg-teal-400/10 dark:text-teal-200") : "border-slate-200 text-muted-foreground"}`}
+                  className={`rounded-lg border px-3 py-2 text-xs font-medium ${workingDays.includes(Number(day)) ? (pathology ? "border-orange-700 bg-orange-50 text-orange-800" : "border-rose-700 bg-rose-50 text-rose-800 dark:border-rose-400 dark:bg-rose-400/10 dark:text-rose-200") : "border-slate-200 text-muted-foreground"}`}
                 >
                   {name}
                 </button>
@@ -650,7 +650,7 @@ export function DiagnosticServiceForm({
         className={
           pathology
             ? "bg-orange-700 text-white hover:bg-orange-800"
-            : "bg-teal-700 text-white hover:bg-teal-800"
+            : "bg-rose-700 text-white hover:bg-rose-800"
         }
       >
         {save.isPending ? "Saving…" : "Save service"}
