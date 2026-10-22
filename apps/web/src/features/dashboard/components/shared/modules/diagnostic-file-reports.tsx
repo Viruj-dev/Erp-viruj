@@ -78,7 +78,7 @@ export function DiagnosticFileReports({
                 key={booking.id}
                 booking={booking}
                 organizationId={tenant.organizationId}
-                canSend={pathology ? diagnosticPermissions(tenant.role).results : diagnosticPermissions(tenant.role).release}
+                canSend={diagnosticPermissions(tenant.role).results}
               />
             ))}
             {query.data && !query.data.data.length && (

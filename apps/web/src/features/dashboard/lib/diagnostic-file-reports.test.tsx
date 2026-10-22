@@ -15,9 +15,9 @@ mock.module("@tanstack/react-query", () => ({
             patientAge: 30,
             patientSex: "female",
             status: "ordered",
-            serviceSnapshot: { name: "CBC" },
+            serviceSnapshot: { name: "CBC" }
           },
-          slot: { startsAt: "2026-10-22T10:00:00Z", branch: { name: "Main" } },
+          slot: { startsAt: "2026-10-22T10:00:00Z", branch: { name: "Main" } }
         },
         {
           id: "booking-b",
@@ -26,27 +26,33 @@ mock.module("@tanstack/react-query", () => ({
           order: {
             patientName: "Patient B",
             status: "released",
-            serviceSnapshot: { name: "Thyroid" },
+            serviceSnapshot: { name: "Thyroid" }
           },
           slot: { startsAt: "2026-10-22T10:00:00Z", branch: { name: "Main" } },
-          reportFile: { filename: "report.pdf", size: 2500000 },
-        },
+          reportFile: { filename: "report.pdf", size: 2500000 }
+        }
       ],
-      hasMore: false,
-    },
+      hasMore: false
+    }
   }),
   useQueryClient: () => ({}),
-  useMutation: () => ({ isPending: false, mutate: () => {} }),
+  useMutation: () => ({ isPending: false, mutate: () => {} })
 }));
 mock.module("@/lib/viruj-backend", () => ({
-  virujBackend: { diagnostics: {} },
+  virujBackend: { diagnostics: {} }
 }));
 const { DiagnosticFileReports } =
   await import("../components/shared/modules/diagnostic-file-reports");
 test("reports render compact table rows with upload and send actions", () => {
   const html = renderToStaticMarkup(
     <DiagnosticFileReports
-      tenant={{ organizationId: "tenant-a", role: "OWNER" } as ErpTenantContext}
+      tenant={
+        {
+          organizationId: "tenant-a",
+          providerType: "radiology",
+          role: "OWNER"
+        } as ErpTenantContext
+      }
     />
   );
   expect(html).toContain("<table");
@@ -58,4 +64,53 @@ test("reports render compact table rows with upload and send actions", () => {
   expect(html).not.toContain("Prepare report");
   expect(html).not.toContain("Preview");
   expect(html).toContain("Download");
+});
+
+test("both diagnostic workspaces allow owners, managers and clinical staff to upload completed reports", () => {
+  for (const providerType of ["pathology", "radiology"]) {
+    for (const role of [
+      "OWNER",
+      "ADMIN",
+      "ORG_ADMIN",
+      "MANAGER",
+      "DOCTOR",
+      "TECHNICIAN",
+      "owner",
+      "admin",
+      "manager",
+      "doctor",
+      "lab_tech"
+    ]) {
+      const html = renderToStaticMarkup(
+        <DiagnosticFileReports
+          tenant={
+            {
+              organizationId: "tenant-a",
+              providerType,
+              role
+            } as ErpTenantContext
+          }
+        />
+      );
+      expect(html).toContain('type="file"');
+      expect(html).toContain("Send to patient");
+      expect(html).toContain("Download");
+    }
+    for (const role of ["RECEPTIONIST", "STAFF", "PATIENT", "unknown"]) {
+      const html = renderToStaticMarkup(
+        <DiagnosticFileReports
+          tenant={
+            {
+              organizationId: "tenant-a",
+              providerType,
+              role
+            } as ErpTenantContext
+          }
+        />
+      );
+      expect(html).not.toContain('type="file"');
+      expect(html).toContain("A manager or clinical team member can upload.");
+      expect(html).toContain("Download");
+    }
+  }
 });
