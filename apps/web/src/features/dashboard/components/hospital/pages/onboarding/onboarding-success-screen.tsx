@@ -13,7 +13,7 @@ type OnboardingSuccessScreenProps = {
   completionPercentage: number;
   hospitalName: string;
   onContinue: () => void;
-  kind?: OnboardingKind;
+  kind?: OnboardingKind | "doctor";
   themeClassName?: string;
   summary: Array<{ label: string; value: string }>;
 };
@@ -30,6 +30,7 @@ export function OnboardingSuccessScreen({
       className={cn(
         "vh-onboarding flex min-h-svh items-center justify-center bg-[var(--onboarding-page)] px-5 py-12 text-[var(--onboarding-text)]",
         kind === "clinic" && "vh-onboarding--clinic",
+        kind === "doctor" && "vh-onboarding--doctor",
         themeClassName
       )}
     >

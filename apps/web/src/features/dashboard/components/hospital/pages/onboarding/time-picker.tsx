@@ -14,7 +14,9 @@ import {
 import { FieldLabel, fieldClassName } from "./fields";
 import type { OnboardingKind } from "./types";
 
-export const OnboardingTheme = createContext<OnboardingKind>("hospital");
+export const OnboardingTheme = createContext<OnboardingKind | "doctor">(
+  "hospital"
+);
 export function formatTime(value: string) {
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) return "Set time";
   const [hours, minutes] = value.split(":").map(Number);

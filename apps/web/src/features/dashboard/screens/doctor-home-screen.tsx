@@ -1,5 +1,6 @@
 "use client";
 
+import { DoctorOnboardingGate } from "@/features/dashboard/components/doctor/pages/doctor-onboarding-flow";
 import { DoctorWorkspaceContext } from "@/features/dashboard/lib/doctor-workspace";
 import { DoctorReminders } from "@/features/dashboard/components/doctor/pages/doctor-calendar";
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
@@ -208,7 +209,7 @@ export function DoctorHomeScreen({
     return <WorkspaceSkeleton />;
   }
 
-  if (!activeOrganization || !activeMember) {
+  if (!activeOrganization?.id || !activeMember) {
     return (
       <OrganizationAccessScreen
         isLoading={organizationsState.isPending}
@@ -255,65 +256,29 @@ export function DoctorHomeScreen({
     );
   }
 
+  const doctorTenant =
+    createErpTenantContext({
+      organizationId: activeOrganization.id,
+      organizationSlug: activeOrganizationSlug,
+      providerType: "doctor",
+      role: activeMember.role,
+      permissions: getBillingPermissionsFromMember(activeMember),
+    }) ?? undefined;
   return (
-    <div
-      className={`erp-workspace flex h-dvh min-h-dvh bg-surface text-on-surface transition-colors dark:bg-[#0b0d10] dark:text-slate-100 ${workspaceTheme.selection}`}
-    >
-      <ErpDemoSidebar
-        allowedPages={doctorAllowedPages}
+    <DoctorWorkspaceContext.Provider value={doctorTenant}>
+      <DoctorOnboardingGate
         currentPage={resolvedPage}
-        isCollapsed={isSidebarCollapsed}
-        onLogout={async () => {
-          setIsSigningOut(true);
-          try {
-            await authClient.signOut();
-            await sessionState.refetch();
-            await activeOrganizationState.refetch();
-            await activeMemberState.refetch();
-          } finally {
-            setIsSigningOut(false);
-          }
-        }}
-        onPageChange={(page) => {
-          const doctorPage = resolveDoctorPage(page);
-          router.push(
-            activeOrganizationSlug
-              ? buildTenantDashboardPath(
-                  "doctor",
-                  activeOrganizationSlug,
-                  doctorPage
-                )
-              : buildDashboardPath("doctor", doctorPage)
-          );
-        }}
-        onToggle={() => setIsSidebarCollapsed((value) => !value)}
-        organizationLabel={organizationLabel}
-      />
-      <main
-        className={`erp-main flex h-dvh min-w-0 flex-1 flex-col overflow-hidden transition-[margin] duration-300 motion-reduce:transition-none ${
-          isSidebarCollapsed
-            ? "ml-[76px] lg:ml-[88px]"
-            : "ml-[76px] lg:ml-[264px]"
-        }`}
+        organizationName={organizationName}
+        userName={userName}
+        userEmail={sessionState.data.user.email || ""}
       >
-        <div className="erp-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
-          <ErpDemoTopBar
-            organizationId={activeOrganization.id}
-            organizationLabel={organizationLabel}
-            organizationName={organizationName}
-            roleLabel={roleLabel}
-            userName={userName}
-            onNavigateToProfile={() => {
-              router.push(
-                activeOrganizationSlug
-                  ? buildTenantDashboardPath(
-                      "doctor",
-                      activeOrganizationSlug,
-                      "profile"
-                    )
-                  : buildDashboardPath("doctor", "profile")
-              );
-            }}
+        <div
+          className={`erp-workspace flex h-dvh min-h-dvh bg-surface text-on-surface transition-colors dark:bg-[#0b0d10] dark:text-slate-100 ${workspaceTheme.selection}`}
+        >
+          <ErpDemoSidebar
+            allowedPages={doctorAllowedPages}
+            currentPage={resolvedPage}
+            isCollapsed={isSidebarCollapsed}
             onLogout={async () => {
               setIsSigningOut(true);
               try {
@@ -325,46 +290,99 @@ export function DoctorHomeScreen({
                 setIsSigningOut(false);
               }
             }}
+            onPageChange={(page) => {
+              const doctorPage = resolveDoctorPage(page);
+              router.push(
+                activeOrganizationSlug
+                  ? buildTenantDashboardPath(
+                      "doctor",
+                      activeOrganizationSlug,
+                      doctorPage
+                    )
+                  : buildDashboardPath("doctor", doctorPage)
+              );
+            }}
+            onToggle={() => setIsSidebarCollapsed((value) => !value)}
+            organizationLabel={organizationLabel}
           />
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={resolvedPage}
-              animate={{ opacity: 1, y: 0 }}
-              className="erp-page mx-auto flex min-h-full w-full max-w-[1800px] p-3 sm:p-5 lg:p-7"
-              exit={{ opacity: 0, y: reduceMotion ? 0 : -6 }}
-              initial={{ opacity: 0, y: reduceMotion ? 0 : 10 }}
-              transition={{
-                duration: reduceMotion ? 0 : 0.22,
-                ease: "easeOut",
-              }}
-            >
-              <div
-                className={`erp-page-content flex min-h-full w-full flex-col`}
-              >
-                <DoctorPageContent
-                  currentPage={resolvedPage}
-                  detailId={detailId}
-                  organizationId={activeOrganization.id}
-                  roleLabel={roleLabel}
-                  tenant={
-                    activeOrganization.id
-                      ? (createErpTenantContext({
-                          organizationId: activeOrganization.id,
-                          organizationSlug: activeOrganizationSlug,
-                          providerType: "doctor",
-                          role: activeMember?.role,
-                          permissions:
-                            getBillingPermissionsFromMember(activeMember),
-                        }) ?? undefined)
-                      : undefined
+          <main
+            className={`erp-main flex h-dvh min-w-0 flex-1 flex-col overflow-hidden transition-[margin] duration-300 motion-reduce:transition-none ${
+              isSidebarCollapsed
+                ? "ml-[76px] lg:ml-[88px]"
+                : "ml-[76px] lg:ml-[264px]"
+            }`}
+          >
+            <div className="erp-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+              <ErpDemoTopBar
+                organizationId={activeOrganization.id}
+                organizationLabel={organizationLabel}
+                organizationName={organizationName}
+                roleLabel={roleLabel}
+                userName={userName}
+                onNavigateToProfile={() => {
+                  router.push(
+                    activeOrganizationSlug
+                      ? buildTenantDashboardPath(
+                          "doctor",
+                          activeOrganizationSlug,
+                          "profile"
+                        )
+                      : buildDashboardPath("doctor", "profile")
+                  );
+                }}
+                onLogout={async () => {
+                  setIsSigningOut(true);
+                  try {
+                    await authClient.signOut();
+                    await sessionState.refetch();
+                    await activeOrganizationState.refetch();
+                    await activeMemberState.refetch();
+                  } finally {
+                    setIsSigningOut(false);
                   }
-                />
-              </div>
-            </motion.div>
-          </AnimatePresence>
+                }}
+              />
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={resolvedPage}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="erp-page mx-auto flex min-h-full w-full max-w-[1800px] p-3 sm:p-5 lg:p-7"
+                  exit={{ opacity: 0, y: reduceMotion ? 0 : -6 }}
+                  initial={{ opacity: 0, y: reduceMotion ? 0 : 10 }}
+                  transition={{
+                    duration: reduceMotion ? 0 : 0.22,
+                    ease: "easeOut",
+                  }}
+                >
+                  <div
+                    className={`erp-page-content flex min-h-full w-full flex-col`}
+                  >
+                    <DoctorPageContent
+                      currentPage={resolvedPage}
+                      detailId={detailId}
+                      organizationId={activeOrganization.id}
+                      roleLabel={roleLabel}
+                      tenant={
+                        activeOrganization.id
+                          ? (createErpTenantContext({
+                              organizationId: activeOrganization.id,
+                              organizationSlug: activeOrganizationSlug,
+                              providerType: "doctor",
+                              role: activeMember?.role,
+                              permissions:
+                                getBillingPermissionsFromMember(activeMember),
+                            }) ?? undefined)
+                          : undefined
+                      }
+                    />
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </main>
         </div>
-      </main>
-    </div>
+      </DoctorOnboardingGate>
+    </DoctorWorkspaceContext.Provider>
   );
 }
 

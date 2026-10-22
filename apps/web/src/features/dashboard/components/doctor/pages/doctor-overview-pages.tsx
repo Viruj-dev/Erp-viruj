@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { DoctorProfileForm } from "./doctor-onboarding";
+import { DoctorOnboarding } from "./doctor-onboarding-flow";
 import {
   DoctorPageShell,
   HospitalPanel,
@@ -16,32 +16,6 @@ import {
   type Page,
 } from "@/features/dashboard/lib/doctor-workspace";
 export function DoctorDashboardPage() {
-  const completion = useDoctorQuery<{ percentage: number }>(
-    "/doctor/profile/completion"
-  );
-  if (completion.isPending)
-    return (
-      <p className="p-6" role="status">
-        Loading your practice…
-      </p>
-    );
-  if (completion.isError)
-    return (
-      <DoctorPageShell
-        eyebrow="Workspace"
-        title="Unable to load your doctor workspace"
-        subtitle="Your setup status could not be loaded."
-      >
-        <p role="alert" className="text-sm">
-          {completion.error.message}
-        </p>
-        <Button onClick={() => void completion.refetch()}>Retry</Button>
-      </DoctorPageShell>
-    );
-  if (completion.data.percentage < 100) return <DoctorProfileForm onboarding />;
-  return <DoctorOverview />;
-}
-function DoctorOverview() {
   const tenant = useDoctorTenant();
   const profile = useDoctorQuery<DoctorProfile>("/doctor/profile");
   const stats =
@@ -154,5 +128,5 @@ function DoctorOverview() {
   );
 }
 export function DoctorOnboardingCenterPage() {
-  return <DoctorProfileForm onboarding />;
+  return <DoctorOnboarding />;
 }

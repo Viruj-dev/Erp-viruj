@@ -30,11 +30,7 @@ const fields = [
   ["consultationFee", "Consultation fee (INR)", "number"],
   ["consultationDurationMinutes", "Consultation duration (minutes)", "number"],
 ] as const;
-export function DoctorProfileForm({
-  onboarding = false,
-}: {
-  onboarding?: boolean;
-}) {
+export function DoctorProfileForm() {
   const q = useDoctorQuery<DoctorProfile>("/doctor/profile");
   if (q.isPending) return <p className="p-6">Loading your profile…</p>;
   if (q.isError)
@@ -44,17 +40,9 @@ export function DoctorProfileForm({
         <Button onClick={() => void q.refetch()}>Retry</Button>
       </p>
     );
-  return (
-    <ProfileForm key={q.data.id} initial={q.data} onboarding={onboarding} />
-  );
+  return <ProfileForm key={q.data.id} initial={q.data} />;
 }
-function ProfileForm({
-  initial,
-  onboarding,
-}: {
-  initial: DoctorProfile;
-  onboarding: boolean;
-}) {
+function ProfileForm({ initial }: { initial: DoctorProfile }) {
   const [profile, setProfile] = useState({
     ...initial,
     fullName: initial.fullName === "Individual Doctor" ? "" : initial.fullName,
@@ -93,8 +81,8 @@ function ProfileForm({
   }
   return (
     <DoctorPageShell
-      eyebrow={onboarding ? "Setup" : "Profile"}
-      title={onboarding ? "Doctor onboarding" : "Doctor profile"}
+      eyebrow="Profile"
+      title="Doctor profile"
       subtitle="Your professional details, credentials and consultation preferences."
     >
       <form

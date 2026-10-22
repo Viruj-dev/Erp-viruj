@@ -330,6 +330,48 @@
   --onboarding-hero: linear-gradient(135deg, #881337, #be123c 58%, #fb7185);
 }
 
+.vh-onboarding--doctor {
+  --onboarding-page: #132b24;
+  --onboarding-shell: #f3f8f5;
+  --onboarding-panel: #ffffff;
+  --onboarding-panel-muted: #e8f2ec;
+  --onboarding-panel-soft: #f7fbf8;
+  --onboarding-border: #cfdfd5;
+  --onboarding-border-strong: #bdd5c7;
+  --onboarding-text: #172b22;
+  --onboarding-heading: #10291d;
+  --onboarding-muted: #64776b;
+  --onboarding-muted-strong: #40594a;
+  --onboarding-placeholder: #91a498;
+  --onboarding-accent: #047857;
+  --onboarding-accent-mid: #059669;
+  --onboarding-accent-deep: #064e3b;
+  --onboarding-accent-soft: #d1fae5;
+  --onboarding-accent-ring: rgba(16, 185, 129, 0.16);
+  --onboarding-accent-shadow: rgba(4, 120, 87, 0.24);
+  --onboarding-hero: linear-gradient(135deg, #064e3b, #059669 58%, #34d399);
+}
+.dark .vh-onboarding--doctor {
+  --onboarding-page: #091610;
+  --onboarding-shell: #101e17;
+  --onboarding-panel: #172920;
+  --onboarding-panel-muted: #1b3025;
+  --onboarding-panel-soft: #14251b;
+  --onboarding-border: #294435;
+  --onboarding-border-strong: #365744;
+  --onboarding-text: #e1f5e8;
+  --onboarding-heading: #effcf3;
+  --onboarding-muted: #9db8a7;
+  --onboarding-muted-strong: #c0d9c9;
+  --onboarding-placeholder: #789685;
+  --onboarding-accent: #6ee7b7;
+  --onboarding-accent-mid: #059669;
+  --onboarding-accent-deep: #047857;
+  --onboarding-accent-soft: rgba(52, 211, 153, 0.13);
+  --onboarding-accent-ring: rgba(52, 211, 153, 0.18);
+  --onboarding-accent-shadow: rgba(4, 120, 87, 0.3);
+}
+
 .vh-onboarding-gradient {
   background: var(--onboarding-hero);
 }
@@ -478,9 +520,13 @@
 }
 /* The shared header becomes a compact dock without hiding its actions. */
 .erp-topbar {
-  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1),
-    min-height 280ms ease, padding 280ms ease, top 280ms ease,
-    border-radius 280ms ease, box-shadow 280ms ease;
+  transition:
+    width 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    min-height 280ms ease,
+    padding 280ms ease,
+    top 280ms ease,
+    border-radius 280ms ease,
+    box-shadow 280ms ease;
 }
 .erp-topbar-workspace,
 .erp-topbar [data-slot="dropdown-menu-trigger"] {
@@ -496,10 +542,16 @@
 .erp-topbar-account-label,
 .erp-topbar-chevron {
   overflow: hidden;
-  transition: max-width 280ms ease, opacity 180ms ease, transform 280ms ease;
+  transition:
+    max-width 280ms ease,
+    opacity 180ms ease,
+    transform 280ms ease;
 }
 .erp-topbar button {
-  transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
 }
 .erp-topbar button:hover {
   transform: translateY(-1px);
@@ -546,7 +598,8 @@
   min-width: 36px;
   min-height: 36px;
 }
-.erp-topbar[data-compact="true"] button:not([data-slot="dropdown-menu-trigger"]) {
+.erp-topbar[data-compact="true"]
+  button:not([data-slot="dropdown-menu-trigger"]) {
   width: 36px;
   height: 36px;
 }

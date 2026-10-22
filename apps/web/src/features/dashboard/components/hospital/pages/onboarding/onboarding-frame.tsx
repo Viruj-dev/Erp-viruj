@@ -11,6 +11,7 @@ import {
   Loader2,
   ShieldCheck,
   Sparkles,
+  Stethoscope,
   Users,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -18,7 +19,7 @@ import { OnboardingTheme } from "./time-picker";
 import type { OnboardingKind, StepDefinition, StepId } from "./types";
 
 export type OnboardingFrameProps = {
-  kind: OnboardingKind;
+  kind: OnboardingKind | "doctor";
   organizationLabel: string;
   entityLabel: string;
   userName: string;
@@ -64,6 +65,7 @@ export function OnboardingFrame({
         className={cn(
           "vh-onboarding min-h-screen bg-[var(--onboarding-page)] p-2 text-[var(--onboarding-text)] md:p-3",
           kind === "clinic" && "vh-onboarding--clinic",
+          kind === "doctor" && "vh-onboarding--doctor",
           themeClassName
         )}
       >
@@ -72,7 +74,9 @@ export function OnboardingFrame({
             <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-dashed border-[var(--onboarding-border)] px-6 md:px-8">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--onboarding-accent-deep)] text-white shadow-[0_10px_24px_var(--onboarding-accent-shadow)]">
-                  {kind === "clinic" ? (
+                  {kind === "doctor" ? (
+                    <Stethoscope size={17} />
+                  ) : kind === "clinic" ? (
                     <Building2 size={17} />
                   ) : (
                     <Hospital size={17} />
@@ -189,7 +193,7 @@ export function OnboardingFrame({
                           {userName}
                         </p>
                         <span className="rounded border border-[var(--onboarding-border-strong)] bg-[var(--onboarding-accent-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--onboarding-accent)]">
-                          Admin
+                          {kind === "doctor" ? "Doctor" : "Admin"}
                         </span>
                       </div>
                       <p className="truncate text-[11px] font-medium text-[var(--onboarding-muted)]">

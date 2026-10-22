@@ -1,9 +1,11 @@
-import { expect, test } from "bun:test";
+import { expect, mock, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DoctorWorkspaceContext } from "@/features/dashboard/lib/doctor-workspace";
 import { createErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
-import { DoctorDashboardPage } from "./doctor-overview-pages";
+mock.module("next/navigation", () => ({ useRouter: () => ({ replace() {} }) }));
+const { DoctorOnboardingGate, doctorSessionDate } =
+  await import("./doctor-onboarding-flow");
 import { DoctorProfileForm } from "./doctor-onboarding";
 import {
   DoctorCalendarPage,
@@ -32,7 +34,7 @@ function render(node: React.ReactNode, data: Record<string, unknown>) {
   return html;
 }
 test("doctor onboarding asks for professional and contact details", () => {
-  const html = render(<DoctorProfileForm onboarding />, {
+  const html = render(<DoctorProfileForm />, {
     "/doctor/profile": {
       id: "a",
       fullName: "",
@@ -112,17 +114,32 @@ test("consultations show actual patient and organisation without decision button
 });
 
 test("new doctor dashboard opens onboarding before mounting dashboard queries", () => {
-  const html = render(<DoctorDashboardPage />, {
-    "/doctor/profile/completion": { percentage: 0 },
-    "/doctor/profile": {
-      id: "a",
-      fullName: "",
-      languages: [],
-      isPublic: false,
-    },
-    "/doctor/verification": { status: "NOT_SUBMITTED", documents: [] },
-  });
-  expect(html).toContain("Doctor onboarding");
+  const html = render(
+    <DoctorOnboardingGate
+      currentPage="dashboard"
+      organizationName="My practice"
+      userName="Dr Test"
+      userEmail="doctor@example.test"
+    >
+      <div data-testid="erp-shell">Dashboard shell</div>
+    </DoctorOnboardingGate>,
+    {
+      "/doctor/profile/completion": { percentage: 0 },
+      "/doctor/locations": [],
+      "/doctor/profile": {
+        id: "a",
+        fullName: "",
+        languages: [],
+        isPublic: false,
+      },
+      "/doctor/verification": { status: "NOT_SUBMITTED", documents: [] },
+    }
+  );
+  expect(html).toContain("Personal information");
+  expect(html).toContain("vh-onboarding--doctor");
+  expect(html).toContain("Step 1 of 5");
+  expect(html).toContain("Save &amp; Continue");
+  expect(html).not.toContain("erp-shell");
   expect(html).not.toContain("Appointments today");
   expect(html).not.toContain("Unavailable");
 });
@@ -140,7 +157,14 @@ test("failed setup check shows one retry state instead of an unavailable dashboa
   const html = renderToStaticMarkup(
     <QueryClientProvider client={client}>
       <DoctorWorkspaceContext.Provider value={tenant}>
-        <DoctorDashboardPage />
+        <DoctorOnboardingGate
+          currentPage="dashboard"
+          organizationName="My practice"
+          userName="Dr Test"
+          userEmail="doctor@example.test"
+        >
+          <div data-testid="erp-shell">Dashboard shell</div>
+        </DoctorOnboardingGate>
       </DoctorWorkspaceContext.Provider>
     </QueryClientProvider>
   );
@@ -148,4 +172,56 @@ test("failed setup check shows one retry state instead of an unavailable dashboa
   expect(html).toContain("Retry");
   expect(html).not.toContain("Appointments today");
   client.clear();
+});
+
+test("completed setup opens the ERP shell instead of showing onboarding", () => {
+  const html = render(
+    <DoctorOnboardingGate
+      currentPage="dashboard"
+      organizationName="Practice"
+      userName="Doctor"
+      userEmail="doctor@example.test"
+    >
+      <div data-testid="erp-shell">Dashboard shell</div>
+    </DoctorOnboardingGate>,
+    { "/doctor/profile/completion": { percentage: 100 } }
+  );
+  expect(html).toContain("erp-shell");
+  expect(html).not.toContain("vh-onboarding");
+});
+test("an explicit onboarding route always uses the shared full-screen frame", () => {
+  const html = render(
+    <DoctorOnboardingGate
+      currentPage="onboarding"
+      organizationName="Practice"
+      userName="Doctor"
+      userEmail="doctor@example.test"
+    >
+      <div data-testid="erp-shell">Dashboard shell</div>
+    </DoctorOnboardingGate>,
+    {
+      "/doctor/profile/completion": { percentage: 100 },
+      "/doctor/profile": {
+        id: "a",
+        fullName: "Doctor",
+        languages: [],
+        isPublic: false,
+      },
+      "/doctor/locations": [],
+      "/doctor/verification": { status: "NOT_SUBMITTED", documents: [] },
+    }
+  );
+  expect(html).toContain("vh-onboarding--doctor");
+  expect(html).toContain("Professional credentials");
+  expect(html).toContain("Work locations");
+  expect(html).toContain("Availability &amp; fees");
+  expect(html).not.toContain("erp-shell");
+});
+test("initial workplace sessions use upcoming weekdays in India", () => {
+  expect(doctorSessionDate("THURSDAY", new Date("2026-10-21T20:00:00Z"))).toBe(
+    "2026-10-22"
+  );
+  expect(doctorSessionDate("MONDAY", new Date("2026-10-21T20:00:00Z"))).toBe(
+    "2026-10-26"
+  );
 });
