@@ -48,15 +48,6 @@ const descriptions: Record<StepId, string> = {
   services: "",
   public: "",
 };
-const days = [
-  "MONDAY",
-  "TUESDAY",
-  "WEDNESDAY",
-  "THURSDAY",
-  "FRIDAY",
-  "SATURDAY",
-  "SUNDAY",
-];
 type Verification = {
   status: string;
   documents: { id: string; name?: string }[];
@@ -126,8 +117,11 @@ export function DoctorOnboarding({
 }) {
   const profile = useDoctorQuery<DoctorProfile>("/doctor/profile");
   const locations = useDoctorQuery<WorkLocation[]>("/doctor/locations");
+  const workingHours = useDoctorQuery<WorkingHours[]>("/doctor/working-hours");
   const verification = useDoctorQuery<Verification>("/doctor/verification");
-  const failed = [profile, locations, verification].find((q) => q.isError);
+  const failed = [profile, locations, verification, workingHours].find(
+    (q) => q.isError
+  );
   if (failed)
     return (
       <div className="vh-onboarding vh-onboarding--doctor min-h-screen bg-[var(--onboarding-shell)] p-8 text-[var(--onboarding-text)]">
@@ -135,7 +129,12 @@ export function DoctorOnboarding({
         <Button onClick={() => void failed.refetch()}>Retry</Button>
       </div>
     );
-  if (!profile.data || !locations.data || !verification.data)
+  if (
+    !profile.data ||
+    !locations.data ||
+    !verification.data ||
+    !workingHours.data
+  )
     return (
       <div
         className="vh-onboarding vh-onboarding--doctor min-h-screen bg-[var(--onboarding-shell)] p-8 text-[var(--onboarding-text)]"
@@ -149,6 +148,7 @@ export function DoctorOnboarding({
       key={profile.data.id}
       initial={profile.data}
       existingLocations={locations.data}
+      initialHours={workingHours.data}
       verification={verification.data}
       refreshDocuments={() => verification.refetch()}
       organizationName={organizationName}
@@ -206,6 +206,7 @@ export function DoctorCredentialsFields({
 function DoctorSetup({
   initial,
   existingLocations,
+  initialHours,
   verification,
   refreshDocuments,
   organizationName,
@@ -214,6 +215,7 @@ function DoctorSetup({
 }: {
   initial: DoctorProfile;
   existingLocations: WorkLocation[];
+  initialHours: WorkingHours[];
   verification: Verification;
   refreshDocuments: () => Promise<unknown>;
   organizationName: string;
@@ -230,7 +232,7 @@ function DoctorSetup({
       initial.fullName === "Individual Doctor" ? userName : initial.fullName,
     email: initial.email || userEmail,
   });
-  const [schedule, setSchedule] = useState<WorkingHours[]>([]);
+  const [schedule, setSchedule] = useState<WorkingHours[]>(initialHours);
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -248,7 +250,7 @@ function DoctorSetup({
         ? 1
         : 0)
     : undefined;
-  const draftKey = `viruj:doctor-onboarding:draft:${tenant.organizationId}`;
+  const draftKey = `viruj:doctor-onboarding:v2:draft:${tenant.organizationId}`;
   useEffect(() => {
     try {
       const raw = localStorage.getItem(draftKey);

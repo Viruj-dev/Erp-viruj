@@ -1719,6 +1719,8 @@ export const virujBackend = {
       ),
     confirmInvitation: (input: { invitationId: string }) =>
       request<{
+        organizationId?: string;
+        organizationType?: string;
         email: string;
         loginUrl: string;
         role: string;

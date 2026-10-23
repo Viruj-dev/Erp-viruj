@@ -139,6 +139,7 @@ export function DoctorsStep({
                   }
                 />
                 <TextField
+                  required
                   label="Doctor Email"
                   onChange={(value) =>
                     updateDoctor(doctor.id, { inviteEmail: value })

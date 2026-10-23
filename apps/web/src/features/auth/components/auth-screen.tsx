@@ -27,7 +27,8 @@ export function ErpAuthScreen() {
   const organizationsState = authClient.useListOrganizations();
   const sessionOrganization = getSessionOrganization(sessionState.data);
   const sessionMember = getSessionMember(sessionState.data);
-  const activeOrganization = sessionOrganization ?? activeOrganizationState.data;
+  const activeOrganization =
+    sessionOrganization ?? activeOrganizationState.data;
   const activeMember = sessionMember ?? activeMemberState.data;
 
   useEffect(() => {
@@ -82,13 +83,24 @@ export function ErpAuthScreen() {
       return;
     }
 
+    const pendingInvitation = window.sessionStorage.getItem(
+      "viruj:pending-invitation"
+    );
+    if (pendingInvitation && /^[a-zA-Z0-9-]+$/.test(pendingInvitation)) {
+      router.replace(`/staff-confirmation/${pendingInvitation}`);
+      return;
+    }
     if (
       activeOrganizationType &&
       isDashboardOrganizationType(activeOrganizationType)
     ) {
-      const onboardingStoragePrefix = getOnboardingStoragePrefix(activeOrganizationType);
-      const shouldStartOnboarding =
-        shouldStartOrganizationOnboarding(activeOrganization, window.localStorage);
+      const onboardingStoragePrefix = getOnboardingStoragePrefix(
+        activeOrganizationType
+      );
+      const shouldStartOnboarding = shouldStartOrganizationOnboarding(
+        activeOrganization,
+        window.localStorage
+      );
 
       if (shouldStartOnboarding && onboardingStoragePrefix) {
         window.sessionStorage.setItem(
@@ -144,7 +156,6 @@ export function ErpAuthScreen() {
   );
 }
 
-
 function getOnboardingStoragePrefix(organizationType: string) {
   if (organizationType === "clinic") return "viruj:clinic-onboarding";
   if (organizationType === "hospital") return "viruj:hospital-onboarding";
@@ -161,7 +172,7 @@ function getSessionOrganization(session: unknown) {
     return session.activeOrganization as {
       createdAt?: string | Date;
       id?: string;
-      
+
       organizationType?: string;
     };
   }

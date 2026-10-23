@@ -44,6 +44,25 @@ export function DoctorDashboardPage() {
   }));
   const analytics: RoleDashboardAnalytics = {
     appointments: rows,
+    heroStats: { upcoming: String(stats.data?.upcomingAppointments || 0) },
+    charts: [
+      {
+        title: "Recent appointment activity (latest 100)",
+        values: Array.from({ length: 7 }, (_, i) => {
+          const date = new Date();
+          date.setDate(date.getDate() - (6 - i));
+          return rows.filter(
+            (a) =>
+              new Date(a.appointmentDate).toDateString() === date.toDateString()
+          ).length;
+        }),
+        labels: Array.from({ length: 7 }, (_, i) => {
+          const date = new Date();
+          date.setDate(date.getDate() - (6 - i));
+          return date.toLocaleDateString("en-IN", { weekday: "short" });
+        }),
+      },
+    ],
     stats: [
       {
         label: "Appointment Requests",
@@ -54,6 +73,16 @@ export function DoctorDashboardPage() {
         label: "Patients",
         value: String(stats.data?.patientsSeenToday ?? 0),
         note: "Patients treated today",
+      },
+      {
+        label: "Completed appointments",
+        value: String(stats.data?.completedAppointments || 0),
+        note: "Completed visits across your organisations",
+      },
+      {
+        label: "Upcoming appointments",
+        value: String(stats.data?.upcomingAppointments || 0),
+        note: "Scheduled patient visits",
       },
     ],
     appointmentStatuses: [
@@ -68,14 +97,12 @@ export function DoctorDashboardPage() {
         color: "#60a5fa",
       },
     ],
-    activity: rows
-      .slice(0, 5)
-      .map((a) => ({
-        id: a.id,
-        title: a.patientName,
-        subtitle: `${a.appointmentMode} · ${a.status}`,
-        meta: new Date(a.appointmentDate).toLocaleDateString("en-IN"),
-      })),
+    activity: rows.slice(0, 5).map((a) => ({
+      id: a.id,
+      title: a.patientName,
+      subtitle: `${a.appointmentMode} · ${a.status}`,
+      meta: new Date(a.appointmentDate).toLocaleDateString("en-IN"),
+    })),
   };
   return (
     <RoleDashboardPage

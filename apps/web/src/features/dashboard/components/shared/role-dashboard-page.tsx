@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
-  DropdownMenuRadioItem
+  DropdownMenuRadioItem,
 } from "@/components/ui/erp/dropdown-menu";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -24,7 +24,7 @@ import {
   Users,
   Stethoscope,
   HeartPulse,
-  ClipboardCheck
+  ClipboardCheck,
 } from "lucide-react";
 import {
   Bar,
@@ -33,20 +33,20 @@ import {
   ResponsiveContainer,
   Tooltip,
   XAxis,
-  YAxis
+  YAxis,
 } from "recharts";
 import type { ClinicGalleryBentoItem } from "@/features/dashboard/components/clinic/clinic-gallery-bento";
 import {
   buildDashboardPath,
   buildTenantDashboardPath,
   isDashboardPage,
-  type DashboardPage
+  type DashboardPage,
 } from "@/features/dashboard/lib/routing";
 import type { VirujAppointment } from "@/lib/viruj-backend";
 import {
   formatDate,
   getStatusLabel,
-  statusClassName
+  statusClassName,
 } from "./modules/appointments/utils";
 import { AppointmentDetailDialog } from "./modules/appointments/components/appointment-detail";
 import { DoctorAvatar } from "./workspace/doctor-avatar";
@@ -115,7 +115,7 @@ export function RoleDashboardPage({
   unavailable = [],
   onRefresh,
   refreshing = false,
-  onAppointmentSelect
+  onAppointmentSelect,
 }: {
   analytics?: RoleDashboardAnalytics;
   tone: DashboardTone;
@@ -148,7 +148,9 @@ export function RoleDashboardPage({
     ? ["Appointments", "Branches", "Services"]
     : diagnostic
       ? ["Bookings", "Orders", "Reports"]
-      : ["Appointments", "Doctors", "Services"];
+      : tone === "doctor"
+        ? ["Appointments"]
+        : ["Appointments", "Doctors", "Services"];
   const servicesPage = tone === "hospital" ? "facilities" : "services";
   const profilePage =
     diagnostic || pathology
@@ -178,7 +180,7 @@ export function RoleDashboardPage({
   const points =
     chart?.values.map((value, index) => ({
       label: chart.labels?.[index] ?? String(index + 1),
-      value
+      value,
     })) ?? [];
   const hasTrend = points.some((point) => point.value > 0);
   const chartUnavailable =
@@ -212,7 +214,7 @@ export function RoleDashboardPage({
                   ? "#7855c7"
                   : tone === "hospital"
                     ? "#3569ba"
-                    : "#278565"
+                    : "#278565",
         } as CSSProperties
       }
       className="[--dashboard-accent:var(--dashboard-brand)] dark:[--dashboard-accent:var(--dashboard-brand-light)] erp-overview min-w-0 bg-transparent px-1 py-3 text-slate-900 dark:text-slate-100 sm:px-2 lg:px-3 [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-offset-4 [&_button]:focus-visible:outline-[var(--dashboard-accent)] [&_a]:focus-visible:outline-2 [&_a]:focus-visible:outline-offset-4 [&_a]:focus-visible:outline-[var(--dashboard-accent)]"
@@ -282,33 +284,46 @@ export function RoleDashboardPage({
               label: "Appointment requests",
               source: "appointments",
               page: "appointments-dashboard",
-              icon: CalendarDays
+              icon: CalendarDays,
             },
             {
               key: "Patients",
               label: "Patients",
               source: "appointments",
               page: pathology ? "appointments" : "patients",
-              icon: Users
+              icon: Users,
             },
             {
-              key: "Active Doctors",
-              label: pathology
-                ? "Published branches"
-                : diagnostic
-                  ? "Active diagnostic orders"
-                  : "Published doctors",
-              source: "doctors",
-              page: pathology ? "facilities" : diagnostic ? tone : "doctors",
-              icon: Stethoscope
+              key:
+                tone === "doctor" ? "Completed appointments" : "Active Doctors",
+              label:
+                tone === "doctor"
+                  ? "Completed appointments"
+                  : pathology
+                    ? "Published branches"
+                    : diagnostic
+                      ? "Active diagnostic orders"
+                      : "Published doctors",
+              source: tone === "doctor" ? "appointments" : "doctors",
+              page:
+                tone === "doctor"
+                  ? "consultations"
+                  : pathology
+                    ? "facilities"
+                    : diagnostic
+                      ? tone
+                      : "doctors",
+              icon: Stethoscope,
             },
             {
-              key: "Active Services",
-              label: "Live services",
-              source: "services",
-              page: servicesPage,
-              icon: HeartPulse
-            }
+              key:
+                tone === "doctor" ? "Upcoming appointments" : "Active Services",
+              label:
+                tone === "doctor" ? "Upcoming appointments" : "Live services",
+              source: tone === "doctor" ? "appointments" : "services",
+              page: tone === "doctor" ? "consultations" : servicesPage,
+              icon: HeartPulse,
+            },
           ]
             .filter(
               (metric) =>
@@ -482,7 +497,7 @@ export function RoleDashboardPage({
                         contentStyle={{
                           borderRadius: 8,
                           fontSize: 12,
-                          color: "#334155"
+                          color: "#334155",
                         }}
                       />
                       <Bar
@@ -491,7 +506,7 @@ export function RoleDashboardPage({
                           [
                             "Requests",
                             "Doctors published",
-                            "Services published"
+                            "Services published",
                           ][chartIndex]
                         }
                         fill="var(--dashboard-accent)"
@@ -520,7 +535,7 @@ export function RoleDashboardPage({
                           title={`${item.label}: ${item.value}`}
                           style={{
                             width: `${(item.value / appointmentTotal) * 100}%`,
-                            background: item.color
+                            background: item.color,
                           }}
                         />
                       ))}
@@ -569,7 +584,7 @@ export function RoleDashboardPage({
                 {(
                   [
                     { id: "all", label: "Recent requests" },
-                    { id: "pending", label: "Awaiting approval" }
+                    { id: "pending", label: "Awaiting approval" },
                   ] as const
                 ).map((filter) => (
                   <button
@@ -709,32 +724,44 @@ export function RoleDashboardPage({
                   />
                 </span>
                 <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--dashboard-accent)]">
-                  Needs your attention
+                  {tone === "doctor" ? "Your schedule" : "Needs your attention"}
                 </span>
               </div>
               <h2 className="mt-5 text-lg font-semibold">
-                Make room for better care.
+                {tone === "doctor"
+                  ? "Your next patient visits."
+                  : "Make room for better care."}
               </h2>
               <p className="mt-2 text-xs leading-6 text-slate-500 dark:text-slate-400">
-                Review patient requests and help them take their next step.
+                {tone === "doctor"
+                  ? "Appointments from all your linked organisations appear together."
+                  : "Review patient requests and help them take their next step."}
               </p>
               <div className="my-5 flex items-end gap-3">
                 <span className="text-5xl font-semibold tracking-tight tabular-nums">
-                  {ready && !appointmentsUnavailable ? pending : "—"}
+                  {ready && !appointmentsUnavailable
+                    ? tone === "doctor"
+                      ? analytics?.heroStats?.upcoming || "0"
+                      : pending
+                    : "—"}
                 </span>
                 <span className="pb-1 text-xs text-slate-500 dark:text-slate-400">
                   {loading
                     ? "Loading requests…"
                     : appointmentsUnavailable
                       ? "Requests unavailable"
-                      : "awaiting approval"}
+                      : tone === "doctor"
+                        ? "upcoming appointments"
+                        : "awaiting approval"}
                 </span>
               </div>
               <Link
                 href={href("appointments-review")}
                 className="flex min-h-11 items-center justify-between rounded-full bg-[var(--dashboard-brand)] px-4 text-xs font-semibold text-white transition hover:opacity-90"
               >
-                Review appointments
+                {tone === "doctor"
+                  ? "View consultations"
+                  : "Review appointments"}
                 <ArrowUpRight size={16} />
               </Link>
             </section>
@@ -963,7 +990,7 @@ export function RoleDashboardPage({
 }
 function EmptyBlock({
   title,
-  description
+  description,
 }: {
   title: string;
   description?: string;

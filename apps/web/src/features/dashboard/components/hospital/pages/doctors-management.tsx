@@ -432,7 +432,7 @@ export function DoctorsManagementPage({
                   placeholder="State medical council"
                 />
                 <DoctorInput
-                  label="Doctor email"
+                  label="Doctor email (required)"
                   value={form.inviteEmail || ""}
                   onChange={(value) => updateField("inviteEmail", value)}
                   placeholder="Verified account email for access to this practice"

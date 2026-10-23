@@ -6,7 +6,8 @@ import { virujBackend } from "@/lib/viruj-backend";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowRight, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { activateOrganization, authClient } from "@/lib/auth-client";
 
 type StaffConfirmationScreenProps = {
   invitationId: string;
@@ -37,13 +38,28 @@ export function StaffConfirmationScreen({
     role: string;
   } | null>(null);
 
+  const session = authClient.useSession();
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("viruj:pending-invitation", invitationId);
+    } catch {
+      /* The invitation URL remains available. */
+    }
+  }, [invitationId]);
   const confirmMutation = useMutation({
     mutationFn: virujBackend.staff.confirmInvitation,
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
+      if (result.organizationId && result.organizationType === "doctor")
+        await activateOrganization({ organizationId: result.organizationId });
+      try {
+        sessionStorage.removeItem("viruj:pending-invitation");
+      } catch {
+        /* Continue with the confirmed link. */
+      }
       setConfirmedAccess({
         email: result.email,
         loginUrl: result.loginUrl,
-        role: result.role,
+        role: result.organizationType === "doctor" ? "DOCTOR" : result.role,
       });
     },
   });
@@ -75,8 +91,8 @@ export function StaffConfirmationScreen({
             </p>
             <h1 className="headline mt-3 max-w-xl text-3xl font-semi-bold leading-tight sm:text-4xl">
               {confirmedAccess
-                ? "Your staff access is confirmed"
-                : "Confirm your staff access before login"}
+                ? "Your workspace access is confirmed"
+                : "Accept your workspace invitation"}
             </h1>
           </div>
 
@@ -85,7 +101,7 @@ export function StaffConfirmationScreen({
               <div>
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-950">
                   <p className="font-bold" suppressHydrationWarning>
-                    Status updated to On Duty
+                    Workspace access confirmed
                   </p>
                   <p className="mt-1 text-emerald-900" suppressHydrationWarning>
                     {confirmedAccess.email} is now active as {roleLabel}.
@@ -96,7 +112,7 @@ export function StaffConfirmationScreen({
                   className="mt-7 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#00478d] px-5 text-sm font-semi-bold text-white shadow-[0_14px_28px_rgba(0,71,141,0.24)] transition hover:bg-[#003b73]"
                   href={confirmedAccess.loginUrl}
                 >
-                  Continue to Login
+                  Open your workspace
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -106,9 +122,10 @@ export function StaffConfirmationScreen({
                   className="text-base leading-7 text-[#344054]"
                   suppressHydrationWarning
                 >
-                  Confirming this invite will mark your staff profile as on duty
-                  in the hospital staff directory. After that, sign in with your
-                  existing Viruj Health ERP account.
+                  Sign in or create an account using the invited email address,
+                  then confirm access. Doctor invitations open your personal
+                  ERP, where you can complete onboarding and view your linked
+                  organisations and appointments.
                 </p>
 
                 {confirmMutation.error ? (
@@ -121,7 +138,7 @@ export function StaffConfirmationScreen({
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <button
                     className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#00478d] px-5 text-sm font-semi-bold text-white shadow-[0_14px_28px_rgba(0,71,141,0.24)] transition hover:bg-[#003b73] disabled:cursor-not-allowed disabled:opacity-70"
-                    disabled={isConfirming}
+                    disabled={isConfirming || !session.data?.user}
                     onClick={() =>
                       confirmMutation.mutate({
                         invitationId,
@@ -140,7 +157,7 @@ export function StaffConfirmationScreen({
                     className="inline-flex h-12 items-center justify-center rounded-xl border border-[#c2c6d4] px-5 text-sm font-semi-bold text-[#172033] transition hover:bg-[#f2f6fb]"
                     href="/auth"
                   >
-                    Back to Login
+                    Sign in / create account
                   </Link>
                 </div>
               </div>

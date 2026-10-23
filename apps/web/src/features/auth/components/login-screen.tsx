@@ -2,7 +2,6 @@
 
 import { ErpSelect } from "@/components/ui/erp/select";
 
-
 import { VirujLogo } from "@/components/brand/viruj-logo";
 import { virujBrand } from "@/lib/viruj-brand";
 
@@ -134,6 +133,10 @@ export function ErpDemoLogin({
         }
       }
 
+      if (window.sessionStorage.getItem("viruj:pending-invitation")) {
+        await onAuthenticated();
+        return;
+      }
       const bootstrapResult = await bootstrapOrganization({
         name: buildBootstrapOrganizationName(
           onboardingForm.organizationName,

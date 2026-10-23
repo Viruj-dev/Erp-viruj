@@ -26,6 +26,10 @@ function render(node: React.ReactNode, data: Record<string, unknown>) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
+  client.setQueryData(
+    ["doctor-workspace", "doctor-a", "/doctor/working-hours"],
+    []
+  );
   for (const [path, value] of Object.entries(data))
     client.setQueryData(["doctor-workspace", "doctor-a", path], value);
   const html = renderToStaticMarkup(
