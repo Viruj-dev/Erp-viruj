@@ -202,7 +202,7 @@ export function DoctorCalendarPage() {
                         if (e.key === "Enter" && e.target === e.currentTarget)
                           setDraft(emptyEvent(d));
                       }}
-                      className={`min-h-36 border-b border-r p-2 ${selected === key ? "bg-primary/5 ring-1 ring-inset ring-primary" : ""} ${d.getMonth() !== cursor.getMonth() && view === "month" ? "opacity-50" : ""}`}
+                      className={`min-h-36 border-b border-r p-2 transition-colors duration-150 hover:bg-emerald-50 focus-within:bg-emerald-50 dark:hover:bg-emerald-950/40 dark:focus-within:bg-emerald-950/40 ${selected === key ? "bg-primary/5 ring-1 ring-inset ring-primary" : ""} ${d.getMonth() !== cursor.getMonth() && view === "month" ? "opacity-50" : ""}`}
                     >
                       <button
                         type="button"
