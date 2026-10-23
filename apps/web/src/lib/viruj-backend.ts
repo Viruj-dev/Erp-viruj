@@ -1111,7 +1111,11 @@ export const virujBackend = {
         } | null;
       }>("/directory/facility", { organizationId, suppressToast: true }),
     saveOnboarding: (input: { data: unknown; organizationId?: string }) =>
-      request<{ saved: boolean; clinicId: string }>("/directory/onboarding", {
+      request<{
+        saved: boolean;
+        clinicId: string;
+        doctorInvitationsPending?: number;
+      }>("/directory/onboarding", {
         method: "PUT",
         body: input.data,
         organizationId: input.organizationId,

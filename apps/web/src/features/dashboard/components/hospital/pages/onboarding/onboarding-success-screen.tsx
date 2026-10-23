@@ -16,6 +16,7 @@ type OnboardingSuccessScreenProps = {
   kind?: OnboardingKind | "doctor";
   themeClassName?: string;
   summary: Array<{ label: string; value: string }>;
+  notice?: string;
 };
 
 export function OnboardingSuccessScreen({
@@ -24,6 +25,7 @@ export function OnboardingSuccessScreen({
   onContinue,
   summary,
   themeClassName,
+  notice,
 }: OnboardingSuccessScreenProps) {
   return (
     <main
@@ -58,6 +60,11 @@ export function OnboardingSuccessScreen({
         </CardHeader>
 
         <CardContent className="px-6 pb-8 sm:px-10">
+          {notice ? (
+            <p role="status" className="mb-4 text-sm leading-6">
+              {notice}
+            </p>
+          ) : null}
           <dl className="divide-y divide-[var(--onboarding-border)] border-y border-[var(--onboarding-border)]">
             {summary.map((item) => (
               <div
