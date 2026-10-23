@@ -1,3 +1,7 @@
+import {
+  DoctorProfessionalFields,
+  validExperienceInput,
+} from "./doctor-professional-fields";
 import { expect, mock, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -224,4 +228,91 @@ test("initial workplace sessions use upcoming weekdays in India", () => {
   expect(doctorSessionDate("MONDAY", new Date("2026-10-21T20:00:00Z"))).toBe(
     "2026-10-26"
   );
+});
+
+test("birth date and languages are optional in the onboarding identity step", () => {
+  const html = render(
+    <DoctorOnboardingGate
+      currentPage="onboarding"
+      organizationName="Practice"
+      userName="Doctor"
+      userEmail="doctor@example.test"
+    >
+      <div />
+    </DoctorOnboardingGate>,
+    {
+      "/doctor/profile/completion": { percentage: 0 },
+      "/doctor/profile": {
+        id: "a",
+        fullName: "Doctor",
+        languages: [],
+        isPublic: false,
+      },
+      "/doctor/locations": [],
+      "/doctor/verification": { status: "NOT_SUBMITTED", documents: [] },
+    }
+  );
+  for (const placeholder of ["Date of birth (optional)", "English, Hindi"]) {
+    const input = html.match(
+      new RegExp(
+        '<input[^>]*placeholder="' +
+          placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") +
+          '"[^>]*>'
+      )
+    );
+    expect(input).not.toBeNull();
+    expect(input![0]).not.toContain("required");
+  }
+});
+test("professional fields use the department directory and medical degree choices", () => {
+  for (const qualification of ["MBBS", "MD", "MS"]) {
+    const html = render(
+      <DoctorProfessionalFields
+        profile={{
+          id: "a",
+          fullName: "Doctor",
+          languages: [],
+          isPublic: false,
+          department: "Cardiology",
+          specialization: "Neurology",
+          qualification,
+        }}
+        onChange={() => {}}
+      />,
+      {
+        "/directory/departments": {
+          data: [
+            { id: 1, name: "Cardiology" },
+            { id: 2, name: "Neurology" },
+          ],
+        },
+      }
+    );
+    expect(html).toContain("Cardiology");
+    expect(html).toContain("Neurology");
+    expect(html).toContain(qualification);
+    expect(html).toContain('inputMode="numeric"');
+    expect(html).toContain("Whole years only");
+  }
+  const custom = render(
+    <DoctorProfessionalFields
+      profile={{
+        id: "a",
+        fullName: "Doctor",
+        languages: [],
+        isPublic: false,
+        specialization: "Sports medicine",
+      }}
+      onChange={() => {}}
+    />,
+    { "/directory/departments": { data: [{ id: 1, name: "Cardiology" }] } }
+  );
+  expect(custom).toContain("Your speciality");
+  expect(custom).toContain("Sports medicine");
+});
+test("experience input rejects words, fractions, exponents and out-of-range years", () => {
+  for (const value of ["", "0", "5", "100"])
+    expect(validExperienceInput(value)).toBe(true);
+  for (const value of ["ten", "1.5", "1e2", "-1", "101", "1000", "+2"])
+    expect(validExperienceInput(value)).toBe(false);
 });

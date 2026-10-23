@@ -17,6 +17,10 @@ import type {
   StepDefinition,
   StepId,
 } from "../../hospital/pages/onboarding/types";
+import {
+  DoctorProfessionalFields,
+  DoctorDepartmentSelect,
+} from "./doctor-professional-fields";
 import { DoctorRegistrationField } from "../../shared/workspace/doctor-registration-field";
 import {
   useDoctorQuery,
@@ -351,10 +355,6 @@ function DoctorSetup({
   async function next() {
     setError("");
     if (!form.current?.reportValidity()) return;
-    if (step === 1 && !verification.documents.length) {
-      setError("Upload your medical registration certificate to continue.");
-      return;
-    }
     if (
       step === 3 &&
       (!schedule.days.length || schedule.endTime <= schedule.startTime)
@@ -524,7 +524,12 @@ function DoctorSetup({
             <div className="grid gap-5 md:grid-cols-2">
               {field("fullName", "Full name")}
               <div>
-                {field("dateOfBirth", "Date of birth", "date")}
+                {field(
+                  "dateOfBirth",
+                  "Date of birth (optional)",
+                  "date",
+                  false
+                )}
                 {age !== undefined && (
                   <p className="mt-2 text-xs text-[var(--onboarding-muted)]">
                     Age: {age} years
@@ -549,11 +554,18 @@ function DoctorSetup({
               {field("phone", "Phone number", "tel")}
               {field("email", "Email", "email")}
               <TextField
-                required
-                label="Languages"
+                label="Languages (optional)"
                 placeholder="English, Hindi"
                 value={profile.languages.join(",")}
-                onChange={(v) => update("languages", v.split(","))}
+                onChange={(v) =>
+                  update(
+                    "languages",
+                    v
+                      .split(",")
+                      .map((value) => value.trim())
+                      .filter(Boolean)
+                  )
+                }
               />
             </div>
           </>
@@ -561,10 +573,13 @@ function DoctorSetup({
         {step === 1 && (
           <>
             <div className="grid gap-5 md:grid-cols-2">
-              {field("specialization", "Speciality")}
-              {field("department", "Department")}
-              {field("qualification", "Qualification")}
-              {field("yearsOfExperience", "Experience (years)", "number")}
+              <DoctorProfessionalFields
+                profile={profile}
+                onChange={(patch) => {
+                  setError("");
+                  setProfile((p) => ({ ...p, ...patch }));
+                }}
+              />
               <DoctorRegistrationField
                 value={profile.medicalRegistrationNumber || ""}
                 organizationId={tenant.organizationId}
@@ -575,15 +590,14 @@ function DoctorSetup({
                     fullName: r.name,
                     medicalRegistrationNumber: r.registrationNumber,
                     medicalCouncil: r.medicalCouncil,
-                    qualification: r.qualification,
                   }))
                 }
               />
               {field("medicalCouncil", "Medical council")}
             </div>
             <label className="block">
-              <FieldLabel required>
-                License / registration certificate
+              <FieldLabel>
+                License / registration certificate (optional)
               </FieldLabel>
               <input
                 className={fieldClassName("h-auto py-3")}
@@ -625,7 +639,12 @@ function DoctorSetup({
               {locationField("name", "Organisation name")}
               {locationField("post", "Post")}
               {locationField("position", "Position")}
-              {locationField("department", "Department")}
+              <DoctorDepartmentSelect
+                value={location.department || ""}
+                onChange={(department) =>
+                  setLocation((l) => ({ ...l, department }))
+                }
+              />
               {locationField("addressLine1", "Street address")}
               {locationField("city", "City")}
               {locationField("state", "State")}
@@ -719,7 +738,9 @@ function DoctorSetup({
                 },
                 {
                   label: "Credentials",
-                  value: `${verification.documents.length} uploaded · pending review`,
+                  value: verification.documents.length
+                    ? `${verification.documents.length} uploaded · pending review`
+                    : "Not uploaded (optional)",
                 },
               ].map((row) => (
                 <div
