@@ -1,22 +1,23 @@
 "use client";
 
+import { DoctorRegistrationField } from "../workspace/doctor-registration-field";
 import { PageSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import {
   UploadField,
   TextField,
   FieldLabel,
-  fieldClassName
+  fieldClassName,
 } from "@/features/dashboard/components/hospital/pages/onboarding/fields";
 import { TimePicker } from "@/features/dashboard/components/hospital/pages/onboarding/time-picker";
 import {
   getCurrentPosition,
-  reverseGeocodeLocation
+  reverseGeocodeLocation,
 } from "@/features/dashboard/components/hospital/pages/onboarding/steps/locations-step";
 import { OnboardingFrame } from "@/features/dashboard/components/hospital/pages/onboarding/onboarding-frame";
 import { OnboardingSuccessScreen } from "@/features/dashboard/components/hospital/pages/onboarding/onboarding-success-screen";
 import type {
   StepDefinition,
-  StepId
+  StepId,
 } from "@/features/dashboard/components/hospital/pages/onboarding/types";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,14 +31,14 @@ import {
   diagnosticSetupKey,
   emptyDiagnosticSetup,
   type DiagnosticSetup,
-  type DiagnosticOnboardingState
+  type DiagnosticOnboardingState,
 } from "@/features/dashboard/lib/diagnostic-onboarding";
 import { virujBackend } from "@/lib/viruj-backend";
 
 export function DiagnosticOnboarding({
   tenant,
   organizationName,
-  userEmail = ""
+  userEmail = "",
 }: {
   tenant: ErpTenantContext;
   organizationName?: string;
@@ -47,7 +48,7 @@ export function DiagnosticOnboarding({
     queryKey: diagnosticSetupKey(tenant.organizationId),
     queryFn: () => virujBackend.diagnostics.onboarding(tenant.organizationId),
     enabled: canManageDiagnosticSetup(tenant.role),
-    retry: false
+    retry: false,
   });
   if (!canManageDiagnosticSetup(tenant.role))
     return (
@@ -84,7 +85,7 @@ function SetupForm({
   tenant,
   initial,
   organizationName,
-  userEmail
+  userEmail,
 }: {
   tenant: ErpTenantContext;
   initial: DiagnosticOnboardingState;
@@ -97,7 +98,7 @@ function SetupForm({
     client = useQueryClient();
   const [data, setData] = useState<DiagnosticSetup>(() => ({
     ...emptyDiagnosticSetup(organizationName, userEmail),
-    ...initial.data
+    ...initial.data,
   }));
   const [version, setVersion] = useState(initial.version),
     [step, setStep] = useState(0),
@@ -117,7 +118,7 @@ function SetupForm({
         "Contact & hours",
         "Reporting team",
         pathology ? "Laboratory setup" : "Imaging setup",
-        "Review"
+        "Review",
       ];
   const save = useMutation({
     mutationFn: (complete: boolean) =>
@@ -134,11 +135,11 @@ function SetupForm({
       if (complete) {
         window.localStorage.removeItem(draftKey);
         void client.invalidateQueries({
-          queryKey: ["diagnostic-availability", tenant.organizationId]
+          queryKey: ["diagnostic-availability", tenant.organizationId],
         });
         setComplete(true);
       }
-    }
+    },
   });
   useEffect(() => {
     try {
@@ -278,12 +279,12 @@ function SetupForm({
         "Contact",
         "Clinical team",
         "Operations",
-        "Launch"
+        "Launch",
       ];
   const definitions: StepDefinition[] = steps.map((label, index) => ({
     id: ids[index]!,
     label,
-    kicker: kickers[index]!
+    kicker: kickers[index]!,
   }));
   const descriptions = Object.fromEntries([
     ["profile", "Register the centre and facility credentials"],
@@ -292,16 +293,16 @@ function SetupForm({
       "contact",
       pathology
         ? "Add contact details and choose your opening hours"
-        : "Add the main branch, contact details and opening hours"
+        : "Add the main branch, contact details and opening hours",
     ],
     ["doctors", "Add the professional responsible for approved reports"],
     [
       "departments",
       pathology
         ? "Choose lab sections, accepted samples and collection procedures"
-        : "Choose imaging services, equipment and patient preparation"
+        : "Choose imaging services, equipment and patient preparation",
     ],
-    ["review", "Review the centre details before completing setup"]
+    ["review", "Review the centre details before completing setup"],
   ]) as Record<StepId, string>;
   const themeClassName = pathology
     ? "vh-onboarding--pathology"
@@ -311,8 +312,8 @@ function SetupForm({
     { label: "Branch", value: data.branchName || "Not provided" },
     {
       label: pathology ? "Contact" : "Reporting professional",
-      value: (pathology ? data.email : data.reportingName) || "Not provided"
-    }
+      value: (pathology ? data.email : data.reportingName) || "Not provided",
+    },
   ];
   const validateCurrentStep = () => {
     setValidationError("");
@@ -337,7 +338,7 @@ function SetupForm({
     if (!validateCurrentStep()) return;
     save.mutate(false, {
       onSuccess: () =>
-        setStep((current) => Math.min(current + 1, steps.length - 1))
+        setStep((current) => Math.min(current + 1, steps.length - 1)),
     });
   };
   const handleLaunch = () => {
@@ -363,7 +364,7 @@ function SetupForm({
         address: address.address || current.address,
         city: address.city || current.city,
         state: address.state || current.state,
-        postalCode: address.postalCode || current.postalCode
+        postalCode: address.postalCode || current.postalCode,
       }));
       setLocationStatus("Location found. Check the address before continuing.");
     } catch {
@@ -383,7 +384,7 @@ function SetupForm({
           const media = await virujBackend.organizationProfile.uploadMedia({
             file,
             kind,
-            organizationId: tenant.organizationId
+            organizationId: tenant.organizationId,
           });
           update(kind === "logo" ? "logoUrl" : "certificateUrl", media.url);
           update(kind === "logo" ? "logoName" : "certificateName", name);
@@ -453,14 +454,14 @@ function SetupForm({
               )}
               {!pathology &&
                 field("registrationAuthority", "Issuing authority", {
-                  required: true
+                  required: true,
                 })}
               {
                 <>
                   {upload("logo")}
                   {upload("certificate")}
                   {field("establishedYear", "Year of establishment", {
-                    type: "number"
+                    type: "number",
                   })}
                   {field("website", "Website", { type: "url" })}
                 </>
@@ -470,7 +471,7 @@ function SetupForm({
                   "additionalCertificates",
                   "Additional certificates / accreditation identifiers",
                   {
-                    hint: "Optional. Enter identifiers and issuing bodies where applicable. This does not verify or approve them."
+                    hint: "Optional. Enter identifiers and issuing bodies where applicable. This does not verify or approve them.",
                   }
                 )}
               </div>
@@ -544,7 +545,7 @@ function SetupForm({
               {field("phone", "Contact phone", { required: true, type: "tel" })}
               {field("email", "Contact email", {
                 required: true,
-                type: "email"
+                type: "email",
               })}
             </section>
             <section className="space-y-4 rounded-2xl border border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] p-4">
@@ -560,11 +561,11 @@ function SetupForm({
               <div className="grid gap-4 md:grid-cols-2">
                 {field("openingTime", "Opening time", {
                   required: true,
-                  type: "time"
+                  type: "time",
                 })}
                 {field("closingTime", "Closing time", {
                   required: true,
-                  type: "time"
+                  type: "time",
                 })}
               </div>
               <fieldset>
@@ -578,7 +579,7 @@ function SetupForm({
                   "Thu",
                   "Fri",
                   "Sat",
-                  "Sun"
+                  "Sun",
                 ])}
               </fieldset>
             </section>
@@ -613,6 +614,16 @@ function SetupForm({
               . Add their account and Doctor role through Team before they
               release reports.
             </p>
+            <DoctorRegistrationField
+              value={data.reportingRegistration}
+              organizationId={tenant.organizationId}
+              onChange={(value) => update("reportingRegistration", value)}
+              onSelect={(record) => {
+                update("reportingName", record.name);
+                update("reportingRegistration", record.registrationNumber);
+                update("reportingCouncil", record.medicalCouncil);
+              }}
+            />
             {field(
               "reportingName",
               pathology
@@ -620,14 +631,10 @@ function SetupForm({
                 : "Reporting radiologist name",
               { required: true }
             )}
-            {field(
-              "reportingRegistration",
-              "Professional registration number",
-              { required: true }
-            )}
+            {field("reportingCouncil", "Medical council", { required: true })}
             {field("reportingEmail", "Reporting professional email", {
               required: true,
-              type: "email"
+              type: "email",
             })}
             <p className="rounded-xl bg-muted p-4 text-xs leading-6 text-muted-foreground">
               Saving these details does not invite staff, grant permissions or
@@ -657,7 +664,7 @@ function SetupForm({
                 "Nuclear medicine",
                 "Interventional radiology",
                 "Teleradiology",
-                "Other"
+                "Other",
               ])}
             </fieldset>
             {field(
@@ -666,12 +673,12 @@ function SetupForm({
               {
                 required: true,
                 multiline: true,
-                hint: "List capacity and maintenance arrangements. Use the same machine identifiers for appointment slots and maintenance blocks."
+                hint: "List capacity and maintenance arrangements. Use the same machine identifiers for appointment slots and maintenance blocks.",
               }
             )}
             {field("referralPolicy", "Referral / prescription requirements", {
               required: true,
-              multiline: true
+              multiline: true,
             })}
             {field(
               "screeningProcess",
@@ -684,7 +691,7 @@ function SetupForm({
               {
                 required: true,
                 multiline: true,
-                hint: "Describe your workflow. Do not enter passwords, access tokens or patient records."
+                hint: "Describe your workflow. Do not enter passwords, access tokens or patient records.",
               }
             )}
             <label className="flex items-center gap-2 text-sm">
@@ -708,35 +715,37 @@ function SetupForm({
                   ["Established", data.establishedYear],
                   ["Website", data.website],
                   ["Logo", data.logoName],
-                  ["License / certificate", data.certificateName]
+                  ["License / certificate", data.certificateName],
                 ],
                 [
                   "Registration",
                   [data.registrationNumber, data.registrationAuthority]
                     .filter(Boolean)
-                    .join(" � ")
+                    .join(" � "),
                 ],
                 ["Contact", `${data.phone} � ${data.email}`],
                 [
                   "Branch",
-                  `${data.branchName}, ${data.address}, ${data.city}, ${data.state} ${data.postalCode}`
+                  `${data.branchName}, ${data.address}, ${data.city}, ${data.state} ${data.postalCode}`,
                 ],
                 [
                   "Hours",
-                  `${data.workingDays.join(", ")} � ${data.openingTime}�${data.closingTime}`
+                  `${data.workingDays.join(", ")} � ${data.openingTime}�${data.closingTime}`,
                 ],
                 ...(!pathology
                   ? [
                       [
                         "Reporting professional",
-                        `${data.reportingName} � ${data.reportingRegistration}`
+                        `${data.reportingName} � ${data.reportingRegistration}`,
                       ],
                       [
                         pathology ? "Laboratory sections" : "Modalities",
-                        (pathology ? data.sections : data.modalities).join(", ")
-                      ]
+                        (pathology ? data.sections : data.modalities).join(
+                          ", "
+                        ),
+                      ],
                     ]
-                  : [])
+                  : []),
               ].map(([label, value]) => (
                 <div key={label}>
                   <dt className="text-muted-foreground">{label}</dt>

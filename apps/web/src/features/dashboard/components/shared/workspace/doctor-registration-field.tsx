@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/erp/input";
 import { doctorWorkspaceRequest } from "@/lib/viruj-backend";
@@ -11,6 +11,10 @@ export type RegistryRecord = {
   qualification: string;
   removed: boolean;
 };
+export function singleRegistryMatch(rows: RegistryRecord[]) {
+  const matches = rows.filter((row) => !row.removed);
+  return matches.length === 1 ? matches[0] : undefined;
+}
 export function DoctorRegistrationField({
   value,
   onChange,
@@ -26,9 +30,13 @@ export function DoctorRegistrationField({
     number: string;
     rows: RegistryRecord[];
   }>();
+  const requestId = useRef(0);
+  const [filled, setFilled] = useState<number>();
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   async function lookup() {
+    const currentRequest = ++requestId.current;
+    setFilled(undefined);
     setPending(true);
     setError("");
     setResults(undefined);
@@ -37,11 +45,18 @@ export function DoctorRegistrationField({
         `/doctors/registry?registrationNumber=${encodeURIComponent(value.trim())}`,
         organizationId
       );
+      if (currentRequest !== requestId.current) return;
       setResults({ number: value, rows });
+      const match = singleRegistryMatch(rows);
+      if (match && onSelect) {
+        onSelect(match);
+        setFilled(match.id);
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Registry lookup failed");
+      if (currentRequest === requestId.current)
+        setError(e instanceof Error ? e.message : "Registry lookup failed");
     } finally {
-      setPending(false);
+      if (currentRequest === requestId.current) setPending(false);
     }
   }
   return (
@@ -53,6 +68,9 @@ export function DoctorRegistrationField({
           maxLength={100}
           value={value}
           onChange={(e) => {
+            requestId.current += 1;
+            setPending(false);
+            setFilled(undefined);
             onChange(e.target.value);
             setResults(undefined);
           }}
@@ -72,7 +90,7 @@ export function DoctorRegistrationField({
           {error}
         </p>
       )}
-      {results?.number === value && (
+      {results?.number.trim().toUpperCase() === value.trim().toUpperCase() && (
         <div aria-live="polite" className="space-y-2 text-sm">
           {!results.rows.length && (
             <p>No exact registration found. Check the number and council.</p>
@@ -91,13 +109,30 @@ export function DoctorRegistrationField({
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={() => onSelect?.(row)}
+                  onClick={() => {
+                    onSelect?.(row);
+                    setFilled(row.id);
+                  }}
                 >
-                  Use these details
+                  {filled === row.id
+                    ? "Details filled — use again"
+                    : "Use these details"}
                 </Button>
               )}
             </div>
           ))}
+          {filled !== undefined && (
+            <p role="status" className="text-sm">
+              NMC details filled. Review the fields before continuing.
+            </p>
+          )}
+          {singleRegistryMatch(results.rows) === undefined &&
+            results.rows.some((row) => !row.removed) && (
+              <p className="text-sm">
+                Multiple records found. Choose the matching doctor to fill your
+                details.
+              </p>
+            )}
           <p className="text-xs text-muted-foreground">
             A registry match confirms a listed record. Identity and certificate
             approval are reviewed separately.

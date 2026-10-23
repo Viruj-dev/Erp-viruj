@@ -1,3 +1,4 @@
+import { singleRegistryMatch } from "../../shared/workspace/doctor-registration-field";
 import {
   DoctorProfessionalFields,
   validExperienceInput,
@@ -8,8 +9,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DoctorWorkspaceContext } from "@/features/dashboard/lib/doctor-workspace";
 import { createErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 mock.module("next/navigation", () => ({ useRouter: () => ({ replace() {} }) }));
-const { DoctorOnboardingGate, doctorSessionDate } =
-  await import("./doctor-onboarding-flow");
+const {
+  DoctorOnboardingGate,
+  doctorSessionDate,
+  DoctorCredentialsFields,
+  doctorRegistryFields,
+} = await import("./doctor-onboarding-flow");
 import { DoctorProfileForm } from "./doctor-onboarding";
 import {
   DoctorCalendarPage,
@@ -315,4 +320,44 @@ test("experience input rejects words, fractions, exponents and out-of-range year
     expect(validExperienceInput(value)).toBe(true);
   for (const value of ["ten", "1.5", "1e2", "-1", "101", "1000", "+2"])
     expect(validExperienceInput(value)).toBe(false);
+});
+
+test("registration number is the first professional credentials field", () => {
+  const html = render(
+    <DoctorCredentialsFields
+      profile={{ id: "a", fullName: "Doctor", languages: [], isPublic: false }}
+      onChange={() => {}}
+    />,
+    { "/directory/departments": { data: [] } }
+  );
+  expect(html.indexOf("Registration number")).toBeLessThan(
+    html.indexOf("Medical council")
+  );
+  expect(html.indexOf("Registration number")).toBeLessThan(
+    html.indexOf("Speciality")
+  );
+});
+test("NMC autofill maps returned identity and degree without inventing clinical details", () => {
+  const record = {
+    id: 1,
+    name: "Vaishali Mehta",
+    registrationNumber: "DMC/R/30051",
+    medicalCouncil: "Delhi Medical Council",
+    qualification: "M.B.B.S.",
+    removed: false,
+  };
+  expect(doctorRegistryFields(record)).toEqual({
+    fullName: "Vaishali Mehta",
+    medicalRegistrationNumber: "DMC/R/30051",
+    medicalCouncil: "Delhi Medical Council",
+    qualification: "MBBS",
+  });
+  expect(
+    doctorRegistryFields({ ...record, qualification: "" })
+  ).not.toHaveProperty("qualification");
+  expect(singleRegistryMatch([record])).toEqual(record);
+  expect(
+    singleRegistryMatch([record, { ...record, id: 2, name: "Another doctor" }])
+  ).toBeUndefined();
+  expect(singleRegistryMatch([{ ...record, removed: true }])).toBeUndefined();
 });

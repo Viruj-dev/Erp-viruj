@@ -21,7 +21,10 @@ import {
   DoctorProfessionalFields,
   DoctorDepartmentSelect,
 } from "./doctor-professional-fields";
-import { DoctorRegistrationField } from "../../shared/workspace/doctor-registration-field";
+import {
+  DoctorRegistrationField,
+  type RegistryRecord,
+} from "../../shared/workspace/doctor-registration-field";
 import {
   useDoctorQuery,
   useDoctorTenant,
@@ -184,6 +187,52 @@ export function DoctorOnboarding({
       userName={userName}
       userEmail={userEmail}
     />
+  );
+}
+export function doctorRegistryFields(
+  record: RegistryRecord
+): Partial<DoctorProfile> {
+  const degree = record.qualification.replace(/[.\s]/g, "").toUpperCase();
+  return {
+    fullName: record.name,
+    medicalRegistrationNumber: record.registrationNumber,
+    medicalCouncil: record.medicalCouncil,
+    ...(record.qualification.trim()
+      ? {
+          qualification: ["MBBS", "MD", "MS"].includes(degree)
+            ? degree
+            : record.qualification,
+        }
+      : {}),
+  };
+}
+export function DoctorCredentialsFields({
+  profile,
+  onChange,
+}: {
+  profile: DoctorProfile;
+  onChange: (patch: Partial<DoctorProfile>) => void;
+}) {
+  const tenant = useDoctorTenant();
+  return (
+    <div className="grid gap-5 md:grid-cols-2">
+      <DoctorRegistrationField
+        value={profile.medicalRegistrationNumber || ""}
+        organizationId={tenant.organizationId}
+        onChange={(medicalRegistrationNumber) =>
+          onChange({ medicalRegistrationNumber })
+        }
+        onSelect={(record) => onChange(doctorRegistryFields(record))}
+      />
+      <TextField
+        required
+        label="Medical council"
+        placeholder="Medical council"
+        value={profile.medicalCouncil || ""}
+        onChange={(medicalCouncil) => onChange({ medicalCouncil })}
+      />
+      <DoctorProfessionalFields profile={profile} onChange={onChange} />
+    </div>
   );
 }
 function DoctorSetup({
@@ -572,29 +621,13 @@ function DoctorSetup({
         )}
         {step === 1 && (
           <>
-            <div className="grid gap-5 md:grid-cols-2">
-              <DoctorProfessionalFields
-                profile={profile}
-                onChange={(patch) => {
-                  setError("");
-                  setProfile((p) => ({ ...p, ...patch }));
-                }}
-              />
-              <DoctorRegistrationField
-                value={profile.medicalRegistrationNumber || ""}
-                organizationId={tenant.organizationId}
-                onChange={(v) => update("medicalRegistrationNumber", v)}
-                onSelect={(r) =>
-                  setProfile((p) => ({
-                    ...p,
-                    fullName: r.name,
-                    medicalRegistrationNumber: r.registrationNumber,
-                    medicalCouncil: r.medicalCouncil,
-                  }))
-                }
-              />
-              {field("medicalCouncil", "Medical council")}
-            </div>
+            <DoctorCredentialsFields
+              profile={profile}
+              onChange={(patch) => {
+                setError("");
+                setProfile((p) => ({ ...p, ...patch }));
+              }}
+            />
             <label className="block">
               <FieldLabel>
                 License / registration certificate (optional)

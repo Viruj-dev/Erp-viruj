@@ -27,6 +27,7 @@ export const diagnosticSetupFields = [
   "closingTime",
   "reportingName",
   "reportingRegistration",
+  "reportingCouncil",
   "reportingEmail",
   "sampleHandling",
   "collectionInstructions",
