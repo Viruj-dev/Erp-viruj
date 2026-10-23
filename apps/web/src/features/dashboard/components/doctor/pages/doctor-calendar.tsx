@@ -2,7 +2,14 @@
 import { useEffect, useRef, useState } from "react";
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Pin, Bell } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Pin,
+  Bell,
+  CircleHelp,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/erp/switch";
 import { Input } from "@/components/ui/erp/input";
@@ -53,6 +60,24 @@ export function doctorDayAppointmentsPath(date: string, page = 1) {
   return `/doctor/appointments?page=${page}&pageSize=100&from=${encodeURIComponent(from.toISOString())}&until=${encodeURIComponent(until.toISOString())}`;
 }
 export function DoctorCalendarPage() {
+  const tenant = useDoctorTenant();
+  const [showHelp, setShowHelp] = useState(false);
+  const helpKey = `viruj:doctor-calendar-help:${tenant.organizationId}`;
+  useEffect(() => {
+    try {
+      setShowHelp(localStorage.getItem(helpKey) !== "dismissed");
+    } catch {
+      setShowHelp(true);
+    }
+  }, [helpKey]);
+  function dismissHelp() {
+    setShowHelp(false);
+    try {
+      localStorage.setItem(helpKey, "dismissed");
+    } catch {
+      /* Help remains available from the toolbar. */
+    }
+  }
   const query = useDoctorQuery<CalendarEvent[]>("/doctor/calendar");
   const locations = useDoctorQuery<WorkLocation[]>("/doctor/locations");
   const [cursor, setCursor] = useState(new Date());
@@ -88,7 +113,13 @@ export function DoctorCalendarPage() {
     <DoctorPageShell
       eyebrow="Clinical schedule"
       title="Availability"
-      subtitle="Right-click a date to add an event, pin it, choose a highlight and set a reminder. Double-click a date or press Enter to add an event. Times use your device’s timezone."
+      subtitle="Your calendar, work events and reminders."
+      actions={
+        <Button variant="outline" onClick={() => setShowHelp(true)}>
+          <CircleHelp size={16} />
+          Calendar help
+        </Button>
+      }
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -275,6 +306,45 @@ export function DoctorCalendarPage() {
           </div>
         </div>
       </div>
+      {showHelp && (
+        <aside
+          aria-label="Calendar help"
+          role="status"
+          className="fixed bottom-6 right-6 z-40 w-[calc(100vw-3rem)] max-w-sm rounded-2xl border border-emerald-200 bg-white p-5 text-slate-900 shadow-xl dark:border-emerald-800 dark:bg-[#17191e] dark:text-slate-100"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2 font-semibold">
+              <CircleHelp className="text-emerald-600" size={19} />
+              Make the calendar yours
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Dismiss calendar help"
+              onClick={dismissHelp}
+            >
+              <X size={16} />
+            </Button>
+          </div>
+          <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+            <li>Right-click any date to add an event or reminder.</li>
+            <li>
+              Pin important events, choose a highlight and set the start and end
+              time.
+            </li>
+            <li>
+              Double-click a date, or focus a date cell and press Enter, to add
+              an event.
+            </li>
+          </ul>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Times use your device’s timezone. Reminders work while ERP is open.
+          </p>
+          <Button className="mt-4" onClick={dismissHelp}>
+            Got it
+          </Button>
+        </aside>
+      )}
       <Dialog
         open={!!draft}
         onOpenChange={(open) => {

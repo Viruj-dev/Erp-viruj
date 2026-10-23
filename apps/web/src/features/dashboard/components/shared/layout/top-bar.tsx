@@ -9,7 +9,9 @@ import { NotificationCenter } from "@/features/notifications";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
 import { diagnosticSetupKey } from "@/features/dashboard/lib/diagnostic-onboarding";
 import { authClient } from "@/lib/auth-client";
-import { virujBackend } from "@/lib/viruj-backend";
+import { DoctorAvatar } from "../workspace/doctor-avatar";
+import type { DoctorProfile } from "@/features/dashboard/lib/doctor-workspace";
+import { doctorWorkspaceRequest, virujBackend } from "@/lib/viruj-backend";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme-provider";
 import { useQuery } from "@tanstack/react-query";
@@ -40,6 +42,13 @@ export function ErpDemoTopBar({
   const [failedLogoUrl, setFailedLogoUrl] = useState("");
   const headerRef = useRef<HTMLElement>(null);
   const kind = organizationLabel.toLowerCase();
+  const doctor = useQuery({
+    queryKey: ["doctor-workspace", organizationId, "/doctor/profile"],
+    queryFn: () =>
+      doctorWorkspaceRequest<DoctorProfile>("/doctor/profile", organizationId!),
+    enabled: Boolean(organizationId) && kind === "doctor",
+    retry: false,
+  });
   const diagnostic = kind === "pathology" || kind === "radiology";
   const setup = useQuery({
     queryKey: diagnosticSetupKey(organizationId ?? "none"),
@@ -50,7 +59,8 @@ export function ErpDemoTopBar({
   const workspace = useQuery({
     queryKey: ["viruj-backend", "workspace-profile", organizationId],
     queryFn: () => virujBackend.directory.workspace(organizationId),
-    enabled: Boolean(organizationId) && (kind === "hospital" || kind === "clinic"),
+    enabled:
+      Boolean(organizationId) && (kind === "hospital" || kind === "clinic"),
     retry: false,
   });
   const logoUrl = diagnostic
@@ -72,7 +82,10 @@ export function ErpDemoTopBar({
   const sessionState = authClient.useSession();
   const userImage = sessionState.data?.user?.image;
   const workspaceTheme = getWorkspaceTheme(organizationLabel);
-  const title = organizationName?.trim() || organizationLabel;
+  const title =
+    kind === "doctor"
+      ? doctor.data?.fullName || userName || "Doctor"
+      : organizationName?.trim() || organizationLabel;
 
   return (
     <header
@@ -82,15 +95,27 @@ export function ErpDemoTopBar({
     >
       <div className="erp-topbar-workspace flex min-w-0 flex-1 items-center gap-3">
         <div
-          title={`${title} · ${organizationLabel} workspace`}
-          role="img"
-          aria-label={`${title} workspace`}
+          title={
+            kind === "doctor"
+              ? title
+              : `${title} · ${organizationLabel} workspace`
+          }
+          role={kind === "doctor" ? undefined : "img"}
+          aria-label={kind === "doctor" ? undefined : `${title} workspace`}
           className={cn(
             "erp-topbar-workspace-icon hidden size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl sm:flex",
             workspaceTheme.avatar
           )}
         >
-          {logoUrl && failedLogoUrl !== logoUrl ? (
+          {kind === "doctor" ? (
+            <DoctorAvatar
+              name={title}
+              imageUrl={doctor.data?.profilePhoto || userImage || undefined}
+              gender={doctor.data?.gender}
+              tone="doctor"
+              className="size-10"
+            />
+          ) : logoUrl && failedLogoUrl !== logoUrl ? (
             <Image
               src={logoUrl}
               alt=""
@@ -112,7 +137,9 @@ export function ErpDemoTopBar({
             {title}
           </h2>
           <p className="mt-0.5 truncate text-[11px] text-slate-400">
-            {organizationLabel} workspace
+            {kind === "doctor"
+              ? doctor.data?.specialization || "Doctor"
+              : `${organizationLabel} workspace`}
           </p>
         </div>
       </div>

@@ -105,7 +105,8 @@ test("calendar renders saved work events and attended count", () => {
   expect(html).toContain("Real clinic rounds");
   expect(html).not.toContain("Appointments from your practices");
   expect(html).not.toContain("Personal-practice booking hours");
-  expect(html).toContain("Right-click a date");
+  expect(html).toContain("Calendar help");
+  expect(html).not.toContain("Right-click a date");
   expect(html).toContain("Enable reminders");
 });
 test("consultations show actual patient and organisation without decision buttons", () => {
@@ -382,8 +383,21 @@ test("patients use completed organisation appointments", () => {
   expect(html).not.toContain("Select a provider workspace");
 });
 
-test("doctor dashboard uses the shared role dashboard with actual activity", async () => {
-  const { DoctorDashboardPage } = await import("./doctor-overview-pages");
+test("doctor dashboard shows doctor metrics, appointments and calendar data in shared styling", async () => {
+  const { DoctorDashboardPage, doctorCalendarOverview } =
+    await import("./doctor-overview-pages");
+  const event = {
+    id: "pinned",
+    title: "Hospital rounds",
+    startsAt: "2099-10-23T09:00:00Z",
+    endsAt: "2099-10-23T10:00:00Z",
+    locationId: "hospital",
+    notes: "Bring reports",
+    pinned: true,
+    highlight: "amber",
+    reminderMinutes: 15,
+    patientsAttended: 0,
+  };
   const html = render(<DoctorDashboardPage />, {
     "/doctor/profile": {
       id: "a",
@@ -392,22 +406,103 @@ test("doctor dashboard uses the shared role dashboard with actual activity", asy
       isPublic: false,
     },
     "/doctor/dashboard": {
-      appointmentsToday: 2,
-      patientsSeenToday: 1,
-      completedAppointments: 5,
-      upcomingAppointments: 3,
+      totalPatientsSeen: 125,
+      completedAppointments: 140,
+      patientsSeenToday: 4,
+      workingOrganizations: 2,
+      workingDays: ["MONDAY", "WEDNESDAY"],
+      averageRating: 4.7,
+      ratingCount: 23,
+      nextAppointments: [
+        {
+          id: "next",
+          startsAt: "2099-10-23T09:00:00Z",
+          patient: { name: "Upcoming Patient" },
+          clinic: { name: "C Hospital" },
+        },
+      ],
+      patientTrends: {
+        timezone: "Asia/Kolkata",
+        weekly: [{ date: "2026-10-23", patients: 4 }],
+        monthly: [],
+      },
     },
-    "/doctor/appointments?pageSize=100": {
-      data: [],
-      pagination: { page: 1, total: 0, totalPages: 0 },
-    },
+    "/doctor/calendar": [event],
+    "/doctor/locations": [
+      {
+        id: "hospital",
+        name: "C Hospital",
+        department: "ENT",
+        schedules: [
+          {
+            dayOfWeek: "MONDAY",
+            startTime: "09:00",
+            endTime: "13:00",
+            timezone: "Asia/Kolkata",
+          },
+        ],
+      },
+    ],
   });
-  expect(html).toContain("erp-overview");
-  expect(html).toContain("Your practice, at a glance.");
-  expect(html).toContain("Completed appointments");
-  expect(html).toContain("upcoming appointments");
-  expect(html).not.toContain("Complete onboarding");
+  for (const text of [
+    "erp-overview",
+    "Your practice, at a glance.",
+    "Patients seen",
+    "125",
+    "Organisations working with",
+    "Working days",
+    "Patient rating",
+    "4.7 / 5",
+    "23 patient ratings",
+    "Upcoming Patient",
+    "C Hospital",
+    "Pinned events",
+    "Highlighted events",
+    "Hospital rounds",
+    "Bring reports",
+    "Weekly working schedule",
+    "09:00",
+    "Patients seen per day",
+    "Weekly",
+    "Monthly",
+  ])
+    expect(html).toContain(text);
+  expect(html).not.toContain("Appointment requests");
   expect(html).not.toContain("awaiting approval");
+  const sections = doctorCalendarOverview(
+    [
+      event,
+      { ...event, id: "old", pinned: false, endsAt: "2020-01-01T10:00:00Z" },
+    ],
+    Date.parse("2026-10-23T00:00:00Z")
+  );
+  expect(sections.upcoming.map((e) => e.id)).toEqual(["pinned"]);
+  expect(sections.pinned).toEqual([event]);
+  expect(sections.highlighted).toEqual([event]);
+});
+
+test("doctor dashboard displays an honest empty rating and calendar state", async () => {
+  const { DoctorDashboardPage } = await import("./doctor-overview-pages");
+  const html = render(<DoctorDashboardPage />, {
+    "/doctor/profile": { fullName: "Doctor" },
+    "/doctor/dashboard": {
+      totalPatientsSeen: 0,
+      completedAppointments: 0,
+      patientsSeenToday: 0,
+      workingOrganizations: 0,
+      workingDays: [],
+      averageRating: null,
+      ratingCount: 0,
+      nextAppointments: [],
+      patientTrends: { timezone: "Asia/Kolkata", weekly: [], monthly: [] },
+    },
+    "/doctor/calendar": [],
+    "/doctor/locations": [],
+  });
+  expect(html).toContain("No ratings yet");
+  expect(html).not.toContain("0.0 / 5");
+  expect(html).toContain("No upcoming appointments.");
+  expect(html).toContain("No completed patient appointments in this period.");
 });
 
 test("appointment details show the saved patient snapshot instead of demo clinical records", () => {

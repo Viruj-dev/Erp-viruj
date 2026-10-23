@@ -8,6 +8,7 @@ export const DoctorWorkspaceContext = createContext<
 >(undefined);
 export type DoctorProfile = {
   id: string;
+  profilePhoto?: string;
   fullName: string;
   gender?: string;
   dateOfBirth?: string;
