@@ -87,9 +87,7 @@ const doctorNavItems = [
   { id: "patients", label: "Patients", icon: Users },
   { id: "consultations", label: "Consultations", icon: BriefcaseMedical },
   { id: "gallery", label: "Gallery", icon: Image },
-  { id: "community", label: "Community", icon: MessagesSquare },
-  { id: "profile", label: "Profile", icon: Stethoscope },
-  { id: "doctor-settings", label: "Settings", icon: Settings }
+  { id: "community", label: "Community", icon: MessagesSquare }
 ] as const;
 
 const doctorProfileOptions = [
