@@ -103,7 +103,8 @@ export function useDoctorQuery<T>(path: string) {
     refetchInterval:
       path === "/doctor/calendar"
         ? 60000
-        : path.startsWith("/doctor/appointments")
+        : path.startsWith("/doctor/appointments") ||
+            path === "/doctor/dashboard"
           ? 30000
           : false,
   });

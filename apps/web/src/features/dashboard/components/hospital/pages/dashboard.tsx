@@ -14,6 +14,7 @@ import {
   type RoleDashboardAnalytics,
 } from "@/features/dashboard/components/shared/role-dashboard-page";
 import {
+  doctorWorkspaceRequest,
   virujBackend,
   type VirujAnalyticsChartWidget,
   type VirujActivity,
@@ -39,6 +40,18 @@ export function ErpDemoDashboard({
 }) {
   const tone =
     organizationLabel.toLowerCase() === "clinic" ? "clinic" : "hospital";
+  const ratingsQuery = useQuery({
+    queryKey: ["patient-ratings", organizationId],
+    queryFn: () =>
+      doctorWorkspaceRequest<{
+        averageRating: number | null;
+        ratingCount: number;
+      }>("/ratings/summary", organizationId!),
+    enabled: Boolean(organizationId),
+    retry: 1,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
+  });
   const analyticsEntityId = organizationId;
   const analyticsQuery = useQuery({
     enabled: Boolean(analyticsEntityId),
@@ -122,7 +135,17 @@ export function ErpDemoDashboard({
         open={onboardingStatus.showWelcome}
       />
       <RoleDashboardPage
-        analytics={analytics}
+        analytics={{
+          ...analytics,
+          ratingSummary: ratingsQuery.data,
+          heroStats: {
+            ...analytics.heroStats,
+            Rating:
+              ratingsQuery.data?.averageRating != null
+                ? ratingsQuery.data.averageRating.toFixed(1)
+                : "Not rated",
+          },
+        }}
         organizationId={organizationId}
         organizationName={organizationName}
         loading={[
@@ -141,6 +164,7 @@ export function ErpDemoDashboard({
           activityQuery,
         ].some((query) => query.isFetching)}
         unavailable={[
+          ...(ratingsQuery.isError ? ["patient ratings"] : []),
           ...(analyticsQuery.isError ? ["analytics"] : []),
           ...(appointmentsQuery.isError ? ["appointments"] : []),
           ...(doctorsQuery.isError ? ["doctors"] : []),
@@ -150,6 +174,7 @@ export function ErpDemoDashboard({
         ]}
         onRefresh={() => {
           void Promise.all([
+            ratingsQuery.refetch(),
             analyticsQuery.refetch(),
             appointmentsQuery.refetch(),
             doctorsQuery.refetch(),

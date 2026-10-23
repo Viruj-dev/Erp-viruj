@@ -24,6 +24,7 @@ import {
   Users,
   Stethoscope,
   HeartPulse,
+  Star,
   ClipboardCheck,
 } from "lucide-react";
 import {
@@ -74,6 +75,7 @@ type RoleDashboardListItem = {
   title: string;
 };
 export type RoleDashboardAnalytics = {
+  ratingSummary?: { averageRating: number | null; ratingCount: number };
   appointments?: VirujAppointment[];
   activity?: RoleDashboardListItem[];
   charts?: RoleDashboardChart[];
@@ -240,7 +242,34 @@ export function RoleDashboardPage({
               {organizationName ? ` at ${organizationName}` : ""}.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {analytics?.ratingSummary && (
+              <div
+                aria-label="Patient rating"
+                className="mr-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-[#17191e]"
+              >
+                <Star
+                  size={17}
+                  className="text-amber-600"
+                  fill={
+                    analytics.ratingSummary.ratingCount
+                      ? "currentColor"
+                      : "none"
+                  }
+                />
+                <div>
+                  <p className="font-semibold">
+                    {analytics.ratingSummary.averageRating != null &&
+                    analytics.ratingSummary.ratingCount > 0
+                      ? `${analytics.ratingSummary.averageRating.toFixed(1)} / 5`
+                      : "No ratings yet"}
+                  </p>
+                  <p className={`text-[10px] ${subtle}`}>
+                    {analytics.ratingSummary.ratingCount} patient ratings
+                  </p>
+                </div>
+              </div>
+            )}
             {onRefresh && (
               <button
                 type="button"
