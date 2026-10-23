@@ -8,111 +8,45 @@ import {
   type DoctorAppointment,
   type Page,
 } from "@/features/dashboard/lib/doctor-workspace";
-import { Save } from "lucide-react";
 import {
-  DetailRows,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   DoctorPageShell,
-  FilterBar,
   HospitalPanel,
-  PatientRow,
-  PrimaryAction,
-  SecondaryAction,
   StatusBadge,
-  TextBlock,
-  Timeline,
-} from "@/features/dashboard/components/doctor/_components/doctor-shared-ui";
-import { ErpDemoPatients } from "@/features/dashboard/components/hospital/pages/patients";
+} from "../_components/doctor-shared-ui";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
-import { ErpDemoAppointments } from "@/features/dashboard/components/shared/modules/appointments";
-
-export function DoctorAppointmentsPage({
-  tenant,
-}: {
-  tenant?: ErpTenantContext;
-}) {
-  return <ErpDemoAppointments section="dashboard" tenant={tenant} />;
+export function DoctorAppointmentsPage(_props: { tenant?: ErpTenantContext }) {
+  return <DoctorConsultationsPage />;
 }
-
 export function DoctorAppointmentDetailPage({
   id,
-  tenant,
 }: {
   id?: string;
   tenant?: ErpTenantContext;
 }) {
-  return (
-    <ErpDemoAppointments
-      initialAppointmentId={id}
-      section="dashboard"
-      tenant={tenant}
-    />
-  );
+  return <DoctorConsultationDetailPage id={id} />;
 }
-
 export function DoctorPatientDirectoryPage() {
   return <DoctorConsultationsPage completedOnly />;
 }
 
 export function DoctorPatientDetailPage({ id }: { id?: string }) {
-  return (
-    <DoctorPageShell
-      eyebrow="Patient Detail"
-      title={id ?? "#PA-2041"}
-      subtitle="Overview, appointment history, consultation history, reports, notes, and timeline."
-    >
-      <FilterBar
-        tabs={[
-          "Overview",
-          "Appointments",
-          "Consultations",
-          "Timeline",
-          "Reports",
-          "Notes",
-        ]}
-      />
-      <div className="grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]">
-        <HospitalPanel title="Overview" subtitle="Patient snapshot">
-          <PatientRow
-            initials="MS"
-            meta="42 yrs | Female | +1 (555) 123-4567"
-            name="Margot Sterling"
-            status="Checked-in"
-            tone="blue"
-          />
-          <DetailRows
-            rows={[
-              ["Last Consultation", "Oct 24, 2023"],
-              ["Total Visits", "12"],
-              ["Status", "Checked-in"],
-            ]}
-          />
-        </HospitalPanel>
-        <HospitalPanel
-          title="Timeline"
-          subtitle="Chronological clinical history"
-        >
-          <Timeline
-            items={[
-              "Appointment created",
-              "Appointment completed",
-              "Consultation completed",
-              "Report uploaded",
-              "Note created",
-            ]}
-          />
-        </HospitalPanel>
-      </div>
-    </DoctorPageShell>
-  );
+  return <DoctorConsultationsPage completedOnly patientId={id} />;
 }
-
 export function DoctorConsultationsPage({
   completedOnly = false,
-}: { completedOnly?: boolean } = {}) {
+  patientId,
+}: { completedOnly?: boolean; patientId?: string } = {}) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<DoctorAppointment>();
   const q = useDoctorQuery<Page<DoctorAppointment>>(
-    `/doctor/appointments?page=${page}&pageSize=20&q=${encodeURIComponent(search)}${completedOnly ? "&status=COMPLETED" : ""}`
+    `/doctor/appointments?page=${page}&pageSize=20&q=${encodeURIComponent(search)}${completedOnly ? "&status=COMPLETED" : ""}${patientId ? `&patientId=${encodeURIComponent(patientId)}` : ""}`
   );
   return (
     <DoctorPageShell
@@ -160,6 +94,7 @@ export function DoctorConsultationsPage({
                 "Date / time",
                 "Status",
                 ...(completedOnly ? ["Visit details"] : []),
+                "Details",
               ].map((h) => (
                 <th className="p-4" key={h} scope="col">
                   {h}
@@ -172,7 +107,10 @@ export function DoctorConsultationsPage({
               <tr className="border-t" key={a.id}>
                 <td className="p-4">{a.id}</td>
                 <td className="p-4">
-                  {a.patient?.name || a.patientDetails?.name || "Patient"}
+                  {a.patientDetails?.fullName ||
+                    a.patientDetails?.name ||
+                    a.patient?.name ||
+                    "Patient"}
                 </td>
                 <td className="p-4">{a.clinic?.name || "Personal practice"}</td>
                 <td className="p-4">
@@ -186,6 +124,11 @@ export function DoctorConsultationsPage({
                     {a.reason || "No visit notes provided"}
                   </td>
                 )}
+                <td className="p-4">
+                  <Button variant="outline" onClick={() => setSelected(a)}>
+                    View details
+                  </Button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -214,56 +157,83 @@ export function DoctorConsultationsPage({
           </Button>
         </div>
       </div>
+      <Dialog
+        open={!!selected}
+        onOpenChange={(open) => {
+          if (!open) setSelected(undefined);
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Appointment details</DialogTitle>
+          </DialogHeader>
+          {selected && <DoctorVisitDetails appointment={selected} />}
+        </DialogContent>
+      </Dialog>
     </DoctorPageShell>
   );
 }
 
 export function DoctorConsultationDetailPage({ id }: { id?: string }) {
+  const q = useDoctorQuery<DoctorAppointment>(
+    `/doctor/appointments/${encodeURIComponent(id || "unknown")}`
+  );
   return (
     <DoctorPageShell
-      eyebrow="Consultation Detail"
-      title={id ?? "CON-4421"}
-      subtitle="Structured workspace for diagnosis, observations, treatment plan, recommendations, and SOAP notes."
-      actions={
-        <>
-          <SecondaryAction icon={<Save size={15} />} label="Save Draft" />
-          <PrimaryAction label="Complete Consultation" />
-        </>
-      }
+      eyebrow="Consultation"
+      title="Appointment details"
+      subtitle="The appointment record shared by your organisation."
     >
-      <div className="grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)]">
-        <HospitalPanel title="Patient Summary" subtitle="Consultation context">
-          <PatientRow
-            initials="MS"
-            meta="42 yrs | Female | #PA-2041"
-            name="Margot Sterling"
-            status="Checked-in"
-            tone="blue"
-          />
-        </HospitalPanel>
+      {q.isPending && <p role="status">Loading appointment…</p>}
+      {q.isError && (
+        <p role="alert">
+          Appointment unavailable.{" "}
+          <Button onClick={() => void q.refetch()}>Retry</Button>
+        </p>
+      )}
+      {q.data && (
         <HospitalPanel
-          title="Clinical Notes"
-          subtitle="SOAP-ready consultation workspace"
+          title={
+            q.data.patientDetails?.fullName ||
+            q.data.patientDetails?.name ||
+            q.data.patient?.name ||
+            "Patient"
+          }
         >
-          <div className="grid gap-3">
-            {[
-              "Chief Complaint",
-              "Symptoms",
-              "Diagnosis",
-              "Observations",
-              "Treatment Plan",
-              "Recommendations",
-              "SOAP Notes",
-            ].map((item) => (
-              <TextBlock
-                key={item}
-                title={item}
-                text="Clinical content captured here with a compact editor area matching the ERP form rhythm."
-              />
-            ))}
-          </div>
+          <DoctorVisitDetails appointment={q.data} />
         </HospitalPanel>
-      </div>
+      )}
     </DoctorPageShell>
+  );
+}
+function DoctorVisitDetails({
+  appointment: a,
+}: {
+  appointment: DoctorAppointment;
+}) {
+  const details = a.patientDetails;
+  const rows = [
+    ["Patient", details?.fullName || details?.name || a.patient?.name],
+    ["Organisation", a.clinic?.name],
+    ["Appointment", a.id],
+    ["Date / time", new Date(a.startsAt).toLocaleString("en-IN")],
+    ["Status", a.status],
+    ["Phone", details?.phoneNumber || a.patient?.phone],
+    ["Age", details?.age],
+    ["Gender", details?.gender],
+    ["Reason / visit notes", a.reason],
+  ];
+  return (
+    <dl className="divide-y">
+      {rows.map(([label, value]) => (
+        <div
+          key={label}
+          className="grid grid-cols-[130px_1fr] gap-3 py-3 text-sm"
+        >
+          <dt className="text-muted-foreground">{label}</dt>
+          <dd className="break-words">{value ?? "Not provided"}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }

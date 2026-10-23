@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { DoctorOnboardingGate } from "@/features/dashboard/components/doctor/pages/doctor-onboarding-flow";
 import { DoctorWorkspaceContext } from "@/features/dashboard/lib/doctor-workspace";
 import { DoctorReminders } from "@/features/dashboard/components/doctor/pages/doctor-calendar";
@@ -81,6 +82,7 @@ export function DoctorHomeScreen({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const reduceMotion = useReducedMotion();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [activationError, setActivationError] = useState("");
   const isHydrated = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -96,15 +98,24 @@ export function DoctorHomeScreen({
     sessionOrganization ?? activeOrganizationState.data;
   const activeMember = sessionMember ?? activeMemberState.data;
   const isAuthPending = sessionState.isPending || organizationsState.isPending;
+  const routedOrganization = organizationsState.data?.find(
+    (o) => o.slug === routeSegments[0] && o.organizationType === "doctor"
+  );
+  const needsRoutedActivation =
+    !!routedOrganization && routedOrganization.id !== activeOrganization?.id;
 
   useEffect(() => {
     const activeOrganizationId = activeOrganization?.id;
     const organizations = organizationsState.data ?? [];
-
+    const target =
+      routedOrganization ||
+      (organizations.length === 1 ? organizations[0] : undefined);
     if (
       !sessionState.data?.user ||
-      activeOrganizationId ||
-      organizations.length !== 1 ||
+      !target ||
+      activeOrganizationId === target.id ||
+      (activeOrganizationId && !routedOrganization) ||
+      activationError ||
       isActivatingOnlyOrganization
     ) {
       return;
@@ -112,7 +123,7 @@ export function DoctorHomeScreen({
 
     setIsActivatingOnlyOrganization(true);
     void activateOrganization({
-      organizationId: organizations[0].id,
+      organizationId: target.id,
     })
       .then(() =>
         Promise.all([
@@ -121,8 +132,17 @@ export function DoctorHomeScreen({
           activeMemberState.refetch(),
         ])
       )
+      .catch((error) =>
+        setActivationError(
+          error instanceof Error
+            ? error.message
+            : "Unable to open the invited doctor workspace"
+        )
+      )
       .finally(() => setIsActivatingOnlyOrganization(false));
   }, [
+    routedOrganization,
+    activationError,
     activeMemberState,
     activeOrganization?.id,
     activeOrganizationState,
@@ -164,12 +184,31 @@ export function DoctorHomeScreen({
     }
 
     if (!sessionState.data?.user) {
-      router.replace("/auth");
+      const slug =
+        routeSegments[0] && !isDashboardPage(routeSegments[0])
+          ? routeSegments[0]
+          : undefined;
+      router.replace(
+        slug ? `/auth?doctorWorkspace=${encodeURIComponent(slug)}` : "/auth"
+      );
     }
-  }, [isAuthPending, isHydrated, router, sessionState.data?.user]);
+  }, [
+    isAuthPending,
+    isHydrated,
+    router,
+    sessionState.data?.user,
+    routeSegments,
+  ]);
 
   useEffect(() => {
-    if (!isHydrated || isAuthPending || !activeOrganization || !activeMember) {
+    if (
+      !isHydrated ||
+      isAuthPending ||
+      needsRoutedActivation ||
+      isActivatingOnlyOrganization ||
+      !activeOrganization ||
+      !activeMember
+    ) {
       return;
     }
 
@@ -186,6 +225,8 @@ export function DoctorHomeScreen({
       router.replace(expectedPath);
     }
   }, [
+    needsRoutedActivation,
+    isActivatingOnlyOrganization,
     activeMember,
     activeOrganization,
     activeOrganizationSlug,
@@ -197,7 +238,21 @@ export function DoctorHomeScreen({
     router,
   ]);
 
-  if (!isHydrated || isAuthPending) {
+  if (activationError)
+    return (
+      <div role="alert" className="space-y-4 p-8">
+        <p>{activationError}</p>
+        <Button onClick={() => setActivationError("")}>
+          Retry opening doctor workspace
+        </Button>
+      </div>
+    );
+  if (
+    !isHydrated ||
+    isAuthPending ||
+    needsRoutedActivation ||
+    isActivatingOnlyOrganization
+  ) {
     return <WorkspaceSkeleton />;
   }
 

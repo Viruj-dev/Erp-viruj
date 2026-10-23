@@ -90,6 +90,13 @@ export function ErpAuthScreen() {
       router.replace(`/staff-confirmation/${pendingInvitation}`);
       return;
     }
+    const doctorWorkspace = new URLSearchParams(window.location.search).get(
+      "doctorWorkspace"
+    );
+    if (doctorWorkspace && /^[a-zA-Z0-9-]+$/.test(doctorWorkspace)) {
+      router.replace(`/doctor/${doctorWorkspace}/dashboard`);
+      return;
+    }
     if (
       activeOrganizationType &&
       isDashboardOrganizationType(activeOrganizationType)

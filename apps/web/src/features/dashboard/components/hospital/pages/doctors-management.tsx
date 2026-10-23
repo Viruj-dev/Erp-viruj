@@ -230,6 +230,8 @@ export function DoctorsManagementPage({
   function openEditDialog(doctor: VirujDoctor) {
     setEditingDoctor(doctor);
     setForm({
+      post: doctor.post || "",
+      position: doctor.position || "",
       imageUrl: doctor.imageUrl || "",
       gender: doctor.gender || "unspecified",
       registrationNumber: doctor.registrationNumber || "",
@@ -432,7 +434,8 @@ export function DoctorsManagementPage({
                   placeholder="State medical council"
                 />
                 <DoctorInput
-                  label="Doctor email (required)"
+                  required
+                  label="Doctor email"
                   value={form.inviteEmail || ""}
                   onChange={(value) => updateField("inviteEmail", value)}
                   placeholder="Verified account email for access to this practice"
@@ -464,6 +467,18 @@ export function DoctorsManagementPage({
                     value={form.department}
                   />
                 )}
+                <DoctorInput
+                  label="Post"
+                  value={form.post || ""}
+                  onChange={(value) => updateField("post", value)}
+                  placeholder="e.g. Senior medical officer"
+                />
+                <DoctorInput
+                  label="Position"
+                  value={form.position || ""}
+                  onChange={(value) => updateField("position", value)}
+                  placeholder="e.g. Visiting consultant"
+                />
                 <DoctorInput
                   label="Qualification"
                   onChange={(value) => updateField("qualification", value)}

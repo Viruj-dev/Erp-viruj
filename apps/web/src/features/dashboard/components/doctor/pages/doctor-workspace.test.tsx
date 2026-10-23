@@ -8,7 +8,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DoctorWorkspaceContext } from "@/features/dashboard/lib/doctor-workspace";
 import { createErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
-mock.module("next/navigation", () => ({ useRouter: () => ({ replace() {} }) }));
+mock.module("next/navigation", () => ({
+  useRouter: () => ({ replace() {} }),
+  usePathname: () => "/doctor/my-practice/dashboard",
+}));
 const { DoctorOnboardingGate, DoctorCredentialsFields, doctorRegistryFields } =
   await import("./doctor-onboarding-flow");
 import { DoctorProfileForm } from "./doctor-onboarding";
@@ -16,7 +19,10 @@ import {
   DoctorCalendarPage,
   doctorDayAppointmentsPath,
 } from "./doctor-calendar";
-import { DoctorConsultationsPage } from "./doctor-encounter-pages";
+import {
+  DoctorConsultationsPage,
+  DoctorConsultationDetailPage,
+} from "./doctor-encounter-pages";
 const tenant = createErpTenantContext({
   organizationId: "doctor-a",
   providerType: "doctor",
@@ -374,4 +380,51 @@ test("patients use completed organisation appointments", () => {
   expect(html).toContain("C Hospital");
   expect(html).toContain("Follow-up");
   expect(html).not.toContain("Select a provider workspace");
+});
+
+test("doctor dashboard uses the shared role dashboard with actual activity", async () => {
+  const { DoctorDashboardPage } = await import("./doctor-overview-pages");
+  const html = render(<DoctorDashboardPage />, {
+    "/doctor/profile": {
+      id: "a",
+      fullName: "Test Doctor",
+      languages: [],
+      isPublic: false,
+    },
+    "/doctor/dashboard": {
+      appointmentsToday: 2,
+      patientsSeenToday: 1,
+      completedAppointments: 5,
+      upcomingAppointments: 3,
+    },
+    "/doctor/appointments?pageSize=100": {
+      data: [],
+      pagination: { page: 1, total: 0, totalPages: 0 },
+    },
+  });
+  expect(html).toContain("erp-overview");
+  expect(html).toContain("Your practice, at a glance.");
+  expect(html).toContain("Completed appointments");
+  expect(html).toContain("upcoming appointments");
+  expect(html).not.toContain("Complete onboarding");
+  expect(html).not.toContain("awaiting approval");
+});
+
+test("appointment details show the saved patient snapshot instead of demo clinical records", () => {
+  const html = render(<DoctorConsultationDetailPage id="visit" />, {
+    "/doctor/appointments/visit": {
+      id: "visit",
+      startsAt: "2026-10-23T09:00:00Z",
+      status: "COMPLETED",
+      patient: { name: "Account holder" },
+      patientDetails: { fullName: "Actual patient", age: 24, gender: "Female" },
+      clinic: { name: "C Hospital" },
+      reason: "Follow-up assessment",
+    },
+  });
+  expect(html).toContain("Actual patient");
+  expect(html).toContain("C Hospital");
+  expect(html).toContain("Follow-up assessment");
+  expect(html).not.toContain("Margot");
+  expect(html).not.toContain("Clinical content captured here");
 });

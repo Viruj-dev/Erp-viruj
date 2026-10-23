@@ -71,10 +71,16 @@ export type DoctorAppointment = {
   startsAt: string;
   endsAt?: string;
   status: string;
-  patient?: { name: string };
+  patient?: { name: string; phone?: string };
   clinic?: { name: string };
   provider?: { name: string };
-  patientDetails?: { name?: string };
+  patientDetails?: {
+    name?: string;
+    fullName?: string;
+    age?: number | string;
+    gender?: string;
+    phoneNumber?: string;
+  };
   reason?: string;
 };
 export type Page<T> = {
@@ -93,7 +99,12 @@ export function useDoctorQuery<T>(path: string) {
     queryKey: ["doctor-workspace", tenant.organizationId, path],
     queryFn: () => doctorWorkspaceRequest<T>(path, tenant.organizationId),
     retry: false,
-    refetchInterval: path === "/doctor/calendar" ? 60000 : false,
+    refetchInterval:
+      path === "/doctor/calendar"
+        ? 60000
+        : path.startsWith("/doctor/appointments")
+          ? 30000
+          : false,
   });
 }
 export function useDoctorSave() {

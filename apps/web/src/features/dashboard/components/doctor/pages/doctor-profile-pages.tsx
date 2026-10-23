@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { Plus, Save } from "lucide-react";
 import { DoctorCredentialsPage } from "./doctor-credentials";
 import { ErpUserProfilePage } from "../../shared/profile";
@@ -32,7 +33,19 @@ import {
 } from "../_components/doctor-shared-ui";
 
 export function DoctorProfileManagementPage() {
-  return <ErpUserProfilePage />;
+  const tenant = useDoctorTenant();
+  return (
+    <div className="space-y-4">
+      <ErpUserProfilePage />
+      <div className="flex justify-end">
+        <Button variant="outline" asChild>
+          <Link href={tenant.buildRoute("onboarding")}>
+            Edit professional details
+          </Link>
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export function DoctorVerificationVaultPage() {
@@ -106,7 +119,7 @@ export function DoctorSettingsPage() {
           if (!open) setDraft(undefined);
         }}
       >
-        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogContent className="vh-onboarding vh-onboarding--doctor max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Organisation working hours</DialogTitle>
           </DialogHeader>

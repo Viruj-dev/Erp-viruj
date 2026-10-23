@@ -359,6 +359,8 @@ export type VirujStaffInviteResult = VirujStaffInvitation & {
 };
 
 export type VirujDoctorInput = {
+  post?: string;
+  position?: string;
   inviteEmail?: string;
   medicalCouncil?: string;
   imageUrl?: string;
