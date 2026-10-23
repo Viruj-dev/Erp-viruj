@@ -3,7 +3,6 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/erp/checkbox";
 import { ErpSelect } from "@/components/ui/erp/select";
 import { OnboardingFrame } from "../../hospital/pages/onboarding/onboarding-frame";
 import { OnboardingSuccessScreen } from "../../hospital/pages/onboarding/onboarding-success-screen";
@@ -12,15 +11,11 @@ import {
   FieldLabel,
   fieldClassName,
 } from "../../hospital/pages/onboarding/fields";
-import { TimePicker } from "../../hospital/pages/onboarding/time-picker";
 import type {
   StepDefinition,
   StepId,
 } from "../../hospital/pages/onboarding/types";
-import {
-  DoctorProfessionalFields,
-  DoctorDepartmentSelect,
-} from "./doctor-professional-fields";
+import { DoctorProfessionalFields } from "./doctor-professional-fields";
 import {
   DoctorRegistrationField,
   type RegistryRecord,
@@ -30,14 +25,14 @@ import {
   useDoctorTenant,
   type DoctorProfile,
   type WorkLocation,
-  type CalendarEvent,
+  type WorkingHours,
 } from "@/features/dashboard/lib/doctor-workspace";
+import { DoctorWorkingHoursFields } from "./doctor-working-hours";
 import { doctorWorkspaceRequest, virujBackend } from "@/lib/viruj-backend";
 
 const steps: StepDefinition[] = [
   { id: "profile", label: "Personal information", kicker: "Your identity" },
   { id: "doctors", label: "Professional credentials", kicker: "Your practice" },
-  { id: "locations", label: "Work locations", kicker: "Where you work" },
   { id: "workingHours", label: "Availability & fees", kicker: "Your schedule" },
   { id: "review", label: "Review & launch", kicker: "Ready to begin" },
 ];
@@ -66,33 +61,6 @@ type Verification = {
   status: string;
   documents: { id: string; name?: string }[];
 };
-type Schedule = { days: string[]; startTime: string; endTime: string };
-const emptyLocation: WorkLocation = {
-  id: "",
-  name: "",
-  type: "HOSPITAL",
-  post: "",
-  position: "",
-  department: "",
-  currentlyWorking: true,
-  addressLine1: "",
-  city: "",
-  state: "",
-  country: "India",
-  postalCode: "",
-};
-export function doctorSessionDate(day: string, now = new Date()) {
-  const today = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Kolkata",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
-  const date = new Date(`${today}T00:00:00Z`);
-  const offset = (((days.indexOf(day) + 1) % 7) - date.getUTCDay() + 7) % 7;
-  date.setUTCDate(date.getUTCDate() + offset);
-  return date.toISOString().slice(0, 10);
-}
 export function DoctorOnboardingGate({
   currentPage,
   organizationName,
@@ -262,14 +230,7 @@ function DoctorSetup({
       initial.fullName === "Individual Doctor" ? userName : initial.fullName,
     email: initial.email || userEmail,
   });
-  const [location, setLocation] = useState<WorkLocation>(
-    existingLocations[0] || { ...emptyLocation }
-  );
-  const [schedule, setSchedule] = useState<Schedule>({
-    days: ["MONDAY"],
-    startTime: "09:00",
-    endTime: "13:00",
-  });
+  const [schedule, setSchedule] = useState<WorkingHours[]>([]);
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -294,15 +255,13 @@ function DoctorSetup({
       if (raw) {
         const draft = JSON.parse(raw) as {
           profile?: DoctorProfile;
-          location?: WorkLocation;
-          schedule?: Schedule;
+          schedule?: WorkingHours[];
           step?: number;
         };
         if (draft.profile) setProfile(draft.profile);
-        if (draft.location) setLocation(draft.location);
-        if (draft.schedule) setSchedule(draft.schedule);
+        if (Array.isArray(draft.schedule)) setSchedule(draft.schedule);
         if (Number.isInteger(draft.step))
-          setStep(Math.min(4, Math.max(0, draft.step || 0)));
+          setStep(Math.min(3, Math.max(0, draft.step || 0)));
       }
     } catch {
       setError(
@@ -319,7 +278,7 @@ function DoctorSetup({
       try {
         localStorage.setItem(
           draftKey,
-          JSON.stringify({ profile, location, schedule, step })
+          JSON.stringify({ profile, schedule, step })
         );
         setDraftSaved(true);
       } catch {
@@ -329,7 +288,7 @@ function DoctorSetup({
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [draftReady, complete, draftKey, profile, location, schedule, step]);
+  }, [draftReady, complete, draftKey, profile, schedule, step]);
   const update = <K extends keyof DoctorProfile>(
     key: K,
     value: DoctorProfile[K]
@@ -379,15 +338,6 @@ function DoctorSetup({
       />
     );
   }
-  const locationField = (key: keyof WorkLocation, label: string) => (
-    <TextField
-      required
-      label={label}
-      placeholder={label}
-      value={String(location[key] ?? "")}
-      onChange={(v) => setLocation((l) => ({ ...l, [key]: v }))}
-    />
-  );
   async function upload(file?: File) {
     if (!file) return;
     setBusy(true);
@@ -404,30 +354,7 @@ function DoctorSetup({
   async function next() {
     setError("");
     if (!form.current?.reportValidity()) return;
-    if (
-      step === 3 &&
-      (!schedule.days.length || schedule.endTime <= schedule.startTime)
-    ) {
-      setError("Choose at least one day and an end time after the start time.");
-      return;
-    }
-    setBusy(true);
-    try {
-      if (step === 2) {
-        const saved = await doctorWorkspaceRequest<WorkLocation>(
-          `/doctor/locations${location.id ? `/${location.id}` : ""}`,
-          tenant.organizationId,
-          location,
-          location.id ? "PATCH" : "POST"
-        );
-        setLocation(saved);
-      }
-      setStep((s) => Math.min(4, s + 1));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Unable to save this step");
-    } finally {
-      setBusy(false);
-    }
+    setStep((s) => Math.min(3, s + 1));
   }
   async function launch() {
     setBusy(true);
@@ -439,77 +366,12 @@ function DoctorSetup({
         profile,
         "PATCH"
       );
-      if (location.type === "PERSONAL_PRACTICE") {
-        const saved = await doctorWorkspaceRequest<
-          {
-            locationId: string;
-            dayOfWeek: string;
-            startTime: string;
-            endTime: string;
-          }[]
-        >("/doctor/availability", tenant.organizationId);
-        for (const day of schedule.days)
-          if (
-            !saved.some(
-              (s) =>
-                s.locationId === location.id &&
-                s.dayOfWeek === day &&
-                s.startTime === schedule.startTime &&
-                s.endTime === schedule.endTime
-            )
-          )
-            await doctorWorkspaceRequest(
-              "/doctor/availability",
-              tenant.organizationId,
-              {
-                locationId: location.id,
-                dayOfWeek: day,
-                startTime: schedule.startTime,
-                endTime: schedule.endTime,
-                slotDurationMinutes: profile.consultationDurationMinutes,
-                isActive: true,
-              },
-              "POST"
-            );
-      } else {
-        const saved = await doctorWorkspaceRequest<CalendarEvent[]>(
-          "/doctor/calendar",
-          tenant.organizationId
-        );
-        for (const day of schedule.days) {
-          const date = doctorSessionDate(day);
-          const startsAt = new Date(
-            `${date}T${schedule.startTime}:00+05:30`
-          ).toISOString();
-          const endsAt = new Date(
-            `${date}T${schedule.endTime}:00+05:30`
-          ).toISOString();
-          if (
-            !saved.some(
-              (s) =>
-                s.locationId === location.id &&
-                s.startsAt === startsAt &&
-                s.endsAt === endsAt
-            )
-          )
-            await doctorWorkspaceRequest(
-              "/doctor/calendar",
-              tenant.organizationId,
-              {
-                title: `Consultations at ${location.name}`,
-                locationId: location.id,
-                startsAt,
-                endsAt,
-                notes: "",
-                pinned: false,
-                highlight: "green",
-                reminderMinutes: 15,
-                patientsAttended: 0,
-              },
-              "POST"
-            );
-        }
-      }
+      await doctorWorkspaceRequest(
+        "/doctor/working-hours",
+        tenant.organizationId,
+        schedule,
+        "PATCH"
+      );
       await client.invalidateQueries({
         queryKey: ["doctor-workspace", tenant.organizationId],
       });
@@ -524,7 +386,6 @@ function DoctorSetup({
   const summary = [
     { label: "Doctor", value: profile.fullName },
     { label: "Speciality", value: profile.specialization || "" },
-    { label: "Workplace", value: location.name },
     {
       label: "Consultation",
       value: `INR ${profile.consultationFee ?? 0} · ${profile.consultationDurationMinutes || 0} min`,
@@ -550,7 +411,7 @@ function DoctorSetup({
       stepDescriptions={descriptions}
       currentStepIndex={step}
       completedSteps={steps.slice(0, step).map((s) => s.id)}
-      completionPercentage={step * 25}
+      completionPercentage={Math.round((step / 3) * 100)}
       contentWidthClassName="max-w-[820px] xl:max-w-[900px]"
       saveState={busy ? "saving" : draftSaved ? "saved" : "idle"}
       launching={busy}
@@ -564,7 +425,7 @@ function DoctorSetup({
         className="space-y-6 pb-4"
         onSubmit={(e) => {
           e.preventDefault();
-          if (step === 4) void launch();
+          if (step === 3) void launch();
           else void next();
         }}
       >
@@ -653,54 +514,6 @@ function DoctorSetup({
         {step === 2 && (
           <>
             <div className="grid gap-5 md:grid-cols-2">
-              <label>
-                <FieldLabel required>Organisation type</FieldLabel>
-                <ErpSelect
-                  className={fieldClassName()}
-                  value={location.type}
-                  disabled={!!location.id}
-                  onChange={(e) =>
-                    setLocation((l) => ({ ...l, type: e.target.value }))
-                  }
-                >
-                  <option value="HOSPITAL">Hospital</option>
-                  <option value="CLINIC">Clinic</option>
-                  <option value="LAB">Laboratory</option>
-                  <option value="PERSONAL_PRACTICE">Personal practice</option>
-                </ErpSelect>
-              </label>
-              {locationField("name", "Organisation name")}
-              {locationField("post", "Post")}
-              {locationField("position", "Position")}
-              <DoctorDepartmentSelect
-                value={location.department || ""}
-                onChange={(department) =>
-                  setLocation((l) => ({ ...l, department }))
-                }
-              />
-              {locationField("addressLine1", "Street address")}
-              {locationField("city", "City")}
-              {locationField("state", "State")}
-              {locationField("postalCode", "Postal code")}
-              {locationField("country", "Country")}
-            </div>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={location.currentlyWorking !== false}
-                onCheckedChange={(checked) =>
-                  setLocation((l) => ({
-                    ...l,
-                    currentlyWorking: checked === true,
-                  }))
-                }
-              />
-              Currently working here
-            </label>
-          </>
-        )}
-        {step === 3 && (
-          <>
-            <div className="grid gap-5 md:grid-cols-2">
               {field("consultationFee", "Consultation fee (INR)", "number")}
               {field(
                 "consultationDurationMinutes",
@@ -708,55 +521,14 @@ function DoctorSetup({
                 "number"
               )}
             </div>
-            <div>
-              <FieldLabel required>Available days</FieldLabel>
-              <div className="flex flex-wrap gap-3">
-                {days.map((day) => (
-                  <label
-                    className="flex items-center gap-2 rounded-lg border border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] px-3 py-2 text-sm"
-                    key={day}
-                  >
-                    <Checkbox
-                      checked={schedule.days.includes(day)}
-                      onCheckedChange={(checked) =>
-                        setSchedule((s) => ({
-                          ...s,
-                          days: checked
-                            ? [...s.days, day]
-                            : s.days.filter((d) => d !== day),
-                        }))
-                      }
-                    />
-                    {day.slice(0, 3)}
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="grid gap-5 md:grid-cols-2">
-              <TimePicker
-                label="Available from"
-                value={schedule.startTime}
-                onChange={(v) => setSchedule((s) => ({ ...s, startTime: v }))}
-                themeClassName="vh-onboarding--doctor"
-              />
-              <TimePicker
-                label="Available until"
-                value={schedule.endTime}
-                onChange={(v) => setSchedule((s) => ({ ...s, endTime: v }))}
-                themeClassName="vh-onboarding--doctor"
-              />
-            </div>
-            <p className="text-sm text-[var(--onboarding-muted)]">
-              Times are in Indian Standard Time.{" "}
-              {location.type === "PERSONAL_PRACTICE"
-                ? "These hours repeat weekly for your personal-practice bookings."
-                : "Your selected sessions are added to the calendar for the coming 7 days. The organisation manages its patient booking hours."}{" "}
-              You can manage more locations and dates in Availability after
-              setup.
-            </p>
+            <DoctorWorkingHoursFields
+              locations={existingLocations}
+              value={schedule}
+              onChange={setSchedule}
+            />
           </>
         )}
-        {step === 4 && (
+        {step === 3 && (
           <>
             <dl className="divide-y divide-[var(--onboarding-border)] rounded-xl border border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] px-5">
               {[
@@ -767,7 +539,14 @@ function DoctorSetup({
                 },
                 {
                   label: "Availability",
-                  value: `${schedule.days.map((d) => d.slice(0, 3)).join(", ")} · ${schedule.startTime}–${schedule.endTime} IST`,
+                  value: schedule.length
+                    ? schedule
+                        .map(
+                          (s) =>
+                            `${existingLocations.find((l) => l.id === s.locationId)?.name || "General availability"}: ${s.days.map((d) => d.slice(0, 3)).join(", ")} ${s.startTime}–${s.endTime} IST`
+                        )
+                        .join("; ")
+                    : "Set working hours after an organisation adds you",
                 },
                 {
                   label: "Credentials",

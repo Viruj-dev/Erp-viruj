@@ -50,7 +50,7 @@ export function DoctorAppointmentDetailPage({
 }
 
 export function DoctorPatientDirectoryPage() {
-  return <ErpDemoPatients />;
+  return <DoctorConsultationsPage completedOnly />;
 }
 
 export function DoctorPatientDetailPage({ id }: { id?: string }) {
@@ -106,17 +106,23 @@ export function DoctorPatientDetailPage({ id }: { id?: string }) {
   );
 }
 
-export function DoctorConsultationsPage() {
+export function DoctorConsultationsPage({
+  completedOnly = false,
+}: { completedOnly?: boolean } = {}) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const q = useDoctorQuery<Page<DoctorAppointment>>(
-    `/doctor/appointments?page=${page}&pageSize=20&q=${encodeURIComponent(search)}`
+    `/doctor/appointments?page=${page}&pageSize=20&q=${encodeURIComponent(search)}${completedOnly ? "&status=COMPLETED" : ""}`
   );
   return (
     <DoctorPageShell
-      eyebrow="Consultations"
-      title="Consultations"
-      subtitle="Appointments across your authorised hospital, clinic and personal practices. Staff manage confirmation, cancellation and rescheduling."
+      eyebrow={completedOnly ? "Patient records" : "Consultations"}
+      title={completedOnly ? "Patients" : "Consultations"}
+      subtitle={
+        completedOnly
+          ? "Completed patient appointments across the organisations where you work."
+          : "Appointments across your organisations. Staff manage confirmation, cancellation and rescheduling."
+      }
     >
       <Input
         aria-label="Search consultations"
@@ -153,6 +159,7 @@ export function DoctorConsultationsPage() {
                 "Organisation",
                 "Date / time",
                 "Status",
+                ...(completedOnly ? ["Visit details"] : []),
               ].map((h) => (
                 <th className="p-4" key={h} scope="col">
                   {h}
@@ -174,6 +181,11 @@ export function DoctorConsultationsPage() {
                 <td className="p-4">
                   <StatusBadge status={a.status} />
                 </td>
+                {completedOnly && (
+                  <td className="p-4">
+                    {a.reason || "No visit notes provided"}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

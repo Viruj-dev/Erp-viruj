@@ -1,130 +1,102 @@
 "use client";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { DoctorOnboarding } from "./doctor-onboarding-flow";
 import {
-  DoctorPageShell,
-  HospitalPanel,
-} from "../_components/doctor-shared-ui";
+  RoleDashboardPage,
+  type RoleDashboardAnalytics,
+} from "../../shared/role-dashboard-page";
+import { DoctorOnboarding } from "./doctor-onboarding-flow";
 import {
   useDoctorQuery,
   useDoctorTenant,
   type DoctorProfile,
-  type CalendarEvent,
-  type WorkLocation,
   type DoctorAppointment,
   type Page,
 } from "@/features/dashboard/lib/doctor-workspace";
+import type { VirujAppointment } from "@/lib/viruj-backend";
 export function DoctorDashboardPage() {
   const tenant = useDoctorTenant();
   const profile = useDoctorQuery<DoctorProfile>("/doctor/profile");
   const stats =
     useDoctorQuery<Record<string, number | string>>("/doctor/dashboard");
-  const events = useDoctorQuery<CalendarEvent[]>("/doctor/calendar");
-  const locations = useDoctorQuery<WorkLocation[]>("/doctor/locations");
   const appointments = useDoctorQuery<Page<DoctorAppointment>>(
-    "/doctor/appointments?pageSize=5"
+    "/doctor/appointments?pageSize=100"
   );
-  const upcoming = (events.data || [])
-    .filter((e) => Date.parse(e.endsAt) > Date.now())
-    .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
-    .slice(0, 5);
+  const statusMap: Record<string, VirujAppointment["status"]> = {
+    PENDING: "pending_approval",
+    REQUESTED: "pending_approval",
+    CONFIRMED: "approved",
+    IN_PROGRESS: "approved",
+    COMPLETED: "completed",
+    CANCELLED: "cancelled",
+    NO_SHOW: "no_show",
+    RESCHEDULED: "rescheduled",
+  };
+  const rows: VirujAppointment[] = (appointments.data?.data || []).map((a) => ({
+    id: a.id,
+    startsAt: a.startsAt,
+    appointmentDate: a.startsAt,
+    appointmentTime: new Date(a.startsAt).toLocaleTimeString("en-IN"),
+    appointmentMode: a.clinic?.name || "Practice",
+    doctorName: profile.data?.fullName || "Doctor",
+    patientName: a.patient?.name || a.patientDetails?.name || "Patient",
+    patientEmail: "",
+    reason: a.reason,
+    status: statusMap[a.status] || "pending_approval",
+  }));
+  const analytics: RoleDashboardAnalytics = {
+    appointments: rows,
+    stats: [
+      {
+        label: "Appointment Requests",
+        value: String(stats.data?.appointmentsToday ?? 0),
+        note: "Appointments today across your organisations",
+      },
+      {
+        label: "Patients",
+        value: String(stats.data?.patientsSeenToday ?? 0),
+        note: "Patients treated today",
+      },
+    ],
+    appointmentStatuses: [
+      {
+        label: "Completed",
+        value: Number(stats.data?.completedAppointments || 0),
+        color: "#278565",
+      },
+      {
+        label: "Upcoming",
+        value: Number(stats.data?.upcomingAppointments || 0),
+        color: "#60a5fa",
+      },
+    ],
+    activity: rows
+      .slice(0, 5)
+      .map((a) => ({
+        id: a.id,
+        title: a.patientName,
+        subtitle: `${a.appointmentMode} · ${a.status}`,
+        meta: new Date(a.appointmentDate).toLocaleDateString("en-IN"),
+      })),
+  };
   return (
-    <DoctorPageShell
-      eyebrow="Overview"
-      title={`Welcome, ${profile.data?.fullName || "Doctor"}`}
-      subtitle="Your practice, patients and schedule in one place."
-      actions={
-        <Button asChild>
-          <Link href={tenant.buildRoute("onboarding")}>
-            Complete onboarding
-          </Link>
-        </Button>
-      }
-    >
-      {stats.isError && (
-        <p role="alert">
-          Dashboard data could not load.{" "}
-          <Button variant="outline" onClick={() => void stats.refetch()}>
-            Retry
-          </Button>
-        </p>
-      )}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {(
-          [
-            ["appointmentsToday", "Appointments today"],
-            ["patientsSeenToday", "Patients treated today"],
-            ["completedAppointments", "Completed appointments"],
-            ["upcomingAppointments", "Upcoming appointments"],
-            ["pendingConsultations", "Pending consultations"],
-            ["newPatientsThisMonth", "New patients this month"],
-            ["profileCompletionPercentage", "Profile completion (%)"],
-            ["verificationStatus", "Credential review"],
-          ] as const
-        ).map(([key, label]) => (
-          <HospitalPanel title={label} key={key}>
-            <p className="text-2xl font-semibold">
-              {stats.isPending ? "…" : (stats.data?.[key] ?? "Unavailable")}
-            </p>
-          </HospitalPanel>
-        ))}
-      </div>
-      <div className="grid gap-4 xl:grid-cols-2">
-        <HospitalPanel title="Your next events">
-          <div className="space-y-3">
-            {events.isError ? (
-              <p>Unable to load calendar.</p>
-            ) : upcoming.length ? (
-              upcoming.map((e) => (
-                <div className="rounded-lg border p-3" key={e.id}>
-                  <p className="text-sm font-semibold">
-                    {e.pinned ? "📌 " : ""}
-                    {e.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(e.startsAt).toLocaleString("en-IN")} ·{" "}
-                    {locations.data?.find((l) => l.id === e.locationId)?.name ||
-                      "Personal event"}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No upcoming calendar events.
-              </p>
-            )}
-            <Button variant="outline" asChild>
-              <Link href={tenant.buildRoute("availability")}>
-                Open calendar
-              </Link>
-            </Button>
-          </div>
-        </HospitalPanel>
-        <HospitalPanel title="Recent appointments">
-          {appointments.isError ? (
-            <p>Unable to load appointments.</p>
-          ) : (
-            appointments.data?.data.map((a) => (
-              <div className="border-b py-3 text-sm" key={a.id}>
-                <p>
-                  {a.patient?.name || a.patientDetails?.name || "Patient"} ·{" "}
-                  {a.clinic?.name || "Practice"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(a.startsAt).toLocaleString("en-IN")} · {a.status}
-                </p>
-              </div>
-            ))
-          )}
-          <Button variant="outline" className="mt-3" asChild>
-            <Link href={tenant.buildRoute("consultations")}>
-              All consultations
-            </Link>
-          </Button>
-        </HospitalPanel>
-      </div>
-    </DoctorPageShell>
+    <RoleDashboardPage
+      tone="doctor"
+      userName={profile.data?.fullName || "Doctor"}
+      organizationId={tenant.organizationId}
+      analytics={analytics}
+      loading={stats.isPending || appointments.isPending}
+      unavailable={[
+        ...(stats.isError ? ["analytics"] : []),
+        ...(appointments.isError ? ["appointments"] : []),
+      ]}
+      onRefresh={() => {
+        void stats.refetch();
+        void appointments.refetch();
+      }}
+      refreshing={stats.isFetching || appointments.isFetching}
+      onAppointmentSelect={() => {
+        window.location.href = tenant.buildRoute("consultations");
+      }}
+    />
   );
 }
 export function DoctorOnboardingCenterPage() {

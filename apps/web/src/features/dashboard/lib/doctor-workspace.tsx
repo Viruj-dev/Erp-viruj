@@ -26,7 +26,20 @@ export type DoctorProfile = {
   isPublic: boolean;
   registry?: { checkedAt: string; medicalCouncil: string };
 };
+export type WorkingHours = {
+  locationId: string;
+  days: string[];
+  startTime: string;
+  endTime: string;
+};
 export type WorkLocation = {
+  schedules?: {
+    dayOfWeek: string;
+    startTime: string;
+    endTime: string;
+    timezone: string;
+  }[];
+  phone?: string;
   id: string;
   name: string;
   type: string;

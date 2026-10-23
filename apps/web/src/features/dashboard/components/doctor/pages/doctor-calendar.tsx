@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import * as ContextMenu from "@radix-ui/react-context-menu";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Pin, Bell, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pin, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/erp/checkbox";
 import { Input } from "@/components/ui/erp/input";
@@ -13,18 +14,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DoctorPageShell,
-  HospitalPanel,
-} from "../_components/doctor-shared-ui";
+import { DoctorPageShell } from "../_components/doctor-shared-ui";
 import {
   useDoctorQuery,
   useDoctorSave,
   useDoctorTenant,
   type CalendarEvent,
   type WorkLocation,
-  type DoctorAppointment,
-  type Page,
 } from "@/features/dashboard/lib/doctor-workspace";
 const colors: Record<string, string> = {
   blue: "bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
@@ -64,13 +60,8 @@ export function DoctorCalendarPage() {
   const [selected, setSelected] = useState(localDate(new Date()));
   const [draft, setDraft] = useState<CalendarEvent>();
   const save = useDoctorSave();
-  const [appointmentPage, setAppointmentPage] = useState(1);
-  const appointments = useDoctorQuery<Page<DoctorAppointment>>(
-    doctorDayAppointmentsPath(selected, appointmentPage)
-  );
   function selectDate(date: string) {
     setSelected(date);
-    setAppointmentPage(1);
   }
   const start = new Date(
     cursor.getFullYear(),
@@ -85,17 +76,6 @@ export function DoctorCalendarPage() {
     return d;
   });
   const events = query.data || [];
-  const selectedEvents = events
-    .filter(
-      (e) =>
-        localDate(new Date(e.startsAt)) <= selected &&
-        localDate(new Date(e.endsAt)) >= selected
-    )
-    .sort(
-      (a, b) =>
-        Number(b.pinned) - Number(a.pinned) ||
-        a.startsAt.localeCompare(b.startsAt)
-    );
   function move(direction: number) {
     const d = new Date(cursor);
     if (view === "month") {
@@ -108,15 +88,7 @@ export function DoctorCalendarPage() {
     <DoctorPageShell
       eyebrow="Clinical schedule"
       title="Availability"
-      subtitle="Plan your work, visits and reminders. Times are shown in your device’s local timezone."
-      actions={
-        <Button
-          onClick={() => setDraft(emptyEvent(new Date(`${selected}T12:00`)))}
-        >
-          <Plus size={16} />
-          Add event
-        </Button>
-      }
+      subtitle="Right-click a date to add an event, pin it, choose a highlight and set a reminder. Double-click a date or press Enter to add an event. Times use your device’s timezone."
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -219,147 +191,90 @@ export function DoctorCalendarPage() {
                     a.startsAt.localeCompare(b.startsAt)
                 );
               return (
-                <div
-                  key={key}
-                  className={`min-h-36 border-b border-r p-2 ${selected === key ? "bg-primary/5 ring-1 ring-inset ring-primary" : ""} ${d.getMonth() !== cursor.getMonth() && view === "month" ? "opacity-50" : ""}`}
-                >
-                  <button
-                    type="button"
-                    aria-label={`View ${d.toDateString()}`}
-                    aria-pressed={selected === key}
-                    className={`mb-2 flex size-8 items-center justify-center rounded-full text-sm ${key === localDate(new Date()) ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
-                    onClick={() => selectDate(key)}
-                  >
-                    {d.getDate()}
-                  </button>
-                  <div className="space-y-1">
-                    {entries.slice(0, 3).map((e) => (
+                <ContextMenu.Root key={key}>
+                  <ContextMenu.Trigger asChild>
+                    <div
+                      tabIndex={0}
+                      role="group"
+                      aria-label={d.toDateString()}
+                      onDoubleClick={() => setDraft(emptyEvent(d))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && e.target === e.currentTarget)
+                          setDraft(emptyEvent(d));
+                      }}
+                      className={`min-h-36 border-b border-r p-2 ${selected === key ? "bg-primary/5 ring-1 ring-inset ring-primary" : ""} ${d.getMonth() !== cursor.getMonth() && view === "month" ? "opacity-50" : ""}`}
+                    >
                       <button
                         type="button"
-                        key={e.id}
-                        className={`block w-full rounded-md p-2 text-left text-xs ${colors[e.highlight] || colors.blue}`}
-                        onClick={() =>
-                          setDraft({
-                            ...e,
-                            startsAt: localTime(e.startsAt),
-                            endsAt: localTime(e.endsAt),
-                          })
-                        }
-                      >
-                        {e.pinned && <Pin className="mr-1 inline" size={11} />}
-                        <span className="font-semibold">{e.title}</span>
-                        <span className="mt-1 block">
-                          {new Date(e.startsAt).toLocaleTimeString("en-IN", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                      </button>
-                    ))}
-                    {entries.length > 3 && (
-                      <button
-                        type="button"
+                        aria-label={`View ${d.toDateString()}`}
+                        aria-pressed={selected === key}
+                        className={`mb-2 flex size-8 items-center justify-center rounded-full text-sm ${key === localDate(new Date()) ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
                         onClick={() => selectDate(key)}
-                        className="text-xs text-primary"
                       >
-                        +{entries.length - 3} more
+                        {d.getDate()}
                       </button>
-                    )}
-                  </div>
-                </div>
+                      <div className="space-y-1">
+                        {entries.map((e) => (
+                          <button
+                            type="button"
+                            key={e.id}
+                            className={`block w-full rounded-md p-2 text-left text-xs ${colors[e.highlight] || colors.blue}`}
+                            onClick={() =>
+                              setDraft({
+                                ...e,
+                                startsAt: localTime(e.startsAt),
+                                endsAt: localTime(e.endsAt),
+                              })
+                            }
+                          >
+                            {e.pinned && (
+                              <Pin className="mr-1 inline" size={11} />
+                            )}
+                            <span className="font-semibold">{e.title}</span>
+                            <span className="mt-1 block">
+                              {new Date(e.startsAt).toLocaleTimeString(
+                                "en-IN",
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </ContextMenu.Trigger>
+                  <ContextMenu.Portal>
+                    <ContextMenu.Content className="z-50 min-w-48 rounded-lg border bg-popover p-1 text-popover-foreground shadow-md">
+                      {[
+                        ["Add event", {}],
+                        ["Add pinned event", { pinned: true }],
+                        ["Add highlighted event", { highlight: "amber" }],
+                        ["Add reminder", { reminderMinutes: 30 }],
+                      ].map(([label, preset]) => (
+                        <ContextMenu.Item
+                          key={String(label)}
+                          className="cursor-default rounded-sm px-3 py-2 text-sm outline-none focus:bg-accent"
+                          onSelect={() => {
+                            selectDate(key);
+                            setDraft({
+                              ...emptyEvent(d),
+                              ...(preset as Partial<CalendarEvent>),
+                            });
+                          }}
+                        >
+                          {String(label)}
+                        </ContextMenu.Item>
+                      ))}
+                    </ContextMenu.Content>
+                  </ContextMenu.Portal>
+                </ContextMenu.Root>
               );
             })}
           </div>
         </div>
       </div>
-      <HospitalPanel
-        title={new Date(`${selected}T12:00`).toLocaleDateString("en-IN", {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-        })}
-        subtitle={`${selectedEvents.filter((e) => localDate(new Date(e.startsAt)) === selected).reduce((sum, e) => sum + e.patientsAttended, 0)} attended patients recorded on your events`}
-      >
-        {!selectedEvents.length && (
-          <p className="text-sm text-muted-foreground">
-            No events planned. Add a clinic session, rounds, leave or a personal
-            reminder.
-          </p>
-        )}
-        <div className="grid gap-3 md:grid-cols-2">
-          {selectedEvents.map((e) => (
-            <Button
-              variant="outline"
-              className="h-auto justify-start whitespace-normal p-4 text-left"
-              key={e.id}
-              onClick={() =>
-                setDraft({
-                  ...e,
-                  startsAt: localTime(e.startsAt),
-                  endsAt: localTime(e.endsAt),
-                })
-              }
-            >
-              <span>
-                {e.pinned && "📌 "}
-                {e.title}
-                <span className="block text-xs text-muted-foreground">
-                  {locations.data?.find((l) => l.id === e.locationId)?.name ||
-                    "Personal event"}{" "}
-                  · {e.patientsAttended} patients · {e.reminderMinutes} min
-                  reminder
-                </span>
-              </span>
-            </Button>
-          ))}
-        </div>
-      </HospitalPanel>
-      <HospitalPanel
-        title="Appointments from your practices"
-        subtitle={`${appointments.data?.summary?.patientsAttended ?? 0} patients attended from completed appointments. Organisation staff manage booking decisions.`}
-      >
-        {appointments.isError ? (
-          <p role="alert">Unable to load appointments.</p>
-        ) : (
-          <div className="space-y-2">
-            {appointments.data?.data
-              .filter((a) => localDate(new Date(a.startsAt)) === selected)
-              .map((a) => (
-                <p className="rounded-lg border p-3 text-sm" key={a.id}>
-                  {new Date(a.startsAt).toLocaleTimeString("en-IN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}{" "}
-                  · {a.clinic?.name || "Practice"} · {a.status}
-                </p>
-              ))}
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                disabled={appointmentPage === 1}
-                onClick={() => setAppointmentPage((p) => p - 1)}
-              >
-                Previous appointments
-              </Button>
-              <Button
-                variant="outline"
-                disabled={
-                  !appointments.data ||
-                  appointmentPage >= appointments.data.pagination.totalPages
-                }
-                onClick={() => setAppointmentPage((p) => p + 1)}
-              >
-                Next appointments
-              </Button>
-            </div>
-          </div>
-        )}
-      </HospitalPanel>
-      <p className="text-xs text-muted-foreground">
-        Reminders work while your ERP is open. Calendar events plan your work;
-        personal-practice booking hours are configured below.
-      </p>
-      <BookingHours />
       <Dialog
         open={!!draft}
         onOpenChange={(open) => {
@@ -547,128 +462,6 @@ export function DoctorCalendarPage() {
         </DialogContent>
       </Dialog>
     </DoctorPageShell>
-  );
-}
-function BookingHours() {
-  const locations = useDoctorQuery<WorkLocation[]>("/doctor/locations");
-  const slots = useDoctorQuery<
-    {
-      id: string;
-      locationId: string;
-      dayOfWeek: string;
-      startTime: string;
-      endTime: string;
-      slotDurationMinutes: number;
-    }[]
-  >("/doctor/availability");
-  const save = useDoctorSave();
-  return (
-    <HospitalPanel
-      title="Personal-practice booking hours"
-      subtitle="Recurring hours for patient booking. Hospital and clinic booking hours are managed by their staff."
-    >
-      <form
-        className="flex flex-wrap items-end gap-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const data = new FormData(e.currentTarget);
-          save.mutate({
-            path: "/doctor/availability",
-            body: {
-              locationId: data.get("locationId"),
-              dayOfWeek: data.get("dayOfWeek"),
-              startTime: data.get("startTime"),
-              endTime: data.get("endTime"),
-              slotDurationMinutes: Number(data.get("duration")),
-              isActive: true,
-            },
-          });
-        }}
-      >
-        <label>
-          Location
-          <ErpSelect required name="locationId">
-            <option value="">Select practice</option>
-            {locations.data
-              ?.filter((l) => l.type === "PERSONAL_PRACTICE")
-              .map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.name}
-                </option>
-              ))}
-          </ErpSelect>
-        </label>
-        <label>
-          Day
-          <ErpSelect name="dayOfWeek">
-            {[
-              "MONDAY",
-              "TUESDAY",
-              "WEDNESDAY",
-              "THURSDAY",
-              "FRIDAY",
-              "SATURDAY",
-              "SUNDAY",
-            ].map((d) => (
-              <option key={d}>{d}</option>
-            ))}
-          </ErpSelect>
-        </label>
-        <label>
-          From
-          <Input required name="startTime" type="time" />
-        </label>
-        <label>
-          To
-          <Input required name="endTime" type="time" />
-        </label>
-        <label>
-          Minutes
-          <Input
-            required
-            className="w-24"
-            name="duration"
-            type="number"
-            defaultValue={30}
-            min={5}
-            max={240}
-          />
-        </label>
-        <Button disabled={save.isPending}>Add hours</Button>
-      </form>
-      {save.isError && <p role="alert">{save.error.message}</p>}
-      <div className="mt-4 space-y-2">
-        {slots.data?.map((s) => (
-          <div
-            className="flex items-center justify-between rounded-lg border p-3 text-sm"
-            key={s.id}
-          >
-            <span>
-              {locations.data?.find((l) => l.id === s.locationId)?.name} ·{" "}
-              {s.dayOfWeek} · {s.startTime}–{s.endTime} ·{" "}
-              {s.slotDurationMinutes} min
-            </span>
-            <Button
-              variant="ghost"
-              disabled={save.isPending}
-              onClick={() => {
-                if (
-                  window.confirm(
-                    "Remove these recurring booking hours? Existing bookings stay unchanged."
-                  )
-                )
-                  save.mutate({
-                    path: `/doctor/availability/${s.id}`,
-                    method: "DELETE",
-                  });
-              }}
-            >
-              Remove
-            </Button>
-          </div>
-        ))}
-      </div>
-    </HospitalPanel>
   );
 }
 export function DoctorReminders() {

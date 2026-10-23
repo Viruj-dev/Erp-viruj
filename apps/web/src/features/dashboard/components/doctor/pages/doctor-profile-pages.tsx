@@ -1,13 +1,38 @@
 "use client";
 import { Plus, Save } from "lucide-react";
 import { DoctorCredentialsPage } from "./doctor-credentials";
-import { DoctorProfileForm } from "./doctor-onboarding";
+import { ErpUserProfilePage } from "../../shared/profile";
+import { ErpDemoSettings } from "../../hospital/pages/settings";
+import { DoctorWorkingHoursFields } from "./doctor-working-hours";
+import {
+  useDoctorTenant,
+  useDoctorQuery,
+  useDoctorSave,
+  type WorkingHours,
+  type WorkLocation,
+} from "@/features/dashboard/lib/doctor-workspace";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { DoctorWorkLocationsPage } from "./doctor-work-locations";
 import { DoctorCalendarPage } from "./doctor-calendar";
-import { DataTable, DoctorPageShell, FilterBar, PrimaryAction, RowActions, SettingsPanel, StatusBadge } from "../_components/doctor-shared-ui";
+import {
+  DataTable,
+  DoctorPageShell,
+  FilterBar,
+  PrimaryAction,
+  RowActions,
+  SettingsPanel,
+  StatusBadge,
+} from "../_components/doctor-shared-ui";
 
 export function DoctorProfileManagementPage() {
-  return <DoctorProfileForm />;
+  return <ErpUserProfilePage />;
 }
 
 export function DoctorVerificationVaultPage() {
@@ -55,52 +80,62 @@ export function DoctorLeavesPage() {
 }
 
 export function DoctorSettingsPage() {
+  const tenant = useDoctorTenant();
+  const hours = useDoctorQuery<WorkingHours[]>("/doctor/working-hours");
+  const locations = useDoctorQuery<WorkLocation[]>("/doctor/locations");
+  const [draft, setDraft] = useState<WorkingHours[]>();
+  const save = useDoctorSave();
   return (
-    <DoctorPageShell
-      eyebrow="Configuration"
-      title="Settings"
-      subtitle="Practice behavior, appointment rules, public profile visibility, and notifications."
-      actions={
-        <PrimaryAction icon={<Save size={16} />} label="Save Settings" />
-      }
-    >
-      <div className="grid gap-4 xl:grid-cols-2">
-        <SettingsPanel
-          title="Practice Settings"
-          rows={[
-            "Accept Appointments",
-            "Allow Walk-ins",
-            "Default Consultation Fee",
-            "Timezone",
-            "Locale",
-          ]}
-        />
-        <SettingsPanel
-          title="Appointment Settings"
-          rows={[
-            "Accept Online Consultations",
-            "Default Slot Duration",
-            "Break Duration",
-            "Max Patients Per Slot",
-          ]}
-        />
-        <SettingsPanel
-          title="Public Profile Settings"
-          rows={[
-            "Public Profile Enabled",
-            "Show Consultation Fee",
-            "Show Availability",
-          ]}
-        />
-        <SettingsPanel
-          title="Notification Preferences"
-          rows={[
-            "Appointment Reminders",
-            "Verification Updates",
-            "Patient Activity Alerts",
-          ]}
-        />
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          disabled={!hours.data || !locations.data}
+          onClick={() => setDraft(hours.data || [])}
+        >
+          Manage organisation working hours
+        </Button>
       </div>
-    </DoctorPageShell>
+      <ErpDemoSettings
+        organizationId={tenant.organizationId}
+        section="operational"
+      />
+      <Dialog
+        open={!!draft}
+        onOpenChange={(open) => {
+          if (!open) setDraft(undefined);
+        }}
+      >
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Organisation working hours</DialogTitle>
+          </DialogHeader>
+          {draft && (
+            <form
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                save.mutate(
+                  {
+                    path: "/doctor/working-hours",
+                    method: "PATCH",
+                    body: draft,
+                  },
+                  { onSuccess: () => setDraft(undefined) }
+                );
+              }}
+            >
+              <DoctorWorkingHoursFields
+                locations={locations.data || []}
+                value={draft}
+                onChange={setDraft}
+              />
+              {save.isError && <p role="alert">{save.error.message}</p>}
+              <Button disabled={save.isPending}>Save working hours</Button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

@@ -9,12 +9,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DoctorWorkspaceContext } from "@/features/dashboard/lib/doctor-workspace";
 import { createErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 mock.module("next/navigation", () => ({ useRouter: () => ({ replace() {} }) }));
-const {
-  DoctorOnboardingGate,
-  doctorSessionDate,
-  DoctorCredentialsFields,
-  doctorRegistryFields,
-} = await import("./doctor-onboarding-flow");
+const { DoctorOnboardingGate, DoctorCredentialsFields, doctorRegistryFields } =
+  await import("./doctor-onboarding-flow");
 import { DoctorProfileForm } from "./doctor-onboarding";
 import {
   DoctorCalendarPage,
@@ -97,8 +93,9 @@ test("calendar renders saved work events and attended count", () => {
     )]: { data: [], pagination: { total: 0, totalPages: 0, page: 1 } },
   });
   expect(html).toContain("Real clinic rounds");
-  expect(html).toContain("My clinic");
-  expect(html).toContain("7 attended patients");
+  expect(html).not.toContain("Appointments from your practices");
+  expect(html).not.toContain("Personal-practice booking hours");
+  expect(html).toContain("Right-click a date");
   expect(html).toContain("Enable reminders");
 });
 test("consultations show actual patient and organisation without decision buttons", () => {
@@ -146,7 +143,7 @@ test("new doctor dashboard opens onboarding before mounting dashboard queries", 
   );
   expect(html).toContain("Personal information");
   expect(html).toContain("vh-onboarding--doctor");
-  expect(html).toContain("Step 1 of 5");
+  expect(html).toContain("Step 1 of 4");
   expect(html).toContain("Save &amp; Continue");
   expect(html).not.toContain("erp-shell");
   expect(html).not.toContain("Appointments today");
@@ -222,19 +219,10 @@ test("an explicit onboarding route always uses the shared full-screen frame", ()
   );
   expect(html).toContain("vh-onboarding--doctor");
   expect(html).toContain("Professional credentials");
-  expect(html).toContain("Work locations");
+  expect(html).not.toContain("Where you work");
   expect(html).toContain("Availability &amp; fees");
   expect(html).not.toContain("erp-shell");
 });
-test("initial workplace sessions use upcoming weekdays in India", () => {
-  expect(doctorSessionDate("THURSDAY", new Date("2026-10-21T20:00:00Z"))).toBe(
-    "2026-10-22"
-  );
-  expect(doctorSessionDate("MONDAY", new Date("2026-10-21T20:00:00Z"))).toBe(
-    "2026-10-26"
-  );
-});
-
 test("birth date and languages are optional in the onboarding identity step", () => {
   const html = render(
     <DoctorOnboardingGate
@@ -360,4 +348,26 @@ test("NMC autofill maps returned identity and degree without inventing clinical 
     singleRegistryMatch([record, { ...record, id: 2, name: "Another doctor" }])
   ).toBeUndefined();
   expect(singleRegistryMatch([{ ...record, removed: true }])).toBeUndefined();
+});
+
+test("patients use completed organisation appointments", () => {
+  const html = render(<DoctorConsultationsPage completedOnly />, {
+    "/doctor/appointments?page=1&pageSize=20&q=&status=COMPLETED": {
+      data: [
+        {
+          id: "done",
+          startsAt: "2026-10-23T09:00:00Z",
+          status: "COMPLETED",
+          patient: { name: "Completed Patient" },
+          clinic: { name: "C Hospital" },
+          reason: "Follow-up",
+        },
+      ],
+      pagination: { page: 1, total: 1, totalPages: 1 },
+    },
+  });
+  expect(html).toContain("Completed Patient");
+  expect(html).toContain("C Hospital");
+  expect(html).toContain("Follow-up");
+  expect(html).not.toContain("Select a provider workspace");
 });
