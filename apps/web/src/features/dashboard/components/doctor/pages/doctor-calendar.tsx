@@ -4,7 +4,7 @@ import * as ContextMenu from "@radix-ui/react-context-menu";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Pin, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/erp/checkbox";
+import { Switch } from "@/components/ui/erp/switch";
 import { Input } from "@/components/ui/erp/input";
 import { Textarea } from "@/components/ui/erp/textarea";
 import { ErpSelect } from "@/components/ui/erp/select";
@@ -421,14 +421,15 @@ export function DoctorCalendarPage() {
                   ))}
                 </ErpSelect>
               </label>
-              <label className="flex items-center gap-2">
-                <Checkbox
+              <label className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm">
+                <span>Pin event</span>
+                <Switch
+                  aria-label="Pin event"
                   checked={draft.pinned}
                   onCheckedChange={(checked) =>
-                    setDraft({ ...draft, pinned: checked === true })
+                    setDraft({ ...draft, pinned: checked })
                   }
                 />
-                Pin event
               </label>
               {save.isError && (
                 <p role="alert" className="text-destructive">
