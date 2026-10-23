@@ -94,6 +94,7 @@ function SetupForm({
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [complete, setComplete] = useState(false);
+  const [invitationPending, setInvitationPending] = useState(false);
   const router = useRouter(),
     client = useQueryClient();
   const [data, setData] = useState<DiagnosticSetup>(() => ({
@@ -129,6 +130,7 @@ function SetupForm({
         complete
       ),
     onSuccess: (result, complete) => {
+      setInvitationPending((result.doctorInvitationsPending ?? 0) > 0);
       setVersion(result.version);
       setDraftSaved(true);
       client.setQueryData(diagnosticSetupKey(tenant.organizationId), result);
@@ -397,6 +399,11 @@ function SetupForm({
   if (complete) {
     return (
       <OnboardingSuccessScreen
+        notice={
+          invitationPending
+            ? "Your workspace is ready. Doctor invitation email delivery is pending."
+            : undefined
+        }
         kind="hospital"
         themeClassName={themeClassName}
         completionPercentage={100}

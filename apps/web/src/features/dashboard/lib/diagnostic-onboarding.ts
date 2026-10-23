@@ -48,6 +48,7 @@ export type DiagnosticSetup = Record<
   walkIns: boolean;
 };
 export type DiagnosticOnboardingState = {
+  doctorInvitationsPending?: number;
   data: DiagnosticSetup | null;
   completedAt: string | null;
   version: number;

@@ -76,6 +76,7 @@ export function OrganizationOnboardingPage({
     "idle"
   );
   const [launching, setLaunching] = useState(false);
+  const [invitationPending, setInvitationPending] = useState(false);
 
   const currentStep = steps[currentStepIndex] ?? steps[0];
   const progressCount = completedSteps.filter((step) =>
@@ -226,10 +227,11 @@ export function OrganizationOnboardingPage({
     if (launching) return;
     setLaunching(true);
     try {
-      await virujBackend.directory.saveOnboarding({
+      const result = await virujBackend.directory.saveOnboarding({
         organizationId: organizationId ?? hospitalId,
         data: getPersistableOnboardingState(data),
       });
+      setInvitationPending((result.doctorInvitationsPending ?? 0) > 0);
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -257,6 +259,11 @@ export function OrganizationOnboardingPage({
   if (showCompletionScreen) {
     return (
       <OnboardingSuccessScreen
+        notice={
+          invitationPending
+            ? "Your workspace is ready. Doctor invitation email delivery is pending."
+            : undefined
+        }
         completionPercentage={100}
         hospitalName={
           data.profile.hospitalName || organizationLabel || "Your organization"
@@ -318,11 +325,7 @@ export function OrganizationOnboardingPage({
       ) : null}
 
       {currentStep.id === "doctors" ? (
-        <DoctorsStep
-          data={data}
-          setData={setData}
-          organizationId={storageId}
-        />
+        <DoctorsStep data={data} setData={setData} organizationId={storageId} />
       ) : null}
 
       {currentStep.id === "public" ? (
