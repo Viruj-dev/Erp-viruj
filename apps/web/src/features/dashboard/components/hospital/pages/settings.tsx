@@ -1012,8 +1012,8 @@ function SecurityTab({ security, historyFilters, setHistoryFilters, historyRows 
 
   return (
     <div className="flex flex-col gap-5">
-      <InlineBanner tone="rose" icon={ShieldAlert} title="Security settings are read-only right now">
-        Changing security policy requires proof of recent reauthentication, which this session doesn't have yet. You can review every setting below, but editing is disabled until you reauthenticate — there's no client-side confirmation that can unlock this.
+      <InlineBanner tone="rose" icon={ShieldAlert} title="Security policy editing isn't available yet">
+        Policy editing requires recent-reauthentication proof, which this environment's authentication backend doesn't support yet (reported as unsupported — signing in again will not unlock it). You can review every setting below; editing will arrive together with real reauthentication support.
       </InlineBanner>
 
       <SectionCard title="Capabilities" eyebrow="Security" description="What this environment's authentication backend currently supports.">
@@ -1037,7 +1037,7 @@ function SecurityTab({ security, historyFilters, setHistoryFilters, historyRows 
             </ul>
           </div>
         </div>
-        <p className="mt-3 text-[12px] text-slate-400">Reauthentication required for changes · Session management: not yet available in this environment.</p>
+        <p className="mt-3 text-[12px] text-slate-400">Reauthentication: not supported by this environment yet · Session management: not yet available in this environment.</p>
       </SectionCard>
 
       <SectionCard title="Password policy" eyebrow="Authentication" description="Minimums are floored by the platform-wide policy and can only be made stricter.">
