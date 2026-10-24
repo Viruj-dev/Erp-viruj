@@ -138,7 +138,9 @@ export function DiagnosticPublication({
       )}
       {manage && (
         <Link
-          href={tenant.buildRoute("availability")}
+          // The "availability" route is not a supported diagnostic page;
+          // branch and slot management lives under Facilities.
+          href={tenant.buildRoute("facilities")}
           className="inline-block text-sm underline"
         >
           Manage branches & appointment slots

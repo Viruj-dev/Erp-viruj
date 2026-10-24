@@ -34,6 +34,11 @@ import {
   type DiagnosticOnboardingState,
 } from "@/features/dashboard/lib/diagnostic-onboarding";
 import { virujBackend } from "@/lib/viruj-backend";
+import {
+  isValidEmail,
+  isValidPhone,
+  isValidPostalCode,
+} from "@/features/dashboard/components/hospital/pages/onboarding/state";
 
 export function DiagnosticOnboarding({
   tenant,
@@ -194,6 +199,8 @@ function SetupForm({
       type?: string;
       multiline?: boolean;
       hint?: string;
+      pattern?: string;
+      title?: string;
     } = {}
   ) =>
     options.type === "time" ? (
@@ -227,6 +234,8 @@ function SetupForm({
             placeholder={label}
             type={options.type}
             required={options.required}
+            pattern={options.pattern}
+            title={options.title}
             min={key === "establishedYear" ? 1800 : undefined}
             max={
               key === "establishedYear" ? new Date().getFullYear() : undefined
@@ -320,7 +329,23 @@ function SetupForm({
   const validateCurrentStep = () => {
     setValidationError("");
     if (!formRef.current?.reportValidity()) return false;
+    if (step === 1 && !isValidPostalCode(data.postalCode)) {
+      setValidationError(
+        "Enter a valid 6-digit Indian PIN code for the primary branch."
+      );
+      return false;
+    }
     if (step === 2) {
+      if (!isValidPhone(data.phone)) {
+        setValidationError(
+          "Enter a valid contact phone number (7-20 digits)."
+        );
+        return false;
+      }
+      if (!isValidEmail(data.email)) {
+        setValidationError("Enter a valid contact email address.");
+        return false;
+      }
       if (data.workingDays.length === 0) {
         setValidationError("Select at least one working day to continue.");
         return false;
@@ -349,7 +374,7 @@ function SetupForm({
 
   async function locateBranch() {
     setLocating(true);
-    setLocationStatus("Finding your branch location�");
+    setLocationStatus("Finding your branch location…");
     try {
       const position = await getCurrentPosition();
       const latitude = position.coords.latitude.toFixed(6);
@@ -494,7 +519,7 @@ function SetupForm({
                 <p className="mt-1 text-xs text-[var(--onboarding-muted)]">
                   {data.registrationNumber || "Registration pending"}
                   {data.establishedYear
-                    ? ` � Established ${data.establishedYear}`
+                    ? ` · Established ${data.establishedYear}`
                     : ""}
                 </p>
               </div>
@@ -520,7 +545,7 @@ function SetupForm({
                   disabled={locating}
                   onClick={() => void locateBranch()}
                 >
-                  {locating ? "Finding location�" : "Use current location"}
+                  {locating ? "Finding location…" : "Use current location"}
                 </Button>
                 <p role="status" className="text-sm">
                   {locationStatus}
@@ -542,14 +567,23 @@ function SetupForm({
               {field("address", "Street address", { required: true })}
               {field("city", "City", { required: true })}
               {field("state", "State", { required: true })}
-              {field("postalCode", "PIN code", { required: true })}
+              {field("postalCode", "PIN code", {
+                required: true,
+                pattern: "^[1-9][0-9]{5}$",
+                title: "Enter a valid 6-digit Indian PIN code",
+              })}
             </div>
           </div>
         )}
         {step === 2 && (
           <div className="space-y-5">
             <section className="grid gap-4 rounded-[26px] border border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] p-5 shadow-sm md:grid-cols-2">
-              {field("phone", "Contact phone", { required: true, type: "tel" })}
+              {field("phone", "Contact phone", {
+                required: true,
+                type: "tel",
+                pattern: "^[+0-9 ()-]{7,20}$",
+                title: "Enter a valid phone number (7-20 digits)",
+              })}
               {field("email", "Contact email", {
                 required: true,
                 type: "email",
@@ -562,7 +596,7 @@ function SetupForm({
                   Opening hours
                 </p>
                 <p className="mt-1 text-xs text-[var(--onboarding-muted-strong)]">
-                  12-hour time � Indian Standard Time (IST, UTC+05:30)
+                  12-hour time · Indian Standard Time (IST, UTC+05:30)
                 </p>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
@@ -577,7 +611,7 @@ function SetupForm({
               </div>
               <fieldset>
                 <legend className="mb-3 text-sm font-medium">
-                  Working days � Asia/Kolkata
+                  Working days – Asia/Kolkata
                 </legend>
                 {choices("workingDays", [
                   "Mon",
@@ -728,22 +762,22 @@ function SetupForm({
                   "Registration",
                   [data.registrationNumber, data.registrationAuthority]
                     .filter(Boolean)
-                    .join(" � "),
+                    .join(" · "),
                 ],
-                ["Contact", `${data.phone} � ${data.email}`],
+                ["Contact", `${data.phone} · ${data.email}`],
                 [
                   "Branch",
                   `${data.branchName}, ${data.address}, ${data.city}, ${data.state} ${data.postalCode}`,
                 ],
                 [
                   "Hours",
-                  `${data.workingDays.join(", ")} � ${data.openingTime}�${data.closingTime}`,
+                  `${data.workingDays.join(", ")} · ${data.openingTime}–${data.closingTime}`,
                 ],
                 ...(!pathology
                   ? [
                       [
                         "Reporting professional",
-                        `${data.reportingName} � ${data.reportingRegistration}`,
+                        `${data.reportingName} · ${data.reportingRegistration}`,
                       ],
                       [
                         pathology ? "Laboratory sections" : "Modalities",

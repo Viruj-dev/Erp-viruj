@@ -361,7 +361,7 @@ export function DiagnosticServiceForm({
       <input type="hidden" name="code" value={serviceCode} />
       {pathology && (
         <div className="space-y-1 text-sm">
-          <Label htmlFor="pathology-service">Choose a test or service</Label>
+          <Label htmlFor="pathology-service">Choose a test or service *</Label>
           <Select
             name="pathologyService"
             required
@@ -399,7 +399,7 @@ export function DiagnosticServiceForm({
       )}
       {!pathology && (
         <div className="space-y-1 text-sm">
-          <Label htmlFor="radiology-service">Choose a test or service</Label>
+          <Label htmlFor="radiology-service">Choose a test or service *</Label>
           <Select
             required
             value={radiologyService || (service ? serviceCode : "")}
@@ -451,7 +451,7 @@ export function DiagnosticServiceForm({
         />
       </Label>
       <Label className="block space-y-1 text-sm">
-        Appointment duration (minutes)
+        Appointment duration (minutes) *
         <Input
           disabled={detailsDisabled}
           name="durationMinutes"
@@ -538,7 +538,7 @@ export function DiagnosticServiceForm({
       </fieldset>
       <div className="grid gap-4 sm:grid-cols-2">
         <Label className="block space-y-1 text-sm">
-          Service name
+          Service name *
           <Input
             disabled={detailsDisabled}
             required
@@ -551,7 +551,7 @@ export function DiagnosticServiceForm({
         </Label>
 
         <Label className="block space-y-1 text-sm">
-          Price (₹)
+          Price (₹) *
           <Input
             disabled={detailsDisabled}
             required
@@ -564,7 +564,7 @@ export function DiagnosticServiceForm({
           />
         </Label>
         <Label className="block space-y-1 text-sm">
-          Turnaround (hours)
+          Turnaround (hours) *
           <Input
             disabled={detailsDisabled}
             required
@@ -578,7 +578,7 @@ export function DiagnosticServiceForm({
         </Label>
         {pathology && (
           <Label className="block space-y-1 text-sm">
-            Specimen
+            Specimen *
             <Input
               disabled={detailsDisabled}
               required

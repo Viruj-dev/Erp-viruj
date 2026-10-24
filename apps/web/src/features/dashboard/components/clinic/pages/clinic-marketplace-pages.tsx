@@ -19,6 +19,7 @@ import {
   MessageSquareReply,
   Plus,
   Search,
+  Settings,
   ShieldCheck,
   Sparkles,
   Stethoscope,
@@ -1283,42 +1284,28 @@ export function ClinicReviewsPage() {
 }
 
 export function ClinicSettingsPage() {
-  const tabs = [
-    "General",
-    "Visibility",
-    "Booking Preferences",
-    "Notifications",
-    "Integrations",
-  ];
+  // There is no clinic marketplace-settings API yet, so no persisted toggle
+  // values exist to render. The page is an explicit empty state until the
+  // endpoint ships.
   return (
     <ClinicPageShell
       eyebrow="Settings"
       title="Marketplace Settings"
       subtitle="Configure how your clinic appears and receives requests on Viruj."
     >
-      <div className="flex flex-wrap gap-2">
-        {tabs.map((tab, index) => (
-          <button
-            className={
-              index === 0
-                ? "h-10 rounded-xl bg-[#6d28d9] px-4 text-sm font-semibold text-white"
-                : "h-10 rounded-xl bg-violet-50 px-4 text-sm font-semibold text-slate-600 dark:bg-violet-400/[0.10] dark:text-slate-300"
-            }
-            key={tab}
-            type="button"
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-      <Panel title="General" subtitle="Default marketplace controls">
-        <div className="grid gap-4 md:grid-cols-2">
-          <ToggleRow label="Public Visibility" value="Enabled" />
-          <ToggleRow label="Online Appointment Requests" value="Enabled" />
-          <ToggleRow label="Review Replies" value="Enabled" />
-          <ToggleRow label="WhatsApp Notifications" value="Disabled" />
+      <section className="rounded-2xl border border-dashed border-violet-100 bg-white/88 p-10 text-center dark:border-violet-400/[0.12] dark:bg-[#14171b]">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-400/[0.12] dark:text-violet-300">
+          <Settings size={22} />
         </div>
-      </Panel>
+        <h2 className="mt-4 font-headline text-lg font-semibold text-slate-950 dark:text-slate-100">
+          Marketplace settings are not available yet.
+        </h2>
+        <p className="mx-auto mt-2 max-w-md text-sm font-medium text-slate-500 dark:text-slate-400">
+          Visibility, booking, and notification controls will appear here once
+          marketplace settings can be saved for your clinic. Until then nothing
+          is configurable from this page.
+        </p>
+      </section>
     </ClinicPageShell>
   );
 }

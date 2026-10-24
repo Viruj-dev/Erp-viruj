@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { virujBackend } from "@/lib/viruj-backend";
+import { authClient } from "@/lib/auth-client";
 
 /* ============================================================================
    DESIGN TOKENS — mirrors the existing Viruj ERP dashboard: slate/blue,
@@ -997,6 +998,10 @@ function LockedField({ label, hint, children }) {
 }
 
 function SecurityTab({ security, historyFilters, setHistoryFilters, historyRows }) {
+  // The authentication backend in this environment floors custom minimums at 8
+  // characters (max 128). No capabilities endpoint exposes the value yet, so it
+  // lives here as the single source until one ships.
+  const platformMinimumPasswordLength = 8;
   const [historyDetail, setHistoryDetail] = useState(null);
   const rows = historyRows || HISTORY_ROWS;
   const filteredHistory = rows.filter((h) => {
@@ -1037,7 +1042,7 @@ function SecurityTab({ security, historyFilters, setHistoryFilters, historyRows 
 
       <SectionCard title="Password policy" eyebrow="Authentication" description="Minimums are floored by the platform-wide policy and can only be made stricter.">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <LockedField label="Minimum password length" hint="Platform minimum: 10"><TextInput disabled value={security.minLength} /></LockedField>
+          <LockedField label="Minimum password length" hint={`Platform minimum: ${platformMinimumPasswordLength}`}><TextInput disabled value={security.minLength} /></LockedField>
           <LockedField label="Password expiry" hint="days · 0 = never"><TextInput disabled value={security.expiryDays} /></LockedField>
           <LockedField label="Password history" hint="prevents reusing the last N passwords"><TextInput disabled value={security.historyCount} /></LockedField>
         </div>
@@ -1246,6 +1251,9 @@ export type SettingsSection = "operational" | "notifications" | "security" | "pr
 
 export function ErpDemoSettings({ organizationId, section = "operational" }: { organizationId?: string; section?: SettingsSection }) {
   const queryClient = useQueryClient();
+  const activeOrganizationState = authClient.useActiveOrganization();
+  const activeOrganizationType = activeOrganizationState.data?.organizationType;
+  const organizationName = (activeOrganizationState.data?.name || "").trim();
   const [pageState, setPageState] = useState("loading"); // loading | ready | error | empty
   const [activeTab, setActiveTab] = useState(normalizeSettingsSection(section));
   const [canEdit] = useState(true); // permission-aware read-only mode
@@ -1592,9 +1600,19 @@ export function ErpDemoSettings({ organizationId, section = "operational" }: { o
         <div className="mx-auto max-w-6xl px-5 py-6 sm:px-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-blue-600">Hospital workspace</p>
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-blue-600">
+                {activeOrganizationType === "pathology"
+                  ? "Pathology workspace"
+                  : activeOrganizationType === "radiology"
+                    ? "Radiology workspace"
+                    : "Hospital workspace"}
+              </p>
               <h1 className="text-[22px] font-semibold text-slate-900">Settings</h1>
-              <p className="mt-1 text-[13px] text-slate-500">Operational rules, notification behavior, and security policy for Yashoda Hospital.</p>
+              <p className="mt-1 text-[13px] text-slate-500">
+                {activeOrganizationType === "pathology" || activeOrganizationType === "radiology"
+                  ? "Operational rules, notification behavior, and security policy for this diagnostic workspace."
+                  : `Operational rules, notification behavior, and security policy for ${organizationName || "this workspace"}.`}
+              </p>
             </div>          </div>
 
           {pageState === "ready" && (

@@ -28,6 +28,36 @@ function hasValidCoordinates(branch?: Branch) {
   );
 }
 
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const phonePattern = /^[+0-9 ()-]{7,20}$/;
+const indianPinCodePattern = /^[1-9][0-9]{5}$/;
+
+export function isValidEmail(value: string) {
+  return emailPattern.test(value.trim());
+}
+
+export function isValidPhone(value: string) {
+  return phonePattern.test(value.trim());
+}
+
+export function isValidPostalCode(value: string) {
+  return indianPinCodePattern.test(value.trim());
+}
+
+export function isValidEstablishedYear(value: string) {
+  const year = Number(value.trim());
+  return (
+    Number.isInteger(year) &&
+    year >= 1800 &&
+    year <= new Date().getFullYear()
+  );
+}
+
+export function isValidBedCount(value: string) {
+  const bedCount = Number(value.trim());
+  return Number.isInteger(bedCount) && bedCount >= 0;
+}
+
 export function validateStep(
   stepId: StepId,
   data: OnboardingState,
@@ -55,17 +85,37 @@ export function validateStep(
       if (kind === "clinic" && !data.profile.establishedYear.trim()) {
         return "Add the year established.";
       }
+      if (
+        kind === "clinic" &&
+        !isValidEstablishedYear(data.profile.establishedYear)
+      ) {
+        return "Enter a valid year established (a whole year between 1800 and the current year).";
+      }
       if (kind === "clinic" && !data.profile.hospitalOwnershipType.trim()) {
         return "Select the ownership type.";
       }
+      if (
+        data.profile.numberOfBeds.trim() &&
+        !isValidBedCount(data.profile.numberOfBeds)
+      ) {
+        return "Bed count must be a non-negative whole number.";
+      }
       if (kind === "hospital" && !data.profile.email.trim())
         return "Add the hospital email.";
+      if (kind === "hospital" && !isValidEmail(data.profile.email))
+        return "Enter a valid hospital email address.";
       if (kind === "hospital" && !data.profile.phone.trim())
         return "Add the hospital phone number.";
+      if (kind === "hospital" && !isValidPhone(data.profile.phone))
+        return "Enter a valid hospital phone number (7-20 digits).";
       return "";
     case "contact":
       if (!data.profile.phone.trim()) return "Add the primary mobile number.";
+      if (!isValidPhone(data.profile.phone))
+        return "Enter a valid primary mobile number (7-20 digits).";
       if (!data.profile.email.trim()) return "Add the clinic email.";
+      if (!isValidEmail(data.profile.email))
+        return "Enter a valid clinic email address.";
       return "";
     case "locations":
       if (
@@ -80,6 +130,11 @@ export function validateStep(
         return kind === "clinic"
           ? "Add address, city, state, and pincode."
           : "Each branch needs a name, address, and city.";
+      }
+      if (
+        data.branches.some((branch) => !isValidPostalCode(branch.postalCode))
+      ) {
+        return "Enter a valid 6-digit Indian PIN code for each branch.";
       }
       if (
         data.publicProfile.showHospitalProfile &&

@@ -13,7 +13,6 @@ import {
   Activity,
   Clock,
   Edit3,
-  Filter,
   Search,
   Trash2,
   UserPlus
@@ -235,13 +234,6 @@ export function ErpDemoStaff({
             />
           </span>
           <button
-            className="inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-surface-container-low px-3 py-2 text-xs font-semi-bold text-on-surface transition hover:bg-surface-container-high"
-            type="button"
-          >
-            <Filter size={14} />
-            Advanced Filters
-          </button>
-          <button
             className="inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-primary px-3 py-2 text-xs font-semi-bold text-white shadow-sm transition hover:scale-[0.99]"
             onClick={() => {
               setIsEntryDialogOpen(true);
@@ -261,7 +253,7 @@ export function ErpDemoStaff({
               <span>Name & Identifier</span>
               <span>Department</span>
               <span>Access Level</span>
-              <span>Last Activity</span>
+              <span>Joined</span>
               <span>Actions</span>
             </div>
             <div className="divide-y divide-outline-variant/12">
@@ -541,7 +533,7 @@ function getRoleOptionsForOrganization(
   }
 
   if (organizationType === "pathology") {
-    return ["ADMIN", "MANAGER", "TECHNICIAN", "RECEPTIONIST", "STAFF"];
+    return ["ADMIN", "MANAGER", "DOCTOR", "TECHNICIAN", "RECEPTIONIST", "STAFF"];
   }
 
   return [

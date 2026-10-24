@@ -4,7 +4,6 @@ import {
   Activity,
   AlertTriangle,
   Bell,
-  BrainCircuit,
   CalendarClock,
   ClipboardList,
   FileBarChart,
@@ -32,6 +31,7 @@ const moduleContent: Record<
   {
     accent: string;
     description: string;
+    emptyMessage?: string;
     icon: ReactNode;
     kpis: { label: string; note: string; value: string }[];
     primary: string;
@@ -102,21 +102,11 @@ const moduleContent: Record<
     description:
       "Imaging operations for scan queues, MRI/CT/X-ray uploads, report drafting, and modality scheduling.",
     icon: <ImagePlus size={22} />,
-    kpis: [
-      { label: "Scan queue", note: "7 urgent", value: "44" },
-      { label: "Reports pending", note: "Avg 38m", value: "19" },
-      { label: "Modalities online", note: "2 in maintenance", value: "12" },
-    ],
+    emptyMessage:
+      "No imaging activity yet — this centre has no studies in the system.",
+    kpis: [],
     primary: "Imaging Control",
-    queue: [
-      { label: "MRI Brain", meta: "PX-88219 | 09:40 AM", status: "Upload" },
-      { label: "CT Chest", meta: "PX-77102 | 10:15 AM", status: "Reporting" },
-      {
-        label: "X-ray Spine",
-        meta: "PX-94018 | 11:05 AM",
-        status: "Scheduled",
-      },
-    ],
+    queue: [],
     title: "Radiology Operations",
     workflows: [
       "DICOM image management",
@@ -130,17 +120,11 @@ const moduleContent: Record<
     description:
       "Lab command center for test requests, sample tracking, diagnostics reports, and turnaround monitoring.",
     icon: <FlaskConical size={22} />,
-    kpis: [
-      { label: "Samples active", note: "14 priority", value: "312" },
-      { label: "TAT median", note: "9m faster", value: "41m" },
-      { label: "Reports ready", note: "23 awaiting release", value: "88" },
-    ],
+    emptyMessage:
+      "No lab activity yet — this workspace has no samples in the system.",
+    kpis: [],
     primary: "Lab Operations",
-    queue: [
-      { label: "CBC panel", meta: "Barcode LAB-8821", status: "Processing" },
-      { label: "Lipid profile", meta: "Barcode LAB-8830", status: "Verified" },
-      { label: "Culture test", meta: "Barcode LAB-8842", status: "Incubating" },
-    ],
+    queue: [],
     title: "Pathology Lab",
     workflows: [
       "Sample collection tracking",
@@ -154,17 +138,11 @@ const moduleContent: Record<
     description:
       "Medication operations for prescriptions, stock, dispensing queues, substitutions, and controlled inventory.",
     icon: <Pill size={22} />,
-    kpis: [
-      { label: "Dispense queue", note: "5 urgent", value: "67" },
-      { label: "Low stock", note: "12 reorder alerts", value: "24" },
-      { label: "Claims linked", note: "Insurance mapped", value: "91%" },
-    ],
+    emptyMessage:
+      "No pharmacy activity yet — this workspace has no dispense records in the system.",
+    kpis: [],
     primary: "Pharmacy Desk",
-    queue: [
-      { label: "Metformin 500mg", meta: "Dr. Elias Vance", status: "Pack" },
-      { label: "Atorvastatin", meta: "Insurance claim", status: "Approval" },
-      { label: "Nebulizer refill", meta: "Ward 3B", status: "Ready" },
-    ],
+    queue: [],
     title: "Pharmacy Management",
     workflows: [
       "Prescription dispensing",
@@ -274,22 +252,29 @@ export function ErpEnterpriseModule({
             </p>
           </div>
         </div>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {content.kpis.map((kpi) => (
-            <div
-              className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur"
-              key={kpi.label}
-            >
-              <p className="text-[10px] font-semi-bold uppercase tracking-[0.18em] text-white/55">
-                {kpi.label}
-              </p>
-              <p className="mt-2 font-headline text-3xl font-semi-bold">
-                {kpi.value}
-              </p>
-              <p className="mt-1 text-xs text-white/62">{kpi.note}</p>
-            </div>
-          ))}
-        </div>
+        {content.kpis.length === 0 ? (
+          <div className="mt-8 rounded-2xl border border-white/15 bg-white/10 p-5 text-sm font-medium text-white/80 backdrop-blur">
+            This module is not connected to live workspace data yet — no metrics
+            are shown until real activity exists.
+          </div>
+        ) : (
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {content.kpis.map((kpi) => (
+              <div
+                className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur"
+                key={kpi.label}
+              >
+                <p className="text-[10px] font-semi-bold uppercase tracking-[0.18em] text-white/55">
+                  {kpi.label}
+                </p>
+                <p className="mt-2 font-headline text-3xl font-semi-bold">
+                  {kpi.value}
+                </p>
+                <p className="mt-1 text-xs text-white/62">{kpi.note}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
@@ -306,41 +291,35 @@ export function ErpEnterpriseModule({
             <Activity className="text-secondary" size={22} />
           </div>
           <div className="mt-5 divide-y divide-outline-variant/15">
-            {content.queue.map((item) => (
-              <div
-                className="grid gap-3 py-4 sm:grid-cols-[1fr_auto] sm:items-center"
-                key={item.label}
-              >
-                <div>
-                  <p className="font-headline text-lg font-semi-bold text-on-surface">
-                    {item.label}
-                  </p>
-                  <p className="text-sm font-medium text-on-surface-variant">
-                    {item.meta}
-                  </p>
-                </div>
-                <span className="w-fit rounded-full bg-primary/10 px-3 py-1 text-[10px] font-semi-bold uppercase tracking-[0.14em] text-primary">
-                  {item.status}
-                </span>
+            {content.queue.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-outline-variant/30 bg-surface-container-lowest p-6 text-sm font-bold text-on-surface-variant">
+                {content.emptyMessage ??
+                  "No activity yet for this workspace."}
               </div>
-            ))}
+            ) : (
+              content.queue.map((item) => (
+                <div
+                  className="grid gap-3 py-4 sm:grid-cols-[1fr_auto] sm:items-center"
+                  key={item.label}
+                >
+                  <div>
+                    <p className="font-headline text-lg font-semi-bold text-on-surface">
+                      {item.label}
+                    </p>
+                    <p className="text-sm font-medium text-on-surface-variant">
+                      {item.meta}
+                    </p>
+                  </div>
+                  <span className="w-fit rounded-full bg-primary/10 px-3 py-1 text-[10px] font-semi-bold uppercase tracking-[0.14em] text-primary">
+                    {item.status}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <BrainCircuit className="text-primary" size={22} />
-              <h3 className="font-headline text-xl font-semi-bold text-on-surface">
-                AI Operations Insight
-              </h3>
-            </div>
-            <p className="mt-4 text-sm font-medium leading-6 text-on-surface-variant">
-              Viruj AI is watching queue pressure, role permissions, and
-              department load. It recommends reassigning overflow tasks before
-              SLA breach windows.
-            </p>
-          </div>
           <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <ShieldCheck className="text-secondary" size={22} />
