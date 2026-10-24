@@ -146,9 +146,9 @@ export function DoctorsManagementPage({
 
   const doctors = useMemo(() => doctorsQuery.data ?? [], [doctorsQuery.data]);
   const isClinicTone = organizationLabel.toLowerCase() === "clinic";
-  const clinicDepartmentOptions = useClinicDepartmentOptions(
+  const departmentOptions = useDoctorDepartmentOptions(
     organizationId,
-    isClinicTone
+    isClinicTone ? "clinic" : "hospital"
   );
   const filteredDoctors = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -199,7 +199,8 @@ export function DoctorsManagementPage({
     form.name.trim() &&
     form.specialty.trim() &&
     form.registrationNumber?.trim() &&
-    (!isClinicTone || form.department.trim())
+    (!isClinicTone || form.department.trim()) &&
+    (!form.department.trim() || departmentOptions.includes(form.department))
   );
 
   function updateField(field: keyof VirujDoctorInput, value: string) {
@@ -452,21 +453,13 @@ export function DoctorsManagementPage({
                   placeholder="Pediatric Neurologist"
                   value={form.specialty}
                 />
-                {isClinicTone ? (
-                  <DoctorDepartmentSelect
-                    label="Department"
-                    onChange={(value) => updateField("department", value)}
-                    options={clinicDepartmentOptions}
-                    value={form.department}
-                  />
-                ) : (
-                  <DoctorInput
-                    label="Department"
-                    onChange={(value) => updateField("department", value)}
-                    placeholder="Neurology"
-                    value={form.department}
-                  />
-                )}
+                <DoctorDepartmentSelect
+                  label="Department"
+                  required={isClinicTone}
+                  onChange={(value) => updateField("department", value)}
+                  options={departmentOptions}
+                  value={form.department}
+                />
                 <DoctorInput
                   label="Post"
                   value={form.post || ""}
@@ -657,14 +650,11 @@ function DoctorDialogPortal({ children }: { children: React.ReactNode }) {
   return createPortal(children, document.body);
 }
 
-function useClinicDepartmentOptions(
+function useDoctorDepartmentOptions(
   organizationId: string | undefined,
-  enabled: boolean
+  kind: "hospital" | "clinic"
 ) {
-  const profile = useWorkspaceProfile(
-    enabled ? organizationId : undefined,
-    "clinic"
-  );
+  const profile = useWorkspaceProfile(organizationId, kind);
   return profile.workspace?.departments.map((d) => d.name) ?? [];
 }
 
@@ -804,17 +794,25 @@ function DoctorDepartmentSelect({
     <label className="block">
       <span className="text-[10px] font-semi-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-600">
         {label}
+        <span className="ml-1 normal-case tracking-normal">
+          {required ? "* Required" : "(Optional)"}
+        </span>
       </span>
       <ErpSelect
         className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-primary disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/[0.08] dark:bg-white/[0.055] dark:text-slate-100"
         disabled={!options.length && !hasSavedValue}
+        required={required}
         onChange={(event) => onChange(event.target.value)}
         value={value}
       >
         <option value="">
           {options.length ? "Select department" : "Add a department first"}
         </option>
-        {hasSavedValue ? <option value={value}>{value}</option> : null}
+        {hasSavedValue ? (
+          <option value={value} disabled>
+            {value} (no longer available)
+          </option>
+        ) : null}
         {options.map((option) => (
           <option key={option} value={option}>
             {option}
