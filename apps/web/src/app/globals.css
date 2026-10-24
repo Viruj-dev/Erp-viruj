@@ -721,3 +721,33 @@
     padding: 18px;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Viruj auth screen — "pulse of care" motion                          */
+/* ------------------------------------------------------------------ */
+
+@keyframes viruj-ecg-travel {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -1800;
+  }
+}
+
+.viruj-ecg-pulse {
+  stroke-dasharray: 110 1690;
+  animation: viruj-ecg-travel 7s linear infinite;
+}
+
+.viruj-ecg-trace {
+  stroke-dasharray: 260 1540;
+  animation: viruj-ecg-travel 7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viruj-ecg-pulse,
+  .viruj-ecg-trace {
+    animation: none;
+  }
+}
