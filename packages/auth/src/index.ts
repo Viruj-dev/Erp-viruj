@@ -17,6 +17,7 @@ import {
 import { networkInterfaces } from "node:os";
 import { z } from "zod";
 import { sendPasswordResetEmail } from "./password-reset-email";
+import { requireReviewedSignIn } from "./access-review";
 
 export {
   organizationTypes,
@@ -604,6 +605,17 @@ export const auth = betterAuth({
     schema,
   }),
   trustedOrigins,
+  databaseHooks: {
+    session: {
+      create: {
+        before: async (session, context) => {
+          // Credentials have been verified, but no session has been created yet.
+          if (context?.path === "/sign-in/email")
+            await requireReviewedSignIn(session.userId);
+        },
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
     resetPasswordTokenExpiresIn: 60 * 60,

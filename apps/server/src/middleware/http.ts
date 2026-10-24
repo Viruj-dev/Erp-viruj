@@ -7,7 +7,10 @@ import { networkInterfaces } from "node:os";
 const allowedOrigins = buildAllowedOrigins();
 
 export function registerHttpMiddleware(app: Hono) {
-  app.use(logger());
+  app.use(async (c, next) => {
+    if (c.req.path === "/auth/magic-link/verify") return next();
+    return logger()(c, next);
+  });
   app.use(
     "/*",
     cors({
@@ -39,6 +42,7 @@ function buildAllowedOrigins() {
       .filter(Boolean)
   );
   origins.add(new URL(env.BETTER_AUTH_URL).origin);
+  origins.add(new URL(env.ERP_REVIEW_ADMIN_ORIGIN).origin);
 
   if (env.NODE_ENV !== "production") {
     origins.add("http://localhost:3001");

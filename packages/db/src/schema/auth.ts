@@ -1,10 +1,12 @@
-import { relations } from "drizzle-orm";
+import { sql, relations } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   integer,
   jsonb,
   pgEnum,
+  primaryKey,
   pgTable,
   text,
   timestamp,
@@ -357,3 +359,47 @@ export const facilityRelations = relations(facility, ({ one }) => ({
     references: [organization.id],
   }),
 }));
+
+// Reviewed access is kept separate from user-editable organization metadata.
+export const accessReview = pgTable(
+  "erp_access_reviews",
+  {
+    organizationId: text("organization_id")
+      .primaryKey()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    applicantId: text("applicant_id")
+      .notNull()
+      .references(() => user.id),
+    status: text("status").notNull(),
+    snapshot: jsonb("snapshot").notNull(),
+    submittedAt: timestamp("submitted_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reason: text("reason"),
+    emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
+    revision: integer("revision").default(1).notNull(),
+  },
+  (table) => [
+    index("erp_access_reviews_queue").on(table.status, table.submittedAt),
+    check(
+      "erp_access_reviews_status_check",
+      sql`${table.status} IN ('draft','pending','approved','rejected')`
+    ),
+  ]
+);
+export const requestLimit = pgTable(
+  "erp_request_limits",
+  {
+    key: text("key").notNull(),
+    windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
+    count: integer("count").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.key, table.windowStart] })]
+);
+export const consumedAccessLink = pgTable("erp_consumed_access_links", {
+  tokenHash: text("token_hash").primaryKey(),
+  consumedAt: timestamp("consumed_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});

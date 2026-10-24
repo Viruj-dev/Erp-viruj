@@ -12,6 +12,13 @@ export const env = createEnv({
     ERP_FROM_EMAIL: z
       .string()
       .default("Viruj Health ERP <support@virujhealth.com>"),
+    ERP_CLIENT_IP_HEADER: z.string().optional(),
+    ERP_REVIEW_ADMIN_ORIGIN: z.url().default("https://admin.virujhealth.com"),
+    ERP_REVIEW_ADMIN_ID: z.string().optional(),
+    ERP_REVIEW_ADMIN_PASSWORD_HASH: z.string().optional(),
+    ERP_REVIEW_ADMIN_SECRET: z.string().min(32).optional(),
+    ERP_WEB_URL: z.url().optional(),
+    CENTRAL_API_URL: z.url().optional(),
     RESEND_API_KEY: z.string().optional(),
     NODE_ENV: z
       .enum(["development", "production", "test"])
