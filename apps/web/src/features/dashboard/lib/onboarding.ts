@@ -17,8 +17,8 @@ export function shouldStartOrganizationOnboarding(
   if (storage.getItem(`${prefix}:start`) === "1") return true;
   if (storage.getItem(`${prefix}:completed:${organization.id}`)) return false;
 
-  const createdTime = organization.createdAt
-    ? new Date(organization.createdAt).getTime()
-    : 0;
-  return createdTime > 0 && now - createdTime < 2 * 60 * 60 * 1000;
+  // Incomplete onboarding is pending for hospital and clinic workspaces
+  // regardless of organization age. The gate no longer expires after two
+  // hours, so a deep-linked workspace cannot skip setup just by waiting.
+  return true;
 }

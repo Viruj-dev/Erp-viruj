@@ -41,6 +41,7 @@ export const erpStatements = {
   billingTransactions: ["read"] as const,
   community: ["read", "manage"] as const,
   consultation: ["read", "create", "update", "manage"] as const,
+  diagnosticReport: ["prepare"] as const,
   doctorDirectory: ["read", "manage"] as const,
   facility: [
     "read",
@@ -65,6 +66,7 @@ const accessControl = createAccessControl(erpStatements);
 
 export const organizationRoles = {
   OWNER: accessControl.newRole({
+    diagnosticReport: ["prepare"],
     audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
@@ -88,6 +90,7 @@ export const organizationRoles = {
     schedule: ["read", "manage"],
   }),
   CLINIC_OWNER: accessControl.newRole({
+    diagnosticReport: ["prepare"],
     audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
@@ -111,6 +114,7 @@ export const organizationRoles = {
     schedule: ["read", "manage"],
   }),
   ADMIN: accessControl.newRole({
+    diagnosticReport: ["prepare"],
     audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
@@ -134,6 +138,7 @@ export const organizationRoles = {
     schedule: ["read", "manage"],
   }),
   CLINIC_ADMIN: accessControl.newRole({
+    diagnosticReport: ["prepare"],
     audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
@@ -157,6 +162,7 @@ export const organizationRoles = {
     schedule: ["read", "manage"],
   }),
   MANAGER: accessControl.newRole({
+    diagnosticReport: ["prepare"],
     audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
@@ -179,6 +185,7 @@ export const organizationRoles = {
     schedule: ["read", "manage"],
   }),
   DOCTOR: accessControl.newRole({
+    diagnosticReport: ["prepare"],
     appointment: ["read", "update", "manage"],
     consultation: ["read", "create", "update", "manage"],
     doctorDirectory: ["read"],
@@ -219,12 +226,14 @@ export const organizationRoles = {
     schedule: ["read", "manage"],
   }),
   TECHNICIAN: accessControl.newRole({
+    diagnosticReport: ["prepare"],
     appointment: ["read", "update"],
     organization: ["read"],
     patient: ["read"],
     project: ["read"],
   }),
   ORG_ADMIN: accessControl.newRole({
+    diagnosticReport: ["prepare"],
     audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
@@ -262,6 +271,7 @@ export const organizationRoles = {
     project: ["read"],
   }),
   admin: accessControl.newRole({
+    diagnosticReport: ["prepare"],
     audit: ["read"],
     appointment: ["read", "update", "manage"],
     billing: ["read", "manage"],
@@ -488,7 +498,7 @@ export const hasOrganizationPermission = (
   const normalizedRole = normalizeOrganizationMemberRole(role);
   const definition =
     organizationRoles[
-      (normalizedRole ?? role) as ErpOrganizationRole | OrganizationMemberRole
+      (role in organizationRoles ? role : normalizedRole) as ErpOrganizationRole | OrganizationMemberRole
     ];
 
   if (!definition) {
@@ -511,6 +521,13 @@ export const getOrganizationPermissions = (role: string) =>
   );
 
 const centralApiPermissionChecks = {
+  "staff.members.read": { member: ["read"] },
+  "staff.members.manage": { member: ["update", "delete"] },
+  "staff.invitations.read": { invitation: ["read"] },
+  "staff.invitations.manage": { invitation: ["create", "cancel"] },
+  "patients.destructive.delete": { organization: ["delete"] },
+  "appointment_manager.settings.manage": { hospitalSettings: ["update"] },
+  "diagnostics.reports.prepare": { diagnosticReport: ["prepare"] },
   "activity.read": { audit: ["read"] },
   "analytics.export": { audit: ["read"] },
   "analytics.read": { audit: ["read"] },

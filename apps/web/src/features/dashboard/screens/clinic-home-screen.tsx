@@ -42,6 +42,7 @@ import {
   organizationTypeLabels,
 } from "@/features/dashboard/lib/routing";
 import { WorkspaceSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
+import { clearCentralApiToken } from "@/lib/central-api-token";
 import { activateOrganization, authClient } from "@/lib/auth-client";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -69,10 +70,22 @@ const clinicSupportedPages: ErpDemoPage[] = [
   "reviews",
   "settings",
   "analytics",
+  "subscription",
   "profile",
 ];
 
 const clinicOnboardingStoragePrefix = "viruj:clinic-onboarding";
+
+// Pages that must not open pre-setup via deep link.
+const clinicOnboardingGatedPages = new Set<ErpDemoPage>([
+  "appointments",
+  "appointments-dashboard",
+  "appointments-review",
+  "appointments-patients",
+  "appointments-settings",
+  "services",
+  "facilities",
+]);
 
 export function ClinicHomeScreen({
   currentPage: requestedPage,
@@ -184,8 +197,11 @@ export function ClinicHomeScreen({
   const shouldRedirectToOnboarding =
     isHydrated &&
     !isAuthPending &&
-    requestedPage === "dashboard" &&
     activeOrganizationType === "clinic" &&
+    // Deep-linked workflow pages (appointments, services/facilities) may only
+    // open once the workspace has completed setup, same as the dashboard.
+    (requestedPage === "dashboard" ||
+      clinicOnboardingGatedPages.has(resolvedPage)) &&
     shouldStartOrganizationOnboarding(activeOrganization, window.localStorage);
 
   const clinicDashboardPath = activeOrganizationSlug
@@ -349,6 +365,7 @@ export function ClinicHomeScreen({
         onSignOut={async () => {
           setIsSigningOut(true);
           try {
+            clearCentralApiToken();
             await authClient.signOut();
             await sessionState.refetch();
             await activeOrganizationState.refetch();
@@ -394,6 +411,7 @@ export function ClinicHomeScreen({
         onLogout={async () => {
           setIsSigningOut(true);
           try {
+            clearCentralApiToken();
             await authClient.signOut();
             await sessionState.refetch();
             await activeOrganizationState.refetch();
@@ -445,6 +463,7 @@ export function ClinicHomeScreen({
             onLogout={async () => {
               setIsSigningOut(true);
               try {
+                clearCentralApiToken();
                 await authClient.signOut();
                 await sessionState.refetch();
                 await activeOrganizationState.refetch();

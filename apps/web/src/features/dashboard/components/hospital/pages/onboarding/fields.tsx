@@ -27,6 +27,8 @@ export function TextField({
   min,
   max,
   step,
+  pattern,
+  title,
   value,
 }: {
   label: string;
@@ -34,9 +36,11 @@ export function TextField({
   placeholder: string;
   type?: string;
   required?: boolean;
-  min?: number;
-  max?: number;
+  min?: number | string;
+  max?: number | string;
   step?: number;
+  pattern?: string;
+  title?: string;
   value: string;
 }) {
   return (
@@ -50,6 +54,8 @@ export function TextField({
         min={min}
         max={max}
         step={step}
+        pattern={pattern}
+        title={title}
         type={type}
         value={value}
       />

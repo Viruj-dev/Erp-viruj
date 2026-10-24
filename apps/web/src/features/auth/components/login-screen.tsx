@@ -35,6 +35,7 @@ import {
   bootstrapOrganization,
   getAuthActionError,
 } from "@/lib/auth-client";
+import { clearCentralApiToken } from "@/lib/central-api-token";
 import type { DashboardOrganizationType } from "@/features/dashboard/lib/routing";
 
 type Step = "login" | "onboarding" | "invitation";
@@ -113,6 +114,9 @@ export function ErpDemoLogin({
         return;
       }
 
+      // A new session must never inherit a central API token minted for the
+      // previous user.
+      clearCentralApiToken();
       setSuccessMessage("Secure session authorized.");
       await onAuthenticated();
     } finally {
@@ -147,6 +151,7 @@ export function ErpDemoLogin({
           );
           return;
         }
+        clearCentralApiToken();
       }
 
       if (window.sessionStorage.getItem("viruj:pending-invitation")) {

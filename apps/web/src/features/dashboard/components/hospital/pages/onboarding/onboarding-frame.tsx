@@ -1,5 +1,7 @@
 "use client";
 import { cn } from "@/lib/utils";
+import { authClient } from "@/lib/auth-client";
+import { clearCentralApiToken } from "@/lib/central-api-token";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -9,12 +11,14 @@ import {
   Cloud,
   Hospital,
   Loader2,
+  LogOut,
   ShieldCheck,
   Sparkles,
   Stethoscope,
+  UserRoundCog,
   Users,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { OnboardingTheme } from "./time-picker";
 import type { OnboardingKind, StepDefinition, StepId } from "./types";
 
@@ -58,7 +62,27 @@ export function OnboardingFrame({
   children,
   themeClassName,
 }: OnboardingFrameProps) {
+  const [signingOut, setSigningOut] = useState(false);
   const currentStep = steps[currentStepIndex] ?? steps[0];
+  const handleSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      // Session ends, but onboarding drafts stay in localStorage so nothing
+      // is lost; only the central API token cache is dropped.
+      clearCentralApiToken();
+      await authClient.signOut();
+    } catch {
+      // Signing out is best-effort — always land the user on /auth.
+    } finally {
+      if (typeof window !== "undefined" && window.location.pathname !== "/auth") {
+        window.location.assign("/auth");
+      } else {
+        setSigningOut(false);
+      }
+    }
+  };
+  const handleSwitchAccount = handleSignOut;
   return (
     <OnboardingTheme.Provider value={kind}>
       <div
@@ -92,23 +116,49 @@ export function OnboardingFrame({
                 </div>
               </div>
 
-              <div className="hidden h-8 items-center gap-2 rounded-full border border-[var(--onboarding-border-strong)] bg-[var(--onboarding-panel-muted)] px-3 text-[11px] font-semibold text-[var(--onboarding-muted)] sm:inline-flex">
-                {saveState === "saving" ? (
-                  <Loader2
-                    className="animate-spin text-[var(--onboarding-accent)]"
-                    size={13}
-                  />
-                ) : (
-                  <Cloud
-                    className="text-[var(--onboarding-accent)]"
-                    size={13}
-                  />
-                )}
-                {saveState === "saving"
-                  ? "Auto-saving"
-                  : saveState === "saved"
-                    ? "Saved"
-                    : "Unsaved changes"}
+              <div className="flex items-center gap-2">
+                <div className="hidden h-8 items-center gap-2 rounded-full border border-[var(--onboarding-border-strong)] bg-[var(--onboarding-panel-muted)] px-3 text-[11px] font-semibold text-[var(--onboarding-muted)] sm:inline-flex">
+                  {saveState === "saving" ? (
+                    <Loader2
+                      className="animate-spin text-[var(--onboarding-accent)]"
+                      size={13}
+                    />
+                  ) : (
+                    <Cloud
+                      className="text-[var(--onboarding-accent)]"
+                      size={13}
+                    />
+                  )}
+                  {saveState === "saving"
+                    ? "Auto-saving"
+                    : saveState === "saved"
+                      ? "Saved"
+                      : "Unsaved changes"}
+                </div>
+                <button
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[var(--onboarding-border-strong)] bg-[var(--onboarding-panel-muted)] px-3 text-[11px] font-semibold text-[var(--onboarding-muted)] transition hover:text-[var(--onboarding-muted-strong)] disabled:pointer-events-none disabled:opacity-50"
+                  disabled={signingOut}
+                  onClick={() => void handleSignOut()}
+                  title="Sign out of this account"
+                  type="button"
+                >
+                  {signingOut ? (
+                    <Loader2 className="animate-spin" size={13} />
+                  ) : (
+                    <LogOut size={13} />
+                  )}
+                  Sign out
+                </button>
+                <button
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[var(--onboarding-border-strong)] bg-[var(--onboarding-panel-muted)] px-3 text-[11px] font-semibold text-[var(--onboarding-muted)] transition hover:text-[var(--onboarding-muted-strong)] disabled:pointer-events-none disabled:opacity-50"
+                  disabled={signingOut}
+                  onClick={handleSwitchAccount}
+                  title="Switch to a different account"
+                  type="button"
+                >
+                  <UserRoundCog size={13} />
+                  Switch account
+                </button>
               </div>
             </header>
 

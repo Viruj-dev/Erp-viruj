@@ -36,12 +36,14 @@ test("onboarding is decided before rendering home for hospital and clinic accoun
       )
     ).toBe(true);
     values.clear();
+    // Onboarding now stays pending for any organization that has never
+    // completed setup, however old it is.
     const existing = {
       ...organization,
       createdAt: new Date(now - 3 * 60 * 60 * 1000),
     };
     expect(shouldStartOrganizationOnboarding(existing, storage, now)).toBe(
-      false
+      true
     );
     values.set(`${prefix}:start`, "1");
     expect(shouldStartOrganizationOnboarding(existing, storage, now)).toBe(
@@ -57,11 +59,14 @@ test("onboarding is decided before rendering home for hospital and clinic accoun
     )
   ).toBe(false);
   values.clear();
+  // The gate no longer depends on createdAt, so even an unparseable value
+  // cannot skip setup: onboarding stays pending until the completion flag is
+  // written on launch.
   expect(
     shouldStartOrganizationOnboarding(
       { id: "invalid", organizationType: "hospital", createdAt: "invalid" },
       storage,
       now
     )
-  ).toBe(false);
+  ).toBe(true);
 });

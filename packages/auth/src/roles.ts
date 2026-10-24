@@ -40,7 +40,7 @@ export type ErpOrganizationRole = (typeof organizationRoleOptions)[number];
 
 export const normalizeOrganizationMemberRole = (
   role: string
-): ErpOrganizationRole | null => {
+): ErpOrganizationRole | "APPOINTMENT_HANDLER" | "COMMUNITY_MANAGER" | null => {
   switch (role) {
     case "owner":
     case "OWNER":
@@ -54,7 +54,6 @@ export const normalizeOrganizationMemberRole = (
     case "manager":
     case "MANAGER":
       return "MANAGER";
-    case "APPOINTMENT_HANDLER":
     case "doctor":
     case "DOCTOR":
       return "DOCTOR";
@@ -67,8 +66,13 @@ export const normalizeOrganizationMemberRole = (
     case "lab_tech":
     case "TECHNICIAN":
       return "TECHNICIAN";
+    // APPOINTMENT_HANDLER and COMMUNITY_MANAGER are distinct roles with their
+    // own grant definitions in organizationRoles — they must not normalize
+    // into DOCTOR or MANAGER.
+    case "APPOINTMENT_HANDLER":
+      return "APPOINTMENT_HANDLER";
     case "COMMUNITY_MANAGER":
-      return "MANAGER";
+      return "COMMUNITY_MANAGER";
     default:
       return null;
   }

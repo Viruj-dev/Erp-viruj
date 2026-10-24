@@ -42,6 +42,7 @@ import {
   organizationTypeLabels,
 } from "@/features/dashboard/lib/routing";
 import { WorkspaceSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
+import { clearCentralApiToken } from "@/lib/central-api-token";
 import { activateOrganization, authClient } from "@/lib/auth-client";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -296,6 +297,7 @@ export function DoctorHomeScreen({
         onSignOut={async () => {
           setIsSigningOut(true);
           try {
+            clearCentralApiToken();
             await authClient.signOut();
             await sessionState.refetch();
             await activeOrganizationState.refetch();
@@ -337,6 +339,7 @@ export function DoctorHomeScreen({
             onLogout={async () => {
               setIsSigningOut(true);
               try {
+                clearCentralApiToken();
                 await authClient.signOut();
                 await sessionState.refetch();
                 await activeOrganizationState.refetch();
@@ -388,6 +391,7 @@ export function DoctorHomeScreen({
                 onLogout={async () => {
                   setIsSigningOut(true);
                   try {
+                    clearCentralApiToken();
                     await authClient.signOut();
                     await sessionState.refetch();
                     await activeOrganizationState.refetch();

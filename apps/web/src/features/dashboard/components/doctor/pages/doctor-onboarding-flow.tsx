@@ -11,6 +11,7 @@ import {
   FieldLabel,
   fieldClassName,
 } from "../../hospital/pages/onboarding/fields";
+import { isValidPhone } from "../../hospital/pages/onboarding/state";
 import type {
   StepDefinition,
   StepId,
@@ -241,15 +242,20 @@ function DoctorSetup({
   const [draftSaved, setDraftSaved] = useState(false);
   const birth = profile.dateOfBirth ? new Date(profile.dateOfBirth) : undefined;
   const today = new Date();
-  const age = birth
-    ? today.getFullYear() -
-      birth.getFullYear() -
-      (today.getMonth() < birth.getMonth() ||
-      (today.getMonth() === birth.getMonth() &&
-        today.getDate() < birth.getDate())
-        ? 1
-        : 0)
-    : undefined;
+  const isValidBirth =
+    birth instanceof Date &&
+    !Number.isNaN(birth.getTime()) &&
+    birth.getTime() <= today.getTime();
+  const age =
+    birth && isValidBirth
+      ? today.getFullYear() -
+        birth.getFullYear() -
+        (today.getMonth() < birth.getMonth() ||
+        (today.getMonth() === birth.getMonth() &&
+          today.getDate() < birth.getDate())
+          ? 1
+          : 0)
+      : undefined;
   const draftKey = `viruj:doctor-onboarding:v2:draft:${tenant.organizationId}`;
   useEffect(() => {
     try {
@@ -356,6 +362,27 @@ function DoctorSetup({
   async function next() {
     setError("");
     if (!form.current?.reportValidity()) return;
+    if (step === 0) {
+      if (profile.dateOfBirth) {
+        const birthDate = new Date(profile.dateOfBirth);
+        if (Number.isNaN(birthDate.getTime())) {
+          setError("Enter a valid date of birth.");
+          return;
+        }
+        if (birthDate.getTime() > Date.now()) {
+          setError("Date of birth cannot be in the future.");
+          return;
+        }
+        if (birthDate.getFullYear() < 1900) {
+          setError("Date of birth must be 1900 or later.");
+          return;
+        }
+      }
+      if (profile.phone && !isValidPhone(profile.phone)) {
+        setError("Enter a valid phone number (7-20 digits).");
+        return;
+      }
+    }
     setStep((s) => Math.min(3, s + 1));
   }
   async function launch() {
@@ -436,12 +463,15 @@ function DoctorSetup({
             <div className="grid gap-5 md:grid-cols-2">
               {field("fullName", "Full name")}
               <div>
-                {field(
-                  "dateOfBirth",
-                  "Date of birth (optional)",
-                  "date",
-                  false
-                )}
+                <TextField
+                  label="Date of birth (optional)"
+                  placeholder="Date of birth (optional)"
+                  type="date"
+                  min="1900-01-01"
+                  max={new Date().toISOString().slice(0, 10)}
+                  value={profile.dateOfBirth ?? ""}
+                  onChange={(dateOfBirth) => update("dateOfBirth", dateOfBirth)}
+                />
                 {age !== undefined && (
                   <p className="mt-2 text-xs text-[var(--onboarding-muted)]">
                     Age: {age} years
@@ -463,7 +493,16 @@ function DoctorSetup({
                   <option value="unspecified">Prefer not to say</option>
                 </ErpSelect>
               </label>
-              {field("phone", "Phone number", "tel")}
+              <TextField
+                label="Phone number"
+                placeholder="Phone number"
+                required
+                type="tel"
+                pattern="^[+0-9 ()-]{7,20}$"
+                title="Enter a valid phone number (7-20 digits)"
+                value={profile.phone ?? ""}
+                onChange={(phone) => update("phone", phone)}
+              />
               {field("email", "Email", "email")}
               <TextField
                 label="Languages (optional)"

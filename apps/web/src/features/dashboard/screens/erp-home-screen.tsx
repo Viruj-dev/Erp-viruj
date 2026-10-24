@@ -71,6 +71,10 @@ import {
   hasFeature
 } from "@/features/subscription/utils/subscription-access";
 import { activateOrganization, authClient } from "@/lib/auth-client";
+import {
+  clearCentralApiToken,
+  setCentralApiTokenIdentity
+} from "@/lib/central-api-token";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -148,6 +152,20 @@ export function ErpHomeScreen({
     organizationsState.data,
     sessionState.data?.user,
     sessionState
+  ]);
+
+  // Key the central API token cache to the signed-in user + active workspace
+  // so a cached token is never reused across users or organizations.
+  useEffect(() => {
+    const userId = sessionState.data?.user?.id ?? null;
+    const organizationId = activeOrganization?.id ?? null;
+
+    setCentralApiTokenIdentity(
+      userId && organizationId ? `${userId}:${organizationId}` : null
+    );
+  }, [
+    activeOrganization?.id,
+    sessionState.data?.user?.id
   ]);
 
   const currentPage = isErpDemoPage(requestedPage)
@@ -449,6 +467,7 @@ export function ErpHomeScreen({
         onSignOut={async () => {
           setIsSigningOut(true);
           try {
+            clearCentralApiToken();
             await authClient.signOut();
             await sessionState.refetch();
             await activeOrganizationState.refetch();
@@ -501,6 +520,7 @@ export function ErpHomeScreen({
         onLogout={async () => {
           setIsSigningOut(true);
           try {
+            clearCentralApiToken();
             await authClient.signOut();
             await sessionState.refetch();
             await activeOrganizationState.refetch();
@@ -551,6 +571,7 @@ export function ErpHomeScreen({
             onLogout={async () => {
               setIsSigningOut(true);
               try {
+                clearCentralApiToken();
                 await authClient.signOut();
                 await sessionState.refetch();
                 await activeOrganizationState.refetch();
@@ -659,11 +680,11 @@ function PageContent({
               />
             </div>
           </details>
-          <FacilitiesPage
-            routeBasePath={routeBasePath}
-            routeSegments={routeSegments}
-            tenant={appointmentTenant}
-          />
+          {
+            // The generic facilities catalogue fetches hospital inventory from
+            // a workspace-scoped API that diagnoses do not serve — diagnostic
+            // tenants only manage branches/slots here.
+          }
         </div>
       );
     if (currentPage.startsWith("appointments"))
