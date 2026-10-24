@@ -1,3 +1,4 @@
+import { registerReviewAdminRoutes } from "../routes/review-admin";
 import { Hono } from "hono";
 
 import { handleServerError } from "../middleware/error-handler";
@@ -12,6 +13,7 @@ export function createApp(app = new Hono()) {
   app.onError(handleServerError);
 
   registerHttpMiddleware(app);
+  registerReviewAdminRoutes(app);
   registerAuthRoutes(app);
   registerDoctorRoutes(app);
   registerFacilityRoutes(app);

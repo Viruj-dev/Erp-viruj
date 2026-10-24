@@ -6,6 +6,7 @@ Bun.env.DATABASE_URL = "postgres://test:test@localhost:5432/viruj_test";
 Bun.env.BETTER_AUTH_SECRET = "test-secret-for-security-regressions";
 Bun.env.BETTER_AUTH_URL = "http://localhost:3002/auth";
 Bun.env.CORS_ORIGIN = "http://localhost:3001";
+Bun.env.ERP_WEB_URL = "http://localhost:3001";
 Bun.env.CENTRAL_API_JWT_SECRET = "test-central-api-jwt-secret-32-bytes";
 
 const { auth } = await import("@erp_virujhealth/auth");
@@ -26,6 +27,7 @@ const transaction = mock(async (callback: (tx: unknown) => Promise<unknown>) =>
 );
 
 beforeEach(() => {
+  spyOn(db, "execute").mockResolvedValue([{ status: "approved" }] as never);
   selectResults = [];
   createdOrganization = [];
   memberFailure = false;
@@ -80,6 +82,67 @@ beforeEach(() => {
 });
 
 afterEach(() => mock.restore());
+
+test("pending applicants get no sign-in session and review status is checked only after password verification", async () => {
+  const context = await auth.$context;
+  const now = new Date();
+  spyOn(context.internalAdapter, "findUserByEmail").mockResolvedValue({
+    user: {
+      id: "pending-user",
+      email: "pending@example.test",
+      name: "Pending",
+      emailVerified: false,
+      createdAt: now,
+      updatedAt: now,
+    },
+    accounts: [
+      {
+        id: "account",
+        userId: "pending-user",
+        accountId: "pending-user",
+        providerId: "credential",
+        password: "test-hash",
+        createdAt: now,
+        updatedAt: now,
+      },
+    ],
+  });
+  const verify = spyOn(context.password, "verify").mockResolvedValue(true);
+  const review = spyOn(db, "execute").mockResolvedValue([
+    { status: "pending" },
+  ] as never);
+  const insert = spyOn(db, "insert");
+  const signIn = () =>
+    auth.handler(
+      new Request("http://localhost:3002/auth/sign-in/email", {
+        method: "POST",
+        headers: {
+          Origin: "http://localhost:3001",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: "pending@example.test",
+          password: "test-password",
+        }),
+      })
+    );
+  const response = await signIn();
+  expect(response.status).toBe(403);
+  expect(await response.json()).toMatchObject({
+    code: "ACCESS_REVIEW_PENDING",
+  });
+  expect(response.headers.has("set-cookie")).toBe(false);
+  expect(insert).not.toHaveBeenCalled();
+  review.mockClear();
+  verify.mockResolvedValue(false);
+  const invalid = await signIn();
+  expect(invalid.status).toBe(401);
+  expect(await invalid.json()).not.toHaveProperty(
+    "code",
+    "ACCESS_REVIEW_PENDING"
+  );
+  expect(review).not.toHaveBeenCalled();
+});
 
 function bootstrap() {
   return createApp().request("/auth/bootstrap-organization", {
@@ -268,4 +331,61 @@ test("doctor owner token carries doctor workspace identity and onboarding permis
     "doctor.file.create",
   ])
     expect(payload.permissions).toContain(permission);
+});
+
+test("legacy access links lead to password login without creating a session", async () => {
+  const handler = spyOn(auth, "handler").mockResolvedValue(
+    new Response("unexpected authentication")
+  );
+  const response = await createApp().request(
+    "/auth/magic-link/verify?token=old-link-token&callbackURL=https://untrusted.example"
+  );
+  expect(response.status).toBe(303);
+  expect(response.headers.get("Location")).toBe("http://localhost:3001/auth");
+  expect(response.headers.get("Set-Cookie")).toBeNull();
+  expect(handler).not.toHaveBeenCalled();
+  expect(
+    (
+      await createApp().request("/auth/sign-in/magic-link", {
+        method: "POST",
+        headers: { Origin: "http://localhost:3001" },
+      })
+    ).status
+  ).toBe(410);
+});
+
+test("pending workspaces cannot use the legacy ERP routes", async () => {
+  spyOn(db, "execute").mockResolvedValue([] as never);
+  expect((await createApp().request("/erp/doctors")).status).toBe(403);
+});
+
+test("signup middleware refuses attempt twenty-one before account creation", async () => {
+  const handler = spyOn(auth, "handler").mockImplementation(
+    async () => new Response("account creation")
+  );
+  let attempts = 0;
+  spyOn(db, "execute").mockImplementation((async () =>
+    ++attempts <= 20
+      ? [{ count: attempts }]
+      : []) as unknown as typeof db.execute);
+  const app = createApp();
+  for (let attempt = 0; attempt < 20; attempt++) {
+    expect(
+      (
+        await app.request("/auth/sign-up/email", {
+          method: "POST",
+          headers: { Origin: "http://localhost:3001" },
+        })
+      ).status
+    ).toBe(200);
+  }
+  expect(
+    (
+      await app.request("/auth/sign-up/email", {
+        method: "POST",
+        headers: { Origin: "http://localhost:3001" },
+      })
+    ).status
+  ).toBe(429);
+  expect(handler).toHaveBeenCalledTimes(20);
 });

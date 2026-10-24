@@ -869,7 +869,14 @@ function compactObject<T extends Record<string, unknown>>(value: T) {
     >;
   };
 }
+export type AccessReview = { status: "unsubmitted" | "draft" | "pending" | "approved" | "rejected"; completed?: boolean; reason?: string | null };
 export const virujBackend = {
+  accessReview: {
+    draft: (organizationId: string) => request<{data: unknown}>("/access-review/draft", {organizationId, suppressToast: true}),
+    status: (organizationId: string) => request<AccessReview>("/access-review", {organizationId, suppressToast: true}),
+    submit: (organizationId: string) => request<AccessReview>("/access-review/submit", {organizationId, method: "POST", suppressToast: true}),
+    reapply: (organizationId: string) => request<AccessReview>("/access-review/reapply", {organizationId, method: "POST", suppressToast: true}),
+  },
   doctorDocuments: {
     upload: (file: File, organizationId: string) => {
       const form = new FormData();

@@ -1,3 +1,7 @@
+import {
+  clientIp,
+  takeRequestLimit,
+} from "@erp_virujhealth/auth/access-review";
 import { auth, getCentralApiPermissions } from "@erp_virujhealth/auth";
 import { db } from "@erp_virujhealth/db";
 import { env } from "@erp_virujhealth/env/server";
@@ -8,7 +12,7 @@ import {
   normalizeOrganizationType,
   session,
 } from "@erp_virujhealth/db/schema/auth";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { SignJWT } from "jose";
@@ -16,6 +20,73 @@ import { SignJWT } from "jose";
 const defaultOrganizationType = "hospital";
 
 export function registerAuthRoutes(app: Hono) {
+  app.get("/auth/magic-link/verify", (c) => {
+    c.header("Referrer-Policy", "no-referrer");
+    c.header("Cache-Control", "no-store");
+    if (!env.ERP_WEB_URL)
+      return c.json(
+        { error: "Open Viruj ERP and sign in with your email and password." },
+        410
+      );
+    return c.redirect(new URL("/auth", env.ERP_WEB_URL).toString(), 303);
+  });
+  app.post("/auth/sign-in/magic-link", (c) =>
+    c.json({ error: "Sign in with your email and password." }, 410)
+  );
+  app.use("/auth/organization/*", async (c, next) => {
+    const action = c.req.path.split("/").pop();
+    if (
+      [
+        "create",
+        "list",
+        "set-active",
+        "get-full-organization",
+        "get-active-member",
+        "get-active-member-role",
+        "check-slug",
+      ].includes(action ?? "")
+    )
+      return next();
+    const session = await auth.api.getSession({ headers: c.req.raw.headers });
+    if (!session?.user) return c.json({ error: "Not authenticated" }, 401);
+    if (!session.activeOrganization?.id)
+      return c.json({ error: "Workspace required" }, 403);
+    const rows = await db.execute(
+      sql`SELECT 1 FROM erp_access_reviews WHERE organization_id=${session.activeOrganization.id} AND status='approved'`
+    );
+    if (!rows.length)
+      return c.json({ error: "Workspace approval required" }, 403);
+    return next();
+  });
+  app.use("/auth/sign-up/*", async (c, next) => {
+    if (
+      c.req.method === "POST" &&
+      !(await takeRequestLimit(
+        `signup:${clientIp(c.req.raw.headers)}`,
+        20,
+        86400
+      ))
+    ) {
+      c.header("Retry-After", "86400");
+      return c.json(
+        { error: "Daily signup limit reached. Please try again tomorrow." },
+        429
+      );
+    }
+    return next();
+  });
+  app.use("/erp/*", async (c, next) => {
+    const session = await auth.api.getSession({ headers: c.req.raw.headers });
+    if (!session?.user) return c.json({ error: "Not authenticated" }, 401);
+    if (!session.activeOrganization?.id)
+      return c.json({ error: "Workspace required" }, 403);
+    const rows = await db.execute(
+      sql`SELECT 1 FROM erp_access_reviews WHERE organization_id=${session.activeOrganization.id} AND status='approved'`
+    );
+    if (!rows.length)
+      return c.json({ error: "Workspace approval required" }, 403);
+    return next();
+  });
   app.get("/auth/central-api-token", async (context) => {
     context.header("Cache-Control", "no-store");
     try {

@@ -1,3 +1,4 @@
+import { AccessReviewGate } from "@/features/dashboard/components/shared/access-review-gate";
 import type { Metadata } from "next";
 import { Geist, Manrope } from "next/font/google";
 import "./globals.css";
@@ -33,7 +34,7 @@ export default function RootLayout({
     >
       <body className={`${manrope.variable} ${geist.variable} font-sans`}>
         <AppProvider>
-          <Providers>{children}</Providers>
+          <Providers><AccessReviewGate>{children}</AccessReviewGate></Providers>
         </AppProvider>
       </body>
     </html>
