@@ -1,20 +1,18 @@
-import { ErpSelect } from "@/components/ui/erp/select";
-import { cn } from "@/lib/utils";
-import { Check, Plus, Trash2, Wrench } from "lucide-react";
-import type { Dispatch, SetStateAction } from "react";
-import { clinicServiceCategories, clinicServiceNames } from "../constants";
-import { FieldLabel, TextField, fieldClassName } from "../fields";
-import type { OnboardingService, OnboardingState } from "../types";
-
-const emptyService = (): OnboardingService => ({
-  availableOnline: true,
-  category: "Consultation",
-  description: "",
-  duration: "30 min",
-  id: crypto.randomUUID(),
-  name: "",
-  price: "",
-});
+import { useState, type Dispatch, type SetStateAction } from "react";
+import { Check, Search, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/erp/dialog";
+import { Button } from "@/components/ui/button";
+import { hospitalServiceGroups } from "../constants";
+import { fieldClassName } from "../fields";
+import { toggleServiceSelection } from "../state";
+import type { OnboardingState } from "../types";
 
 export function ServicesStep({
   data,
@@ -23,143 +21,138 @@ export function ServicesStep({
   data: OnboardingState;
   setData: Dispatch<SetStateAction<OnboardingState>>;
 }) {
-  const addService = (name = "") => {
-    setData((current) => ({
-      ...current,
-      services: [...current.services, { ...emptyService(), name }],
-    }));
-  };
-
-  const updateService = (id: string, patch: Partial<OnboardingService>) => {
-    setData((current) => ({
-      ...current,
-      services: current.services.map((service) =>
-        service.id === id ? { ...service, ...patch } : service
+  const [query, setQuery] = useState("");
+  const search = query.trim().toLowerCase();
+  const groups = hospitalServiceGroups
+    .map((group) => ({
+      ...group,
+      services: group.services.filter((name) =>
+        `${group.name} ${name}`.toLowerCase().includes(search)
       ),
+    }))
+    .filter((group) => group.services.length);
+  const toggle = (name: string, category: string) =>
+    setData((current) => ({
+      ...current,
+      services: toggleServiceSelection(current.services, name, category),
     }));
-  };
-
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          className="inline-flex h-11 items-center gap-2 rounded-lg bg-[var(--onboarding-accent-deep)] px-4 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(7,89,133,0.18)] transition hover:-translate-y-0.5 hover:bg-[var(--onboarding-accent-mid)]"
-          onClick={() => addService()}
-          type="button"
-        >
-          <Plus size={16} />
-          Add Service
-        </button>
-        {clinicServiceNames.map((name) => (
-          <button
-            className="h-9 rounded-full border border-[var(--onboarding-border-strong)] bg-[var(--onboarding-accent-soft)] px-3 text-xs font-bold text-[var(--onboarding-accent)] transition hover:bg-[var(--onboarding-panel)]"
-            key={name}
-            onClick={() => addService(name)}
-            type="button"
-          >
-            {name}
-          </button>
-        ))}
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] p-5">
+        <div>
+          <h3 className="font-semibold">Hospital services</h3>
+          <p className="mt-1 text-sm text-[var(--onboarding-muted)]">
+            Choose what your hospital offers. {data.services.length} selected.
+          </p>
+        </div>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button
+              type="button"
+              className="h-11 bg-[var(--onboarding-accent-deep)] px-4 text-white"
+            >
+              Choose services
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="vh-onboarding max-h-[90svh] gap-4 overflow-hidden bg-[var(--onboarding-panel)] text-[var(--onboarding-text)] sm:max-w-3xl">
+            <DialogTitle>Choose hospital services</DialogTitle>
+            <DialogDescription>
+              Click a service to add or remove it. {data.services.length}{" "}
+              selected.
+            </DialogDescription>
+            <label className="relative">
+              <span className="sr-only">Search services</span>
+              <Search
+                size={18}
+                className="absolute left-3 top-3 text-[var(--onboarding-muted)]"
+                aria-hidden="true"
+              />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                className={fieldClassName("pl-10")}
+                placeholder="Search services or categories…"
+              />
+            </label>
+            <div className="max-h-[55svh] space-y-6 overflow-y-auto pr-1">
+              {groups.map((group) => (
+                <section key={group.name} className="space-y-3">
+                  <h3 className="text-sm font-semibold">{group.name}</h3>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {group.services.map((name) => {
+                      const selected = data.services.some(
+                        (service) => service.name === name
+                      );
+                      return (
+                        <label
+                          key={name}
+                          className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm transition-colors ${selected ? "border-[var(--onboarding-accent)] bg-[var(--onboarding-accent-soft)]" : "border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] hover:border-[var(--onboarding-accent)]"}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() => toggle(name, group.name)}
+                            className="mt-0.5 size-4 shrink-0 accent-[var(--onboarding-accent)]"
+                          />
+                          {name}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
+              {!groups.length && (
+                <p className="p-6 text-center text-sm text-[var(--onboarding-muted)]">
+                  No services found.
+                </p>
+              )}
+            </div>
+            <DialogClose asChild>
+              <Button
+                type="button"
+                className="h-11 bg-[var(--onboarding-accent-deep)] text-white"
+              >
+                <Check size={16} aria-hidden="true" />
+                Done · {data.services.length} selected
+              </Button>
+            </DialogClose>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      <div className="grid gap-4">
+      {!data.services.length && (
+        <p className="rounded-2xl border border-dashed border-[var(--onboarding-border)] p-8 text-center text-sm text-[var(--onboarding-muted)]">
+          Select the services available at your hospital to get started.
+        </p>
+      )}
+      <div className="grid gap-3 md:grid-cols-2">
         {data.services.map((service) => (
-          <section
-            className="rounded-[24px] border border-slate-200/80 bg-white/78 p-4 shadow-sm dark:border-white/[0.10] dark:bg-white/[0.055]"
+          <div
             key={service.id}
+            className="flex items-center gap-3 rounded-xl border border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] p-4"
           >
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--onboarding-accent-soft)] text-[var(--onboarding-accent)]">
-                  <Wrench size={18} />
-                </span>
-                <div className="min-w-0">
-                  <h3 className="truncate font-headline text-lg font-semibold text-slate-950 dark:text-white">
-                    {service.name || "Service details"}
-                  </h3>
-                  <p className="mt-1 text-xs font-bold text-slate-500">
-                    {service.category || "Category pending"}
-                  </p>
-                </div>
-              </div>
-              <button
-                className="inline-flex h-9 items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 text-xs font-bold text-rose-700 transition hover:bg-rose-100"
-                onClick={() =>
-                  setData((current) => ({
-                    ...current,
-                    services: current.services.filter((item) => item.id !== service.id),
-                  }))
-                }
-                type="button"
-              >
-                <Trash2 size={14} />
-                Remove
-              </button>
+            <Check
+              size={18}
+              className="shrink-0 text-[var(--onboarding-accent)]"
+              aria-hidden="true"
+            />
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-semibold">{service.name}</h3>
+              <p className="mt-1 text-xs text-[var(--onboarding-muted)]">
+                {service.category}
+              </p>
             </div>
-
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_140px_140px]">
-              <TextField
-                required
-                label="Name"
-                onChange={(value) => updateService(service.id, { name: value })}
-                placeholder="General Consultation"
-                value={service.name}
-              />
-              <label>
-                <FieldLabel required>Category</FieldLabel>
-                <ErpSelect
-                  className={fieldClassName("appearance-none")}
-                  onChange={(event) => updateService(service.id, { category: event.target.value })}
-                  value={service.category}
-                >
-                  {clinicServiceCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </ErpSelect>
-              </label>
-              <TextField
-                required
-                label="Price"
-                onChange={(value) => updateService(service.id, { price: value })}
-                placeholder="500"
-                value={service.price}
-              />
-              <TextField
-                required
-                label="Duration"
-                onChange={(value) => updateService(service.id, { duration: value })}
-                placeholder="30 min"
-                value={service.duration}
-              />
-              <label className="md:col-span-2 xl:col-span-3">
-                <FieldLabel>Description</FieldLabel>
-                <input
-                  className={fieldClassName()}
-                  onChange={(event) => updateService(service.id, { description: event.target.value })}
-                  placeholder="Short description shown to patients"
-                  value={service.description}
-                />
-              </label>
-              <button
-                className={cn(
-                  "inline-flex h-11 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-bold transition",
-                  service.availableOnline
-                    ? "border-[var(--onboarding-border-strong)] bg-[var(--onboarding-accent-soft)] text-[var(--onboarding-accent)]"
-                    : "border-slate-200 bg-slate-50 text-slate-500"
-                )}
-                onClick={() => updateService(service.id, { availableOnline: !service.availableOnline })}
-                type="button"
-              >
-                <Check size={15} />
-                {service.availableOnline ? "Available Online" : "Offline Only"}
-              </button>
-            </div>
-          </section>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={`Remove ${service.name}`}
+              onClick={() => toggle(service.name, service.category)}
+            >
+              <Trash2 size={16} aria-hidden="true" />
+            </Button>
+          </div>
         ))}
       </div>
     </div>
   );
 }
-

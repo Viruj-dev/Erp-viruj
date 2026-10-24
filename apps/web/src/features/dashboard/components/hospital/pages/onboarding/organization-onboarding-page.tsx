@@ -1,5 +1,6 @@
 "use client";
 import { OnboardingFrame } from "./onboarding-frame";
+import { Button } from "@/components/ui/button";
 
 import { cn } from "@/lib/utils";
 import { setCentralApiTokenIdentity } from "@/lib/central-api-token";
@@ -25,7 +26,7 @@ import { DepartmentsStep } from "./steps/departments-step";
 import { DoctorsStep } from "./steps/doctors-step";
 import { LocationsStep } from "./steps/locations-step";
 import { ProfileStep } from "./steps/profile-step";
-import { PublicProfileStep } from "./steps/public-profile-step";
+import { ServicesStep } from "./steps/services-step";
 import { ReviewStep } from "./steps/review-step";
 import { WorkingHoursStep } from "./steps/working-hours-step";
 import type { OnboardingKind, OnboardingState, StepId } from "./types";
@@ -81,6 +82,8 @@ export function OrganizationOnboardingPage({
   );
   const [launching, setLaunching] = useState(false);
   const [invitationPending, setInvitationPending] = useState(false);
+  const [restoringDraft, setRestoringDraft] = useState(false);
+  const [draftRestoreFailed, setDraftRestoreFailed] = useState(false);
   // The step fields live inside this form so the Continue/Launch buttons can
   // surface native constraint messages (for example a -1 establishment year)
   // directly at the field before the custom per-step validation runs.
@@ -92,10 +95,7 @@ export function OrganizationOnboardingPage({
   useEffect(() => {
     const userId = sessionState.data?.user?.id ?? null;
     const onboardingOrganizationId =
-      organizationId ??
-      hospitalId ??
-      activeOrganizationState.data?.id ??
-      null;
+      organizationId ?? hospitalId ?? activeOrganizationState.data?.id ?? null;
 
     setCentralApiTokenIdentity(
       userId && onboardingOrganizationId
@@ -106,9 +106,43 @@ export function OrganizationOnboardingPage({
     activeOrganizationState.data?.id,
     hospitalId,
     organizationId,
-    sessionState.data?.user?.id
+    sessionState.data?.user?.id,
   ]);
 
+  useEffect(() => {
+    const id = organizationId ?? hospitalId;
+    if (!id || window.localStorage.getItem(storageKey)) return;
+    let cancelled = false;
+    setRestoringDraft(true);
+    setDraftRestoreFailed(false);
+    void virujBackend.accessReview
+      .draft(id)
+      .then((saved) => {
+        if (!cancelled && saved.data) {
+          setData(
+            mergeOnboardingState(
+              saved.data as OnboardingState,
+              profileDefaults,
+              kind
+            )
+          );
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDraftRestoreFailed(true);
+          setErrorMessage(
+            "Unable to restore your saved application. Reload this page before making changes."
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setRestoringDraft(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [organizationId, hospitalId, storageKey, kind, profileDefaults]);
   const currentStep = steps[currentStepIndex] ?? steps[0];
   const progressCount = completedSteps.filter((step) =>
     onboardingStepIds.has(step)
@@ -122,7 +156,7 @@ export function OrganizationOnboardingPage({
         );
   const wideContent = [
     "departments",
-    "public",
+    "services",
     "review",
     "workingHours",
     "doctors",
@@ -160,6 +194,7 @@ export function OrganizationOnboardingPage({
   }, [kind, onboardingStepIds, profileDefaults, steps.length, storageKey]);
 
   useEffect(() => {
+    if (restoringDraft || draftRestoreFailed) return;
     setSaveState("saving");
     const timeout = window.setTimeout(() => {
       const draft = JSON.stringify({
@@ -184,7 +219,14 @@ export function OrganizationOnboardingPage({
     }, 500);
 
     return () => window.clearTimeout(timeout);
-  }, [completedSteps, currentStepIndex, data, storageKey]);
+  }, [
+    completedSteps,
+    currentStepIndex,
+    data,
+    storageKey,
+    restoringDraft,
+    draftRestoreFailed,
+  ]);
 
   const summary = useMemo(() => {
     if (kind === "clinic") {
@@ -211,8 +253,8 @@ export function OrganizationOnboardingPage({
       { label: "Departments", value: enabledDepartments.length.toString() },
       { label: "Branches", value: data.branches.length.toString() },
       {
-        label: "Public Profile",
-        value: data.publicProfile.showHospitalProfile ? "Enabled" : "Hidden",
+        label: "Services",
+        value: data.services.length.toString(),
       },
     ];
   }, [data, enabledDepartments.length, kind, organizationLabel]);
@@ -253,6 +295,7 @@ export function OrganizationOnboardingPage({
   };
 
   const handleLaunch = async () => {
+    if (restoringDraft || draftRestoreFailed) return;
     if (!stepFormRef.current?.reportValidity()) {
       return;
     }
@@ -294,12 +337,31 @@ export function OrganizationOnboardingPage({
     setShowCompletionScreen(true);
   };
 
+  if (restoringDraft) {
+    return (
+      <main role="status" className="grid min-h-svh place-items-center">
+        Loading your saved onboarding details…
+      </main>
+    );
+  }
+  if (draftRestoreFailed) {
+    return (
+      <main className="grid min-h-svh place-items-center p-8">
+        <section className="space-y-4">
+          <p role="alert">{errorMessage}</p>
+          <Button onClick={() => window.location.reload()}>
+            Retry saved details
+          </Button>
+        </section>
+      </main>
+    );
+  }
   if (showCompletionScreen) {
     return (
       <OnboardingSuccessScreen
         notice={
           invitationPending
-            ? "Your workspace is ready. Doctor invitation email delivery is pending."
+            ? "Your onboarding details are saved for review."
             : undefined
         }
         completionPercentage={100}
@@ -337,52 +399,56 @@ export function OrganizationOnboardingPage({
         onSubmit={(event) => event.preventDefault()}
         className="flex min-h-0 flex-col"
       >
-      {currentStep.id === "profile" ? (
-        <ProfileStep
-          data={data}
-          kind={kind}
-          organizationId={storageId}
-          updateProfile={updateProfile}
-        />
-      ) : null}
+        {currentStep.id === "profile" ? (
+          <ProfileStep
+            data={data}
+            kind={kind}
+            organizationId={storageId}
+            updateProfile={updateProfile}
+          />
+        ) : null}
 
-      {currentStep.id === "contact" ? (
-        <ContactStep data={data} updateProfile={updateProfile} />
-      ) : null}
+        {currentStep.id === "contact" ? (
+          <ContactStep data={data} updateProfile={updateProfile} />
+        ) : null}
 
-      {currentStep.id === "locations" ? (
-        <LocationsStep data={data} kind={kind} setData={setData} />
-      ) : null}
+        {currentStep.id === "locations" ? (
+          <LocationsStep data={data} kind={kind} setData={setData} />
+        ) : null}
 
-      {currentStep.id === "workingHours" ? (
-        <WorkingHoursStep data={data} setData={setData} />
-      ) : null}
+        {currentStep.id === "workingHours" ? (
+          <WorkingHoursStep data={data} setData={setData} />
+        ) : null}
 
-      {currentStep.id === "departments" ? (
-        <DepartmentsStep
-          data={data}
-          kind={kind}
-          organizationId={storageId}
-          setData={setData}
-        />
-      ) : null}
+        {currentStep.id === "departments" ? (
+          <DepartmentsStep
+            data={data}
+            kind={kind}
+            organizationId={storageId}
+            setData={setData}
+          />
+        ) : null}
 
-      {currentStep.id === "doctors" ? (
-        <DoctorsStep data={data} setData={setData} organizationId={storageId} />
-      ) : null}
+        {currentStep.id === "doctors" ? (
+          <DoctorsStep
+            data={data}
+            setData={setData}
+            organizationId={storageId}
+          />
+        ) : null}
 
-      {currentStep.id === "public" ? (
-        <PublicProfileStep data={data} setData={setData} />
-      ) : null}
+        {currentStep.id === "services" ? (
+          <ServicesStep data={data} setData={setData} />
+        ) : null}
 
-      {currentStep.id === "review" ? (
-        <ReviewStep
-          completionPercentage={completionPercentage}
-          data={data}
-          kind={kind}
-          summary={summary}
-        />
-      ) : null}
+        {currentStep.id === "review" ? (
+          <ReviewStep
+            completionPercentage={completionPercentage}
+            data={data}
+            kind={kind}
+            summary={summary}
+          />
+        ) : null}
       </form>
     </OnboardingFrame>
   );

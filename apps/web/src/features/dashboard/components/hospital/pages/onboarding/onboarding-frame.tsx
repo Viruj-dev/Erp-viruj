@@ -331,7 +331,7 @@ export function OnboardingFrame({
                           disabled={launching}
                           type="button"
                         >
-                          Launch ERP
+                          Submit for review
                           <Sparkles size={16} />
                         </button>
                       ) : (

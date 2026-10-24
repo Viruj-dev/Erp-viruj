@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Check, Clock3, Globe2, ShieldCheck, Sparkles } from "lucide-react";
-import { publicOptions } from "../constants";
 import { HealthcareLaunchIllustration } from "../healthcare-launch-illustration";
 import type { OnboardingKind, OnboardingState } from "../types";
 
@@ -42,15 +41,11 @@ export function ReviewStep({
       ready: enabledDepartments.length > 0,
     },
     {
-      label: isClinic ? "Doctors" : "Patient app profile",
+      label: isClinic ? "Doctors" : "Hospital services",
       meta: isClinic
         ? `${data.doctors.length} doctors added`
-        : data.publicProfile.showHospitalProfile
-          ? "Verification required"
-          : "Hidden from Viruj",
-      ready: isClinic
-        ? data.doctors.length > 0
-        : data.publicProfile.showHospitalProfile,
+        : `${data.services.length} services selected`,
+      ready: isClinic ? data.doctors.length > 0 : data.services.length > 0,
     },
   ];
   const visiblePatientFeatures = isClinic
@@ -59,9 +54,7 @@ export function ReviewStep({
         `${enabledDepartments.length} specialties`,
         `${data.workingHours.filter((hours) => hours.isOpen).length} open days`,
       ]
-    : publicOptions
-        .filter(([key]) => data.publicProfile[key])
-        .map(([, label]) => label.replace("Show ", "").replace("Display ", ""));
+    : data.services.map((service) => service.name);
 
   return (
     <div className="space-y-4">
@@ -71,14 +64,15 @@ export function ReviewStep({
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/14 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/85">
               <Sparkles size={13} />
-              Launch readiness
+              Application review
             </div>
             <h3 className="mt-5 text-[30px] font-semibold leading-tight tracking-tight md:text-[36px]">
-              {organizationName} is ready for day one.
+              {organizationName} is ready for review.
             </h3>
             <p className="mt-3 max-w-lg text-sm font-medium leading-6 text-white/80">
-              Every required setup section is saved. Launch ERP now to start
-              managing day-to-day {isClinic ? "clinic" : "hospital"} operations.
+              Every required setup section is saved. Submit your application for
+              review before managing day-to-day{" "}
+              {isClinic ? "clinic" : "hospital"} operations.
             </p>
             <div className="mt-6">
               <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.16em] text-white/80">
@@ -136,10 +130,10 @@ export function ReviewStep({
 
         <div className="rounded-[22px] border border-[var(--onboarding-border)] bg-[var(--onboarding-panel-soft)] p-4 shadow-sm">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--onboarding-muted)]">
-            Patient app
+            {isClinic ? "Patient app" : "Hospital services"}
           </p>
           <h4 className="mt-1 text-lg font-semibold text-[var(--onboarding-text)]">
-            {isClinic ? "Clinic readiness" : "Public visibility"}
+            {isClinic ? "Clinic readiness" : "Services offered"}
           </h4>
           <div className="mt-4 flex flex-wrap gap-2">
             {visiblePatientFeatures.length ? (
@@ -153,7 +147,7 @@ export function ReviewStep({
               ))
             ) : (
               <span className="rounded-full border border-[#ddd8cc] bg-[#f4eee3] px-3 py-1.5 text-xs font-semibold text-[#8a652d]">
-                Profile hidden
+                No services selected
               </span>
             )}
           </div>
@@ -162,16 +156,12 @@ export function ReviewStep({
             <p className="mt-3 text-sm font-semibold">
               {isClinic
                 ? `${data.doctors.length} doctors / ${enabledDepartments.length} specialties`
-                : data.publicProfile.showHospitalProfile
-                  ? "Ready for review"
-                  : "Private workspace"}
+                : "Ready for review"}
             </p>
             <p className="mt-1 text-xs font-medium leading-5 text-white/80">
               {isClinic
                 ? "Clinic onboarding captures identity, contact, location, schedule, specialties, and doctors."
-                : data.publicProfile.showHospitalProfile
-                  ? "Patients can find this hospital after profile verification and directory publication."
-                  : "You can publish the hospital profile later from settings."}
+                : "Your services and onboarding details will be reviewed before ERP access is approved."}
             </p>
           </div>
         </div>

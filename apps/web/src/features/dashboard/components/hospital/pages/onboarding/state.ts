@@ -65,9 +65,7 @@ export function isValidPostalCode(value: string) {
 export function isValidEstablishedYear(value: string) {
   const year = Number(value.trim());
   return (
-    Number.isInteger(year) &&
-    year >= 1800 &&
-    year <= new Date().getFullYear()
+    Number.isInteger(year) && year >= 1800 && year <= new Date().getFullYear()
   );
 }
 
@@ -282,19 +280,21 @@ export function validateStep(
       }
       return "";
     case "services":
-      if (kind === "clinic" && data.services.length === 0) {
-        return "Add at least one clinic service.";
+      if (data.services.length === 0) {
+        return "Select at least one service.";
       }
       if (
         data.services.some(
           (service) =>
             !service.name.trim() ||
             !service.category.trim() ||
-            !service.price.trim() ||
-            !service.duration.trim()
+            (kind === "clinic" &&
+              (!service.price.trim() || !service.duration.trim()))
         )
       ) {
-        return "Each service needs name, category, price, and duration.";
+        return kind === "clinic"
+          ? "Each service needs name, category, price, and duration."
+          : "Each service needs a name and category.";
       }
       return "";
     default:
@@ -577,4 +577,26 @@ function normalizeServices(value: unknown): OnboardingService[] {
 export function validTimeRange(start: string, end: string) {
   const time = /^([01]\d|2[0-3]):[0-5]\d$/;
   return time.test(start) && time.test(end) && end > start;
+}
+
+export function toggleServiceSelection(
+  services: OnboardingService[],
+  name: string,
+  category: string
+): OnboardingService[] {
+  if (services.some((service) => service.name === name)) {
+    return services.filter((service) => service.name !== name);
+  }
+  return [
+    ...services,
+    {
+      id: crypto.randomUUID(),
+      name,
+      category,
+      price: "",
+      duration: "",
+      description: "",
+      availableOnline: false,
+    },
+  ];
 }
