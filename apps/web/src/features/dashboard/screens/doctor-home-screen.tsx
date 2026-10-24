@@ -42,7 +42,10 @@ import {
   organizationTypeLabels,
 } from "@/features/dashboard/lib/routing";
 import { WorkspaceSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
-import { clearCentralApiToken } from "@/lib/central-api-token";
+import {
+  clearCentralApiToken,
+  setCentralApiTokenIdentity
+} from "@/lib/central-api-token";
 import { activateOrganization, authClient } from "@/lib/auth-client";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -159,6 +162,19 @@ export function DoctorHomeScreen({
       : isErpDemoPage(requestedPage)
         ? requestedPage
         : "dashboard";
+  // Key the central API token cache to the signed-in user + active workspace
+  // so a cached token is never reused across users or organizations.
+  useEffect(() => {
+    const userId = sessionState.data?.user?.id ?? null;
+    const organizationId = activeOrganization?.id ?? null;
+
+    setCentralApiTokenIdentity(
+      userId && organizationId ? `${userId}:${organizationId}` : null
+    );
+  }, [
+    activeOrganization?.id,
+    sessionState.data?.user?.id
+  ]);
   const activeOrganizationType =
     activeOrganization?.organizationType &&
     isDashboardOrganizationType(activeOrganization.organizationType)

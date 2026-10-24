@@ -353,6 +353,7 @@ export type VirujAuditLog = {
 export type VirujStaffInviteResult = VirujStaffInvitation & {
   onboarding?: {
     confirmationUrl?: string;
+    emailError?: string;
     emailSent?: boolean;
     loginUrl?: string;
   };
@@ -516,6 +517,15 @@ export type VirujHospitalGalleryItem = {
   sortOrder: number;
   updatedAt: string;
   url: string;
+};
+
+export type VirujOnboardingStatus = {
+  organizationId?: string;
+  providerType?: string;
+  onboardingCompleted?: boolean;
+  hospitalOrClinicCompleted?: boolean;
+  diagnosticsCompleted?: boolean;
+  source?: string;
 };
 
 export type VirujAnalyticsDateRange =
@@ -1429,6 +1439,11 @@ export const virujBackend = {
         "/hospital/settings/security",
         { organizationId: input?.organizationId, suppressToast: true }
       ),
+    getSecurityCapabilities: (input?: { organizationId?: string }) =>
+      request<{ data: { password: { minimumLength: number } } }>(
+        "/hospital/settings/security/capabilities",
+        { organizationId: input?.organizationId, suppressToast: true }
+      ),
     getSecurityHistory: (input?: { organizationId?: string }) =>
       request<{
         data: {
@@ -1703,6 +1718,20 @@ export const virujBackend = {
       request<{ count: number }>("/notifications/unread/count", {
         organizationId: input?.organizationId,
         suppressToast: true,
+      }),
+  },
+  onboardingStatus: {
+    key: (organizationId?: string) =>
+      [
+        "viruj-backend",
+        "erp",
+        "onboarding-status",
+        organizationId ?? "none"
+      ] as const,
+    status: (organizationId?: string) =>
+      request<VirujOnboardingStatus>("/onboarding-status", {
+        organizationId,
+        suppressToast: true
       }),
   },
   modules: {

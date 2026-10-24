@@ -997,11 +997,7 @@ function LockedField({ label, hint, children }) {
   );
 }
 
-function SecurityTab({ security, historyFilters, setHistoryFilters, historyRows }) {
-  // The authentication backend in this environment floors custom minimums at 8
-  // characters (max 128). No capabilities endpoint exposes the value yet, so it
-  // lives here as the single source until one ships.
-  const platformMinimumPasswordLength = 8;
+function SecurityTab({ security, platformMinimumPasswordLength, historyFilters, setHistoryFilters, historyRows }) {
   const [historyDetail, setHistoryDetail] = useState(null);
   const rows = historyRows || HISTORY_ROWS;
   const filteredHistory = rows.filter((h) => {
@@ -1042,7 +1038,7 @@ function SecurityTab({ security, historyFilters, setHistoryFilters, historyRows 
 
       <SectionCard title="Password policy" eyebrow="Authentication" description="Minimums are floored by the platform-wide policy and can only be made stricter.">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <LockedField label="Minimum password length" hint={`Platform minimum: ${platformMinimumPasswordLength}`}><TextInput disabled value={security.minLength} /></LockedField>
+          <LockedField label="Minimum password length" hint={platformMinimumPasswordLength ? `Platform minimum: ${platformMinimumPasswordLength}` : "Platform minimum unavailable"}><TextInput disabled value={security.minLength} /></LockedField>
           <LockedField label="Password expiry" hint="days · 0 = never"><TextInput disabled value={security.expiryDays} /></LockedField>
           <LockedField label="Password history" hint="prevents reusing the last N passwords"><TextInput disabled value={security.historyCount} /></LockedField>
         </div>
@@ -1284,6 +1280,7 @@ export function ErpDemoSettings({ organizationId, section = "operational" }: { o
   const notificationsQuery = useQuery({ queryFn: () => virujBackend.hospitalSettings.getNotifications({ organizationId }), queryKey: virujBackend.hospitalSettings.key("notifications", organizationId), retry: false, staleTime: 30_000 });
   const notificationRulesQuery = useQuery({ queryFn: () => virujBackend.hospitalSettings.getNotificationRules({ organizationId }), queryKey: virujBackend.hospitalSettings.notificationRulesKey(organizationId), retry: false, staleTime: 30_000 });
   const securityQuery = useQuery({ queryFn: () => virujBackend.hospitalSettings.getSecurity({ organizationId }), queryKey: virujBackend.hospitalSettings.key("security", organizationId), retry: false, staleTime: 30_000 });
+  const securityCapabilitiesQuery = useQuery({ queryFn: () => virujBackend.hospitalSettings.getSecurityCapabilities({ organizationId }), queryKey: virujBackend.hospitalSettings.key("security-capabilities", organizationId), enabled: activeTab === "security", retry: false, staleTime: 30_000 });
   const securityHistoryQuery = useQuery({ queryFn: () => virujBackend.hospitalSettings.getSecurityHistory({ organizationId }), queryKey: virujBackend.hospitalSettings.securityHistoryKey(organizationId), retry: false, staleTime: 30_000 });
 
   const activeSettingsQuery = activeTab === "operational" ? operationalQuery : activeTab === "notifications" ? notificationsQuery : securityQuery;
@@ -1673,7 +1670,7 @@ export function ErpDemoSettings({ organizationId, section = "operational" }: { o
               <NotificationsTab data={notifications} setData={setNotifications} readOnly={!canEdit} rules={rules} setRules={setRules} pushToast={pushToast} />
             )}
             {activeTab === "security" && (
-              <SecurityTab security={securitySettings} historyFilters={historyFilters} setHistoryFilters={setHistoryFilters} historyRows={securityHistory} />
+              <SecurityTab security={securitySettings} platformMinimumPasswordLength={securityCapabilitiesQuery.data?.data.password.minimumLength} historyFilters={historyFilters} setHistoryFilters={setHistoryFilters} historyRows={securityHistory} />
             )}
           </>
         )}

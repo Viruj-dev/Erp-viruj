@@ -1,24 +1,49 @@
-export function shouldStartOrganizationOnboarding(
-  organization:
-    | { id?: string; organizationType?: string; createdAt?: string | Date }
-    | null
-    | undefined,
-  storage: Pick<Storage, "getItem">,
-  now = Date.now()
-) {
+export type OnboardingOrganizationLike =
+  | {
+      id?: string;
+      organizationType?: string;
+    }
+  | null
+  | undefined;
+
+export type OnboardingStatusReport = {
+  organizationId?: string;
+  providerType?: string;
+  onboardingCompleted?: boolean;
+  hospitalOrClinicCompleted?: boolean;
+  diagnosticsCompleted?: boolean;
+  source?: string;
+} | null;
+
+export type OnboardingStatusReporter = () => Promise<OnboardingStatusReport>;
+
+export async function resolveOrganizationOnboardingGate(
+  organization: OnboardingOrganizationLike,
+  fetchStatus: OnboardingStatusReporter
+): Promise<boolean> {
   if (
     !organization?.id ||
     !["hospital", "clinic"].includes(organization.organizationType ?? "")
-  ) {
+  )
     return false;
+
+  const status = await fetchStatus();
+  const completed =
+    status?.onboardingCompleted ?? status?.hospitalOrClinicCompleted;
+  if (
+    status?.organizationId !== organization.id ||
+    (status.providerType &&
+      status.providerType !== organization.organizationType) ||
+    typeof completed !== "boolean"
+  ) {
+    throw new Error("Unable to verify organization setup. Please try again.");
   }
+  return !completed;
+}
 
-  const prefix = `viruj:${organization.organizationType}-onboarding`;
-  if (storage.getItem(`${prefix}:start`) === "1") return true;
-  if (storage.getItem(`${prefix}:completed:${organization.id}`)) return false;
-
-  // Incomplete onboarding is pending for hospital and clinic workspaces
-  // regardless of organization age. The gate no longer expires after two
-  // hours, so a deep-linked workspace cannot skip setup just by waiting.
-  return true;
+export function shouldRedirectDiagnosticOnboarding(
+  page: string,
+  completedAt: unknown
+) {
+  return page !== "onboarding" && !completedAt;
 }

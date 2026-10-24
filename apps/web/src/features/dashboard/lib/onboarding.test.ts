@@ -1,72 +1,83 @@
 import { expect, test } from "bun:test";
-import { shouldStartOrganizationOnboarding } from "./onboarding";
+import {
+  resolveOrganizationOnboardingGate,
+  shouldRedirectDiagnosticOnboarding,
+} from "./onboarding";
 
-test("onboarding is decided before rendering home for hospital and clinic accounts", () => {
-  const now = Date.parse("2026-09-13T12:00:00Z");
-  const values = new Map<string, string>();
-  const storage = { getItem: (key: string) => values.get(key) ?? null };
+test("the backend decides setup completion on every visit", async () => {
+  let requests = 0;
   for (const organizationType of ["hospital", "clinic"]) {
-    values.clear();
-    const organization = {
-      id: "new",
-      organizationType,
-      createdAt: new Date(now - 1000),
-    };
-    const prefix = `viruj:${organizationType}-onboarding`;
-    // A fresh login may have no signup start flag, but must still go straight to onboarding.
-    expect(shouldStartOrganizationOnboarding(organization, storage, now)).toBe(
-      true
-    );
-    expect(
-      shouldStartOrganizationOnboarding(
-        { ...organization, createdAt: organization.createdAt.toISOString() },
-        storage,
-        now
-      )
-    ).toBe(true);
-    values.set(`${prefix}:completed:new`, "1");
-    expect(shouldStartOrganizationOnboarding(organization, storage, now)).toBe(
-      false
-    );
-    expect(
-      shouldStartOrganizationOnboarding(
-        { ...organization, id: "another" },
-        storage,
-        now
-      )
-    ).toBe(true);
-    values.clear();
-    // Onboarding now stays pending for any organization that has never
-    // completed setup, however old it is.
-    const existing = {
-      ...organization,
-      createdAt: new Date(now - 3 * 60 * 60 * 1000),
-    };
-    expect(shouldStartOrganizationOnboarding(existing, storage, now)).toBe(
-      true
-    );
-    values.set(`${prefix}:start`, "1");
-    expect(shouldStartOrganizationOnboarding(existing, storage, now)).toBe(
-      true
-    );
+    for (const completed of [true, false, false, true]) {
+      const start = await resolveOrganizationOnboardingGate(
+        { id: "tenant", organizationType },
+        async () => {
+          requests += 1;
+          return {
+            organizationId: "tenant",
+            providerType: organizationType,
+            onboardingCompleted: completed,
+          };
+        }
+      );
+      expect(start).toBe(!completed);
+    }
   }
-  expect(shouldStartOrganizationOnboarding(null, storage, now)).toBe(false);
-  expect(
-    shouldStartOrganizationOnboarding(
-      { id: "doctor", organizationType: "doctor", createdAt: new Date(now) },
-      storage,
-      now
+  expect(requests).toBe(8);
+});
+
+test("unknown or mismatched setup status cannot unlock the workspace", async () => {
+  for (const status of [
+    null,
+    {},
+    { organizationId: "other", onboardingCompleted: true },
+    {
+      organizationId: "tenant",
+      providerType: "clinic",
+      onboardingCompleted: true,
+    },
+  ]) {
+    await expect(
+      resolveOrganizationOnboardingGate(
+        { id: "tenant", organizationType: "hospital" },
+        async () => status
+      )
+    ).rejects.toThrow("verify");
+  }
+  await expect(
+    resolveOrganizationOnboardingGate(
+      { id: "tenant", organizationType: "hospital" },
+      async () => {
+        throw new Error("offline");
+      }
     )
+  ).rejects.toThrow("offline");
+});
+
+test("other provider types do not use the hospital/clinic gate", async () => {
+  for (const organization of [
+    null,
+    { id: "doctor", organizationType: "doctor" },
+    { id: "lab", organizationType: "pathology" },
+  ]) {
+    expect(
+      await resolveOrganizationOnboardingGate(organization, async () => {
+        throw new Error("must not fetch");
+      })
+    ).toBe(false);
+  }
+});
+
+test("incomplete diagnostics can open setup while operational pages stay gated", () => {
+  expect(shouldRedirectDiagnosticOnboarding("onboarding", null)).toBe(false);
+  for (const page of [
+    "dashboard",
+    "reports",
+    "services",
+    "facilities",
+    "appointments",
+  ])
+    expect(shouldRedirectDiagnosticOnboarding(page, null)).toBe(true);
+  expect(
+    shouldRedirectDiagnosticOnboarding("dashboard", "2026-10-24T00:00:00Z")
   ).toBe(false);
-  values.clear();
-  // The gate no longer depends on createdAt, so even an unparseable value
-  // cannot skip setup: onboarding stays pending until the completion flag is
-  // written on launch.
-  expect(
-    shouldStartOrganizationOnboarding(
-      { id: "invalid", organizationType: "hospital", createdAt: "invalid" },
-      storage,
-      now
-    )
-  ).toBe(true);
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { shouldStartOrganizationOnboarding } from "@/features/dashboard/lib/onboarding";
+import { useOrganizationOnboardingGate } from "@/features/dashboard/lib/use-organization-onboarding-gate";
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import {
   ClinicDepartmentsPage,
@@ -21,6 +21,7 @@ import {
   ErpDemoPatients,
   FacilitiesPage,
   OrganizationOnboardingPage,
+  PricingPage,
 } from "@/features/dashboard/components/hospital/pages";
 import {
   ErpDemoSidebar,
@@ -42,7 +43,10 @@ import {
   organizationTypeLabels,
 } from "@/features/dashboard/lib/routing";
 import { WorkspaceSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
-import { clearCentralApiToken } from "@/lib/central-api-token";
+import {
+  clearCentralApiToken,
+  setCentralApiTokenIdentity
+} from "@/lib/central-api-token";
 import { activateOrganization, authClient } from "@/lib/auth-client";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -194,15 +198,50 @@ export function ClinicHomeScreen({
     organizationLabel
   );
   const workspaceTheme = getWorkspaceTheme(organizationLabel);
+
+  // Key the central API token cache to the signed-in user + active workspace
+  // so a cached token is never reused across users or organizations.
+  useEffect(() => {
+    const userId = sessionState.data?.user?.id ?? null;
+    const organizationId = activeOrganization?.id ?? null;
+
+    setCentralApiTokenIdentity(
+      userId && organizationId ? `${userId}:${organizationId}` : null
+    );
+  }, [
+    activeOrganization?.id,
+    sessionState.data?.user?.id
+  ]);
+
+  // Pages that must not open pre-setup via deep link behave like the
+  // dashboard: the workspace routes to onboarding unless completion is
+  // confirmed by the local marker or the backend onboarding status.
+  const requestingGatedWorkspacePage =
+    requestedPage === "dashboard" ||
+    clinicOnboardingGatedPages.has(resolvedPage);
+  const onboardingGate = useOrganizationOnboardingGate(
+    activeOrganization?.id,
+    activeOrganizationType,
+    isHydrated &&
+      !isAuthPending &&
+      activeOrganizationType === "clinic" &&
+      requestingGatedWorkspacePage
+  );
+
   const shouldRedirectToOnboarding =
     isHydrated &&
     !isAuthPending &&
     activeOrganizationType === "clinic" &&
-    // Deep-linked workflow pages (appointments, services/facilities) may only
-    // open once the workspace has completed setup, same as the dashboard.
-    (requestedPage === "dashboard" ||
-      clinicOnboardingGatedPages.has(resolvedPage)) &&
-    shouldStartOrganizationOnboarding(activeOrganization, window.localStorage);
+    requestingGatedWorkspacePage &&
+    onboardingGate === "start";
+  // While the backend-authoritative status is pending, hold the shell
+  // skeleton so the setup screen never flashes on an unknown backend state.
+  const isOnboardingGatePending =
+    isHydrated &&
+    !isAuthPending &&
+    activeOrganizationType === "clinic" &&
+    requestingGatedWorkspacePage &&
+    onboardingGate === "pending";
 
   const clinicDashboardPath = activeOrganizationSlug
     ? buildTenantDashboardPath("clinic", activeOrganizationSlug)
@@ -321,7 +360,16 @@ export function ClinicHomeScreen({
     router,
   ]);
 
-  if (!isHydrated || isAuthPending || shouldRedirectToOnboarding) {
+  if (requestingGatedWorkspacePage && onboardingGate === "error") {
+    return <div role="alert" className="space-y-3 p-8"><p>Unable to verify organization setup.</p><button type="button" onClick={() => window.location.reload()}>Try again</button></div>;
+  }
+
+  if (
+    !isHydrated ||
+    isAuthPending ||
+    shouldRedirectToOnboarding ||
+    isOnboardingGatePending
+  ) {
     return <WorkspaceSkeleton />;
   }
 
@@ -624,6 +672,14 @@ function ClinicPageContent({
       return <ClinicReviewsPage />;
     case "analytics":
       return <ErpDemoAnalytics />;
+    case "subscription":
+      // Same Plans & Subscription page the hospital workspace renders.
+      return (
+        <PricingPage
+          organizationId={organizationId}
+          organizationName={organizationName}
+        />
+      );
     case "settings":
       return <ClinicSettingsPage />;
     case "dashboard":

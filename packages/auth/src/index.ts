@@ -498,7 +498,7 @@ export const hasOrganizationPermission = (
   const normalizedRole = normalizeOrganizationMemberRole(role);
   const definition =
     organizationRoles[
-      (role in organizationRoles ? role : normalizedRole) as ErpOrganizationRole | OrganizationMemberRole
+      (normalizedRole ?? role) as ErpOrganizationRole | OrganizationMemberRole
     ];
 
   if (!definition) {

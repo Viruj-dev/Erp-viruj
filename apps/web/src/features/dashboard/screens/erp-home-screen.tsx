@@ -14,7 +14,8 @@ import { virujBackend } from "@/lib/viruj-backend";
 import { DiagnosticWorkspace } from "@/features/dashboard/components/shared/modules/diagnostic-workspace";
 import { DiagnosticOrders } from "@/features/dashboard/components/shared/modules/diagnostic-orders";
 
-import { shouldStartOrganizationOnboarding } from "@/features/dashboard/lib/onboarding";
+import { useOrganizationOnboardingGate } from "@/features/dashboard/lib/use-organization-onboarding-gate";
+import { shouldRedirectDiagnosticOnboarding } from "@/features/dashboard/lib/onboarding";
 import { ActivityLogsPage } from "@/features/dashboard/components/shared/activity";
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import {
@@ -81,6 +82,19 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
 const fallbackPage: ErpDemoPage = "dashboard";
+
+// Hospital workflow pages that, like the dashboard, must not open via deep
+// link while organization setup is incomplete (symmetric with the clinic
+// workspace). Diagnostics keep their server-driven gate.
+const hospitalOnboardingGatedPages = new Set<ErpDemoPage>([
+  "appointments",
+  "appointments-dashboard",
+  "appointments-review",
+  "appointments-patients",
+  "appointments-settings",
+  "services",
+  "facilities"
+]);
 
 export function ErpHomeScreen({
   currentPage: requestedPage,
@@ -274,17 +288,38 @@ export function ErpHomeScreen({
       Boolean(activeOrganization?.id),
     retry: false
   });
+  // Pages that must not open pre-setup via deep link behave like the
+  // dashboard: the workspace routes to onboarding unless completion is
+  // confirmed by the local marker or the backend onboarding status. The
+  // deep-link pages only apply to the hospital workspace; diagnostics keep
+  // their existing server-driven gate.
+  const requestingGatedWorkspacePage =
+    requestedPage === "dashboard" ||
+    (activeOrganizationType === "hospital" &&
+      hospitalOnboardingGatedPages.has(currentPage));
+  const onboardingGate = useOrganizationOnboardingGate(
+    activeOrganization?.id,
+    activeOrganizationType,
+    isHydrated &&
+      !isAuthPending &&
+      Boolean(activeOrganizationType) &&
+      requestingGatedWorkspacePage
+  );
+
   const shouldRedirectToOnboarding =
     isHydrated &&
     !isAuthPending &&
-    requestedPage === "dashboard" &&
-    (shouldStartOrganizationOnboarding(
-      activeOrganization,
-      window.localStorage
-    ) ||
+    ((requestingGatedWorkspacePage && onboardingGate === "start") ||
       (canSetupDiagnostics &&
         diagnosticSetup.isSuccess &&
-        !diagnosticSetup.data.completedAt));
+        shouldRedirectDiagnosticOnboarding(requestedPage, diagnosticSetup.data.completedAt)));
+  // While the backend-authoritative status is pending, hold the shell
+  // skeleton so the setup screen never flashes on an unknown backend state.
+  const isOnboardingGatePending =
+    isHydrated &&
+    !isAuthPending &&
+    requestingGatedWorkspacePage &&
+    onboardingGate === "pending";
 
   useEffect(() => {
     if (!isHydrated || isAuthPending) {
@@ -425,7 +460,16 @@ export function ErpHomeScreen({
     router
   ]);
 
-  if (!isHydrated || isAuthPending || shouldRedirectToOnboarding) {
+  if (requestingGatedWorkspacePage && onboardingGate === "error") {
+    return <div role="alert" className="space-y-3 p-8"><p>Unable to verify organization setup.</p><button type="button" onClick={() => window.location.reload()}>Try again</button></div>;
+  }
+
+  if (
+    !isHydrated ||
+    isAuthPending ||
+    shouldRedirectToOnboarding ||
+    isOnboardingGatePending
+  ) {
     return <WorkspaceSkeleton />;
   }
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { ErpDemoLogin } from "@/features/auth/components/login-screen";
-import { shouldStartOrganizationOnboarding } from "@/features/dashboard/lib/onboarding";
 import {
   buildDashboardPath,
   getDefaultDashboardPage,
@@ -101,31 +100,10 @@ export function ErpAuthScreen() {
       activeOrganizationType &&
       isDashboardOrganizationType(activeOrganizationType)
     ) {
-      const onboardingStoragePrefix = getOnboardingStoragePrefix(
-        activeOrganizationType
-      );
-      const shouldStartOnboarding = shouldStartOrganizationOnboarding(
-        activeOrganization,
-        window.localStorage
-      );
-
-      if (shouldStartOnboarding && onboardingStoragePrefix) {
-        window.sessionStorage.setItem(
-          `${onboardingStoragePrefix}:entry:${activeOrganization?.id ?? "workspace"}`,
-          "1"
-        );
-        window.sessionStorage.setItem(
-          `${onboardingStoragePrefix}:entry:workspace`,
-          "1"
-        );
-      }
-
       router.replace(
         buildDashboardPath(
           activeOrganizationType,
-          shouldStartOnboarding
-            ? "onboarding"
-            : getDefaultDashboardPage(activeMember?.role)
+          getDefaultDashboardPage(activeMember?.role)
         )
       );
       return;
@@ -163,11 +141,6 @@ export function ErpAuthScreen() {
   );
 }
 
-function getOnboardingStoragePrefix(organizationType: string) {
-  if (organizationType === "clinic") return "viruj:clinic-onboarding";
-  if (organizationType === "hospital") return "viruj:hospital-onboarding";
-  return null;
-}
 function getSessionOrganization(session: unknown) {
   if (
     session &&
