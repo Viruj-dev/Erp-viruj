@@ -10,7 +10,10 @@ Bun.env.CENTRAL_API_JWT_SECRET ??= "test-central-api-jwt-secret-32-bytes";
 const authModule = import("./index");
 
 test("legacy aliases use canonical grants without elevating specialist roles", async () => {
-  const { getCentralApiPermissions } = await authModule;
+  const { getCentralApiPermissions, organizationRoles } = await authModule;
+  expect(organizationRoles.doctor).toBe(organizationRoles.DOCTOR);
+  expect(organizationRoles.lab_tech).toBe(organizationRoles.TECHNICIAN);
+  expect(organizationRoles.receptionist).toBe(organizationRoles.RECEPTIONIST);
   for (const [alias, canonical] of [
     ["owner", "OWNER"],
     ["admin", "ADMIN"],
