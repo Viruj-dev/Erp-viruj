@@ -107,7 +107,7 @@ export function ErpSelect({
           align="start"
           sideOffset={4}
           alignItemWithTrigger={false}
-          className="isolate z-50"
+          className="isolate z-[10000]"
         >
           <Select.Popup className="max-h-[var(--available-height)] min-w-[var(--anchor-width)] max-w-[calc(100vw-2rem)] origin-[var(--transform-origin)] overflow-y-auto rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md outline-none transition-[opacity,transform] duration-100 data-[starting-style]:scale-95 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0 motion-reduce:transition-none">
             <Select.List>
