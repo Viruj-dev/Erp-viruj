@@ -1,3 +1,4 @@
+import { useWorkspaceApproved } from "./workspace-approval";
 import { useEffect, useMemo, useState } from "react";
 import {
   resolveOrganizationOnboardingGate,
@@ -41,6 +42,7 @@ export function useOrganizationOnboardingGate(
   organizationType: string | null | undefined,
   enabled: boolean
 ): OrganizationOnboardingGateState {
+  const approved = useWorkspaceApproved(organizationId);
   // Memoized so a session refetch that resolves the same workspace does not
   // re-run the effect (and re-fetch the status).
   const organization = useMemo<OnboardingOrganizationLike>(
@@ -55,7 +57,7 @@ export function useOrganizationOnboardingGate(
     useState<OrganizationOnboardingGateState>("pending");
 
   useEffect(() => {
-    if (!enabled || !organization?.id) {
+    if (approved || !enabled || !organization?.id) {
       setState("pending");
       return;
     }
@@ -77,7 +79,7 @@ export function useOrganizationOnboardingGate(
     return () => {
       cancelled = true;
     };
-  }, [enabled, organization]);
+  }, [approved, enabled, organization]);
 
-  return state;
+  return approved ? "skip" : state;
 }

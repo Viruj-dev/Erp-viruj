@@ -429,7 +429,7 @@ function SetupForm({
       <OnboardingSuccessScreen
         notice={
           invitationPending
-            ? "Your workspace is ready. Doctor invitation email delivery is pending."
+            ? "Your onboarding details are saved for review."
             : undefined
         }
         kind="hospital"

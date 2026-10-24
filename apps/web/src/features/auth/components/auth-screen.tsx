@@ -13,6 +13,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 export function ErpAuthScreen() {
   const router = useRouter();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [authenticatedHere, setAuthenticatedHere] = useState(false);
   const [isActivatingOnlyOrganization, setIsActivatingOnlyOrganization] =
     useState(false);
   const isHydrated = useSyncExternalStore(
@@ -34,6 +35,7 @@ export function ErpAuthScreen() {
     const organizations = organizationsState.data ?? [];
 
     if (
+      !authenticatedHere ||
       isAuthenticating ||
       !sessionState.data?.user ||
       activeOrganization?.id ||
@@ -56,6 +58,7 @@ export function ErpAuthScreen() {
       )
       .finally(() => setIsActivatingOnlyOrganization(false));
   }, [
+    authenticatedHere,
     activeMemberState,
     activeOrganization?.id,
     activeOrganizationState,
@@ -70,6 +73,7 @@ export function ErpAuthScreen() {
     const activeOrganizationType = activeOrganization?.organizationType;
 
     if (
+      !authenticatedHere ||
       !isHydrated ||
       isAuthenticating ||
       isActivatingOnlyOrganization ||
@@ -111,6 +115,7 @@ export function ErpAuthScreen() {
 
     router.replace("/dashboard");
   }, [
+    authenticatedHere,
     activeMember?.role,
     activeMemberState.isPending,
     activeOrganization?.id,
@@ -136,6 +141,7 @@ export function ErpAuthScreen() {
           activeOrganizationState.refetch(),
           activeMemberState.refetch(),
         ]);
+        setAuthenticatedHere(true);
       }}
     />
   );

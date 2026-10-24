@@ -1,4 +1,5 @@
 "use client";
+import { useWorkspaceApproved } from "@/features/dashboard/lib/workspace-approval";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -40,14 +41,14 @@ const steps: StepDefinition[] = [
   { id: "profile", label: "Personal information", kicker: "Your identity" },
   { id: "doctors", label: "Professional credentials", kicker: "Your practice" },
   { id: "workingHours", label: "Availability & fees", kicker: "Your schedule" },
-  { id: "review", label: "Review & launch", kicker: "Ready to begin" },
+  { id: "review", label: "Review & submit", kicker: "Ready to begin" },
 ];
 const descriptions: Record<StepId, string> = {
   profile: "Add your name, contact details and personal information",
   doctors: "Add your speciality, registration and license",
   locations: "Add the hospital, clinic or laboratory where you work",
   workingHours: "Set your consultation fees, duration and first availability",
-  review: "Review your details before opening your ERP",
+  review: "Review your details before submitting your application",
   contact: "",
   clinicProfile: "",
   departments: "",
@@ -76,11 +77,14 @@ export function DoctorOnboardingGate({
   const completion = useDoctorQuery<{ percentage: number }>(
     "/doctor/profile/completion"
   );
-  const needsSetup = completion.data ? completion.data.percentage < 100 : false;
+  const approved = useWorkspaceApproved(tenant.organizationId);
+  const needsSetup =
+    !approved && (completion.data ? completion.data.percentage < 100 : false);
   useEffect(() => {
     if (needsSetup && currentPage !== "onboarding")
       router.replace(tenant.buildRoute("onboarding"));
   }, [needsSetup, currentPage, router, tenant]);
+  if (approved) return children;
   if (completion.isPending)
     return (
       <div
@@ -296,7 +300,7 @@ function DoctorSetup({
         setDraftSaved(true);
       } catch {
         setError(
-          "Unable to save a local draft. Keep this page open until you launch your ERP."
+          "Unable to save a local draft. Keep this page open until you submit your application."
         );
       }
     }, 500);
@@ -613,9 +617,9 @@ function DoctorSetup({
               ))}
             </dl>
             <p className="text-sm text-[var(--onboarding-muted)]">
-              Launch ERP saves your professional profile and availability.
-              Registry errors appear here so you can correct the details without
-              losing your draft.
+              Submit for review saves your professional profile and
+              availability. Registry errors appear here so you can correct the
+              details without losing your draft.
             </p>
           </>
         )}

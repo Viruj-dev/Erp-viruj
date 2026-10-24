@@ -1,4 +1,5 @@
 "use client";
+import { useWorkspaceApproved } from "@/features/dashboard/lib/workspace-approval";
 import { DiagnosticFileReports } from "../components/shared/modules/diagnostic-file-reports";
 import { DiagnosticProfile } from "@/features/dashboard/components/shared/modules/diagnostic-profile";
 import { DiagnosticCatalogue } from "@/features/dashboard/components/shared/modules/diagnostic-catalogue";
@@ -7,7 +8,7 @@ import { DiagnosticBookingInbox } from "@/features/dashboard/components/shared/m
 import { DiagnosticOnboarding } from "@/features/dashboard/components/shared/modules/diagnostic-onboarding";
 import {
   canManageDiagnosticSetup,
-  diagnosticSetupKey
+  diagnosticSetupKey,
 } from "@/features/dashboard/lib/diagnostic-onboarding";
 import { virujBackend } from "@/lib/viruj-backend";
 
@@ -20,17 +21,17 @@ import { ActivityLogsPage } from "@/features/dashboard/components/shared/activit
 import { OrganizationAccessScreen } from "@/features/auth/components/organization-access-screen";
 import {
   ErpDemoSidebar,
-  ErpDemoTopBar
+  ErpDemoTopBar,
 } from "@/features/dashboard/components/shared/layout";
 import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout/role-theme";
 import {
   createErpTenantContext,
-  type ErpTenantContext
+  type ErpTenantContext,
 } from "@/features/dashboard/lib/erp-tenant";
 import { ClinicGalleryPage } from "@/features/dashboard/components/clinic/pages";
 import {
   ErpDemoAppointments,
-  ErpEnterpriseModule
+  ErpEnterpriseModule,
 } from "@/features/dashboard/components/shared/modules";
 import {
   ErpDemoAnalytics,
@@ -44,7 +45,7 @@ import {
   ErpDemoStaff,
   HospitalProfilePage,
   OrganizationOnboardingPage,
-  PricingPage
+  PricingPage,
 } from "@/features/dashboard/components/hospital/pages";
 import { ErpUserProfilePage } from "@/features/dashboard/components/shared/profile";
 import type { ErpDemoPage } from "@/features/dashboard/components/shared/types";
@@ -55,26 +56,26 @@ import {
   isDashboardOrganizationType,
   isDashboardPage,
   organizationTypeLabels,
-  resolveAccessibleDashboardPage
+  resolveAccessibleDashboardPage,
 } from "@/features/dashboard/lib/routing";
 import {
   PageSkeleton,
-  WorkspaceSkeleton
+  WorkspaceSkeleton,
 } from "@/features/dashboard/components/shared/page-skeleton";
 import {
   billingQueryOptions,
-  needsAnalyticsSubscription
+  needsAnalyticsSubscription,
 } from "@/features/subscription/utils/billing-query-options";
 import { subscriptionBillingApi } from "@/features/subscription/api/subscription.api";
 import {
   getBillingPermissionsFromMember,
   hasBillingPermission,
-  hasFeature
+  hasFeature,
 } from "@/features/subscription/utils/subscription-access";
 import { activateOrganization, authClient } from "@/lib/auth-client";
 import {
   clearCentralApiToken,
-  setCentralApiTokenIdentity
+  setCentralApiTokenIdentity,
 } from "@/lib/central-api-token";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -93,13 +94,13 @@ const hospitalOnboardingGatedPages = new Set<ErpDemoPage>([
   "appointments-patients",
   "appointments-settings",
   "services",
-  "facilities"
+  "facilities",
 ]);
 
 export function ErpHomeScreen({
   currentPage: requestedPage,
   routeOrganizationType,
-  routeSegments = []
+  routeSegments = [],
 }: {
   currentPage: string;
   routeOrganizationType: string;
@@ -126,6 +127,7 @@ export function ErpHomeScreen({
   const sessionMember = getSessionMember(sessionState.data);
   const activeOrganization =
     sessionOrganization ?? activeOrganizationState.data;
+  const approved = useWorkspaceApproved(activeOrganization?.id);
   const activeMember = sessionMember ?? activeMemberState.data;
   const isAuthPending =
     sessionState.isPending ||
@@ -148,13 +150,13 @@ export function ErpHomeScreen({
 
     setIsActivatingOnlyOrganization(true);
     void activateOrganization({
-      organizationId: organizations[0].id
+      organizationId: organizations[0].id,
     })
       .then(() =>
         Promise.all([
           sessionState.refetch(),
           activeOrganizationState.refetch(),
-          activeMemberState.refetch()
+          activeMemberState.refetch(),
         ])
       )
       .finally(() => setIsActivatingOnlyOrganization(false));
@@ -165,7 +167,7 @@ export function ErpHomeScreen({
     isActivatingOnlyOrganization,
     organizationsState.data,
     sessionState.data?.user,
-    sessionState
+    sessionState,
   ]);
 
   // Key the central API token cache to the signed-in user + active workspace
@@ -177,10 +179,7 @@ export function ErpHomeScreen({
     setCentralApiTokenIdentity(
       userId && organizationId ? `${userId}:${organizationId}` : null
     );
-  }, [
-    activeOrganization?.id,
-    sessionState.data?.user?.id
-  ]);
+  }, [activeOrganization?.id, sessionState.data?.user?.id]);
 
   const currentPage = isErpDemoPage(requestedPage)
     ? requestedPage
@@ -214,13 +213,13 @@ export function ErpHomeScreen({
     ...billingQueryOptions,
     enabled: checkAnalyticsSubscription,
     queryFn: subscriptionBillingApi.current,
-    queryKey: subscriptionBillingApi.currentKey
+    queryKey: subscriptionBillingApi.currentKey,
   });
   const plansQuery = useQuery({
     ...billingQueryOptions,
     enabled: checkAnalyticsSubscription,
     queryFn: subscriptionBillingApi.plans,
-    queryKey: subscriptionBillingApi.plansKey
+    queryKey: subscriptionBillingApi.plansKey,
   });
   const checkingAnalyticsAccess =
     checkAnalyticsSubscription &&
@@ -265,7 +264,7 @@ export function ErpHomeScreen({
           organizationSlug: activeOrganizationSlug,
           permissions: activeMemberPermissions,
           providerType: activeOrganizationType,
-          role: activeMemberRole
+          role: activeMemberRole,
         })
       : null;
   const workspaceTheme = getWorkspaceTheme(organizationLabel);
@@ -286,7 +285,7 @@ export function ErpHomeScreen({
       !isAuthPending &&
       canSetupDiagnostics &&
       Boolean(activeOrganization?.id),
-    retry: false
+    retry: false,
   });
   // Pages that must not open pre-setup via deep link behave like the
   // dashboard: the workspace routes to onboarding unless completion is
@@ -307,12 +306,16 @@ export function ErpHomeScreen({
   );
 
   const shouldRedirectToOnboarding =
+    !approved &&
     isHydrated &&
     !isAuthPending &&
     ((requestingGatedWorkspacePage && onboardingGate === "start") ||
       (canSetupDiagnostics &&
         diagnosticSetup.isSuccess &&
-        shouldRedirectDiagnosticOnboarding(requestedPage, diagnosticSetup.data.completedAt)));
+        shouldRedirectDiagnosticOnboarding(
+          requestedPage,
+          diagnosticSetup.data.completedAt
+        )));
   // While the backend-authoritative status is pending, hold the shell
   // skeleton so the setup screen never flashes on an unknown backend state.
   const isOnboardingGatePending =
@@ -362,7 +365,7 @@ export function ErpHomeScreen({
     isHydrated,
     requestedPage,
     router,
-    shouldRedirectToOnboarding
+    shouldRedirectToOnboarding,
   ]);
   useEffect(() => {
     if (
@@ -417,7 +420,7 @@ export function ErpHomeScreen({
     isAuthPending,
     isHydrated,
     requestedPage,
-    router
+    router,
   ]);
   useEffect(() => {
     if (
@@ -457,11 +460,18 @@ export function ErpHomeScreen({
     shouldRedirectToOnboarding,
     routeDashboardOrganizationType,
     routeOrganizationType,
-    router
+    router,
   ]);
 
   if (requestingGatedWorkspacePage && onboardingGate === "error") {
-    return <div role="alert" className="space-y-3 p-8"><p>Unable to verify organization setup.</p><button type="button" onClick={() => window.location.reload()}>Try again</button></div>;
+    return (
+      <div role="alert" className="space-y-3 p-8">
+        <p>Unable to verify organization setup.</p>
+        <button type="button" onClick={() => window.location.reload()}>
+          Try again
+        </button>
+      </div>
+    );
   }
 
   if (
@@ -493,7 +503,7 @@ export function ErpHomeScreen({
           );
 
           await activateOrganization({
-            organizationId
+            organizationId,
           });
           await sessionState.refetch();
           await activeOrganizationState.refetch();
@@ -634,7 +644,7 @@ export function ErpHomeScreen({
               initial={{ opacity: 0, y: reduceMotion ? 0 : 10 }}
               transition={{
                 duration: reduceMotion ? 0 : 0.22,
-                ease: "easeOut"
+                ease: "easeOut",
               }}
             >
               <div
@@ -681,7 +691,7 @@ function PageContent({
   organizationName,
   routeBasePath,
   routeSegments,
-  appointmentTenant
+  appointmentTenant,
 }: {
   currentPage: ErpDemoPage;
   organizationLabel: string;
@@ -697,9 +707,7 @@ function PageContent({
     appointmentTenant?.providerType === "pathology" ||
     appointmentTenant?.providerType === "radiology";
   if (appointmentTenant && isDiagnosticTenant) {
-    if (
-      currentPage === "reports"
-    )
+    if (currentPage === "reports")
       return (
         <DiagnosticFileReports
           key={appointmentTenant.organizationId}

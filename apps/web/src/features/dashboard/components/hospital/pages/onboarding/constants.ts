@@ -4,8 +4,8 @@ export const hospitalSteps: StepDefinition[] = [
   { id: "profile", label: "Organization Profile", kicker: "Identity" },
   { id: "locations", label: "Locations & Branches", kicker: "Network" },
   { id: "departments", label: "Departments", kicker: "Care units" },
-  { id: "public", label: "Public Profile", kicker: "Viruj app" },
-  { id: "review", label: "Review & Complete", kicker: "Launch" },
+  { id: "services", label: "Services", kicker: "Hospital services" },
+  { id: "review", label: "Review & Complete", kicker: "Submit" },
 ];
 
 export const clinicSteps: StepDefinition[] = [
@@ -19,7 +19,7 @@ export const clinicSteps: StepDefinition[] = [
     kicker: "Care units",
   },
   { id: "doctors", label: "Doctors", kicker: "Clinical team" },
-  { id: "review", label: "Review & Complete", kicker: "Launch" },
+  { id: "review", label: "Review & Complete", kicker: "Submit" },
 ];
 
 export const steps = hospitalSteps;
@@ -33,8 +33,8 @@ export const hospitalStepDescriptions: Record<StepId, string> = {
   locations: "Add branches and map locations",
   profile: "Tell us about your hospital",
   public: "Control what appears on the Viruj patient app",
-  review: "Confirm and launch your hospital workspace",
-  services: "Add billable services and online availability",
+  review: "Review your hospital details before submitting",
+  services: "Choose the services available at your hospital",
   workingHours: "Set daily opening hours",
 };
 
@@ -46,7 +46,7 @@ export const clinicStepDescriptions: Record<StepId, string> = {
   locations: "Add address, map link, and coordinates",
   profile: "Add clinic identity and registration details",
   public: "Control what appears on the Viruj patient app",
-  review: "Confirm and launch your clinic workspace",
+  review: "Review your clinic details before submitting",
   services: "Add services, pricing, duration, and online availability",
   workingHours: "Set your weekly schedule in Indian Standard Time",
 };
@@ -143,3 +143,108 @@ export const publicOptions = [
 
 export const storagePrefix = "viruj:hospital-onboarding";
 export const clinicStoragePrefix = "viruj:clinic-onboarding";
+export const hospitalServiceGroups = [
+  {
+    name: "Emergency and critical care",
+    services: [
+      "24x7 Emergency / Trauma Care",
+      "Ambulance Service",
+      "Air Ambulance",
+      "ICU / NICU / PICU",
+      "Burn Unit",
+      "Poison Control",
+    ],
+  },
+  {
+    name: "Diagnostics and imaging",
+    services: [
+      "In-house Pathology Lab",
+      "Radiology (X-ray, Ultrasound)",
+      "CT Scan",
+      "MRI",
+      "PET Scan",
+      "Mammography",
+      "Bone Density (DEXA)",
+      "Cardiac Diagnostics (ECG, Echo, TMT)",
+      "Home Sample Collection",
+    ],
+  },
+  {
+    name: "Surgical and procedural",
+    services: [
+      "Day Care Surgery",
+      "Robotic Surgery",
+      "Laparoscopic Surgery",
+      "Cath Lab",
+      "Dialysis Unit",
+      "Endoscopy",
+      "Organ Transplant",
+    ],
+  },
+  {
+    name: "Maternity and child care",
+    services: [
+      "Maternity / Labour Rooms",
+      "IVF / Fertility Services",
+      "Neonatal Care",
+      "Pediatric Vaccination",
+      "Lactation Support",
+    ],
+  },
+  {
+    name: "Pharmacy and supplies",
+    services: [
+      "24x7 Pharmacy",
+      "Blood Bank",
+      "Oxygen Supply",
+      "Medical Equipment Rental",
+    ],
+  },
+  {
+    name: "Outpatient and preventive",
+    services: [
+      "Health Check-up Packages",
+      "Executive Health Check-ups",
+      "Corporate Health Programs",
+      "Vaccination Services",
+      "Telemedicine / Video Consultation",
+      "Second Opinion Services",
+      "Home Healthcare / Home Nursing",
+    ],
+  },
+  {
+    name: "Rehab and wellness",
+    services: [
+      "Physiotherapy",
+      "Occupational Therapy",
+      "Cardiac Rehabilitation",
+      "De-addiction Center",
+      "Nutrition and Dietetics",
+      "Yoga / Ayurveda / AYUSH",
+      "Palliative Care",
+    ],
+  },
+  {
+    name: "Patient facilities",
+    services: [
+      "Private / Deluxe / Suite Rooms",
+      "Attendant Stay",
+      "Cafeteria / Canteen",
+      "Pickup and Drop",
+      "Interpreter Services",
+      "Insurance Desk / TPA Support",
+      "Cashless Treatment",
+      "International Patient Services",
+    ],
+  },
+  {
+    name: "Camps and outreach (temporary)",
+    services: [
+      "Health Camps",
+      "Blood Donation Drives",
+      "Vaccination Drives",
+      "Mobile Health Van",
+      "Visiting Consultants",
+    ],
+  },
+] as const;

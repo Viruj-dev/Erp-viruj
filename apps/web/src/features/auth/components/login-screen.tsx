@@ -37,12 +37,22 @@ import {
 } from "@/lib/auth-client";
 import { clearCentralApiToken } from "@/lib/central-api-token";
 import type { DashboardOrganizationType } from "@/features/dashboard/lib/routing";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from "@/components/ui/erp/dialog";
 
 type Step = "login" | "onboarding" | "invitation";
 type OrganizationType = DashboardOrganizationType;
 
 type BetterAuthResult = {
   error?: {
+    code?: string;
     message?: string;
   } | null;
 };
@@ -73,6 +83,7 @@ export function ErpDemoLogin({
   const [isPending, setIsPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [reviewPending, setReviewPending] = useState(false);
   const [loginForm, setLoginForm] = useState({
     email: "",
     password: "",
@@ -108,6 +119,10 @@ export function ErpDemoLogin({
       });
 
       if (hasError(result)) {
+        if (result.error.code === "ACCESS_REVIEW_PENDING") {
+          setReviewPending(true);
+          return;
+        }
         setErrorMessage(
           result.error.message || "Unable to sign in with those credentials."
         );
@@ -260,6 +275,20 @@ export function ErpDemoLogin({
 
   return (
     <main className="relative grid min-h-dvh bg-[#f4f6fb] text-slate-950 lg:grid-cols-[1fr_1.05fr] dark:bg-[#05070a] dark:text-slate-100">
+      <Dialog open={reviewPending} onOpenChange={setReviewPending}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Your profile is under review</DialogTitle>
+            <DialogDescription>
+              We’ll email you once your application is reviewed. You can sign in
+              after approval.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogClose asChild>
+            <Button>Got it</Button>
+          </DialogClose>
+        </DialogContent>
+      </Dialog>
       {/* five-role aurora hairline */}
       <div
         aria-hidden="true"
@@ -270,7 +299,10 @@ export function ErpDemoLogin({
       {/* ---------------------------------------------------------- */}
       <section className="relative flex flex-col bg-[#f6f8fc] px-6 py-8 sm:px-10 lg:px-14 dark:bg-[#0b1017]">
         {/* aurora echo — soft role-tinted glows + dot texture */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-0"
+        >
           <div className="absolute -top-28 -left-20 size-[360px] rounded-full bg-[radial-gradient(circle,rgba(118,108,255,0.09),transparent_65%)] blur-2xl" />
           <div className="absolute -bottom-36 right-[-12%] size-[420px] rounded-full bg-[radial-gradient(circle,rgba(16,185,129,0.08),transparent_65%)] blur-2xl" />
           <div className="absolute top-1/3 right-[-16%] size-[360px] rounded-full bg-[radial-gradient(circle,rgba(251,113,133,0.07),transparent_65%)] blur-2xl" />
@@ -318,11 +350,7 @@ export function ErpDemoLogin({
           <div className="w-full max-w-[440px]">
             <AnimatePresence mode="wait">
               {step === "login" ? (
-                <motion.div
-                  key="login"
-                  {...stepMotion}
-                  className="space-y-7"
-                >
+                <motion.div key="login" {...stepMotion} className="space-y-7">
                   <div>
                     <h1 className="font-headline text-[2rem] font-bold tracking-tight text-slate-950 sm:text-[2.35rem] dark:text-white">
                       Welcome back.
@@ -398,7 +426,7 @@ export function ErpDemoLogin({
                     <div className="absolute inset-0 flex items-center">
                       <span className="w-full border-t border-slate-200 dark:border-white/10" />
                     </div>
-                      <span className="relative flex justify-center">
+                    <span className="relative flex justify-center">
                       <span className="-translate-y-0 bg-[#f6f8fc] px-3 text-[11px] font-semibold tracking-wide text-slate-400 uppercase dark:bg-[#0b1017] dark:text-slate-500">
                         or
                       </span>
@@ -413,7 +441,10 @@ export function ErpDemoLogin({
                     }}
                     type="button"
                   >
-                    <KeyRound size={16} className="text-slate-400 dark:text-slate-500" />
+                    <KeyRound
+                      size={16}
+                      className="text-slate-400 dark:text-slate-500"
+                    />
                     Have a team invitation? Join your team
                   </button>
                 </motion.div>
@@ -599,7 +630,10 @@ export function ErpDemoLogin({
                 >
                   <div>
                     <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1 text-[10px] font-bold tracking-[0.22em] text-slate-500 uppercase dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400">
-                      <KeyRound size={13} className="text-slate-400 dark:text-slate-500" />
+                      <KeyRound
+                        size={13}
+                        className="text-slate-400 dark:text-slate-500"
+                      />
                       Staff access
                     </p>
                     <h1 className="font-headline text-[1.85rem] font-bold tracking-tight text-slate-950 sm:text-[2.1rem] dark:text-white">
@@ -612,7 +646,11 @@ export function ErpDemoLogin({
                   </div>
 
                   <div className="flex items-start gap-2.5 rounded-xl border border-slate-200/80 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
-                    <Info size={15} className="mt-0.5 shrink-0" aria-hidden="true" />
+                    <Info
+                      size={15}
+                      className="mt-0.5 shrink-0"
+                      aria-hidden="true"
+                    />
                     <span>
                       Paste the invitation ID your administrator shared with
                       you. IDs are alphanumeric and unique per person.
@@ -711,7 +749,10 @@ export function ErpDemoLogin({
           <span>
             © {new Date().getFullYear()} {virujBrand.name}
           </span>
-          <Link className="transition hover:text-slate-700 hover:underline dark:hover:text-slate-200" href="/about">
+          <Link
+            className="transition hover:text-slate-700 hover:underline dark:hover:text-slate-200"
+            href="/about"
+          >
             About & support
           </Link>
         </footer>
@@ -798,7 +839,13 @@ export function ErpDemoLogin({
               xmlns="http://www.w3.org/2000/svg"
             >
               <defs>
-                <linearGradient id="viruj-ecg-aurora" x1="0" y1="0" x2="1" y2="0">
+                <linearGradient
+                  id="viruj-ecg-aurora"
+                  x1="0"
+                  y1="0"
+                  x2="1"
+                  y2="0"
+                >
                   <stop offset="0%" stopColor="#4aa6ff" />
                   <stop offset="28%" stopColor="#8f85ff" />
                   <stop offset="52%" stopColor="#fb7185" />
@@ -821,7 +868,9 @@ export function ErpDemoLogin({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
-                style={{ filter: "drop-shadow(0 0 8px rgba(148,163,255,0.45))" }}
+                style={{
+                  filter: "drop-shadow(0 0 8px rgba(148,163,255,0.45))",
+                }}
               />
               <path
                 className="viruj-ecg-pulse"
@@ -830,7 +879,9 @@ export function ErpDemoLogin({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2.5"
-                style={{ filter: "drop-shadow(0 0 10px rgba(196,181,253,0.85))" }}
+                style={{
+                  filter: "drop-shadow(0 0 10px rgba(196,181,253,0.85))",
+                }}
               />
             </svg>
           </div>
@@ -1036,11 +1087,7 @@ function StatusBlock({
       role={errorMessage ? "alert" : "status"}
     >
       {errorMessage ? (
-        <AlertCircle
-          size={16}
-          className="mt-0.5 shrink-0"
-          aria-hidden="true"
-        />
+        <AlertCircle size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
       ) : (
         <CheckCircle2
           size={16}
