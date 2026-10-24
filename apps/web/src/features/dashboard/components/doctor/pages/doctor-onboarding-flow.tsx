@@ -11,7 +11,12 @@ import {
   FieldLabel,
   fieldClassName,
 } from "../../hospital/pages/onboarding/fields";
-import { isValidPhone } from "../../hospital/pages/onboarding/state";
+import {
+  isValidPhone,
+  webPhoneHtmlPattern,
+  webPhoneInputTitle,
+  webPhoneRequirement,
+} from "../../hospital/pages/onboarding/state";
 import type {
   StepDefinition,
   StepId,
@@ -379,7 +384,7 @@ function DoctorSetup({
         }
       }
       if (profile.phone && !isValidPhone(profile.phone)) {
-        setError("Enter a valid phone number (7-20 digits).");
+        setError(`Enter a valid phone number ${webPhoneRequirement}.`);
         return;
       }
     }
@@ -498,8 +503,8 @@ function DoctorSetup({
                 placeholder="Phone number"
                 required
                 type="tel"
-                pattern="^[+0-9 ()-]{7,20}$"
-                title="Enter a valid phone number (7-20 digits)"
+                pattern={webPhoneHtmlPattern}
+                title={webPhoneInputTitle}
                 value={profile.phone ?? ""}
                 onChange={(phone) => update("phone", phone)}
               />

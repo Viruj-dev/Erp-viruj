@@ -29,16 +29,34 @@ function hasValidCoordinates(branch?: Branch) {
 }
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const phonePattern = /^[+0-9 ()-]{7,20}$/;
 const indianPinCodePattern = /^[1-9][0-9]{5}$/;
+
+// Shared phone rule (hospital/clinic profile + contact steps, diagnostic
+// onboarding, and doctor onboarding all import these so the client-side rule
+// cannot drift from the backend contract): the value may only contain an
+// optional leading "+", digits, spaces and "()-", must be 7–20 characters
+// long, and must contain at least 7 and at most 15 digits.
+const phoneCharacterPattern = /^[+]?[0-9 ()-]{7,20}$/;
 
 export function isValidEmail(value: string) {
   return emailPattern.test(value.trim());
 }
 
 export function isValidPhone(value: string) {
-  return phonePattern.test(value.trim());
+  const trimmed = value.trim();
+  if (!phoneCharacterPattern.test(trimmed)) return false;
+  const digitCount = trimmed.replace(/[^0-9]/g, "").length;
+  return digitCount >= 7 && digitCount <= 15;
 }
+
+// HTML pattern attributes can only express the character-shape half of the
+// rule; the digit-count half is enforced by isValidPhone on submit. Both
+// exports are shared by every onboarding flow that renders a phone field.
+export const webPhoneHtmlPattern = "[+]?[0-9 ()-]{7,20}";
+export const webPhoneInputTitle =
+  "Enter a valid phone number (7-20 characters, at least 7 digits)";
+// Sentence fragment shared by the custom validation messages.
+export const webPhoneRequirement = "(7-20 characters, at least 7 digits)";
 
 export function isValidPostalCode(value: string) {
   return indianPinCodePattern.test(value.trim());
@@ -91,6 +109,13 @@ export function validateStep(
       ) {
         return "Enter a valid year established (a whole year between 1800 and the current year).";
       }
+      if (
+        kind === "hospital" &&
+        data.profile.establishedYear.trim() &&
+        !isValidEstablishedYear(data.profile.establishedYear)
+      ) {
+        return "Enter a valid year established (a whole year between 1800 and the current year).";
+      }
       if (kind === "clinic" && !data.profile.hospitalOwnershipType.trim()) {
         return "Select the ownership type.";
       }
@@ -107,12 +132,12 @@ export function validateStep(
       if (kind === "hospital" && !data.profile.phone.trim())
         return "Add the hospital phone number.";
       if (kind === "hospital" && !isValidPhone(data.profile.phone))
-        return "Enter a valid hospital phone number (7-20 digits).";
+        return `Enter a valid hospital phone number ${webPhoneRequirement}.`;
       return "";
     case "contact":
       if (!data.profile.phone.trim()) return "Add the primary mobile number.";
       if (!isValidPhone(data.profile.phone))
-        return "Enter a valid primary mobile number (7-20 digits).";
+        return `Enter a valid primary mobile number ${webPhoneRequirement}.`;
       if (!data.profile.email.trim()) return "Add the clinic email.";
       if (!isValidEmail(data.profile.email))
         return "Enter a valid clinic email address.";

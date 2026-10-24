@@ -2,9 +2,11 @@
 import { OnboardingFrame } from "./onboarding-frame";
 
 import { cn } from "@/lib/utils";
+import { setCentralApiTokenIdentity } from "@/lib/central-api-token";
+import { authClient } from "@/lib/auth-client";
 import { virujBackend } from "@/lib/viruj-backend";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getOnboardingSteps,
   getStepDescriptions,
@@ -49,6 +51,8 @@ export function OrganizationOnboardingPage({
 }) {
   const router = useRouter();
   const kind = organizationType;
+  const sessionState = authClient.useSession();
+  const activeOrganizationState = authClient.useActiveOrganization();
   const storagePrefix = getStoragePrefix(kind);
   const storageId = organizationId ?? hospitalId ?? "workspace";
   const storageKey = `${storagePrefix}:draft:${storageId}`;
@@ -77,6 +81,33 @@ export function OrganizationOnboardingPage({
   );
   const [launching, setLaunching] = useState(false);
   const [invitationPending, setInvitationPending] = useState(false);
+  // The step fields live inside this form so the Continue/Launch buttons can
+  // surface native constraint messages (for example a -1 establishment year)
+  // directly at the field before the custom per-step validation runs.
+  const stepFormRef = useRef<HTMLFormElement>(null);
+
+  // The identity step saves central-API data (media uploads, onboarding
+  // save), so bind the central API token cache to this session's user +
+  // active organization, same as the home screens.
+  useEffect(() => {
+    const userId = sessionState.data?.user?.id ?? null;
+    const onboardingOrganizationId =
+      organizationId ??
+      hospitalId ??
+      activeOrganizationState.data?.id ??
+      null;
+
+    setCentralApiTokenIdentity(
+      userId && onboardingOrganizationId
+        ? `${userId}:${onboardingOrganizationId}`
+        : null
+    );
+  }, [
+    activeOrganizationState.data?.id,
+    hospitalId,
+    organizationId,
+    sessionState.data?.user?.id
+  ]);
 
   const currentStep = steps[currentStepIndex] ?? steps[0];
   const progressCount = completedSteps.filter((step) =>
@@ -203,6 +234,10 @@ export function OrganizationOnboardingPage({
   };
 
   const handleContinue = () => {
+    if (!stepFormRef.current?.reportValidity()) {
+      // Native validation surfaced field-level messages already.
+      return;
+    }
     const validationMessage = validateStep(currentStep.id, data, kind);
     if (validationMessage) {
       setErrorMessage(validationMessage);
@@ -218,6 +253,9 @@ export function OrganizationOnboardingPage({
   };
 
   const handleLaunch = async () => {
+    if (!stepFormRef.current?.reportValidity()) {
+      return;
+    }
     const validationMessage = validateStep(currentStep.id, data, kind);
     if (validationMessage) {
       setErrorMessage(validationMessage);
@@ -294,6 +332,11 @@ export function OrganizationOnboardingPage({
       handleContinue={handleContinue}
       handleLaunch={() => void handleLaunch()}
     >
+      <form
+        ref={stepFormRef}
+        onSubmit={(event) => event.preventDefault()}
+        className="flex min-h-0 flex-col"
+      >
       {currentStep.id === "profile" ? (
         <ProfileStep
           data={data}
@@ -340,6 +383,7 @@ export function OrganizationOnboardingPage({
           summary={summary}
         />
       ) : null}
+      </form>
     </OnboardingFrame>
   );
 }

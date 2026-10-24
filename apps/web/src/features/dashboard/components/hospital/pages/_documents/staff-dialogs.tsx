@@ -17,12 +17,15 @@ type MutationError = { message?: string } | null | undefined;
 
 type AddStaffEntryDialogProps = {
   email: string;
+  emailDeliveryError?: { email: string; message: string } | null;
   inviteError: MutationError;
   isInvitePending: boolean;
+  isRetryPending?: boolean;
   name: string;
   onClose: () => void;
   onEmailChange: (value: string) => void;
   onNameChange: (value: string) => void;
+  onRetryEmailDelivery?: () => void;
   onRoleChange: (value: StaffRole) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   role: StaffRole;
@@ -31,12 +34,15 @@ type AddStaffEntryDialogProps = {
 
 export function AddStaffEntryDialog({
   email,
+  emailDeliveryError,
   inviteError,
   isInvitePending,
+  isRetryPending = false,
   name,
   onClose,
   onEmailChange,
   onNameChange,
+  onRetryEmailDelivery,
   onRoleChange,
   onSubmit,
   role,
@@ -82,6 +88,31 @@ export function AddStaffEntryDialog({
               value={role}
             />
 
+
+            {emailDeliveryError ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200">
+                <p>{emailDeliveryError.message}</p>
+                <p className="mt-1 font-medium">
+                  Invitation saved — email delivery failed. Retry below.
+                </p>
+                {onRetryEmailDelivery ? (
+                  <button
+                    className="mt-2 rounded-lg border border-amber-700/30 px-3 py-1.5 text-xs font-semi-bold text-amber-700 transition hover:bg-amber-100/40 disabled:opacity-60"
+                    disabled={isInvitePending || isRetryPending}
+                    onClick={onRetryEmailDelivery}
+                    type="button"
+                  >
+                    {isRetryPending || isInvitePending
+                      ? "Retrying..."
+                      : "Retry email delivery"}
+                  </button>
+                ) : null}
+                <p className="mt-2 text-xs font-medium text-amber-700/80">
+                  The invitation stays in the pending invitations list with a
+                  delivery-failed badge until the invite email can be sent.
+                </p>
+              </div>
+            ) : null}
 
             {inviteError ? (
               <p className="rounded-lg bg-error-container/30 px-3 py-2 text-sm font-semibold text-error">

@@ -7,7 +7,10 @@ import {
 
 import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import { authClient } from "@/lib/auth-client";
-import { virujBackend } from "@/lib/viruj-backend";
+import {
+  virujBackend,
+  type VirujStaffInviteResult
+} from "@/lib/viruj-backend";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
@@ -106,12 +109,50 @@ export function ErpDemoStaff({
       })
     ]);
   };
-  const inviteMutation = useMutation({
-    mutationFn: virujBackend.staff.invite,
-    onSuccess: async () => {
+  // Invite result payload distinguishes "invitation saved but the email
+  // could not be sent" from a failed/erred invite. On email delivery failure
+  // the dialog stays open with the failure and a retry; the invitation is
+  // also kept listed with a delivery-failed badge.
+  const [emailDeliveryFailure, setEmailDeliveryFailure] = useState<{
+    email: string;
+    message: string;
+  } | null>(null);
+  const applyInviteResult = async (
+    result: VirujStaffInviteResult,
+    variables: { email: string }
+  ) => {
+    if (result.onboarding?.emailSent === false) {
+      setEmailDeliveryFailure({
+        email: variables.email,
+        message:
+          result.onboarding.emailError ||
+          "The invitation was saved, but the invite email could not be sent."
+      });
+    } else {
+      setEmailDeliveryFailure(null);
       setName("");
       setEmail("");
       setIsEntryDialogOpen(false);
+    }
+  };
+  const inviteMutation = useMutation({
+    mutationFn: virujBackend.staff.invite,
+    onSuccess: async (result, variables) => {
+      await applyInviteResult(result, variables);
+      await invalidateStaffData();
+    },
+    onError: () => {
+      // Non-email delivery failures (for example network errors) surface
+      // through the existing invite error display in the dialog.
+      setEmailDeliveryFailure(null);
+    }
+  });
+  // Re-inviting the same person is the available retry path — no dedicated
+  // "resend invite email" endpoint is exposed yet.
+  const retryInviteMutation = useMutation({
+    mutationFn: virujBackend.staff.invite,
+    onSuccess: async (result, variables) => {
+      await applyInviteResult(result, variables);
       await invalidateStaffData();
     }
   });
@@ -348,8 +389,16 @@ export function ErpDemoStaff({
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <RolePill role={invitation.role} />
-                      <span className="rounded-full bg-secondary-container/35 px-3 py-1 text-[10px] font-semi-bold uppercase tracking-[0.14em] text-secondary">
-                        {invitation.status}
+                      <span
+                        className={`rounded-full px-3 py-1 text-[10px] font-semi-bold uppercase tracking-[0.14em] ${
+                          emailDeliveryFailure?.email === invitation.email
+                            ? "bg-error-container/40 text-error"
+                            : "bg-secondary-container/35 text-secondary"
+                        }`}
+                      >
+                        {emailDeliveryFailure?.email === invitation.email
+                          ? "Email delivery failed"
+                          : invitation.status}
                       </span>
                     </div>
                     <button
@@ -408,14 +457,25 @@ export function ErpDemoStaff({
       {isEntryDialogOpen ? (
         <AddStaffEntryDialog
           email={email}
+          emailDeliveryError={emailDeliveryFailure}
           inviteError={inviteMutation.isError ? inviteMutation.error : null}
           isInvitePending={inviteMutation.isPending}
+          isRetryPending={retryInviteMutation.isPending}
           name={name}
           onClose={() => {
             setIsEntryDialogOpen(false);
           }}
           onEmailChange={setEmail}
           onNameChange={setName}
+          onRetryEmailDelivery={() => {
+            if (!email.trim() || !activeOrganizationId) return;
+            retryInviteMutation.mutate({
+              email,
+              name,
+              organizationId: activeOrganizationId,
+              role
+            });
+          }}
           onRoleChange={setRole}
           onSubmit={handleInvite}
           role={role}

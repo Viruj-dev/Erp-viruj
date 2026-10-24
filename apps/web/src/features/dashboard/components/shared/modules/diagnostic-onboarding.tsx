@@ -38,6 +38,9 @@ import {
   isValidEmail,
   isValidPhone,
   isValidPostalCode,
+  webPhoneHtmlPattern,
+  webPhoneInputTitle,
+  webPhoneRequirement,
 } from "@/features/dashboard/components/hospital/pages/onboarding/state";
 
 export function DiagnosticOnboarding({
@@ -338,7 +341,7 @@ function SetupForm({
     if (step === 2) {
       if (!isValidPhone(data.phone)) {
         setValidationError(
-          "Enter a valid contact phone number (7-20 digits)."
+          `Enter a valid contact phone number ${webPhoneRequirement}.`
         );
         return false;
       }
@@ -581,8 +584,8 @@ function SetupForm({
               {field("phone", "Contact phone", {
                 required: true,
                 type: "tel",
-                pattern: "^[+0-9 ()-]{7,20}$",
-                title: "Enter a valid phone number (7-20 digits)",
+                pattern: webPhoneHtmlPattern,
+                title: webPhoneInputTitle,
               })}
               {field("email", "Contact email", {
                 required: true,
