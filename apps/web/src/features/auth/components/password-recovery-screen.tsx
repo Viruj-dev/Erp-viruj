@@ -80,8 +80,8 @@ export function PasswordRecoveryScreen(props: PasswordRecoveryProps) {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#eef0ea] p-4 text-slate-950 dark:bg-[#05070a] dark:text-slate-100">
-      <section className="w-full max-w-md rounded-[1.75rem] bg-[#f7f7f3] p-6 shadow-[0_28px_100px_rgba(15,23,42,0.16)] dark:bg-[#10151b] dark:shadow-[0_28px_100px_rgba(0,0,0,0.55)] dark:ring-1 dark:ring-white/10 sm:p-9">
+    <main className="flex min-h-screen items-center justify-center bg-[#f8faf9] p-4 text-slate-950 dark:bg-[#05070a] dark:text-slate-100">
+      <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:bg-[#10151b] dark:shadow-[0_28px_100px_rgba(0,0,0,0.55)] dark:ring-1 dark:ring-white/10 sm:p-9">
         <div className="mb-8 flex items-center gap-2">
           <VirujLogo />
           <span className="font-headline text-sm font-bold">
@@ -94,7 +94,7 @@ export function PasswordRecoveryScreen(props: PasswordRecoveryProps) {
         </h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           {isReset
-            ? "Choose a new password for your ERP account."
+            ? "Choose a new password for your care workspace."
             : "Enter your registered email address and we will send a password reset link."}
         </p>
 
@@ -172,7 +172,7 @@ export function PasswordRecoveryScreen(props: PasswordRecoveryProps) {
             ) : null}
 
             <button
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:hover:bg-cyan-50"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-teal-800 text-sm font-semibold text-white transition hover:bg-teal-900 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:hover:bg-cyan-50"
               disabled={isPending}
               type="submit"
             >
@@ -195,7 +195,7 @@ export function PasswordRecoveryScreen(props: PasswordRecoveryProps) {
 
         <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
           <Link className="underline underline-offset-4" href="/auth">
-            Back to login
+            Back to sign in
           </Link>
           {isReset && !isComplete ? (
             <Link

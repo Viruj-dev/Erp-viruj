@@ -1,7 +1,5 @@
 "use client";
 
-import { ErpSelect } from "@/components/ui/erp/select";
-
 import { VirujLogo } from "@/components/brand/viruj-logo";
 import { virujBrand } from "@/lib/viruj-brand";
 
@@ -10,12 +8,16 @@ import {
   ArrowRight,
   Eye,
   EyeOff,
-  Info,
+  Building2,
+  Check,
+  HeartPulse,
+  Microscope,
+  ScanLine,
+  Stethoscope,
   ShieldCheck,
   X,
-  Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import Link from "next/link";
 import {
   acceptInvitation,
@@ -34,16 +36,13 @@ type BetterAuthResult = {
   } | null;
 };
 
-const organizationTypeOptions: Array<{
-  label: string;
-  value: OrganizationType;
-}> = [
-  { label: "Multi-specialty Hospital", value: "hospital" },
-  { label: "Private Clinic", value: "clinic" },
-  { label: "Individual Doctor", value: "doctor" },
-  { label: "Pathology Lab", value: "pathology" },
-  { label: "Radiology Center", value: "radiology" },
-];
+const organizationTypeOptions = [
+  { label: "Hospital", value: "hospital", icon: Building2 },
+  { label: "Clinic", value: "clinic", icon: HeartPulse },
+  { label: "Doctor", value: "doctor", icon: Stethoscope },
+  { label: "Pathology", value: "pathology", icon: Microscope },
+  { label: "Radiology", value: "radiology", icon: ScanLine },
+] as const;
 
 export function ErpDemoLogin({
   onAuthenticated,
@@ -238,9 +237,9 @@ export function ErpDemoLogin({
   };
 
   return (
-    <div className="min-h-screen bg-[#eef0ea] p-3 text-slate-950 transition-colors dark:bg-[#05070a] dark:text-slate-100 md:p-5">
-      <div className="grid min-h-[calc(100vh-1.5rem)] overflow-hidden rounded-[1.75rem] bg-[#f3f4f1] shadow-[0_28px_100px_rgba(15,23,42,0.16)] transition-colors dark:bg-[#10151b] dark:shadow-[0_28px_100px_rgba(0,0,0,0.55)] dark:ring-1 dark:ring-white/10 lg:min-h-[calc(100vh-2.5rem)] lg:grid-cols-[0.42fr_0.58fr]">
-        <section className="relative flex min-h-[760px] flex-col bg-[#f7f7f3] px-6 py-6 transition-colors dark:bg-[#0f141a] md:px-10">
+    <main className="min-h-screen bg-[#f8faf9] text-slate-950 dark:bg-[#05070a] dark:text-slate-100 md:p-6">
+      <div className="mx-auto grid min-h-screen max-w-[1440px] overflow-hidden bg-white dark:bg-[#10151b] md:min-h-[calc(100svh-3rem)] md:rounded-2xl md:border md:border-slate-200 dark:md:border-white/10 lg:grid-cols-[1.1fr_0.9fr]">
+        <section className="relative flex flex-col px-6 py-6 dark:bg-[#0f141a] sm:px-10 lg:px-14">
           <header className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <VirujLogo />
@@ -252,7 +251,7 @@ export function ErpDemoLogin({
               <span className="hidden sm:inline">
                 {step === "login"
                   ? "Don't have an account?"
-                  : "Already enrolled?"}
+                  : "Have an account?"}
               </span>
               <button
                 className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-100 dark:hover:bg-white/[0.10]"
@@ -262,13 +261,13 @@ export function ErpDemoLogin({
                 }}
                 type="button"
               >
-                {step === "login" ? "Register" : "Login"}
+                {step === "login" ? "Create account" : "Sign in"}
               </button>
             </div>
           </header>
 
-          <div className="flex flex-1 items-center justify-center py-10">
-            <div className="w-full max-w-[420px]">
+          <div className="flex flex-1 items-center justify-center py-12 lg:py-16">
+            <div className="w-full max-w-[440px]">
               <AnimatePresence mode="wait">
                 {step === "login" ? (
                   <motion.div
@@ -279,18 +278,15 @@ export function ErpDemoLogin({
                     initial={{ opacity: 0, y: 14 }}
                     transition={{ duration: 0.24, ease: "easeOut" }}
                   >
-                    <div className="text-center">
-                      <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] ring-1 ring-slate-200/70 dark:bg-white/[0.06] dark:shadow-[0_18px_50px_rgba(0,0,0,0.34)] dark:ring-white/10">
-                        <ShieldCheck
-                          size={30}
-                          className="text-slate-900 dark:text-cyan-200"
-                        />
-                      </div>
-                      <h1 className="mt-7 font-headline text-2xl font-bold tracking-tight text-slate-950 dark:text-white">
-                        Login to your ERP account
+                    <div>
+                      <p className="mb-3 flex items-center gap-2 text-xs font-semibold text-teal-800 dark:text-teal-300">
+                        <ShieldCheck size={16} /> Your care workspace
+                      </p>
+                      <h1 className="font-headline text-3xl font-bold tracking-tight text-slate-950 dark:text-white">
+                        Welcome back.
                       </h1>
-                      <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
-                        Enter your healthcare workspace details to continue.
+                      <p className="mt-3 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                        Sign in to continue caring for your patients.
                       </p>
                     </div>
 
@@ -309,7 +305,7 @@ export function ErpDemoLogin({
                             email: value,
                           }))
                         }
-                        placeholder="admin@yashodahospital.co"
+                        placeholder="you@work.com"
                         required
                         type="email"
                         value={loginForm.email}
@@ -322,19 +318,12 @@ export function ErpDemoLogin({
                             password: value,
                           }))
                         }
-                        placeholder="Enter your secure password"
+                        placeholder="Enter your password"
                         required
                         type="password"
                         value={loginForm.password}
                       />
-                      <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
-                        <label className="inline-flex items-center gap-2">
-                          <input
-                            className="size-4 rounded border-slate-300 dark:border-white/20 dark:bg-[#161c24]"
-                            type="checkbox"
-                          />
-                          Keep me logged in
-                        </label>
+                      <div className="flex items-center justify-end text-xs font-semibold text-slate-500 dark:text-slate-400">
                         <Link
                           className="underline underline-offset-4"
                           href="/forgot-password"
@@ -347,11 +336,11 @@ export function ErpDemoLogin({
                         successMessage={successMessage}
                       />
                       <button
-                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white shadow-[0_18px_40px_rgba(15,23,42,0.24)] transition hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:shadow-[0_18px_40px_rgba(34,211,238,0.12)] dark:hover:bg-cyan-50"
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-teal-800 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-teal-300 dark:text-slate-950 dark:hover:bg-teal-200"
                         disabled={isPending}
                         type="submit"
                       >
-                        {isPending ? "Authorizing..." : "Login"}
+                        {isPending ? "Signing in..." : "Sign in"}
                         <ArrowRight size={17} />
                       </button>
                     </form>
@@ -364,7 +353,7 @@ export function ErpDemoLogin({
                       }}
                       type="button"
                     >
-                      Accept a staff invitation instead
+                      Have a team invitation? Join your team
                     </button>
                   </motion.div>
                 ) : null}
@@ -381,17 +370,17 @@ export function ErpDemoLogin({
                     <header className="flex items-start justify-between gap-4">
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-teal-700 dark:text-cyan-300">
-                          Healthcare ERP signup
+                          Get started
                         </p>
                         <h1 className="mt-2 font-headline text-2xl font-bold tracking-tight text-slate-950 dark:text-white">
-                          Register your care workspace
+                          A home for your care team.
                         </h1>
                         <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
-                          Create the owner account and provision your hospital,
-                          clinic, lab, or doctor workspace.
+                          Choose your workspace and create your account.
                         </p>
                       </div>
                       <button
+                        aria-label="Back to sign in"
                         className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm transition hover:bg-slate-100 hover:text-slate-900 dark:bg-white/[0.06] dark:text-slate-400 dark:hover:bg-white/[0.10] dark:hover:text-white"
                         onClick={() => {
                           clearMessages();
@@ -403,18 +392,6 @@ export function ErpDemoLogin({
                       </button>
                     </header>
 
-                    <div className="flex gap-3 rounded-2xl border border-teal-100 bg-teal-50 p-4 dark:border-cyan-400/15 dark:bg-cyan-400/10">
-                      <Info
-                        className="mt-0.5 shrink-0 text-teal-700 dark:text-cyan-300"
-                        size={18}
-                      />
-                      <p className="text-xs font-medium leading-5 text-teal-900 dark:text-cyan-100">
-                        This creates an ERP owner account, provisions the
-                        organization, and activates your clinical operations
-                        dashboard.
-                      </p>
-                    </div>
-
                     <form
                       className="space-y-4"
                       onSubmit={(event) => {
@@ -422,54 +399,84 @@ export function ErpDemoLogin({
                         void handleCreateOrganization();
                       }}
                     >
+                      <fieldset>
+                        <legend className="mb-3 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                          Your workspace
+                        </legend>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                          {organizationTypeOptions.map(
+                            ({ label, value, icon: Icon }) => (
+                              <label
+                                key={value}
+                                className="relative cursor-pointer"
+                              >
+                                <input
+                                  className="peer sr-only"
+                                  type="radio"
+                                  name="workspace-type"
+                                  value={value}
+                                  checked={
+                                    onboardingForm.organizationType === value
+                                  }
+                                  onChange={() =>
+                                    setOnboardingForm((current) => ({
+                                      ...current,
+                                      organizationType: value,
+                                    }))
+                                  }
+                                />
+                                <span className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-3.5 text-xs font-semibold text-slate-600 transition hover:border-teal-500 peer-checked:border-teal-700 peer-checked:bg-teal-50 peer-checked:text-teal-900 peer-focus-visible:ring-2 peer-focus-visible:ring-teal-600 peer-focus-visible:ring-offset-2 dark:border-white/15 dark:text-slate-300 dark:peer-checked:border-teal-400 dark:peer-checked:bg-teal-400/10 dark:peer-checked:text-teal-200">
+                                  <Icon size={17} aria-hidden="true" />
+                                  {label}
+                                  {onboardingForm.organizationType === value ? (
+                                    <Check
+                                      className="ml-auto shrink-0"
+                                      size={13}
+                                      aria-hidden="true"
+                                    />
+                                  ) : null}
+                                </span>
+                              </label>
+                            )
+                          )}
+                        </div>
+                        <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                          Joining a team? Use your invitation instead.
+                        </p>
+                      </fieldset>
+                      <FormField
+                        label="Workspace name"
+                        onChange={(value) =>
+                          setOnboardingForm((current) => ({
+                            ...current,
+                            organizationName: value,
+                          }))
+                        }
+                        placeholder={
+                          onboardingForm.organizationType === "doctor"
+                            ? "Optional practice name"
+                            : "Your organization name"
+                        }
+                        required={onboardingForm.organizationType !== "doctor"}
+                        type="text"
+                        value={onboardingForm.organizationName}
+                      />
                       <div className="grid gap-3 sm:grid-cols-2">
                         <FormField
-                          label="Organization"
-                          onChange={(value) =>
-                            setOnboardingForm((current) => ({
-                              ...current,
-                              organizationName: value,
-                            }))
-                          }
-                          placeholder={
-                            onboardingForm.organizationType === "doctor"
-                              ? "Optional practice name"
-                              : "Yashoda Hospital"
-                          }
-                          required={
-                            onboardingForm.organizationType !== "doctor"
-                          }
-                          type="text"
-                          value={onboardingForm.organizationName}
-                        />
-                        <SelectField
-                          label="Workspace Type"
-                          onChange={(value) =>
-                            setOnboardingForm((current) => ({
-                              ...current,
-                              organizationType: value as OrganizationType,
-                            }))
-                          }
-                          options={organizationTypeOptions}
-                          value={onboardingForm.organizationType}
-                        />
-                      </div>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <FormField
-                          label="Owner Name"
+                          label="Your name"
                           onChange={(value) =>
                             setOnboardingForm((current) => ({
                               ...current,
                               name: value,
                             }))
                           }
-                          placeholder="Dr. Dhruv Negi"
+                          placeholder="Your full name"
                           required
                           type="text"
                           value={onboardingForm.name}
                         />
                         <FormField
-                          label="Owner Email"
+                          label="Work email"
                           onChange={(value) =>
                             setOnboardingForm((current) => ({
                               ...current,
@@ -500,13 +507,13 @@ export function ErpDemoLogin({
                         successMessage={successMessage}
                       />
                       <button
-                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white shadow-[0_18px_40px_rgba(15,23,42,0.24)] transition hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:shadow-[0_18px_40px_rgba(34,211,238,0.12)] dark:hover:bg-cyan-50"
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-teal-800 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-teal-300 dark:text-slate-950 dark:hover:bg-teal-200"
                         disabled={isPending}
                         type="submit"
                       >
                         {isPending
                           ? "Creating workspace..."
-                          : "Create healthcare ERP"}
+                          : "Create workspace"}
                         <ArrowRight size={17} />
                       </button>
                     </form>
@@ -541,8 +548,9 @@ export function ErpDemoLogin({
                         Accept your invitation
                       </h1>
                       <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
-                        Join an existing healthcare organization with the
-                        invitation ID from the Staff page.
+                        Enter the invitation ID shared by your team
+                        administrator. Use your existing account or create one
+                        to join.
                       </p>
                     </header>
 
@@ -611,7 +619,7 @@ export function ErpDemoLogin({
                         successMessage={successMessage}
                       />
                       <button
-                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white shadow-[0_18px_40px_rgba(15,23,42,0.24)] transition hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-slate-950 dark:shadow-[0_18px_40px_rgba(34,211,238,0.12)] dark:hover:bg-cyan-50"
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-teal-800 text-sm font-semibold text-white transition hover:bg-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-teal-300 dark:text-slate-950 dark:hover:bg-teal-200"
                         disabled={isPending}
                         type="submit"
                       >
@@ -628,15 +636,22 @@ export function ErpDemoLogin({
                       }}
                       type="button"
                     >
-                      Back to login
+                      Back to sign in
                     </button>
                   </motion.div>
                 ) : null}
               </AnimatePresence>
+              <p className="mt-7 flex items-center justify-center gap-2 border-t border-slate-100 pt-5 text-xs text-slate-500 dark:border-white/10 dark:text-slate-400">
+                <ShieldCheck
+                  size={15}
+                  className="shrink-0 text-teal-700 dark:text-teal-300"
+                />{" "}
+                Workspace access is managed by your organization.
+              </p>
             </div>
           </div>
 
-          <footer className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400">
+          <footer className="flex items-center justify-end text-xs font-semibold text-slate-500 dark:text-slate-400">
             <span>
               © {new Date().getFullYear()} {virujBrand.name}
             </span>
@@ -646,85 +661,63 @@ export function ErpDemoLogin({
           </footer>
         </section>
 
-        <aside className="relative hidden overflow-hidden bg-[#e9ebe6] transition-colors dark:bg-[#090d12] lg:block">
-          <div className="absolute inset-0 bg-[linear-gradient(#cfd6cc_1px,transparent_1px),linear-gradient(90deg,#cfd6cc_1px,transparent_1px)] bg-[size:48px_48px] opacity-55 dark:bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] dark:opacity-70" />
-          <div className="absolute left-[14%] top-[18%] h-28 w-28 rounded-full border border-slate-300/70 dark:border-cyan-300/15" />
-          <div className="absolute bottom-[22%] right-[18%] h-48 w-48 rounded-full border border-teal-900/10 dark:border-cyan-300/10" />
-          <div className="relative flex min-h-full flex-col justify-center px-16 py-14">
-            <div className="mb-10 flex size-14 items-center justify-center rounded-full bg-white shadow-[0_18px_45px_rgba(15,23,42,0.12)] dark:bg-white/[0.08] dark:shadow-[0_18px_45px_rgba(0,0,0,0.34)]">
-              <ShieldCheck
-                className="text-teal-800 dark:text-cyan-200"
-                size={25}
-              />
-            </div>
-            <div className="max-w-2xl font-headline text-4xl font-bold leading-tight tracking-tight text-slate-950 dark:text-white xl:text-5xl">
-              One connected workspace for your doctors, staff, appointments, and
-              patient care.
-            </div>
-            <div className="mt-8">
-              <p className="text-sm font-bold text-slate-950 dark:text-white">
-                {virujBrand.name}
-              </p>
-              <p className="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400">
-                Connected to the Viruj patient app
-              </p>
-            </div>
-            <div className="mt-10 flex gap-1.5">
-              <span className="h-1.5 w-7 rounded-full bg-slate-950 dark:bg-white" />
-              <span className="size-1.5 rounded-full bg-teal-700 dark:bg-cyan-300" />
-              <span className="size-1.5 rounded-full bg-slate-300 dark:bg-white/20" />
-            </div>
-            <div className="mt-14 grid max-w-xl grid-cols-2 gap-4">
-              <FeaturePill
-                icon={
-                  <ShieldCheck
-                    className="text-teal-700 dark:text-cyan-300"
-                    size={22}
-                  />
-                }
-                subtitle="Organization scoped access"
-                title="Secure roles"
-              />
-              <FeaturePill
-                icon={
-                  <Zap className="text-teal-700 dark:text-cyan-300" size={22} />
-                }
-                subtitle="Fast clinical workflows"
-                title="Smooth ops"
-              />
+        <aside className="relative hidden flex-col justify-between bg-[#123e35] p-12 text-white lg:flex xl:p-16">
+          <div className="flex items-center gap-2 text-xs font-medium text-teal-100/80">
+            <span className="size-1.5 rounded-full bg-teal-300" /> Built around
+            better care
+          </div>
+          <div className="py-16">
+            <span className="mb-7 flex size-12 items-center justify-center rounded-2xl border border-white/20 text-teal-200">
+              <HeartPulse size={25} strokeWidth={1.5} />
+            </span>
+            <h2 className="max-w-sm font-headline text-4xl font-semibold leading-[1.2] tracking-tight xl:text-5xl">
+              More time for
+              <br />
+              the people
+              <br />
+              <span className="text-teal-200">in your care.</span>
+            </h2>
+            <p className="mt-6 max-w-sm text-sm leading-7 text-teal-50/75">
+              Your appointments, patient records, and care team. Together in one
+              thoughtful workspace.
+            </p>
+            <div className="mt-10 space-y-5 border-t border-white/15 pt-7">
+              <div className="flex items-start gap-3">
+                <ShieldCheck
+                  size={19}
+                  className="mt-0.5 shrink-0 text-teal-200"
+                />
+                <div>
+                  <p className="text-sm font-medium">
+                    The right access for every role
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-teal-50/65">
+                    Permissions managed within your organization.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <HeartPulse
+                  size={19}
+                  className="mt-0.5 shrink-0 text-teal-200"
+                />
+                <div>
+                  <p className="text-sm font-medium">
+                    Care that stays connected
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-teal-50/65">
+                    Connected to the Viruj patient app.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
+          <p className="text-xs text-teal-100/60">
+            Viruj Health · Made for the people behind the care.
+          </p>
         </aside>
       </div>
-    </div>
-  );
-}
-
-function FeaturePill({
-  icon,
-  subtitle,
-  title,
-}: {
-  icon: React.ReactNode;
-  subtitle: string;
-  title: string;
-}) {
-  return (
-    <motion.div
-      animate={{ opacity: 1, scale: 1 }}
-      className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white/70 p-4 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur dark:border-white/10 dark:bg-white/[0.06] dark:shadow-[0_16px_40px_rgba(0,0,0,0.28)]"
-      initial={{ opacity: 0, scale: 0.9 }}
-    >
-      {icon}
-      <div>
-        <p className="text-sm font-bold text-slate-950 dark:text-white">
-          {title}
-        </p>
-        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-          {subtitle}
-        </p>
-      </div>
-    </motion.div>
+    </main>
   );
 }
 
@@ -743,18 +736,23 @@ function FormField({
   type: string;
   value: string;
 }) {
+  const inputId = useId();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const isPasswordField = type === "password";
   const inputType = isPasswordField && isPasswordVisible ? "text" : type;
 
   return (
     <div className="space-y-1">
-      <label className="px-1 text-xs font-bold text-slate-800 dark:text-slate-200">
+      <label
+        htmlFor={inputId}
+        className="text-xs font-semibold text-slate-700 dark:text-slate-200"
+      >
         {label}
       </label>
       <div className="relative">
         <input
-          className={`h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-slate-300 focus:ring-2 focus:ring-slate-200 dark:border-white/10 dark:bg-[#161c24] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-400/40 dark:focus:ring-cyan-400/15 ${
+          id={inputId}
+          className={`h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-normal text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-700 focus:ring-2 focus:ring-teal-700/15 dark:border-white/10 dark:bg-[#161c24] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-400/40 dark:focus:ring-cyan-400/15 ${
             isPasswordField ? "pr-12" : ""
           }`}
           onChange={(event) => onChange(event.target.value)}
@@ -778,40 +776,6 @@ function FormField({
   );
 }
 
-function SelectField({
-  label,
-  onChange,
-  options,
-  value,
-}: {
-  label: string;
-  onChange: (value: string) => void;
-  options: Array<{
-    label: string;
-    value: string;
-  }>;
-  value: string;
-}) {
-  return (
-    <div className="space-y-1">
-      <label className="px-1 text-xs font-bold text-slate-800 dark:text-slate-200">
-        {label}
-      </label>
-      <ErpSelect
-        className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-200 dark:border-white/10 dark:bg-[#161c24] dark:text-white dark:focus:border-cyan-400/40 dark:focus:ring-cyan-400/15"
-        onChange={(event) => onChange(event.target.value)}
-        value={value}
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </ErpSelect>
-    </div>
-  );
-}
-
 function StatusBlock({
   errorMessage,
   successMessage,
@@ -825,6 +789,7 @@ function StatusBlock({
 
   return (
     <div
+      role={errorMessage ? "alert" : "status"}
       className={`rounded-xl border px-4 py-3 text-sm ${
         errorMessage
           ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-400/20 dark:bg-rose-500/10 dark:text-rose-200"
