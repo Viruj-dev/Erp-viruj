@@ -1,4 +1,5 @@
 "use client";
+import { runBulkRequests } from "@/features/notifications/lib/bulk-feedback";
 
 import { PageSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 
@@ -79,13 +80,21 @@ function PatientAppointments({
         .filter((id): id is string => Boolean(id));
       if (!appointmentIds.length)
         return virujBackend.patients.deleteAll({ organizationId });
-      const results = await Promise.all(
-        appointmentIds.map((id) =>
-          virujBackend.appointments.delete({ id, organizationId })
-        )
+      const result = await runBulkRequests(
+        appointmentIds.map(
+          (id) => () =>
+            virujBackend.appointments.delete(
+              { id, organizationId },
+              { suppressToast: true }
+            )
+        ),
+        "appointment deletion requests completed"
       );
       return {
-        deleted: results.reduce((sum, result) => sum + result.deleted, 0),
+        deleted: result.completed.reduce(
+          (sum, result) => sum + result.deleted,
+          0
+        ),
       };
     },
     onSuccess: async () => {

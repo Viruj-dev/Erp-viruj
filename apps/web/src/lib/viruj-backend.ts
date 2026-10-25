@@ -1307,8 +1307,9 @@ export const virujBackend = {
         method: "POST",
         organizationId: input.organizationId,
       }),
-    delete: (input: { id: string; organizationId?: string }) =>
+    delete: (input: { id: string; organizationId?: string }, options: Pick<RequestOptions, "suppressToast"> = {}) =>
       request<{ deleted: number }>(`/appointments/${input.id}`, {
+        ...options,
         method: "DELETE",
         organizationId: input.organizationId,
       }),
@@ -1498,8 +1499,9 @@ export const virujBackend = {
       facility: VirujFacilityInput;
       id: string;
       organizationId?: string;
-    }) =>
+    }, options: Pick<RequestOptions, "suppressToast"> = {}) =>
       request<VirujFacility>(`/facilities/${input.id}`, {
+        ...options,
         body: input.facility,
         method: "PATCH",
         organizationId: input.organizationId,
@@ -1556,8 +1558,9 @@ export const virujBackend = {
       facility: VirujFacilityInput;
       id: string;
       organizationId?: string;
-    }) =>
+    }, options: Pick<RequestOptions, "suppressToast"> = {}) =>
       request<VirujFacility>(`/services/${input.id}`, {
+        ...options,
         body: input.facility,
         method: "PATCH",
         organizationId: input.organizationId,
@@ -1628,8 +1631,9 @@ export const virujBackend = {
         method: "POST",
         organizationId: input.organizationId,
       }),
-    delete: (input: { id: string; organizationId?: string }) =>
+    delete: (input: { id: string; organizationId?: string }, options: Pick<RequestOptions, "suppressToast"> = {}) =>
       request<{ success: true }>(`/doctors/${input.id}`, {
+        ...options,
         method: "DELETE",
         organizationId: input.organizationId,
       }),

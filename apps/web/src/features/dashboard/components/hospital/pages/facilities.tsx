@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { runBulkRequests } from "@/features/notifications/lib/bulk-feedback";
 import {
   AlertTriangle,
   Filter,
@@ -163,19 +164,24 @@ export function FacilitiesPage({
   });
   const publishAllMutation = useMutation({
     mutationFn: async (services: VirujFacility[]) => {
-      await Promise.all(
-        services.map((facility) =>
-          catalogApi.update({
-            facility: {
-              ...toFacilityInput(facility),
-              isAvailable: true,
-              status: "active",
-              visibility: "public",
-            },
-            id: facility.id,
-            organizationId,
-          })
-        )
+      return runBulkRequests(
+        services.map(
+          (facility) => () =>
+            catalogApi.update(
+              {
+                facility: {
+                  ...toFacilityInput(facility),
+                  isAvailable: true,
+                  status: "active",
+                  visibility: "public",
+                },
+                id: facility.id,
+                organizationId,
+              },
+              { suppressToast: true }
+            )
+        ),
+        `${catalogLabel.toLowerCase()} published`
       );
     },
     onSuccess: invalidateFacilities,

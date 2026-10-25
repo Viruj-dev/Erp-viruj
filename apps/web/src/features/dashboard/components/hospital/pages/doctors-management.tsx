@@ -1,4 +1,5 @@
 "use client";
+import { runBulkRequests } from "@/features/notifications/lib/bulk-feedback";
 
 import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 
@@ -131,15 +132,20 @@ export function DoctorsManagementPage({
 
   const deleteAllDoctorsMutation = useMutation({
     mutationFn: async (targetDoctors: VirujDoctor[]) => {
-      await Promise.all(
-        targetDoctors.map((doctorProfile) =>
-          virujBackend.doctors.delete({ id: doctorProfile.id, organizationId })
-        )
+      const result = await runBulkRequests(
+        targetDoctors.map(
+          (doctorProfile) => () =>
+            virujBackend.doctors.delete(
+              { id: doctorProfile.id, organizationId },
+              { suppressToast: true }
+            )
+        ),
+        "doctor profiles deleted"
       );
-      return { deleted: targetDoctors.length };
+      return { deleted: result.completed.length, failed: result.failed };
     },
-    onSuccess: async () => {
-      setIsDeleteAllDialogOpen(false);
+    onSuccess: async (result) => {
+      if (!result.failed) setIsDeleteAllDialogOpen(false);
       await invalidateDoctors();
     },
   });
