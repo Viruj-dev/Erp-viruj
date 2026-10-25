@@ -44,7 +44,7 @@
     "@erp_virujhealth/config": "workspace:*",
     "@neondatabase/serverless": "^1.0.2",
     "@types/bun": "catalog:",
-    "eslint": "latest",
+    "eslint": "^9",
     "postgres": "^3.4.8",
     "prettier": "latest",
     "stylelint": "latest",
