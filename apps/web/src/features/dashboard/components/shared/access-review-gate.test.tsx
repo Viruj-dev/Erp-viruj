@@ -1,5 +1,21 @@
 import { beforeEach, expect, mock, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
+import type { ReactNode } from "react";
+const DialogPart = ({
+  children,
+  className,
+}: {
+  children?: ReactNode;
+  className?: string;
+}) => <div className={className}>{children}</div>;
+mock.module("@/components/ui/erp/dialog", () => ({
+  Dialog: DialogPart,
+  DialogContent: DialogPart,
+  DialogHeader: DialogPart,
+  DialogTitle: DialogPart,
+  DialogDescription: DialogPart,
+  DialogClose: DialogPart,
+}));
 let pathname = "/hospital";
 mock.module("next/navigation", () => ({
   usePathname: () => pathname,
@@ -41,7 +57,7 @@ const submit = mock(async (_id: string) => ({
 mock.module("@/lib/viruj-backend", () => ({
   virujBackend: { accessReview: { status, reapply, submit } },
 }));
-const { AccessReviewGate, loadAccessReview } =
+const { AccessReviewGate, loadAccessReview, OnboardingReviewNotice } =
   await import("./access-review-gate");
 beforeEach(() => {
   status.mockClear();
@@ -56,6 +72,29 @@ beforeEach(() => {
     status: "draft",
     reason: "Correct the registration",
   });
+});
+
+test("onboarding notice uses the selected role's existing colors for its card, icon and button", () => {
+  for (const role of [
+    "hospital",
+    "clinic",
+    "doctor",
+    "pathology",
+    "radiology",
+  ]) {
+    const html = renderToStaticMarkup(
+      <OnboardingReviewNotice organizationType={role} />
+    );
+    expect(html).toContain(`vh-onboarding--${role}`);
+    expect(html).toContain("bg-[var(--onboarding-panel)]");
+    expect(html).toContain("text-[var(--onboarding-accent)]");
+    expect(html).toContain("bg-[var(--onboarding-accent-deep)]");
+    expect(html).toContain("Got it, continue");
+    expect(html).not.toContain("dark:bg-[#17241f]");
+  }
+  expect(renderToStaticMarkup(<OnboardingReviewNotice />)).toContain(
+    "vh-onboarding--hospital"
+  );
 });
 
 test("rejected users reopen saved onboarding without submitting another request", async () => {

@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/erp/dialog";
 import { ShieldCheck, Clock3 } from "lucide-react";
+import { resolveWorkspaceRole } from "@/features/dashboard/components/shared/layout/role-theme";
 import {
   buildTenantDashboardPath,
   isDashboardOrganizationType,
@@ -88,6 +89,42 @@ export function ReviewCard({
         </p>
       </section>
     </main>
+  );
+}
+
+export function OnboardingReviewNotice({
+  organizationType,
+}: {
+  organizationType?: string | null;
+}) {
+  const role = resolveWorkspaceRole(organizationType ?? "hospital");
+  return (
+    <Dialog defaultOpen>
+      <DialogContent
+        showCloseButton={false}
+        className={`vh-onboarding vh-onboarding--${role} rounded-2xl border-[var(--onboarding-border)] bg-[var(--onboarding-panel)] p-7 text-[var(--onboarding-text)] sm:max-w-md`}
+      >
+        <ShieldCheck
+          className="size-8 text-[var(--onboarding-accent)]"
+          aria-hidden="true"
+        />
+        <DialogHeader>
+          <DialogTitle className="text-xl font-semibold text-[var(--onboarding-heading)]">
+            Before you start
+          </DialogTitle>
+          <DialogDescription className="leading-6 text-[var(--onboarding-muted-strong)]">
+            Your details and documents will be saved and reviewed. Please fill
+            them carefully. Incorrect details may lead to rejection. You can
+            correct them and reapply.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogClose asChild>
+          <Button className="mt-2 w-full bg-[var(--onboarding-accent-deep)] text-white hover:bg-[var(--onboarding-accent-mid)]">
+            Got it, continue
+          </Button>
+        </DialogClose>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -218,30 +255,7 @@ export function AccessReviewGate({ children }: { children: ReactNode }) {
     );
   return (
     <>
-      <Dialog key={org?.id} defaultOpen>
-        <DialogContent
-          showCloseButton={false}
-          className="rounded-2xl border-[#d5e2de] bg-white p-7 text-[#183b36] dark:border-[#2a4036] dark:bg-[#17241f] dark:text-[#e1eee8] sm:max-w-md"
-        >
-          <ShieldCheck
-            className="size-8 text-emerald-700 dark:text-emerald-300"
-            aria-hidden="true"
-          />
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">
-              Before you start
-            </DialogTitle>
-            <DialogDescription className="leading-6 text-slate-600 dark:text-slate-300">
-              Your details and documents will be saved and reviewed. Please fill
-              them carefully. Incorrect details may lead to rejection. You can
-              correct them and reapply.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogClose asChild>
-            <Button className="mt-2 w-full">Got it, continue</Button>
-          </DialogClose>
-        </DialogContent>
-      </Dialog>
+      <OnboardingReviewNotice key={org?.id} organizationType={type} />
       {children}
     </>
   );
