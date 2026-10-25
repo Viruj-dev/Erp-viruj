@@ -358,7 +358,7 @@ function PlanCard({ billingCycle, canChangePlan, currentPlan, index, onSelectPla
             {isCurrent ? <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">Current</Badge> : null}
             {popular ? <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">Most popular</Badge> : null}
           </div>
-          <p className="mt-2 min-h-10 text-sm leading-5 text-slate-500 dark:text-slate-400">{plan.description ?? "Fixed-price Viruj ERP subscription plan."}</p>
+          <p className="mt-2 min-h-10 text-sm leading-5 text-slate-500 dark:text-slate-400">{plan.description ?? "Fixed-price Viruj Health subscription plan."}</p>
         </div>
       </div>
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/[0.07] dark:bg-white/[0.035]">

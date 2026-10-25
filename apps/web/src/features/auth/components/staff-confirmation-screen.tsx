@@ -87,7 +87,7 @@ export function StaffConfirmationScreen({
               className="text-xs font-extrabold uppercase tracking-[0.28em] text-[#9fd7ff]"
               suppressHydrationWarning
             >
-              Viruj Health ERP
+              Viruj Health
             </p>
             <h1 className="headline mt-3 max-w-xl text-3xl font-semi-bold leading-tight sm:text-4xl">
               {confirmedAccess

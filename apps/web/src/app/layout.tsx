@@ -14,8 +14,8 @@ const manrope = Manrope({
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "Viruj Health Clinical ERP",
-  applicationName: "Viruj Health ERP",
+  title: "Viruj Health",
+  applicationName: "Viruj Health",
   icons: { icon: "/brand/viruj-icon.png", apple: "/brand/viruj-icon.png" },
   description:
     "Viruj Health’s connected workspace for clinical operations, appointments, patient records, care teams, and practice insights.",

@@ -25,7 +25,7 @@ export function registerAuthRoutes(app: Hono) {
     c.header("Cache-Control", "no-store");
     if (!env.ERP_WEB_URL)
       return c.json(
-        { error: "Open Viruj ERP and sign in with your email and password." },
+        { error: "Open Viruj Health and sign in with your email and password." },
         410
       );
     return c.redirect(new URL("/auth", env.ERP_WEB_URL).toString(), 303);

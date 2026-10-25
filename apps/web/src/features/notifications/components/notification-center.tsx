@@ -91,7 +91,7 @@ export function NotificationCenter({
                 Notifications
               </SheetTitle>
               <SheetDescription className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Business events synced from Viruj ERP.
+                Business events synced from Viruj Health.
               </SheetDescription>
             </div>
             <ConnectionPill status={connectionStatus} />

@@ -22,9 +22,9 @@ export async function sendPasswordResetEmail({
     body: JSON.stringify({
       from: env.ERP_FROM_EMAIL,
       to: [email],
-      subject: "Reset your Viruj ERP password",
+      subject: "Reset your Viruj Health password",
       text: [
-        "We received a request to reset your Viruj ERP password.",
+        "We received a request to reset your Viruj Health password.",
         "",
         `Reset your password: ${url}`,
         "",

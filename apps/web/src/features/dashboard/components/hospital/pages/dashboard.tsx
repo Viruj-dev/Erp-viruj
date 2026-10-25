@@ -278,7 +278,7 @@ function WelcomeOnboardingModal({
                 been successfully configured.
               </DialogTitle>
               <DialogDescription className="text-sm font-medium text-cyan-50/80">
-                Viruj Health ERP is ready for daily operations. Continue to the
+                Viruj Health is ready for daily operations. Continue to the
                 dashboard to manage your hospital workspace.
               </DialogDescription>
             </DialogHeader>

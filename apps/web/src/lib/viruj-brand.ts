@@ -3,7 +3,7 @@
 export const virujBrand = {
   name: "Viruj Health",
   company: "Viruj Health Technologies",
-  product: "Viruj Health ERP",
+  product: "Viruj Health",
   logo: "/brand/viruj-icon.png",
   patientApp: "https://app.virujhealth.com",
   privacy: "https://app.virujhealth.com/privacy-policy",

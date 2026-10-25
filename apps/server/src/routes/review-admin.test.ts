@@ -151,7 +151,7 @@ test("approval sends access once, while repeated and stale decisions conflict", 
   expect(row.status).toBe("approved");
   expect(delivered).toBe(1);
   expect(sentEmail?.html).toContain('href="https://erp.virujhealth.com/auth"');
-  expect(sentEmail?.html).toContain("Sign in to Viruj ERP");
+  expect(sentEmail?.html).toContain("Sign in to Viruj Health");
   expect(sentEmail?.text).toContain("existing email and password");
   expect(JSON.stringify(sentEmail)).not.toContain("magic-link");
   expect(JSON.stringify(sentEmail)).not.toContain("token=");
@@ -220,6 +220,23 @@ test("rejections require useful notes and failed mail leaves a retryable decisio
   expect((await post("/requests/org/resend", {})).status).toBe(200);
   expect(row.email_sent_at).toBe("sent");
   expect(delivered).toBe(1);
+});
+test("rejected applications receive a styled update email with safe review notes", async () => {
+  const response = await post("/requests/org/decision", {
+    status: "rejected",
+    revision: 1,
+    reason: "Check <registration> & certificate.",
+  });
+  expect(response.status).toBe(200);
+  expect(sentEmail?.html).toContain("Update application");
+  expect(sentEmail?.html).toContain(
+    "Check &lt;registration&gt; &amp; certificate."
+  );
+  expect(sentEmail?.html).toContain('href="https://erp.virujhealth.com/auth"');
+  expect(sentEmail?.text).toContain(
+    "Your account and saved details are retained"
+  );
+  expect(JSON.stringify(sentEmail)).not.toContain("Viruj ERP");
 });
 import { afterAll } from "bun:test";
 afterAll(() => {

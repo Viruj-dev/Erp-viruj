@@ -113,7 +113,7 @@ export function OnboardingFrame({
                 </div>
                 <div className="min-w-0">
                   <h1 className="truncate text-sm font-semibold tracking-tight text-[var(--onboarding-text)]">
-                    {organizationLabel || "Viruj Health ERP"}
+                    {organizationLabel || "Viruj Health"}
                   </h1>
                   <p className="hidden text-[11px] font-medium text-[var(--onboarding-muted)] sm:block">
                     Required {entityLabel} setup

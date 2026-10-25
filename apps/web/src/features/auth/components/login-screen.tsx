@@ -316,7 +316,7 @@ export function ErpDemoLogin({
                 {virujBrand.product}
               </span>
               <span className="block text-[11px] font-medium text-slate-400 dark:text-slate-500">
-                by {virujBrand.name}
+                Care workspace
               </span>
             </div>
           </div>

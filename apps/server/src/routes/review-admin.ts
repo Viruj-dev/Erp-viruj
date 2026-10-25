@@ -12,6 +12,7 @@ import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { bodyLimit } from "hono/body-limit";
 import { SignJWT, jwtVerify } from "jose";
 import { timingSafeEqual } from "node:crypto";
+import { reviewEmailHtml } from "./review-email";
 
 const cookieName = "erp_review_admin";
 function adminKey() {
@@ -40,6 +41,8 @@ async function centralToken(row: Record<string, unknown>) {
     .sign(new TextEncoder().encode(env.CENTRAL_API_JWT_SECRET));
 }
 async function notify(row: Record<string, unknown>) {
+  if (!env.ERP_WEB_URL) throw new Error("ERP_WEB_URL must be configured.");
+  const signInUrl = new URL("/auth", env.ERP_WEB_URL).toString();
   if (row.status === "approved") {
     if (!env.CENTRAL_API_URL || !env.ERP_WEB_URL)
       throw new Error("CENTRAL_API_URL and ERP_WEB_URL must be configured.");
@@ -53,24 +56,24 @@ async function notify(row: Record<string, unknown>) {
     );
     if (!sync.ok)
       throw new Error("Approval saved; directory synchronization needs retry.");
-    const signInUrl = new URL("/auth", env.ERP_WEB_URL).toString();
     await sendReviewEmail(
       String(row.email),
-      "Your Viruj ERP workspace is approved",
+      "Your Viruj Health workspace is approved",
       [
         "Your application is approved and your workspace is ready.",
         "Sign in with your existing email and password. Your onboarding details are saved, and you do not need to request access again.",
-        `Sign in to Viruj ERP: ${signInUrl}`,
+        `Sign in to Viruj Health: ${signInUrl}`,
         "Keep your credentials private. Grant access only to authorized team members and follow your organization's privacy policies when handling patient information.",
         "For assistance, contact support@virujhealth.com.",
       ].join("\n\n"),
-      `<!doctype html><html><body style="margin:0;background:#f4f7f6;font-family:Arial,sans-serif;color:#183b36"><main style="max-width:540px;margin:32px auto;padding:32px;background:#ffffff;border:1px solid #d5e2de;border-radius:16px"><p style="font-size:12px;letter-spacing:2px">VIRUJ HEALTH</p><h1 style="font-size:24px">Your workspace is approved</h1><p style="line-height:1.7">Sign in with your existing email and password. Your onboarding details are saved, and you do not need to request access again.</p><p style="margin:28px 0"><a href="${signInUrl}" style="display:inline-block;padding:13px 22px;background:#185e4b;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:bold">Sign in to Viruj ERP</a></p><p style="font-size:13px;line-height:1.7">Keep your credentials private. Grant access only to authorized team members and follow your organization’s privacy policies when handling patient information.</p><p style="font-size:13px">Need help? Contact support@virujhealth.com.</p></main></body></html>`
+      await reviewEmailHtml("approved", signInUrl)
     );
   } else {
     await sendReviewEmail(
       String(row.email),
-      "Please update your Viruj ERP application",
-      `Thank you for applying to Viruj ERP. We could not approve the information in this submission.\n\nReview notes: ${row.reason}\n\nSign in with your existing account at ${env.ERP_WEB_URL}/auth, choose “Update application”, correct your saved information and submit it again. Your account and onboarding details have been retained.\n\nFor assistance, contact support@virujhealth.com.`
+      "Update your Viruj Health application",
+      `Your application needs a few updates before we can approve it.\n\nReview note: ${row.reason}\n\nSign in with your existing email and password, choose “Update application”, correct your saved details and submit again. Your account and saved details are retained.\n\nUpdate your application: ${signInUrl}\n\nNeed help? Contact support@virujhealth.com.`,
+      await reviewEmailHtml("rejected", signInUrl, String(row.reason || ""))
     );
   }
   await db.execute(

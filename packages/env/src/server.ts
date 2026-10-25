@@ -11,7 +11,7 @@ export const env = createEnv({
     CENTRAL_API_JWT_SECRET: z.string().min(32),
     ERP_FROM_EMAIL: z
       .string()
-      .default("Viruj Health ERP <support@virujhealth.com>"),
+      .default("Viruj Health <support@virujhealth.com>"),
     ERP_CLIENT_IP_HEADER: z.string().optional(),
     ERP_REVIEW_ADMIN_ORIGIN: z.url().default("https://admin.virujhealth.com"),
     ERP_REVIEW_ADMIN_ID: z.string().optional(),
