@@ -5,6 +5,7 @@ export async function reviewEmailHtml(
   signInUrl: string,
   reason?: string
 ) {
+  const logoUrl = new URL("/brand/viruj-icon.png", signInUrl).toString();
   const approved = status === "approved";
   const heading = approved
     ? "Your workspace is ready"
@@ -26,7 +27,24 @@ export async function reviewEmailHtml(
               <td
                 style="padding:28px 28px 20px;border-bottom:1px solid #eee7e4;font-size:20px;font-weight:bold;color:#7f1d1d"
               >
-                Viruj Health
+                <table role="presentation" style="border-spacing:0">
+                  <tr>
+                    <td style="padding-right:12px;vertical-align:middle">
+                      <img
+                        src="${logoUrl}"
+                        alt="Viruj Health logo"
+                        width="40"
+                        height="40"
+                        style="display:block;width:40px;height:40px;border:0"
+                      />
+                    </td>
+                    <td
+                      style="vertical-align:middle;font-size:20px;font-weight:bold;color:#7f1d1d"
+                    >
+                      Viruj Health
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr>

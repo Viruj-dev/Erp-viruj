@@ -24,9 +24,25 @@ test("reviewer notes cannot inject markup or executable content", async () => {
     '<script>alert("x")</script> & <img src=x onerror=alert(1)>'
   );
   expect(email).not.toContain("<script>");
-  expect(email).not.toContain("<img");
+  expect(email).not.toContain("<img src=x");
+  expect(email.match(/<img\b/g)).toHaveLength(1);
   expect(email).toContain("&lt;script&gt;");
   expect(email).toContain("&amp;");
+});
+
+test("both review emails include the public logo with explicit dimensions and fallback text", async () => {
+  for (const status of ["approved", "rejected"] as const) {
+    const email = await reviewEmailHtml(
+      status,
+      "https://erp.virujhealth.com/auth"
+    );
+    expect(email).toContain(
+      'src="https://erp.virujhealth.com/brand/viruj-icon.png"'
+    );
+    expect(email).toContain('alt="Viruj Health logo"');
+    expect(email).toContain('width="40"');
+    expect(email).toContain('height="40"');
+  }
 });
 test("approval emails retain saved access and privacy guidance", async () => {
   const email = await reviewEmailHtml(
