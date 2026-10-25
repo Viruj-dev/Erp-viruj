@@ -17,11 +17,11 @@ Bun.env.ERP_WEB_URL = "https://erp.virujhealth.com";
 Bun.env.CENTRAL_API_URL = "http://central.test";
 let row = {
   organization_id: "org",
-  applicant_id: "owner",
+  applicant_id: "owner" as string | null,
   revision: 1,
   status: "pending",
   reason: null as string | null,
-  email: "owner@example.com",
+  email: "owner@example.com" as string | null,
   organization_type: "clinic",
   slug: "example",
   email_sent_at: null as string | null,
@@ -47,7 +47,12 @@ mock.module("@erp_virujhealth/db", () => ({
           : [];
       }
       if (sql.startsWith("UPDATE erp_access_reviews SET status=")) {
-        if (row.status !== "pending" || params[3] !== row.revision) return [];
+        if (
+          row.status !== "pending" ||
+          params[3] !== row.revision ||
+          (sql.includes("AND applicant_id IS NOT NULL") && !row.applicant_id)
+        )
+          return [];
         row.status = String(params[0]);
         row.reason = params[1] as string | null;
         return [{ organization_id: row.organization_id }];
@@ -103,6 +108,8 @@ async function post(
 beforeEach(async () => {
   row = {
     ...row,
+    applicant_id: "owner",
+    email: "owner@example.com",
     status: "pending",
     revision: 1,
     reason: null,
@@ -208,6 +215,29 @@ test("approved and rejected applications move from requests to logs", async () =
   expect(await list("requests")).toHaveLength(0);
   expect(await list("logs")).toHaveLength(0);
 });
+test("deleted applicants remain visible but cannot be approved or notified", async () => {
+  row.applicant_id = null;
+  row.email = null;
+  const response = await app().request("/auth/review-admin/requests", {
+    headers: { Origin: "https://admin.virujhealth.com", Cookie: cookie },
+  });
+  expect(await response.json()).toMatchObject([{ applicant_id: null }]);
+  expect(listQuery).toContain("LEFT JOIN users");
+  expect(
+    (await post("/requests/org/decision", { status: "approved", revision: 1 }))
+      .status
+  ).toBe(409);
+  expect(row.status).toBe("pending");
+  row.status = "approved";
+  const resend = await post("/requests/org/resend", {});
+  expect(resend.status).toBe(409);
+  expect(await resend.json()).toMatchObject({
+    error: "The applicant account was deleted. Notification is unavailable.",
+  });
+  expect(delivered).toBe(0);
+  expect(row.email_sent_at).toBeNull();
+});
+
 test("rejections require useful notes and failed mail leaves a retryable decision", async () => {
   expect(
     (

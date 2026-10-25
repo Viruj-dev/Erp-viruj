@@ -4,7 +4,7 @@ The review UI is served at https://admin.virujhealth.com. Point that hostname at
 
 ## Deploy in this order
 
-1. Back up the ERP auth database. Apply `scripts/access-review.sql` to that database. The central API's `ERP_AUTH_DATABASE_URL` must point to the same database used by ERP auth's `DATABASE_URL`.
+1. Back up the ERP auth database. Apply `scripts/access-review.sql` to that database. For existing installations, also apply `scripts/access-review-user-deletion.sql` to allow applicant deletion while retaining review decisions and snapshots. Verify it in staging with `scripts/access-review-user-deletion.test.sql` (fixtures roll back). The central API's `ERP_AUTH_DATABASE_URL` must point to the same database used by ERP auth's `DATABASE_URL`.
 2. Configure the secrets below through the hosting provider's secret manager. Keep these values out of frontend variables, source control, logs and email.
 3. Configure the reverse proxy and deploy the API, auth service and web app together. Run the smoke checks below before opening registration.
 

@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.verifications (
 CREATE INDEX IF NOT EXISTS verifications_identifier_idx ON public.verifications(identifier);
 CREATE TABLE IF NOT EXISTS erp_access_reviews (
  organization_id text PRIMARY KEY REFERENCES organizations(id) ON DELETE CASCADE,
- applicant_id text NOT NULL REFERENCES users(id),
+ applicant_id text REFERENCES users(id) ON DELETE SET NULL,
  status text NOT NULL CHECK (status IN ('draft','pending','approved','rejected')),
  snapshot jsonb NOT NULL,
  submitted_at timestamptz NOT NULL DEFAULT now(),

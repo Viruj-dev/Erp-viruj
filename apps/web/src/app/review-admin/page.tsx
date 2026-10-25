@@ -7,8 +7,9 @@ import { ApplicationInformation } from "./application-information";
 
 type Application = {
   organization_id: string;
-  applicant_name: string;
-  email: string;
+  applicant_id: string | null;
+  applicant_name: string | null;
+  email: string | null;
   organization_name: string;
   organization_type: string;
   status: string;
@@ -274,18 +275,22 @@ export default function ReviewAdminPage() {
                 </span>
                 <strong className="block">{item.organization_name}</strong>
                 <span className="mt-1 block truncate text-sm text-slate-500 dark:text-slate-400">
-                  {item.applicant_name} · {item.email}
+                  {item.applicant_id
+                    ? `${item.applicant_name} · ${item.email}`
+                    : "Applicant account deleted"}
                 </span>
                 <span className="mt-3 block text-xs text-slate-500 dark:text-slate-400">
                   {view === "logs" && item.reviewed_at
                     ? `${item.status === "rejected" ? "Rejected" : "Approved"} ${new Date(item.reviewed_at).toLocaleString()}`
                     : new Date(item.submitted_at).toLocaleString()}
                 </span>
-                {item.reviewed_at && !item.email_sent_at && (
-                  <span className="mt-2 block text-xs text-red-700 dark:text-red-300">
-                    Email delivery needs retry
-                  </span>
-                )}
+                {item.applicant_id &&
+                  item.reviewed_at &&
+                  !item.email_sent_at && (
+                    <span className="mt-2 block text-xs text-red-700 dark:text-red-300">
+                      Email delivery needs retry
+                    </span>
+                  )}
               </button>
             ))}
             <div className="flex gap-3">
@@ -319,7 +324,7 @@ export default function ReviewAdminPage() {
                   {selected.organization_name}
                 </h2>
                 <p className="mb-8 mt-2 text-sm text-slate-500 dark:text-slate-400">
-                  {selected.email} · Submission {selected.revision}
+                  {selected.email ?? "Applicant account deleted"} · Submission {selected.revision}
                   {selected.reviewed_at && (
                     <span
                       className={`mt-2 block ${selected.status === "rejected" ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300"}`}
@@ -352,14 +357,16 @@ export default function ReviewAdminPage() {
                     </label>
                     <div className="flex flex-wrap gap-3">
                       <Button
-                        disabled={busy}
+                        disabled={busy || !selected.applicant_id}
                         onClick={() => void decision("approved")}
                       >
                         Approve access & send email
                       </Button>
                       <Button
                         variant="outline"
-                        disabled={busy || !reason.trim()}
+                        disabled={
+                          busy || !selected.applicant_id || !reason.trim()
+                        }
                         onClick={() => void decision("rejected")}
                       >
                         Request corrections & send email
@@ -371,7 +378,7 @@ export default function ReviewAdminPage() {
                     <Button
                       className="mt-6"
                       variant="outline"
-                      disabled={busy}
+                      disabled={busy || !selected.applicant_id}
                       onClick={() => {
                         setBusy(true);
                         setError("");

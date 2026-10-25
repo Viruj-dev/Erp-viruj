@@ -367,9 +367,9 @@ export const accessReview = pgTable(
     organizationId: text("organization_id")
       .primaryKey()
       .references(() => organization.id, { onDelete: "cascade" }),
-    applicantId: text("applicant_id")
-      .notNull()
-      .references(() => user.id),
+    applicantId: text("applicant_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
     status: text("status").notNull(),
     snapshot: jsonb("snapshot").notNull(),
     submittedAt: timestamp("submitted_at", { withTimezone: true })

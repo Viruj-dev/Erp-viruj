@@ -174,7 +174,7 @@ export function registerReviewAdminRoutes(app: Hono) {
       Math.min(1000000, Number(c.req.query("offset")) || 0)
     );
     const rows = await db.execute(
-      sql`SELECT r.*,u.name AS applicant_name,u.email,o.name AS organization_name,o.organization_type,o.slug FROM erp_access_reviews r JOIN users u ON u.id=r.applicant_id JOIN organizations o ON o.id=r.organization_id WHERE ${logs ? sql`r.status IN ('approved','rejected')` : sql`r.status='pending'`} ORDER BY ${logs ? sql`r.reviewed_at DESC` : sql`r.submitted_at DESC`} LIMIT 50 OFFSET ${offset}`
+      sql`SELECT r.*,u.name AS applicant_name,u.email,o.name AS organization_name,o.organization_type,o.slug FROM erp_access_reviews r LEFT JOIN users u ON u.id=r.applicant_id JOIN organizations o ON o.id=r.organization_id WHERE ${logs ? sql`r.status IN ('approved','rejected')` : sql`r.status='pending'`} ORDER BY ${logs ? sql`r.reviewed_at DESC` : sql`r.submitted_at DESC`} LIMIT 50 OFFSET ${offset}`
     );
     return c.json(rows);
   });
@@ -197,7 +197,7 @@ export function registerReviewAdminRoutes(app: Hono) {
         400
       );
     const updated = await db.execute(
-      sql`UPDATE erp_access_reviews SET status=${body.status},reason=${body.status === "rejected" ? body.reason.trim() : null},reviewed_at=now(),email_sent_at=NULL WHERE organization_id=${c.req.param("id")} AND status='pending' AND revision=${body.revision} RETURNING organization_id`
+      sql`UPDATE erp_access_reviews SET status=${body.status},reason=${body.status === "rejected" ? body.reason.trim() : null},reviewed_at=now(),email_sent_at=NULL WHERE organization_id=${c.req.param("id")} AND status='pending' AND revision=${body.revision} AND applicant_id IS NOT NULL RETURNING organization_id`
     );
     if (!updated.length)
       return c.json(
@@ -253,10 +253,18 @@ export function registerReviewAdminRoutes(app: Hono) {
 }
 async function deliver(id: string, c: import("hono").Context) {
   const rows = await db.execute(
-    sql`SELECT r.*,u.email,o.organization_type,o.slug FROM erp_access_reviews r JOIN users u ON u.id=r.applicant_id JOIN organizations o ON o.id=r.organization_id WHERE r.organization_id=${id} AND r.status IN ('approved','rejected')`
+    sql`SELECT r.*,u.email,o.organization_type,o.slug FROM erp_access_reviews r LEFT JOIN users u ON u.id=r.applicant_id JOIN organizations o ON o.id=r.organization_id WHERE r.organization_id=${id} AND r.status IN ('approved','rejected')`
   );
   const row = rows[0];
   if (!row) return c.json({ error: "Reviewed application not found." }, 404);
+  if (!row.applicant_id || !row.email)
+    return c.json(
+      {
+        error:
+          "The applicant account was deleted. Notification is unavailable.",
+      },
+      409
+    );
   try {
     await notify(row);
     return c.json({ ok: true });
