@@ -25,7 +25,12 @@ export type DoctorProfile = {
   languages: string[];
   bio?: string;
   isPublic: boolean;
-  registry?: { checkedAt: string; medicalCouncil: string };
+  registry?: {
+    checkedAt?: string;
+    medicalCouncil: string;
+    source?: string;
+    status?: string;
+  };
 };
 export type WorkingHours = {
   locationId: string;

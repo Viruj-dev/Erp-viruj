@@ -55,8 +55,8 @@ export function DoctorCredentialsPage() {
       <HospitalPanel title="Credential review">
         <StatusBadge status={q.data?.status || "NOT_SUBMITTED"} />
         <p className="mt-3 text-sm text-muted-foreground">
-          NMC registry matching and identity / certificate approval are separate
-          checks.
+          Our team reviews your registration details, identity and certificates
+          manually.
         </p>
       </HospitalPanel>
       <div className="grid gap-4 md:grid-cols-2">

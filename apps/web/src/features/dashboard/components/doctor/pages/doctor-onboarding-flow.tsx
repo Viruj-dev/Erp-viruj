@@ -619,8 +619,8 @@ function DoctorSetup({
             </dl>
             <p className="text-sm text-[var(--onboarding-muted)]">
               {approved ? "Save changes updates" : "Submit for review saves"}{" "}
-              your professional profile and availability. Registry errors appear
-              here so you can correct the details without losing your draft.
+              your professional profile and availability. Our team will review
+              your registration details and documents manually.
             </p>
           </>
         )}

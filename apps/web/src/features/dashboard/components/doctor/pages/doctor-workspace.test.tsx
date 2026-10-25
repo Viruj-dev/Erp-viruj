@@ -70,11 +70,12 @@ test("doctor onboarding asks for professional and contact details", () => {
     "Consultation fee (INR)",
     "Consultation duration (minutes)",
     "License / registration certificate",
-    "Check NMC register",
+    "Our team will review your registration details and documents manually.",
     "Set availability",
   ])
     expect(html).toContain(label);
   expect(html).not.toContain("Aris Thorne");
+  expect(html).not.toContain("Check NMC register");
 });
 test("calendar renders saved work events and attended count", () => {
   const today = new Date();
