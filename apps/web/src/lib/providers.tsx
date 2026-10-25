@@ -8,6 +8,7 @@ import { NotificationProvider } from "@/features/notifications";
 import { ThemeProvider } from "./theme-provider";
 import { PostHogAnalytics } from "./posthog-analytics";
 import { createQueryClient } from "./query-cache";
+import { AppointmentRealtimeProvider } from "./use-realtime-invalidation";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(createQueryClient);
@@ -18,7 +19,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <NotificationProvider>
         <QueryClientProvider client={queryClient}>
           <SessionScopedQueryReset />
-          {children}
+          <AppointmentRealtimeProvider>{children}</AppointmentRealtimeProvider>
         </QueryClientProvider>
       </NotificationProvider>
     </ThemeProvider>
