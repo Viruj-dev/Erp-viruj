@@ -240,8 +240,8 @@ export default function ReviewAdminPage() {
             <div className="mb-4 flex items-center justify-between">
               <p className="text-sm font-medium">
                 {view === "logs"
-                  ? "Approved organizations"
-                  : "Applications · Pending first"}
+                  ? "Reviewed applications"
+                  : "Pending applications"}
               </p>
               <Button
                 variant="ghost"
@@ -254,7 +254,7 @@ export default function ReviewAdminPage() {
             {!requests.length && (
               <p className="rounded-xl bg-white dark:bg-[#17241f] p-6 text-sm">
                 {view === "logs"
-                  ? "No approved organizations on this page."
+                  ? "No reviewed applications on this page."
                   : "No applications on this page."}
               </p>
             )}
@@ -267,7 +267,9 @@ export default function ReviewAdminPage() {
                 }}
                 className={`w-full rounded-xl border bg-white dark:bg-[#17241f] p-5 text-left ${selected?.organization_id === item.organization_id ? "border-emerald-700 ring-1 ring-emerald-700 dark:border-emerald-400 dark:ring-emerald-400" : "border-[#d5e2de] dark:border-[#2a4036]"}`}
               >
-                <span className="mb-3 block text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                <span
+                  className={`mb-3 block text-xs font-semibold uppercase tracking-wider ${item.status === "rejected" ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300"}`}
+                >
                   {item.status} · {item.organization_type}
                 </span>
                 <strong className="block">{item.organization_name}</strong>
@@ -276,7 +278,7 @@ export default function ReviewAdminPage() {
                 </span>
                 <span className="mt-3 block text-xs text-slate-500 dark:text-slate-400">
                   {view === "logs" && item.reviewed_at
-                    ? `Approved ${new Date(item.reviewed_at).toLocaleString()}`
+                    ? `${item.status === "rejected" ? "Rejected" : "Approved"} ${new Date(item.reviewed_at).toLocaleString()}`
                     : new Date(item.submitted_at).toLocaleString()}
                 </span>
                 {item.reviewed_at && !item.email_sent_at && (
@@ -318,10 +320,12 @@ export default function ReviewAdminPage() {
                 </h2>
                 <p className="mb-8 mt-2 text-sm text-slate-500 dark:text-slate-400">
                   {selected.email} · Submission {selected.revision}
-                  {selected.status === "approved" && selected.reviewed_at && (
-                    <span className="mt-2 block text-emerald-700 dark:text-emerald-300">
-                      Approved on{" "}
-                      {new Date(selected.reviewed_at).toLocaleString()}
+                  {selected.reviewed_at && (
+                    <span
+                      className={`mt-2 block ${selected.status === "rejected" ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300"}`}
+                    >
+                      {selected.status === "rejected" ? "Rejected" : "Approved"}{" "}
+                      on {new Date(selected.reviewed_at).toLocaleString()}
                     </span>
                   )}
                 </p>

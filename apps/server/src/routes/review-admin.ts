@@ -174,7 +174,7 @@ export function registerReviewAdminRoutes(app: Hono) {
       Math.min(1000000, Number(c.req.query("offset")) || 0)
     );
     const rows = await db.execute(
-      sql`SELECT r.*,u.name AS applicant_name,u.email,o.name AS organization_name,o.organization_type,o.slug FROM erp_access_reviews r JOIN users u ON u.id=r.applicant_id JOIN organizations o ON o.id=r.organization_id WHERE ${logs ? sql`r.status='approved'` : sql`r.status IN ('pending','rejected')`} ORDER BY ${logs ? sql`r.reviewed_at DESC` : sql`(r.status='pending') DESC,r.submitted_at DESC`} LIMIT 50 OFFSET ${offset}`
+      sql`SELECT r.*,u.name AS applicant_name,u.email,o.name AS organization_name,o.organization_type,o.slug FROM erp_access_reviews r JOIN users u ON u.id=r.applicant_id JOIN organizations o ON o.id=r.organization_id WHERE ${logs ? sql`r.status IN ('approved','rejected')` : sql`r.status='pending'`} ORDER BY ${logs ? sql`r.reviewed_at DESC` : sql`r.submitted_at DESC`} LIMIT 50 OFFSET ${offset}`
     );
     return c.json(rows);
   });

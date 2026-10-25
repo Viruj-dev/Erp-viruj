@@ -37,11 +37,11 @@ mock.module("@erp_virujhealth/db", () => ({
       const { sql, params } = dialect.sqlToQuery(query);
       if (sql.includes("AS applicant_name")) {
         listQuery = sql;
-        const logs = sql.includes("WHERE r.status='approved'");
+        const logs = sql.includes("WHERE r.status IN ('approved','rejected')");
         return (
           logs
-            ? row.status === "approved"
-            : ["pending", "rejected"].includes(row.status)
+            ? ["approved", "rejected"].includes(row.status)
+            : row.status === "pending"
         )
           ? [{ ...row }]
           : [];
@@ -172,7 +172,7 @@ test("approval sends access once, while repeated and stale decisions conflict", 
   ).toBe(409);
 });
 
-test("approved organizations move from requests to persistent logs", async () => {
+test("approved and rejected applications move from requests to logs", async () => {
   async function list(view: string) {
     const response = await app().request(
       `/auth/review-admin/requests?view=${view}`,
@@ -183,16 +183,30 @@ test("approved organizations move from requests to persistent logs", async () =>
     expect(response.status).toBe(200);
     return response.json();
   }
-  expect(await list("requests")).toHaveLength(1);
-  expect(listQuery).toContain("WHERE r.status IN ('pending','rejected')");
-  expect(await list("logs")).toHaveLength(0);
-  await post("/requests/org/decision", { status: "approved", revision: 1 });
+  for (const status of ["approved", "rejected"]) {
+    row.status = "pending";
+    expect(await list("requests")).toHaveLength(1);
+    expect(listQuery).toContain("WHERE r.status='pending'");
+    expect(await list("logs")).toHaveLength(0);
+    expect(
+      (
+        await post("/requests/org/decision", {
+          status,
+          revision: 1,
+          reason: "Correct the registration details.",
+        })
+      ).status
+    ).toBe(200);
+    expect(await list("requests")).toHaveLength(0);
+    expect(await list("logs")).toMatchObject([
+      { organization_id: "org", status },
+    ]);
+    expect(listQuery).toContain("ORDER BY r.reviewed_at DESC");
+    expect(await list("logs")).toHaveLength(1);
+  }
+  row.status = "draft";
   expect(await list("requests")).toHaveLength(0);
-  expect(await list("logs")).toMatchObject([
-    { organization_id: "org", status: "approved" },
-  ]);
-  expect(listQuery).toContain("ORDER BY r.reviewed_at DESC");
-  expect(await list("logs")).toHaveLength(1);
+  expect(await list("logs")).toHaveLength(0);
 });
 test("rejections require useful notes and failed mail leaves a retryable decision", async () => {
   expect(
