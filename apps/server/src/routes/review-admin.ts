@@ -72,7 +72,7 @@ async function notify(row: Record<string, unknown>) {
     await sendReviewEmail(
       String(row.email),
       "Update your Viruj Health application",
-      `Your application needs a few updates before we can approve it.\n\nReview note: ${row.reason}\n\nSign in with your existing email and password, choose “Update application”, correct your saved details and submit again. Your account and saved details are retained.\n\nUpdate your application: ${signInUrl}\n\nNeed help? Contact support@virujhealth.com.`,
+      `Your application needs a few updates before we can approve it.\n\nReview note: ${row.reason}\n\nSign in with your existing email and password to open your saved application. Correct your details and submit again. Your account and saved details are retained.\n\nUpdate your application: ${signInUrl}\n\nNeed help? Contact support@virujhealth.com.`,
       await reviewEmailHtml("rejected", signInUrl, String(row.reason || ""))
     );
   }

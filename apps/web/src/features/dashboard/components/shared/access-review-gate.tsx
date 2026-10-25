@@ -91,6 +91,20 @@ export function ReviewCard({
   );
 }
 
+export async function loadAccessReview(organizationId: string) {
+  let review = await virujBackend.accessReview.status(organizationId);
+  if (review.status === "rejected") {
+    review = await virujBackend.accessReview.reapply(organizationId);
+    if (review.status === "rejected")
+      throw new Error(
+        "Unable to reopen this application. Sign in with the applicant's account and try again."
+      );
+  }
+  if (review.status === "unsubmitted" && review.completed)
+    review = await virujBackend.accessReview.submit(organizationId);
+  return review;
+}
+
 export function AccessReviewGate({ children }: { children: ReactNode }) {
   const pathname = usePathname(),
     router = useRouter();
@@ -119,14 +133,20 @@ export function AccessReviewGate({ children }: { children: ReactNode }) {
     setError("");
     setCentralApiTokenIdentity(`${session.data.user.id}:${org.id}`);
     try {
-      let review = await virujBackend.accessReview.status(org.id);
-      if (review.status === "unsubmitted" && review.completed)
-        review = await virujBackend.accessReview.submit(org.id);
+      const review = await loadAccessReview(org.id);
+      if (
+        review.status === "draft" &&
+        (type === "hospital" || type === "clinic")
+      )
+        window.sessionStorage.setItem(
+          `viruj:${type}-onboarding:entry:${org.id}`,
+          "1"
+        );
       setResult({ id: org.id, review });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Please try again.");
     }
-  }, [enabled, org?.id, session.data?.user?.id]);
+  }, [enabled, org?.id, type, session.data?.user?.id]);
   useEffect(() => {
     void refresh();
     window.addEventListener("access-review-changed", refresh);
@@ -156,7 +176,11 @@ export function AccessReviewGate({ children }: { children: ReactNode }) {
       router.replace(buildTenantDashboardPath(type, org.slug, "onboarding"));
   }, [enabled, review, type, org?.slug, pathname, router]);
   if (!enabled) return children;
-  if (!review && !error)
+  if (
+    !error &&
+    (!review ||
+      (review.status === "draft" && !pathname.includes("/onboarding/")))
+  )
     return (
       <main
         role="status"
