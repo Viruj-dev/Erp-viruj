@@ -28,7 +28,7 @@ export function useRealtimeInvalidation(userId: string, orgId: string) {
   });
   useEffect(() => {
     if (!userId || !orgId) return;
-    const origin = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+    const origin = window.location.origin;
     const url = `${origin.replace(/\/$/, "")}/events?org=${encodeURIComponent(orgId)}`;
     const events = connectAppointmentEvents({
       client,

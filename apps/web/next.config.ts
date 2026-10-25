@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
       ],
       afterFiles: [
         {
+          source: "/events/:path*",
+          destination: `${apiUrl.replace(/\/$/, "")}/events/:path*`,
+        },
+        {
           source: "/auth/:path*",
           destination: `${authUrl.replace(/\/$/, "")}/auth/:path*`,
         },
