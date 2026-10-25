@@ -1,4 +1,6 @@
 import { cn } from "@/lib/utils";
+import { useContext } from "react";
+import { WorkspaceApprovalContext } from "@/features/dashboard/lib/workspace-approval";
 import { motion } from "framer-motion";
 import { Check, Clock3, Globe2, ShieldCheck, Sparkles } from "lucide-react";
 import { HealthcareLaunchIllustration } from "../healthcare-launch-illustration";
@@ -15,6 +17,7 @@ export function ReviewStep({
   kind?: OnboardingKind;
   summary: Array<{ label: string; value: string }>;
 }) {
+  const approvedOrganizationId = useContext(WorkspaceApprovalContext);
   const isClinic = kind === "clinic";
   const organizationName =
     data.profile.hospitalName || (isClinic ? "Your clinic" : "Your hospital");
@@ -64,15 +67,18 @@ export function ReviewStep({
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/14 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/85">
               <Sparkles size={13} />
-              Application review
+              {approvedOrganizationId ? "Review changes" : "Application review"}
             </div>
             <h3 className="mt-5 text-[30px] font-semibold leading-tight tracking-tight md:text-[36px]">
-              {organizationName} is ready for review.
+              {organizationName}{" "}
+              {approvedOrganizationId
+                ? "is already approved."
+                : "is ready for review."}
             </h3>
             <p className="mt-3 max-w-lg text-sm font-medium leading-6 text-white/80">
-              Every required setup section is saved. Submit your application for
-              review before managing day-to-day{" "}
-              {isClinic ? "clinic" : "hospital"} operations.
+              {approvedOrganizationId
+                ? "Save your updated details and continue to your dashboard. No new access request is needed."
+                : `Every required setup section is saved. Submit your application for review before managing day-to-day ${isClinic ? "clinic" : "hospital"} operations.`}
             </p>
             <div className="mt-6">
               <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.16em] text-white/80">
@@ -156,12 +162,16 @@ export function ReviewStep({
             <p className="mt-3 text-sm font-semibold">
               {isClinic
                 ? `${data.doctors.length} doctors / ${enabledDepartments.length} specialties`
-                : "Ready for review"}
+                : approvedOrganizationId
+                  ? "Ready to save"
+                  : "Ready for review"}
             </p>
             <p className="mt-1 text-xs font-medium leading-5 text-white/80">
               {isClinic
                 ? "Clinic onboarding captures identity, contact, location, schedule, specialties, and doctors."
-                : "Your services and onboarding details will be reviewed before ERP access is approved."}
+                : approvedOrganizationId
+                  ? "Your saved changes keep your existing workspace approval."
+                  : "Your services and onboarding details will be reviewed before ERP access is approved."}
             </p>
           </div>
         </div>

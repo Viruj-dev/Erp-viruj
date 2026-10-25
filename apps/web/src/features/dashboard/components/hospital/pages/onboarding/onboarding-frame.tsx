@@ -1,5 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
+import { WorkspaceApprovalContext } from "@/features/dashboard/lib/workspace-approval";
 import { authClient } from "@/lib/auth-client";
 import { clearCentralApiToken } from "@/lib/central-api-token";
 import { AnimatePresence, motion } from "framer-motion";
@@ -18,7 +19,7 @@ import {
   UserRoundCog,
   Users,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useContext, useState, type ReactNode } from "react";
 import { OnboardingTheme } from "./time-picker";
 import type { OnboardingKind, StepDefinition, StepId } from "./types";
 
@@ -62,6 +63,7 @@ export function OnboardingFrame({
   children,
   themeClassName,
 }: OnboardingFrameProps) {
+  const approvedOrganizationId = useContext(WorkspaceApprovalContext);
   const [signingOut, setSigningOut] = useState(false);
   const currentStep = steps[currentStepIndex] ?? steps[0];
   const handleSignOut = async () => {
@@ -75,7 +77,10 @@ export function OnboardingFrame({
     } catch {
       // Signing out is best-effort — always land the user on /auth.
     } finally {
-      if (typeof window !== "undefined" && window.location.pathname !== "/auth") {
+      if (
+        typeof window !== "undefined" &&
+        window.location.pathname !== "/auth"
+      ) {
         window.location.assign("/auth");
       } else {
         setSigningOut(false);
@@ -331,7 +336,9 @@ export function OnboardingFrame({
                           disabled={launching}
                           type="button"
                         >
-                          Submit for review
+                          {approvedOrganizationId
+                            ? "Save changes"
+                            : "Submit for review"}
                           <Sparkles size={16} />
                         </button>
                       ) : (

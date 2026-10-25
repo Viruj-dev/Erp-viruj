@@ -236,6 +236,7 @@ function DoctorSetup({
   const router = useRouter();
   const client = useQueryClient();
   const form = useRef<HTMLFormElement>(null);
+  const approved = useWorkspaceApproved(tenant.organizationId);
   const [profile, setProfile] = useState<DoctorProfile>({
     ...initial,
     fullName:
@@ -617,9 +618,9 @@ function DoctorSetup({
               ))}
             </dl>
             <p className="text-sm text-[var(--onboarding-muted)]">
-              Submit for review saves your professional profile and
-              availability. Registry errors appear here so you can correct the
-              details without losing your draft.
+              {approved ? "Save changes updates" : "Submit for review saves"}{" "}
+              your professional profile and availability. Registry errors appear
+              here so you can correct the details without losing your draft.
             </p>
           </>
         )}
