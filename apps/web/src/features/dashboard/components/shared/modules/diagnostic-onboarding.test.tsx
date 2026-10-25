@@ -11,7 +11,7 @@ const { DiagnosticOnboarding } = await import("./diagnostic-onboarding");
 test("pathology setup uses orange and radiology setup uses rose", () => {
   for (const kind of ["pathology", "radiology"] as const) {
     const client = new QueryClient();
-    client.setQueryData(diagnosticSetupKey("tenant-a"), {
+    client.setQueryData(diagnosticSetupKey("", "tenant-a"), {
       data: null,
       completedAt: null,
       version: 0

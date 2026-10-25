@@ -19,7 +19,7 @@ mock.module(
 const { ErpDemoTopBar } = await import("./top-bar");
 test("doctor top bar uses the doctor identity and avatar while hospital keeps its organisation icon", () => {
   const client = new QueryClient();
-  client.setQueryData(["doctor-workspace", "doctor-a", "/doctor/profile"], {
+  client.setQueryData(["", "doctor-a", "doctors", "doctor", "/doctor/profile"], {
     fullName: "Dr Test",
     specialization: "Cardiology",
     gender: "female",

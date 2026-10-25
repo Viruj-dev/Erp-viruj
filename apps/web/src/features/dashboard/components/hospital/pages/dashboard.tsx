@@ -1,4 +1,6 @@
 "use client";
+import { useQueryUserId } from "@/lib/use-realtime-invalidation";
+import { resourceKey } from "@/lib/query-cache";
 import { authClient } from "@/lib/auth-client";
 
 import { useQuery } from "@tanstack/react-query";
@@ -78,23 +80,23 @@ export function ErpDemoDashboard({
     staleTime: 30_000,
   });
   const doctorsQuery = useQuery({
-    enabled: Boolean(organizationId),
+    enabled: Boolean(userId && organizationId),
     queryFn: () => virujBackend.doctors.list({ organizationId }),
-    queryKey: virujBackend.doctors.key(organizationId),
+    queryKey: virujBackend.doctors.key(userId, organizationId ?? ""),
     retry: 1,
     staleTime: 30_000,
   });
   const servicesQuery = useQuery({
-    enabled: Boolean(organizationId),
+    enabled: Boolean(userId && organizationId),
     queryFn: () => virujBackend.services.list({ organizationId }),
-    queryKey: virujBackend.services.key({ organizationId }),
+    queryKey: virujBackend.services.key(userId, { organizationId }),
     retry: 1,
     staleTime: 30_000,
   });
   const galleryQuery = useQuery({
-    enabled: Boolean(organizationId),
+    enabled: Boolean(userId && organizationId),
     queryFn: () => virujBackend.hospitalGallery.list({ organizationId }),
-    queryKey: virujBackend.hospitalGallery.key(organizationId),
+    queryKey: virujBackend.hospitalGallery.key(userId, organizationId ?? ""),
     retry: 1,
     staleTime: 30_000,
   });
@@ -218,10 +220,11 @@ function useHospitalOnboardingStatus(organizationId?: string) {
 }
 
 function useHospitalProfileVisibility(organizationId: string | undefined) {
+  const userId = useQueryUserId();
   const facilityQuery = useQuery({
-    enabled: Boolean(organizationId),
+    enabled: Boolean(userId && organizationId),
     queryFn: () => virujBackend.directory.facility(organizationId),
-    queryKey: ["directory", "facility", organizationId],
+    queryKey: resourceKey(userId, organizationId, "catalogue", "facility"),
     retry: 1,
   });
   const [isUpdating, setIsUpdating] = useState(false);

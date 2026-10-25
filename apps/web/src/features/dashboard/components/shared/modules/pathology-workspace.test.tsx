@@ -1,3 +1,4 @@
+import { resourceKey } from "@/lib/query-cache";
 import { expect, mock, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -23,9 +24,9 @@ const tenant = createErpTenantContext({
 
 test("pathology dashboard counts services and branches without loading laboratory orders", () => {
   const client = new QueryClient();
-  client.setQueryData(["diagnostic-bookings", "lab-a"], []);
-  client.setQueryData(virujBackend.diagnostics.key("lab-a", "services"), []);
-  client.setQueryData(["diagnostic-availability", "lab-a", "branches"], []);
+  client.setQueryData(resourceKey("", "lab-a", "diagnostics.bookings"), []);
+  client.setQueryData(virujBackend.diagnostics.key("", "lab-a", "services"), []);
+  client.setQueryData(resourceKey("", "lab-a", "diagnostics.bookings", "availability", "branches"), []);
   const html = renderToStaticMarkup(
     <QueryClientProvider client={client}>
       <DiagnosticWorkspace tenant={tenant} userName="Owner" />
@@ -43,8 +44,8 @@ test("pathology dashboard counts services and branches without loading laborator
 
 test("publication controls reflect branch visibility and restrict publishing to managers with active tests", () => {
   const client = new QueryClient();
-  const branchKey = ["diagnostic-availability", "lab-a", "branches"];
-  const serviceKey = virujBackend.diagnostics.key("lab-a", "services");
+  const branchKey = resourceKey("", "lab-a", "diagnostics.bookings", "availability", "branches");
+  const serviceKey = virujBackend.diagnostics.key("", "lab-a", "services");
   client.setQueryData(branchKey, [
     {
       id: "private",
@@ -96,7 +97,7 @@ test("publication controls reflect branch visibility and restrict publishing to 
 
 test("pathology profile displays saved identity and contact details for its tenant", () => {
   const client = new QueryClient();
-  client.setQueryData(diagnosticSetupKey("lab-a"), {
+  client.setQueryData(diagnosticSetupKey("", "lab-a"), {
     data: {
       ...emptyDiagnosticSetup("Sunrise Diagnostics", "lab@example.com"),
       registrationNumber: "REG-001",
@@ -107,7 +108,7 @@ test("pathology profile displays saved identity and contact details for its tena
     completedAt: "2026-01-01",
     version: 1
   });
-  client.setQueryData(diagnosticSetupKey("lab-b"), {
+  client.setQueryData(diagnosticSetupKey("", "lab-b"), {
     data: emptyDiagnosticSetup("Other tenant"),
     version: 1
   });
@@ -132,10 +133,10 @@ test("pathology profile displays saved identity and contact details for its tena
 test("radiology matches the dashboard UI while reading only its own organization data", () => {
   const radiology = { ...tenant, organizationId: "scan-a", providerType: "radiology" as const };
   const client = new QueryClient();
-  client.setQueryData(["diagnostic-bookings", "scan-a"], []);
-  client.setQueryData(virujBackend.diagnostics.key("scan-a", "services"), []);
-  client.setQueryData(["diagnostic-availability", "scan-a", "branches"], []);
-  client.setQueryData(diagnosticSetupKey("lab-a"), { data: emptyDiagnosticSetup("Pathology only"), completedAt: "2026-01-01", version: 1 });
+  client.setQueryData(resourceKey("", "scan-a", "diagnostics.bookings"), []);
+  client.setQueryData(virujBackend.diagnostics.key("", "scan-a", "services"), []);
+  client.setQueryData(resourceKey("", "scan-a", "diagnostics.bookings", "availability", "branches"), []);
+  client.setQueryData(diagnosticSetupKey("", "lab-a"), { data: emptyDiagnosticSetup("Pathology only"), completedAt: "2026-01-01", version: 1 });
   const html = renderToStaticMarkup(
     <QueryClientProvider client={client}>
       <DiagnosticWorkspace tenant={radiology} userName="Owner" />
@@ -145,7 +146,7 @@ test("radiology matches the dashboard UI while reading only its own organization
   expect(html).toContain("Published branches");
   expect(html).toContain("Your branches");
   expect(client.getQueryCache().getAll()).toHaveLength(4);
-  client.setQueryData(diagnosticSetupKey("scan-a"), {
+  client.setQueryData(diagnosticSetupKey("", "scan-a"), {
     data: {
       ...emptyDiagnosticSetup("Imaging Centre"),
       modalities: ["MRI"],

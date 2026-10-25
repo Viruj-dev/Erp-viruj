@@ -1,4 +1,5 @@
 "use client";
+import { useQueryUserId } from "@/lib/use-realtime-invalidation";
 import { useWorkspaceApproved } from "@/features/dashboard/lib/workspace-approval";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -234,6 +235,7 @@ function DoctorSetup({
 }) {
   const tenant = useDoctorTenant();
   const router = useRouter();
+  const userId = useQueryUserId();
   const client = useQueryClient();
   const form = useRef<HTMLFormElement>(null);
   const approved = useWorkspaceApproved(tenant.organizationId);
@@ -412,7 +414,7 @@ function DoctorSetup({
         "PATCH"
       );
       await client.invalidateQueries({
-        queryKey: ["doctor-workspace", tenant.organizationId],
+        queryKey: [userId, tenant.organizationId, "doctors"],
       });
       localStorage.removeItem(draftKey);
       setComplete(true);

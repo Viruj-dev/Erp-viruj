@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryUserId } from "@/lib/use-realtime-invalidation";
 import { PageSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 
 import {
@@ -17,9 +18,10 @@ import { virujBackend } from "@/lib/viruj-backend";
 import { DiagnosticPublication } from "./diagnostic-publication";
 
 export function DiagnosticProfile({ tenant }: { tenant: ErpTenantContext }) {
+  const userId = useQueryUserId();
   const pathology = tenant.providerType === "pathology";
   const query = useQuery({
-    queryKey: diagnosticSetupKey(tenant.organizationId),
+    queryKey: diagnosticSetupKey(userId, tenant.organizationId),
     queryFn: () => virujBackend.diagnostics.onboarding(tenant.organizationId),
     retry: false
   });

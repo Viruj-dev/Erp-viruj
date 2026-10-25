@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryUserId } from "@/lib/use-realtime-invalidation";
 import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -36,6 +37,7 @@ export function DiagnosticOrders({
   organizationName?: string;
   initialTab?: "orders" | "reports" | "bookings";
 }) {
+  const userId = useQueryUserId();
   const client = useQueryClient();
   const [tab, setTab] = useState<
     "orders" | "catalogue" | "reports" | "bookings" | "availability"
@@ -44,13 +46,13 @@ export function DiagnosticOrders({
   const [status, setStatus] = useState("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const key = virujBackend.diagnostics.key(tenant.organizationId, "orders");
+  const key = virujBackend.diagnostics.key(userId, tenant.organizationId, "orders");
   const orders = useQuery({
     queryKey: key,
     queryFn: () => virujBackend.diagnostics.orders(tenant.organizationId)
   });
   const services = useQuery({
-    queryKey: virujBackend.diagnostics.key(tenant.organizationId, "services"),
+    queryKey: virujBackend.diagnostics.key(userId, tenant.organizationId, "services"),
     queryFn: () => virujBackend.diagnostics.services(tenant.organizationId)
   });
   const selected = orders.data?.find((order) => order.id === selectedId);

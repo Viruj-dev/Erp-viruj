@@ -2,6 +2,21 @@ import { expect, test } from "bun:test";
 import { isCancelledError, QueryObserver } from "@tanstack/react-query";
 import { createQueryClient, resourceKey } from "./query-cache";
 
+test("covered queries wait for both user and organization scope", async () => {
+  const client = createQueryClient();
+  let calls = 0;
+  const observer = new QueryObserver(client, { queryKey: resourceKey("", "org", "doctors"), queryFn: async () => ++calls });
+  const stop = observer.subscribe(() => {});
+  try {
+    await Bun.sleep(0);
+    expect(calls).toBe(0);
+    observer.setOptions({ queryKey: resourceKey("user", "org", "doctors"), queryFn: async () => ++calls });
+    await Bun.sleep(0);
+    expect(calls).toBe(1);
+    expect(observer.options.refetchIntervalInBackground).toBe(false);
+  } finally { stop(); client.clear(); }
+});
+
 test("staff reads share requests and stay fresh for one minute", async () => {
   const client = createQueryClient();
   let requests = 0;
@@ -129,8 +144,10 @@ test("department and directory catalogue overrides last five minutes", async () 
       expect(requests).toBe(1);
     }
     const departmentKey = [
-      "doctor-workspace",
+      "user-a",
       "org-a",
+      "catalogue",
+      "doctor",
       "/directory/departments",
     ];
     client.setQueryData(departmentKey, ["Cardiology"], {

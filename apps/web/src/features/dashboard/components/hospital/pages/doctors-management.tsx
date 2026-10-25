@@ -1,4 +1,6 @@
 "use client";
+import { resourceKey } from "@/lib/query-cache";
+import { useQueryUserId } from "@/lib/use-realtime-invalidation";
 import { runBulkRequests } from "@/features/notifications/lib/bulk-feedback";
 
 import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
@@ -57,6 +59,7 @@ export function DoctorsManagementPage({
   organizationId?: string;
   organizationLabel: string;
 }) {
+  const userId = useQueryUserId();
   const queryClient = useQueryClient();
   const [form, setForm] = useState(emptyForm);
   const [query, setQuery] = useState("");
@@ -68,24 +71,24 @@ export function DoctorsManagementPage({
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
 
   const doctorsQuery = useQuery({
-    enabled: Boolean(organizationId),
+    enabled: Boolean(userId && organizationId),
     queryFn: () => virujBackend.doctors.list({ organizationId }),
-    queryKey: virujBackend.doctors.key(organizationId),
+    queryKey: virujBackend.doctors.key(userId, organizationId ?? ""),
   });
   const facilityQuery = useQuery({
-    enabled: Boolean(organizationId),
+    enabled: Boolean(userId && organizationId),
     queryFn: () => virujBackend.directory.facility(organizationId),
-    queryKey: ["viruj-backend", "directory-facility", organizationId],
+    queryKey: resourceKey(userId, organizationId, "catalogue", "facility"),
     retry: false,
   });
 
   const invalidateDoctors = () =>
     Promise.all([
       queryClient.invalidateQueries({
-        queryKey: virujBackend.doctors.key(organizationId),
+        queryKey: virujBackend.doctors.key(userId, organizationId ?? ""),
       }),
       queryClient.invalidateQueries({
-        queryKey: ["viruj-backend", "workspace-profile", organizationId],
+        queryKey: resourceKey(userId, organizationId, "catalogue", "workspace"),
       }),
     ]);
 

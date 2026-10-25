@@ -6,7 +6,7 @@ import {
 import { expect, mock, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { DoctorWorkspaceContext } from "@/features/dashboard/lib/doctor-workspace";
+import { DoctorWorkspaceContext, doctorQueryKey } from "@/features/dashboard/lib/doctor-workspace";
 import { createErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 mock.module("next/navigation", () => ({
   useRouter: () => ({ replace() {} }),
@@ -33,13 +33,11 @@ function render(node: React.ReactNode, data: Record<string, unknown>) {
     defaultOptions: { queries: { retry: false } },
   });
   client.setQueryData(
-    ["doctor-workspace", "doctor-a", "/doctor/working-hours"],
+    doctorQueryKey("", "doctor-a", "/doctor/working-hours"),
     []
   );
   for (const [path, value] of Object.entries(data))
-    client.setQueryData(path.startsWith("/doctor/appointments")
-      ? ["", "doctor-a", "appointments", "doctor", path]
-      : ["doctor-workspace", "doctor-a", path], value);
+    client.setQueryData(doctorQueryKey("", "doctor-a", path), value);
   const html = renderToStaticMarkup(
     <QueryClientProvider client={client}>
       <DoctorWorkspaceContext.Provider value={tenant}>
@@ -167,7 +165,7 @@ test("failed setup check shows one retry state instead of an unavailable dashboa
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, retryOnMount: false } },
   });
-  const key = ["doctor-workspace", "doctor-a", "/doctor/profile/completion"];
+  const key = doctorQueryKey("", "doctor-a", "/doctor/profile/completion");
   const query = client.getQueryCache().build(client, { queryKey: key });
   query.setState({
     status: "error",

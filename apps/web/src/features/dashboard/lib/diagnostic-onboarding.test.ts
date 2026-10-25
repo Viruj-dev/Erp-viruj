@@ -28,7 +28,7 @@ test("centre setup is available to diagnostic administrators, not clinical staff
     expect(canManageDiagnosticSetup(role)).toBe(false);
 });
 test("draft cache and initial setup do not leak between tenants", () => {
-  expect(diagnosticSetupKey("lab-a")).not.toEqual(diagnosticSetupKey("lab-b"));
+  expect(diagnosticSetupKey("", "lab-a")).not.toEqual(diagnosticSetupKey("", "lab-b"));
   const a = emptyDiagnosticSetup("Lab A", "a@example.com"),
     b = emptyDiagnosticSetup("Lab B");
   a.specimens.push("Blood");

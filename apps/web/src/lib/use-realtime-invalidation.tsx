@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,7 +13,11 @@ import { authClient } from "./auth-client";
 import { getCentralApiToken } from "./central-api-token";
 import { connectAppointmentEvents } from "./appointment-realtime";
 
-const RealtimeContext = createContext({ userId: "", orgId: "", open: false });
+const RealtimeContext = createContext({ userId: "", orgId: "", open: false, visible: true });
+const subscribeVisibility = (listener: () => void) => {
+  document.addEventListener("visibilitychange", listener);
+  return () => document.removeEventListener("visibilitychange", listener);
+};
 
 export function useRealtimeInvalidation(userId: string, orgId: string) {
   const client = useQueryClient();
@@ -32,7 +37,7 @@ export function useRealtimeInvalidation(userId: string, orgId: string) {
       url,
       onStatus: (open) => setConnection({ userId, orgId, open }),
       authorize: async (signal) => {
-        const token = await getCentralApiToken();
+        const token = await getCentralApiToken(true);
         if (signal.aborted) return;
         const response = await fetch(
           `${origin.replace(/\/$/, "")}/events/session?org=${encodeURIComponent(orgId)}`,
@@ -77,8 +82,9 @@ export function AppointmentRealtimeProvider({
     ?.activeOrganization;
   const orgId = active?.id ?? organization.data?.id ?? "";
   const open = useRealtimeInvalidation(userId, orgId);
+  const visible = useSyncExternalStore(subscribeVisibility, () => !document.hidden, () => false);
   return (
-    <RealtimeContext.Provider value={{ userId, orgId, open }}>
+    <RealtimeContext.Provider value={{ userId, orgId, open, visible }}>
       {children}
     </RealtimeContext.Provider>
   );
@@ -89,5 +95,12 @@ export function useAppointmentPollingInterval(
   fallback = 15_000
 ) {
   const connection = useContext(RealtimeContext);
+  if (!connection.visible) return false;
   return connection.open && connection.orgId === orgId ? 60_000 : fallback;
+}
+
+export const useRealtimePollingInterval = useAppointmentPollingInterval;
+
+export function useQueryUserId() {
+  return authClient.useSession().data?.user?.id ?? "";
 }

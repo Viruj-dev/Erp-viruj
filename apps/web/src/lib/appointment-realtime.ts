@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { isPrivateResource } from "./realtime-resources";
 
 export function connectAppointmentEvents({
   client,
@@ -7,6 +8,7 @@ export function connectAppointmentEvents({
   url,
   authorize,
   onStatus,
+  random = Math.random,
   createEventSource = (address: string) =>
     new EventSource(address, { withCredentials: true }),
 }: {
@@ -16,6 +18,7 @@ export function connectAppointmentEvents({
   url: string;
   authorize: (signal: AbortSignal) => Promise<void>;
   onStatus: (open: boolean) => void;
+  random?: () => number;
   createEventSource?: (url: string) => EventSource;
 }) {
   let source: EventSource | undefined;
@@ -36,7 +39,7 @@ export function connectAppointmentEvents({
 
   function recover() {
     // Changes may have been missed while disconnected or in another tab/app.
-    void client.invalidateQueries();
+    void client.invalidateQueries({ queryKey: [userId, orgId] }, { cancelRefetch: false });
   }
 
   async function connect() {
@@ -62,11 +65,11 @@ export function connectAppointmentEvents({
             payload &&
             typeof payload === "object" &&
             "resource" in payload &&
-            payload.resource === "appointments"
+            isPrivateResource(payload.resource)
           ) {
             void client.invalidateQueries({
-              queryKey: [userId, orgId, "appointments"],
-            });
+              queryKey: [userId, orgId, payload.resource],
+            }, { cancelRefetch: false });
           }
         } catch {
           /* Ignore malformed events; polling remains available. */
@@ -77,7 +80,7 @@ export function connectAppointmentEvents({
         disconnect();
         retry = setTimeout(
           () => void connect(),
-          Math.min(30_000, 1_000 * 2 ** Math.min(attempt++, 5))
+          Math.min(30_000, 1_000 * 2 ** Math.min(attempt++, 5)) * (0.5 + random() * 0.5)
         );
       };
     } catch {
@@ -85,7 +88,7 @@ export function connectAppointmentEvents({
       disconnect();
       retry = setTimeout(
         () => void connect(),
-        Math.min(30_000, 1_000 * 2 ** Math.min(attempt++, 5))
+        Math.min(30_000, 1_000 * 2 ** Math.min(attempt++, 5)) * (0.5 + random() * 0.5)
       );
     }
   }

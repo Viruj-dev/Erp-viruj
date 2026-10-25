@@ -1040,8 +1040,8 @@ export const virujBackend = {
           body: { expectedVersion, otp },
         }
       ),
-    key: (organizationId: string, resource: "orders" | "services") =>
-      ["viruj-backend", "diagnostics", organizationId, resource] as const,
+    key: (userId: string, organizationId: string, resource: "orders" | "services") =>
+      resourceKey(userId, organizationId, `diagnostics.${resource}`),
     services: (organizationId: string) =>
       request<DiagnosticService[]>("/diagnostics/services", {
         organizationId,
@@ -1261,7 +1261,7 @@ export const virujBackend = {
   },
   audit: {
     key: (userId: string, organizationId: string) =>
-      resourceKey(userId, organizationId, "audit", "recent"),
+      resourceKey(userId, organizationId, "staff", "audit", "recent"),
     recent: (input?: { organizationId?: string }) =>
       request<VirujAuditLog[]>("/audit/recent", {
         organizationId: input?.organizationId,
@@ -1495,13 +1495,8 @@ export const virujBackend = {
       request<VirujFacility>(`/facilities/${input.id}`, {
         organizationId: input.organizationId,
       }),
-    key: (input?: { organizationId?: string }) =>
-      [
-        "viruj-backend",
-        "erp",
-        "facilities",
-        input?.organizationId ?? "none",
-      ] as const,
+    key: (userId: string, input: { organizationId?: string }) =>
+      resourceKey(userId, input.organizationId, "facilities"),
     list: (input?: { organizationId?: string }) =>
       request<VirujFacility[]>("/facilities", {
         organizationId: input?.organizationId,
@@ -1555,13 +1550,8 @@ export const virujBackend = {
       request<VirujFacility>(`/services/${input.id}`, {
         organizationId: input.organizationId,
       }),
-    key: (input?: { organizationId?: string }) =>
-      [
-        "viruj-backend",
-        "erp",
-        "services",
-        input?.organizationId ?? "none",
-      ] as const,
+    key: (userId: string, input: { organizationId?: string }) =>
+      resourceKey(userId, input.organizationId, "catalogue", "services"),
     list: (input?: { organizationId?: string }) =>
       request<VirujFacility[] | { data: VirujFacility[] }>("/services", {
         organizationId: input?.organizationId,
@@ -1619,14 +1609,8 @@ export const virujBackend = {
           organizationId: input.organizationId,
         }
       ),
-    key: (organizationId?: string) =>
-      [
-        "viruj-backend",
-        "erp",
-        "hospital",
-        "gallery",
-        organizationId ?? "none",
-      ] as const,
+    key: (userId: string, organizationId: string) =>
+      resourceKey(userId, organizationId, "catalogue", "gallery"),
     list: (input?: { organizationId?: string }) =>
       request<VirujHospitalGalleryItem[]>("/hospital/profile/gallery", {
         organizationId: input?.organizationId,
@@ -1661,8 +1645,8 @@ export const virujBackend = {
         method: "DELETE",
         organizationId: input.organizationId,
       }),
-    key: (organizationId?: string) =>
-      ["viruj-backend", "erp", "doctors", organizationId ?? "none"] as const,
+    key: (userId: string, organizationId: string) =>
+      resourceKey(userId, organizationId, "doctors"),
     list: (input?: { organizationId?: string }) =>
       request<VirujDoctor[]>("/doctors", {
         organizationId: input?.organizationId,
@@ -1698,8 +1682,8 @@ export const virujBackend = {
         method: "DELETE",
         organizationId: input?.organizationId,
       }),
-    key: (organizationId?: string) =>
-      ["viruj-backend", "erp", "patients", organizationId ?? "none"] as const,
+    key: (userId: string, organizationId: string) =>
+      resourceKey(userId, organizationId, "patients"),
   },
   notifications: {
     archive: (input: { id: string; organizationId?: string }) =>

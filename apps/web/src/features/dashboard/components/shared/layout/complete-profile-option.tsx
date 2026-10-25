@@ -1,5 +1,7 @@
 "use client";
 
+import { resourceKey } from "@/lib/query-cache";
+import { useQueryUserId } from "@/lib/use-realtime-invalidation";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { ClipboardCheck } from "lucide-react";
@@ -24,17 +26,18 @@ export function CompleteProfileOption({
   collapsed: boolean;
   onContinue: () => void;
 }) {
+  const userId = useQueryUserId();
   const diagnostic = kind === "pathology" || kind === "radiology";
   const setup = useQuery({
-    queryKey: diagnosticSetupKey(organizationId),
+    queryKey: diagnosticSetupKey(userId, organizationId ?? ""),
     queryFn: () => virujBackend.diagnostics.onboarding(organizationId),
-    enabled: diagnostic,
+    enabled: Boolean(userId) && (diagnostic),
     retry: false,
   });
   const workspace = useQuery({
-    queryKey: ["viruj-backend", "workspace-profile", organizationId],
+    queryKey: resourceKey(userId, organizationId, "catalogue", "workspace"),
     queryFn: () => virujBackend.directory.workspace(organizationId),
-    enabled: !diagnostic,
+    enabled: Boolean(userId) && (!diagnostic),
     retry: false,
   });
   const incomplete = diagnostic

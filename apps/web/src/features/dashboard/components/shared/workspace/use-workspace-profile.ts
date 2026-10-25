@@ -1,4 +1,6 @@
 "use client";
+import { resourceKey } from "@/lib/query-cache";
+import { useQueryUserId } from "@/lib/use-realtime-invalidation";
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { virujBackend } from "@/lib/viruj-backend";
@@ -12,12 +14,13 @@ export function useWorkspaceProfile(
   organizationId?: string,
   kind: OnboardingKind = "clinic"
 ) {
+  const userId = useQueryUserId();
   const client = useQueryClient();
-  const queryKey = ["viruj-backend", "workspace-profile", organizationId];
+  const queryKey = resourceKey(userId, organizationId, "catalogue", "workspace");
   const query = useQuery({
     queryKey,
     queryFn: () => virujBackend.directory.workspace(organizationId),
-    enabled: !!organizationId,
+    enabled: Boolean(userId) && (!!organizationId),
     retry: false,
   });
   const data = useMemo(() => {
@@ -67,10 +70,10 @@ export function useWorkspaceProfile(
       client.setQueryData(queryKey, result);
       await Promise.all([
         client.invalidateQueries({
-          queryKey: ["viruj-backend", "directory-facility", organizationId],
+          queryKey: resourceKey(userId, organizationId, "catalogue", "facility"),
         }),
         client.invalidateQueries({
-          queryKey: virujBackend.doctors.key(organizationId),
+          queryKey: virujBackend.doctors.key(userId, organizationId ?? ""),
         }),
       ]);
     },

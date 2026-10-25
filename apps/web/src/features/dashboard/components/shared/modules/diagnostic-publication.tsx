@@ -1,5 +1,7 @@
 "use client";
 
+import { resourceKey } from "@/lib/query-cache";
+import { useQueryUserId } from "@/lib/use-realtime-invalidation";
 import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 
 import Link from "next/link";
@@ -15,18 +17,15 @@ export function DiagnosticPublication({
 }: {
   tenant: ErpTenantContext;
 }) {
+  const userId = useQueryUserId();
   const client = useQueryClient();
-  const branchKey = [
-    "diagnostic-availability",
-    tenant.organizationId,
-    "branches",
-  ];
+  const branchKey = resourceKey(userId, tenant.organizationId, "diagnostics.bookings", "availability", "branches");
   const branches = useQuery({
     queryKey: branchKey,
     queryFn: () => virujBackend.diagnostics.branches(tenant.organizationId),
   });
   const services = useQuery({
-    queryKey: virujBackend.diagnostics.key(tenant.organizationId, "services"),
+    queryKey: virujBackend.diagnostics.key(userId, tenant.organizationId, "services"),
     queryFn: () => virujBackend.diagnostics.services(tenant.organizationId),
   });
   const publication = useMutation({

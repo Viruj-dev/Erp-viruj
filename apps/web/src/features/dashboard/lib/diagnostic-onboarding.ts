@@ -82,8 +82,8 @@ export function canManageDiagnosticSetup(role?: string | null) {
     "manager",
   ].includes(role ?? "");
 }
-export const diagnosticSetupKey = (id: string) =>
-  ["diagnostic-onboarding", id] as const;
+export const diagnosticSetupKey = (userId: string, id: string) =>
+  [userId, id, "diagnostics.services", "onboarding"] as const;
 
 export function needsDiagnosticProfileCompletion(
   setup: DiagnosticOnboardingState,

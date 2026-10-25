@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryUserId } from "@/lib/use-realtime-invalidation";
 import { PageSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import { WorkspaceSection } from "../../shared/workspace/workspace-sections";
 
@@ -947,11 +948,12 @@ export function ClinicGalleryPage({
 }: {
   organizationId?: string;
 }) {
+  const userId = useQueryUserId();
   const backendHospitalId = organizationId;
   const primaryItems = extendedClinicGalleryItems.slice(0, 5);
   const extraItems = extendedClinicGalleryItems.slice(5);
   const queryClient = useQueryClient();
-  const queryKey = virujBackend.hospitalGallery.key(backendHospitalId);
+  const queryKey = virujBackend.hospitalGallery.key(userId, backendHospitalId ?? "");
   const [localImagesById, setLocalImagesById] = useState<
     Record<string, string>
   >({});
@@ -964,7 +966,7 @@ export function ClinicGalleryPage({
   const [savingCardId, setSavingCardId] = useState<string | null>(null);
 
   const galleryQuery = useQuery({
-    enabled: Boolean(backendHospitalId),
+    enabled: Boolean(userId && backendHospitalId),
     queryFn: () =>
       virujBackend.hospitalGallery.list({ organizationId: backendHospitalId }),
     queryKey,

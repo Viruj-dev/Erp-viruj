@@ -1,5 +1,6 @@
 "use client";
 
+import { resourceKey } from "@/lib/query-cache";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -10,7 +11,7 @@ import { getWorkspaceTheme } from "@/features/dashboard/components/shared/layout
 import { diagnosticSetupKey } from "@/features/dashboard/lib/diagnostic-onboarding";
 import { authClient } from "@/lib/auth-client";
 import { DoctorAvatar } from "../workspace/doctor-avatar";
-import type { DoctorProfile } from "@/features/dashboard/lib/doctor-workspace";
+import { doctorQueryKey, type DoctorProfile } from "@/features/dashboard/lib/doctor-workspace";
 import { doctorWorkspaceRequest, virujBackend } from "@/lib/viruj-backend";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme-provider";
@@ -42,25 +43,27 @@ export function ErpDemoTopBar({
   const [failedLogoUrl, setFailedLogoUrl] = useState("");
   const headerRef = useRef<HTMLElement>(null);
   const kind = organizationLabel.toLowerCase();
+  const sessionState = authClient.useSession();
+  const userId = sessionState.data?.user?.id ?? "";
   const doctor = useQuery({
-    queryKey: ["doctor-workspace", organizationId, "/doctor/profile"],
+    queryKey: doctorQueryKey(userId, organizationId ?? "", "/doctor/profile"),
     queryFn: () =>
       doctorWorkspaceRequest<DoctorProfile>("/doctor/profile", organizationId!),
-    enabled: Boolean(organizationId) && kind === "doctor",
+    enabled: Boolean(userId) && (Boolean(organizationId) && kind === "doctor"),
     retry: false,
   });
   const diagnostic = kind === "pathology" || kind === "radiology";
   const setup = useQuery({
-    queryKey: diagnosticSetupKey(organizationId ?? "none"),
+    queryKey: diagnosticSetupKey(userId, organizationId ?? ""),
     queryFn: () => virujBackend.diagnostics.onboarding(organizationId!),
-    enabled: Boolean(organizationId) && diagnostic,
+    enabled: Boolean(userId) && (Boolean(organizationId) && diagnostic),
     retry: false,
   });
   const workspace = useQuery({
-    queryKey: ["viruj-backend", "workspace-profile", organizationId],
+    queryKey: resourceKey(userId, organizationId, "catalogue", "workspace"),
     queryFn: () => virujBackend.directory.workspace(organizationId),
     enabled:
-      Boolean(organizationId) && (kind === "hospital" || kind === "clinic"),
+      Boolean(userId) && (Boolean(organizationId) && (kind === "hospital" || kind === "clinic")),
     retry: false,
   });
   const logoUrl = diagnostic
@@ -79,7 +82,6 @@ export function ErpDemoTopBar({
     scroller.addEventListener("scroll", update, { passive: true });
     return () => scroller.removeEventListener("scroll", update);
   }, []);
-  const sessionState = authClient.useSession();
   const userImage = sessionState.data?.user?.image;
   const workspaceTheme = getWorkspaceTheme(organizationLabel);
   const title =

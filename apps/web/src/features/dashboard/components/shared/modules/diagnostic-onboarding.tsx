@@ -1,5 +1,7 @@
 "use client";
 
+import { resourceKey } from "@/lib/query-cache";
+import { useQueryUserId } from "@/lib/use-realtime-invalidation";
 import { DoctorRegistrationField } from "../workspace/doctor-registration-field";
 import { PageSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import {
@@ -52,10 +54,11 @@ export function DiagnosticOnboarding({
   organizationName?: string;
   userEmail?: string;
 }) {
+  const userId = useQueryUserId();
   const query = useQuery({
-    queryKey: diagnosticSetupKey(tenant.organizationId),
+    queryKey: diagnosticSetupKey(userId, tenant.organizationId),
     queryFn: () => virujBackend.diagnostics.onboarding(tenant.organizationId),
-    enabled: canManageDiagnosticSetup(tenant.role),
+    enabled: Boolean(userId) && (canManageDiagnosticSetup(tenant.role)),
     retry: false,
   });
   if (!canManageDiagnosticSetup(tenant.role))
@@ -100,6 +103,7 @@ function SetupForm({
   organizationName?: string;
   userEmail: string;
 }) {
+  const userId = useQueryUserId();
   const formRef = useRef<HTMLFormElement>(null);
   const [complete, setComplete] = useState(false);
   const [invitationPending, setInvitationPending] = useState(false);
@@ -141,11 +145,11 @@ function SetupForm({
       setInvitationPending((result.doctorInvitationsPending ?? 0) > 0);
       setVersion(result.version);
       setDraftSaved(true);
-      client.setQueryData(diagnosticSetupKey(tenant.organizationId), result);
+      client.setQueryData(diagnosticSetupKey(userId, tenant.organizationId), result);
       if (complete) {
         window.localStorage.removeItem(draftKey);
         void client.invalidateQueries({
-          queryKey: ["diagnostic-availability", tenant.organizationId],
+          queryKey: resourceKey(userId, tenant.organizationId, "diagnostics.bookings", "availability"),
         });
         setComplete(true);
       }

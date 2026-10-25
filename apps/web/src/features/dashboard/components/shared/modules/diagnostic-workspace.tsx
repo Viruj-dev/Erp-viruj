@@ -1,4 +1,6 @@
 "use client";
+import { resourceKey } from "@/lib/query-cache";
+import { useQueryUserId } from "@/lib/use-realtime-invalidation";
 import { useQuery } from "@tanstack/react-query";
 import { RoleDashboardPage } from "../role-dashboard-page";
 import type { ErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
@@ -16,17 +18,18 @@ export function DiagnosticWorkspace({
   organizationName?: string;
   userName: string;
 }) {
+  const userId = useQueryUserId();
   const router = useRouter();
   const bookings = useQuery({
-    queryKey: ["diagnostic-bookings", tenant.organizationId],
+    queryKey: resourceKey(userId, tenant.organizationId, "diagnostics.bookings"),
     queryFn: () => virujBackend.diagnostics.bookings(tenant.organizationId)
   });
   const services = useQuery({
-    queryKey: virujBackend.diagnostics.key(tenant.organizationId, "services"),
+    queryKey: virujBackend.diagnostics.key(userId, tenant.organizationId, "services"),
     queryFn: () => virujBackend.diagnostics.services(tenant.organizationId)
   });
   const branches = useQuery({
-    queryKey: ["diagnostic-availability", tenant.organizationId, "branches"],
+    queryKey: resourceKey(userId, tenant.organizationId, "diagnostics.bookings", "availability", "branches"),
     queryFn: () => virujBackend.diagnostics.branches(tenant.organizationId)
   });
   const rows = (bookings.data ?? []).map(diagnosticBookingAppointment);

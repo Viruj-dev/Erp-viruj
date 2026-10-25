@@ -274,17 +274,17 @@ export function ErpHomeScreen({
   const canSetupDiagnostics =
     isDiagnosticWorkspace && canManageDiagnosticSetup(activeMemberRole);
   const diagnosticSetup = useQuery({
-    queryKey: diagnosticSetupKey(activeOrganization?.id ?? "none"),
+    queryKey: diagnosticSetupKey(sessionState.data?.user?.id ?? "", activeOrganization?.id ?? ""),
     queryFn: () => {
       if (!activeOrganization?.id)
         throw new Error("Select an organisation before loading setup");
       return virujBackend.diagnostics.onboarding(activeOrganization.id);
     },
     enabled:
-      isHydrated &&
+      Boolean(sessionState.data?.user?.id) && (isHydrated &&
       !isAuthPending &&
       canSetupDiagnostics &&
-      Boolean(activeOrganization?.id),
+      Boolean(activeOrganization?.id)),
     retry: false,
   });
   // Pages that must not open pre-setup via deep link behave like the

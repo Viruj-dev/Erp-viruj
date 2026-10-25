@@ -123,8 +123,8 @@ describe("diagnostic UI boundaries", () => {
     expect(diagnosticPermissions("TECHNICIAN").release).toBe(false);
     expect(diagnosticPermissions("DOCTOR").release).toBe(true);
     expect(diagnosticPermissions("RECEPTIONIST").results).toBe(false);
-    expect(virujBackend.diagnostics.key("tenant-a", "orders")).not.toEqual(
-      virujBackend.diagnostics.key("tenant-b", "orders")
+    expect(virujBackend.diagnostics.key("", "tenant-a", "orders")).not.toEqual(
+      virujBackend.diagnostics.key("", "tenant-b", "orders")
     );
     expect(diagnosticMoney(12345)).toContain("123.45");
   });

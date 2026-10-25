@@ -1,5 +1,7 @@
 "use client";
 
+import { useQueryUserId } from "@/lib/use-realtime-invalidation";
+import { resourceKey } from "@/lib/query-cache";
 import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 
 import { useState } from "react";
@@ -18,10 +20,11 @@ export function DiagnosticFileReports({
 }: {
   tenant: ErpTenantContext;
 }) {
+  const userId = useQueryUserId();
   const pathology = tenant.providerType === "pathology";
   const [page, setPage] = useState(1);
   const query = useQuery({
-    queryKey: ["diagnostic-file-reports", tenant.organizationId, page],
+    queryKey: resourceKey(userId, tenant.organizationId, "diagnostics.bookings", "reports", page),
     queryFn: () =>
       virujBackend.diagnostics.reports(tenant.organizationId, page),
   });
@@ -124,6 +127,7 @@ function ReportRow({
   organizationId: string;
   canSend: boolean;
 }) {
+  const userId = useQueryUserId();
   const client = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState("");
@@ -145,10 +149,10 @@ function ReportRow({
     onSuccess: () => {
       setFile(null);
       void client.invalidateQueries({
-        queryKey: ["diagnostic-file-reports", organizationId],
+        queryKey: resourceKey(userId, organizationId, "diagnostics.bookings", "reports"),
       });
       void client.invalidateQueries({
-        queryKey: ["diagnostic-bookings", organizationId],
+        queryKey: resourceKey(userId, organizationId, "diagnostics.bookings"),
       });
     },
     onError: (failure) => setError(failure.message),

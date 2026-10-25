@@ -61,11 +61,11 @@ describe("shared ERP tenant helpers", () => {
       virujBackend.appointments.key("user-a", "clinic-a")
     );
     expect(
-      virujBackend.facilities.key({ organizationId: "hospital-a" })
-    ).not.toEqual(virujBackend.facilities.key({ organizationId: "clinic-a" }));
+      virujBackend.facilities.key("", { organizationId: "hospital-a" })
+    ).not.toEqual(virujBackend.facilities.key("", { organizationId: "clinic-a" }));
     expect(
-      virujBackend.services.key({ organizationId: "hospital-a" })
-    ).not.toEqual(virujBackend.services.key({ organizationId: "clinic-a" }));
+      virujBackend.services.key("", { organizationId: "hospital-a" })
+    ).not.toEqual(virujBackend.services.key("", { organizationId: "clinic-a" }));
   });
 
   test("resolves hospital, clinic and independent doctor tenant contexts", () => {

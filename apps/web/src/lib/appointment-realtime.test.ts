@@ -1,6 +1,24 @@
 import { expect, test } from "bun:test";
 import { createQueryClient, resourceKey } from "./query-cache";
 import { connectAppointmentEvents } from "./appointment-realtime";
+import { privateResources } from "./realtime-resources";
+
+test("every allowed resource invalidates only its scoped cache", async () => {
+  const client = createQueryClient();
+  const source = new FakeEventSource();
+  const events = connectAppointmentEvents({ client, userId: "u", orgId: "a", url: "/events", authorize: async () => {}, onStatus() {}, createEventSource: () => source as unknown as EventSource });
+  try {
+    await Bun.sleep(0);
+    for (const resource of privateResources) {
+      for (const org of ["a", "b"]) for (const name of privateResources) client.setQueryData(["u", org, name], []);
+      source.onmessage!({ data: JSON.stringify({ resource }) });
+      for (const query of client.getQueryCache().getAll()) expect(query.state.isInvalidated).toBe(query.queryKey[1] === "a" && query.queryKey[2] === resource);
+    }
+    client.setQueryData(["u", "a", "staff"], []);
+    source.onmessage!({ data: '{"resource":"unknown"}' });
+    expect(client.getQueryState(["u", "a", "staff"])?.isInvalidated).toBe(false);
+  } finally { events.close(); client.clear(); }
+});
 
 class FakeEventSource {
   onopen: (() => void) | null = null;
@@ -12,10 +30,11 @@ class FakeEventSource {
   }
 }
 
-test("reconnect invalidates every cached query, and events invalidate appointments only", async () => {
+test("reconnect and foreground invalidate this identity only; events invalidate appointments only", async () => {
   const client = createQueryClient();
   const connections: FakeEventSource[] = [];
   const status: boolean[] = [];
+  let authorizations = 0;
   const appointment = resourceKey("user", "org", "appointments");
   const staff = resourceKey("user", "org", "staff");
   const otherTenant = resourceKey("user", "other-org", "appointments");
@@ -29,7 +48,9 @@ test("reconnect invalidates every cached query, and events invalidate appointmen
     userId: "user",
     orgId: "org",
     url: "http://backend/events?org=org",
-    authorize: async () => {},
+    authorize: async () => {
+      authorizations++;
+    },
     onStatus: (open) => status.push(open),
     createEventSource: () => {
       const source = new FakeEventSource();
@@ -39,9 +60,10 @@ test("reconnect invalidates every cached query, and events invalidate appointmen
   });
   try {
     await Bun.sleep(0);
+    expect(authorizations).toBe(1);
     connections[0]!.onopen!();
     for (const query of client.getQueryCache().getAll())
-      expect(query.state.isInvalidated).toBe(true);
+      expect(query.state.isInvalidated).toBe(query.queryKey[1] === "org");
     seed();
     connections[0]!.onmessage!({ data: '{"resource":"appointments"}' });
     expect(client.getQueryState(appointment)?.isInvalidated).toBe(true);
@@ -53,16 +75,17 @@ test("reconnect invalidates every cached query, and events invalidate appointmen
     seed();
     await Bun.sleep(1_100);
     expect(connections).toHaveLength(2);
+    expect(authorizations).toBe(2);
     connections[1]!.onopen!();
     for (const query of client.getQueryCache().getAll())
-      expect(query.state.isInvalidated).toBe(true);
+      expect(query.state.isInvalidated).toBe(query.queryKey[1] === "org");
     expect(status.at(-1)).toBe(true);
     seed();
     events.background();
     expect(status.at(-1)).toBe(false);
     events.foreground();
     for (const query of client.getQueryCache().getAll())
-      expect(query.state.isInvalidated).toBe(true);
+      expect(query.state.isInvalidated).toBe(query.queryKey[1] === "org");
   } finally {
     events.close();
     client.clear();

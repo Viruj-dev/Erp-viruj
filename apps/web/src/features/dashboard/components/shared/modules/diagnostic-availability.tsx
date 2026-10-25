@@ -1,5 +1,7 @@
 "use client";
 
+import { resourceKey } from "@/lib/query-cache";
+import { useQueryUserId } from "@/lib/use-realtime-invalidation";
 import { PageSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,8 +21,9 @@ export function DiagnosticAvailability({
   tenant: ErpTenantContext;
   organizationName?: string;
 }) {
+  const userId = useQueryUserId();
   const client = useQueryClient(),
-    prefix = ["diagnostic-availability", tenant.organizationId];
+    prefix = resourceKey(userId, tenant.organizationId, "diagnostics.bookings", "availability");
   const branches = useQuery({
     queryKey: [...prefix, "branches"],
     queryFn: () => virujBackend.diagnostics.branches(tenant.organizationId),
@@ -30,7 +33,7 @@ export function DiagnosticAvailability({
     queryFn: () => virujBackend.diagnostics.slots(tenant.organizationId),
   });
   const services = useQuery({
-    queryKey: virujBackend.diagnostics.key(tenant.organizationId, "services"),
+    queryKey: virujBackend.diagnostics.key(userId, tenant.organizationId, "services"),
     queryFn: () => virujBackend.diagnostics.services(tenant.organizationId),
   });
   const [showBranch, setShowBranch] = useState(false),

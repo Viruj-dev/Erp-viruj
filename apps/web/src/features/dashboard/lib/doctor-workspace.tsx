@@ -102,24 +102,30 @@ export function useDoctorTenant() {
   if (!tenant) throw new Error("Doctor workspace is required");
   return tenant;
 }
+export function doctorQueryKey(userId: string, orgId: string, path: string) {
+  const resource = path.startsWith("/directory/") ? "catalogue"
+    : path === "/doctor/dashboard" || path.startsWith("/doctor/appointments") ? "appointments"
+    : /^\/doctor\/(patients|consultations|files|prescriptions|follow-ups)(\/|\?|$)/.test(path) ? "patients" : "doctors";
+  return resourceKey(userId, orgId, resource, "doctor", path);
+}
 export function useDoctorQuery<T>(path: string) {
   const tenant = useDoctorTenant();
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id ?? "";
   const appointmentPath = path.startsWith("/doctor/appointments");
-  const interval = useAppointmentPollingInterval(tenant.organizationId, 30_000);
+  const interval = useAppointmentPollingInterval(tenant.organizationId);
+  const dashboardInterval = useAppointmentPollingInterval(tenant.organizationId, 30_000);
+  const calendarInterval = useAppointmentPollingInterval(tenant.organizationId, 60_000);
   return useQuery({
-    queryKey: appointmentPath
-      ? resourceKey(userId, tenant.organizationId, "appointments", "doctor", path)
-      : ["doctor-workspace", tenant.organizationId, path],
-    enabled: !appointmentPath || Boolean(userId),
+    queryKey: doctorQueryKey(userId, tenant.organizationId, path),
+    enabled: Boolean(userId),
     queryFn: () => doctorWorkspaceRequest<T>(path, tenant.organizationId),
     retry: false,
     refetchInterval:
       path === "/doctor/calendar"
-        ? 60000
+        ? calendarInterval
         : appointmentPath ? interval : path === "/doctor/dashboard"
-          ? 30000
+          ? dashboardInterval
           : false,
   });
 }
@@ -139,12 +145,7 @@ export function useDoctorSave() {
       method?: "POST" | "PATCH" | "DELETE";
     }) => doctorWorkspaceRequest(path, tenant.organizationId, body, method),
     onSuccess: async (_result, input, scope) => {
-      await client.invalidateQueries({
-        queryKey: ["doctor-workspace", tenant.organizationId],
-      });
-      if (input.path.startsWith("/doctor/appointments") && scope) {
-        await client.invalidateQueries({ queryKey: resourceKey(scope.userId, scope.orgId, "appointments") });
-      }
+      if (scope) await client.invalidateQueries({ queryKey: doctorQueryKey(scope.userId, scope.orgId, input.path).slice(0, 3) });
     },
   });
 }

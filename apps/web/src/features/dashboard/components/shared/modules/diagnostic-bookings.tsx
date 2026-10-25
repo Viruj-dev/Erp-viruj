@@ -1,4 +1,7 @@
 "use client";
+import { useRealtimePollingInterval } from "@/lib/use-realtime-invalidation";
+import { resourceKey } from "@/lib/query-cache";
+import { useQueryUserId } from "@/lib/use-realtime-invalidation";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -26,18 +29,20 @@ export function DiagnosticBookingInbox({
 }: {
   tenant: ErpTenantContext;
 }) {
+  const userId = useQueryUserId();
+  const pollingInterval = useRealtimePollingInterval(tenant.organizationId);
   const client = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const key = ["diagnostic-bookings", tenant.organizationId];
+  const key = resourceKey(userId, tenant.organizationId, "diagnostics.bookings");
   const query = useQuery({
     queryKey: key,
     queryFn: () => virujBackend.diagnostics.bookings(tenant.organizationId),
-    refetchInterval: 15000
+    refetchInterval: pollingInterval
   });
   const refresh = () => {
     void client.invalidateQueries({ queryKey: key });
     void client.invalidateQueries({
-      queryKey: virujBackend.diagnostics.key(tenant.organizationId, "orders")
+      queryKey: virujBackend.diagnostics.key(userId, tenant.organizationId, "orders")
     });
   };
   const selected = query.data?.find((booking) => booking.id === selectedId);

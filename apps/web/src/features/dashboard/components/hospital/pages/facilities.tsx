@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryUserId } from "@/lib/use-realtime-invalidation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { runBulkRequests } from "@/features/notifications/lib/bulk-feedback";
 import {
@@ -56,6 +57,7 @@ export function FacilitiesPage({
   routeSegments: string[];
   tenant?: ErpTenantContext | null;
 }) {
+  const userId = useQueryUserId();
   const router = useRouter();
   const queryClient = useQueryClient();
   const activeMemberState = authClient.useActiveMember();
@@ -96,7 +98,7 @@ export function FacilitiesPage({
     catalogKind === "services"
       ? "Showcase your care. Manage the services patients can discover and book."
       : "Bring your infrastructure, amenities, and patient access together.";
-  const catalogQueryKey = catalogApi.key({ organizationId });
+  const catalogQueryKey = catalogApi.key(userId, { organizationId });
 
   const facilitiesQuery = useQuery({
     enabled: Boolean(organizationId),

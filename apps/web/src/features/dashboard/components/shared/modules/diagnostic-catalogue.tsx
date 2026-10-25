@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryUserId } from "@/lib/use-realtime-invalidation";
 import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +38,7 @@ import { DashboardPageShell } from "../dashboard-page-shell";
 import { TimePicker } from "../../hospital/pages/onboarding/time-picker";
 
 export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
+  const userId = useQueryUserId();
   const client = useQueryClient();
   const [editing, setEditing] = useState<DiagnosticService | "new" | null>(
     null
@@ -45,7 +47,7 @@ export function DiagnosticCatalogue({ tenant }: { tenant: ErpTenantContext }) {
   const [status, setStatus] = useState("all");
   const [deleting, setDeleting] = useState<DiagnosticService | null>(null);
   const canManage = diagnosticPermissions(tenant.role).catalogue;
-  const key = virujBackend.diagnostics.key(tenant.organizationId, "services");
+  const key = virujBackend.diagnostics.key(userId, tenant.organizationId, "services");
   const query = useQuery({
     queryKey: key,
     queryFn: () => virujBackend.diagnostics.services(tenant.organizationId)
