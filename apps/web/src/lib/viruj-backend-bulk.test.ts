@@ -12,9 +12,8 @@ afterEach(() => mock.restore());
 
 test("bulk API calls suppress per-item success and error popups but retain one accurate summary", async () => {
   let status = 200;
-  spyOn(globalThis, "fetch").mockImplementation(async () =>
-    Response.json({ error: "Failed" }, { status })
-  );
+  spyOn(globalThis, "fetch").mockImplementation((async () =>
+    Response.json({ error: "Failed" }, { status })) as unknown as typeof fetch);
   let individual = 0;
   const feedback: ToastInput[] = [];
   const stopSuccess = notificationEvents.on("api.success", () => {
@@ -32,7 +31,7 @@ test("bulk API calls suppress per-item success and error popups but retain one a
     facility: {} as VirujFacilityInput,
   };
   try {
-    await runBulkRequests(
+    await runBulkRequests<unknown>(
       [
         () => virujBackend.facilities.update(update, { suppressToast: true }),
         () => virujBackend.services.update(update, { suppressToast: true }),
