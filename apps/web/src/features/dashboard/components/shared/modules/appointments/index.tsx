@@ -1,4 +1,6 @@
 "use client";
+import { authClient } from "@/lib/auth-client";
+import { useAppointmentPollingInterval } from "@/lib/use-realtime-invalidation";
 
 import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 
@@ -70,11 +72,14 @@ export function ErpDemoAppointments({
     initialAppointmentId ?? null
   );
   const organizationId = tenant?.organizationId;
+  const { data: appointmentSession } = authClient.useSession();
+  const userId = appointmentSession?.user?.id ?? "";
+  const pollingInterval = useAppointmentPollingInterval(organizationId);
   const appointmentQuery = useQuery({
-    enabled: Boolean(organizationId) && !source,
-    queryKey: virujBackend.appointments.key({ organizationId }),
+    enabled: Boolean(userId && organizationId) && !source,
+    queryKey: virujBackend.appointments.key(userId, organizationId ?? ""),
     queryFn: () => virujBackend.appointments.list({ organizationId }),
-    refetchInterval: 15_000,
+    refetchInterval: pollingInterval,
     retry: false,
   });
   const appointments = source ?? appointmentQuery;

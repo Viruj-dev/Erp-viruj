@@ -1311,13 +1311,8 @@ export const virujBackend = {
         organizationId: input.organizationId,
         successMessage: "Attendance verified",
       }),
-    key: (input?: { organizationId?: string }) =>
-      [
-        "viruj-backend",
-        "erp",
-        "appointments",
-        input?.organizationId ?? "none",
-      ] as const,
+    key: (userId: string, organizationId: string) =>
+      resourceKey(userId, organizationId, "appointments"),
     createMobileRequest: (input: VirujMobileAppointmentRequestInput) =>
       request<VirujAppointment>("/appointments/mobile-request", {
         body: input,

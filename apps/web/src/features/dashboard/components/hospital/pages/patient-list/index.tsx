@@ -1,4 +1,6 @@
 "use client";
+import { authClient } from "@/lib/auth-client";
+import { useAppointmentPollingInterval } from "@/lib/use-realtime-invalidation";
 import { runBulkRequests } from "@/features/notifications/lib/bulk-feedback";
 
 import { PageSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
@@ -52,26 +54,32 @@ function PatientAppointments({
   organizationId: string;
   tone: "blue" | "violet";
 }) {
+  const { data: appointmentSession } = authClient.useSession();
+  const userId = appointmentSession?.user?.id ?? "";
+  const pollingInterval = useAppointmentPollingInterval(organizationId, 5_000);
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<AppointmentView>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const appointmentQueryKey = virujBackend.appointments.key({ organizationId });
+  const appointmentQueryKey = virujBackend.appointments.key(userId, organizationId ?? "");
   const appointments = useQuery({
     queryFn: () => virujBackend.appointments.list({ organizationId }),
     queryKey: appointmentQueryKey,
-    refetchInterval: 5_000,
+    refetchInterval: pollingInterval,
+    enabled: Boolean(userId),
     refetchOnWindowFocus: "always",
     retry: false,
   });
   const permissions = useQuery({
     queryKey: [...appointmentQueryKey, "permissions"],
+    enabled: Boolean(userId),
     queryFn: () => virujBackend.appointments.permissions(organizationId),
     retry: false,
   });
   const canDelete = permissions.data?.includes("appointments.write") ?? false;
   const deletion = useMutation({
+    onMutate: () => appointmentQueryKey,
     mutationFn: async (patientsToDelete: DirectoryPatient[]) => {
       if (!canDelete)
         throw new Error("Appointment management permission is required.");
@@ -97,9 +105,9 @@ function PatientAppointments({
         ),
       };
     },
-    onSuccess: async () => {
+    onSuccess: async (_result, _input, scope) => {
       setPage(1);
-      await queryClient.invalidateQueries({ queryKey: appointmentQueryKey });
+      if (scope) await queryClient.invalidateQueries({ queryKey: scope });
     },
   });
   const records = useMemo(

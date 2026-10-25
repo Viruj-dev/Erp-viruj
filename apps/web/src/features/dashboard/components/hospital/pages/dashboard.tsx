@@ -1,4 +1,5 @@
 "use client";
+import { authClient } from "@/lib/auth-client";
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -38,6 +39,8 @@ export function ErpDemoDashboard({
   roleLabel: string;
   userName: string;
 }) {
+  const { data: appointmentSession } = authClient.useSession();
+  const userId = appointmentSession?.user?.id ?? "";
   const tone =
     organizationLabel.toLowerCase() === "clinic" ? "clinic" : "hospital";
   const ratingsQuery = useQuery({
@@ -68,9 +71,9 @@ export function ErpDemoDashboard({
     staleTime: 60_000,
   });
   const appointmentsQuery = useQuery({
-    enabled: Boolean(organizationId),
     queryFn: () => virujBackend.appointments.list({ organizationId }),
-    queryKey: virujBackend.appointments.key({ organizationId }),
+    enabled: Boolean(userId && organizationId),
+    queryKey: virujBackend.appointments.key(userId, organizationId ?? ""),
     retry: 1,
     staleTime: 30_000,
   });

@@ -37,7 +37,9 @@ function render(node: React.ReactNode, data: Record<string, unknown>) {
     []
   );
   for (const [path, value] of Object.entries(data))
-    client.setQueryData(["doctor-workspace", "doctor-a", path], value);
+    client.setQueryData(path.startsWith("/doctor/appointments")
+      ? ["", "doctor-a", "appointments", "doctor", path]
+      : ["doctor-workspace", "doctor-a", path], value);
   const html = renderToStaticMarkup(
     <QueryClientProvider client={client}>
       <DoctorWorkspaceContext.Provider value={tenant}>

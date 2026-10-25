@@ -2,6 +2,9 @@
 import { createContext, useContext } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { doctorWorkspaceRequest } from "@/lib/viruj-backend";
+import { resourceKey } from "@/lib/query-cache";
+import { authClient } from "@/lib/auth-client";
+import { useAppointmentPollingInterval } from "@/lib/use-realtime-invalidation";
 import type { ErpTenantContext } from "./erp-tenant";
 export const DoctorWorkspaceContext = createContext<
   ErpTenantContext | undefined
@@ -101,23 +104,31 @@ export function useDoctorTenant() {
 }
 export function useDoctorQuery<T>(path: string) {
   const tenant = useDoctorTenant();
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id ?? "";
+  const appointmentPath = path.startsWith("/doctor/appointments");
+  const interval = useAppointmentPollingInterval(tenant.organizationId, 30_000);
   return useQuery({
-    queryKey: ["doctor-workspace", tenant.organizationId, path],
+    queryKey: appointmentPath
+      ? resourceKey(userId, tenant.organizationId, "appointments", "doctor", path)
+      : ["doctor-workspace", tenant.organizationId, path],
+    enabled: !appointmentPath || Boolean(userId),
     queryFn: () => doctorWorkspaceRequest<T>(path, tenant.organizationId),
     retry: false,
     refetchInterval:
       path === "/doctor/calendar"
         ? 60000
-        : path.startsWith("/doctor/appointments") ||
-            path === "/doctor/dashboard"
+        : appointmentPath ? interval : path === "/doctor/dashboard"
           ? 30000
           : false,
   });
 }
 export function useDoctorSave() {
   const tenant = useDoctorTenant();
+  const { data: session } = authClient.useSession();
   const client = useQueryClient();
   return useMutation({
+    onMutate: () => ({ userId: session?.user?.id ?? "", orgId: tenant.organizationId }),
     mutationFn: ({
       path,
       body,
@@ -127,9 +138,13 @@ export function useDoctorSave() {
       body?: unknown;
       method?: "POST" | "PATCH" | "DELETE";
     }) => doctorWorkspaceRequest(path, tenant.organizationId, body, method),
-    onSuccess: () =>
-      client.invalidateQueries({
+    onSuccess: async (_result, input, scope) => {
+      await client.invalidateQueries({
         queryKey: ["doctor-workspace", tenant.organizationId],
-      }),
+      });
+      if (input.path.startsWith("/doctor/appointments") && scope) {
+        await client.invalidateQueries({ queryKey: resourceKey(scope.userId, scope.orgId, "appointments") });
+      }
+    },
   });
 }

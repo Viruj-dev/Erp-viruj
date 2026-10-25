@@ -1,4 +1,6 @@
 "use client";
+import { authClient } from "@/lib/auth-client";
+import { useAppointmentPollingInterval } from "@/lib/use-realtime-invalidation";
 
 import { SectionSkeleton } from "@/features/dashboard/components/shared/page-skeleton";
 
@@ -62,18 +64,23 @@ export function AppointmentDetail({
   organizationId: string;
   themeClassName?: string;
 }) {
+  const { data: appointmentSession } = authClient.useSession();
+  const userId = appointmentSession?.user?.id ?? "";
+  const pollingInterval = useAppointmentPollingInterval(organizationId);
   const queryClient = useQueryClient();
-  const key = virujBackend.appointments.key({ organizationId });
+  const key = virujBackend.appointments.key(userId, organizationId ?? "");
   const details = useQuery({
     queryKey: [...key, "detail", appointmentId],
     queryFn: () =>
       virujBackend.appointments.detail({ id: appointmentId, organizationId }),
     gcTime: 0,
-    refetchInterval: 15_000,
+    refetchInterval: pollingInterval,
+    enabled: Boolean(userId),
     retry: false,
   });
   const permissions = useQuery({
     queryKey: [...key, "permissions"],
+    enabled: Boolean(userId),
     queryFn: () => virujBackend.appointments.permissions(organizationId),
     gcTime: 0,
     retry: false,
@@ -92,6 +99,7 @@ export function AppointmentDetail({
     return () => window.clearInterval(interval);
   }, [expiresAt]);
   const mutation = useMutation({
+    onMutate: () => key,
     mutationFn: async (input: {
       action: "generate" | "verify" | "status";
       status?: VirujAppointmentStatus;
@@ -118,7 +126,7 @@ export function AppointmentDetail({
         endsAt: input.endsAt,
       });
     },
-    onSuccess: async (result) => {
+    onSuccess: async (result, _input, scope) => {
       setLocalError(null);
       if ("expiresAt" in result) {
         setExpiresAt(result.expiresAt);
@@ -130,10 +138,10 @@ export function AppointmentDetail({
         setReason("");
         setRescheduling(false);
       }
-      await queryClient.invalidateQueries({ queryKey: key });
+      if (scope) await queryClient.invalidateQueries({ queryKey: scope });
     },
-    onError: async () => {
-      await queryClient.invalidateQueries({ queryKey: key });
+    onError: async (_error, _input, scope) => {
+      if (scope) await queryClient.invalidateQueries({ queryKey: scope });
     },
   });
   const perform = (

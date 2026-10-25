@@ -56,9 +56,9 @@ describe("shared ERP tenant helpers", () => {
 
   test("does not create shared cache keys across tenants", () => {
     expect(
-      virujBackend.appointments.key({ organizationId: "hospital-a" })
+      virujBackend.appointments.key("user-a", "hospital-a")
     ).not.toEqual(
-      virujBackend.appointments.key({ organizationId: "clinic-a" })
+      virujBackend.appointments.key("user-a", "clinic-a")
     );
     expect(
       virujBackend.facilities.key({ organizationId: "hospital-a" })
