@@ -2,24 +2,14 @@
 
 import {
   PageSkeleton,
-  SectionSkeleton
+  SectionSkeleton,
 } from "@/features/dashboard/components/shared/page-skeleton";
 
 import { DashboardPageShell } from "@/features/dashboard/components/shared/dashboard-page-shell";
 import { authClient } from "@/lib/auth-client";
-import {
-  virujBackend,
-  type VirujStaffInviteResult
-} from "@/lib/viruj-backend";
+import { virujBackend, type VirujStaffInviteResult } from "@/lib/viruj-backend";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Activity,
-  Clock,
-  Edit3,
-  Search,
-  Trash2,
-  UserPlus
-} from "lucide-react";
+import { Activity, Clock, Edit3, Search, Trash2, UserPlus } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   AddStaffEntryDialog,
@@ -34,11 +24,11 @@ import {
   isStaffRole,
   RolePill,
   StaffAvatar,
-  type StaffRole
+  type StaffRole,
 } from "./_documents";
 
 export function ErpDemoStaff({
-  organizationLabel
+  organizationLabel,
 }: {
   organizationLabel: string;
 }) {
@@ -53,8 +43,9 @@ export function ErpDemoStaff({
   const [isEntryDialogOpen, setIsEntryDialogOpen] = useState(false);
   const activeOrganizationState = authClient.useActiveOrganization();
   const { data: session } = authClient.useSession();
+  const currentUserId = session?.user?.id ?? "";
   const activeOrganizationId =
-    getSessionOrganizationId(session) ?? activeOrganizationState.data?.id;
+    getSessionOrganizationId(session) ?? activeOrganizationState.data?.id ?? "";
   const activeOrganizationType =
     getSessionOrganizationType(session) ??
     activeOrganizationState.data?.organizationType;
@@ -77,36 +68,43 @@ export function ErpDemoStaff({
   }, [availableRoleOptions, role, roleFilter]);
 
   const membersQuery = useQuery({
-    enabled: Boolean(activeOrganizationId),
+    enabled: Boolean(currentUserId && activeOrganizationId),
     queryFn: () =>
       virujBackend.staff.listMembers({ organizationId: activeOrganizationId }),
-    queryKey: virujBackend.staff.membersKey(activeOrganizationId)
+    queryKey: virujBackend.staff.membersKey(
+      currentUserId,
+      activeOrganizationId
+    ),
   });
   const invitationsQuery = useQuery({
-    enabled: Boolean(activeOrganizationId),
+    enabled: Boolean(currentUserId && activeOrganizationId),
     queryFn: () =>
       virujBackend.staff.listInvitations({
-        organizationId: activeOrganizationId
+        organizationId: activeOrganizationId,
       }),
-    queryKey: virujBackend.staff.invitationsKey(activeOrganizationId)
+    queryKey: virujBackend.staff.invitationsKey(
+      currentUserId,
+      activeOrganizationId
+    ),
   });
   const auditQuery = useQuery({
-    enabled: Boolean(activeOrganizationId),
+    enabled: Boolean(currentUserId && activeOrganizationId),
     queryFn: () =>
       virujBackend.audit.recent({ organizationId: activeOrganizationId }),
-    queryKey: virujBackend.audit.key(activeOrganizationId)
+    queryKey: virujBackend.audit.key(currentUserId, activeOrganizationId),
   });
-  const invalidateStaffData = async () => {
+  const staffScope = { userId: currentUserId, orgId: activeOrganizationId };
+  const invalidateStaffData = async (scope: typeof staffScope) => {
     await Promise.all([
       queryClient.invalidateQueries({
-        queryKey: virujBackend.audit.key(activeOrganizationId)
+        queryKey: virujBackend.audit.key(scope.userId, scope.orgId),
       }),
       queryClient.invalidateQueries({
-        queryKey: virujBackend.staff.invitationsKey(activeOrganizationId)
+        queryKey: virujBackend.staff.invitationsKey(scope.userId, scope.orgId),
       }),
       queryClient.invalidateQueries({
-        queryKey: virujBackend.staff.membersKey(activeOrganizationId)
-      })
+        queryKey: virujBackend.staff.membersKey(scope.userId, scope.orgId),
+      }),
     ]);
   };
   // Invite result payload distinguishes "invitation saved but the email
@@ -126,7 +124,7 @@ export function ErpDemoStaff({
         email: variables.email,
         message:
           result.onboarding.emailError ||
-          "The invitation was saved, but the invite email could not be sent."
+          "The invitation was saved, but the invite email could not be sent.",
       });
     } else {
       setEmailDeliveryFailure(null);
@@ -137,36 +135,46 @@ export function ErpDemoStaff({
   };
   const inviteMutation = useMutation({
     mutationFn: virujBackend.staff.invite,
+    onMutate: () => staffScope,
+    onSettled: (_result, _error, _variables, scope) =>
+      scope && invalidateStaffData(scope),
     onSuccess: async (result, variables) => {
       await applyInviteResult(result, variables);
-      await invalidateStaffData();
     },
     onError: () => {
       // Non-email delivery failures (for example network errors) surface
       // through the existing invite error display in the dialog.
       setEmailDeliveryFailure(null);
-    }
+    },
   });
   // Re-inviting the same person is the available retry path — no dedicated
   // "resend invite email" endpoint is exposed yet.
   const retryInviteMutation = useMutation({
     mutationFn: virujBackend.staff.invite,
+    onMutate: () => staffScope,
+    onSettled: (_result, _error, _variables, scope) =>
+      scope && invalidateStaffData(scope),
     onSuccess: async (result, variables) => {
       await applyInviteResult(result, variables);
-      await invalidateStaffData();
-    }
+    },
   });
   const updateRoleMutation = useMutation({
     mutationFn: virujBackend.staff.updateRole,
-    onSuccess: invalidateStaffData
+    onMutate: () => staffScope,
+    onSettled: (_result, _error, _variables, scope) =>
+      scope && invalidateStaffData(scope),
   });
   const removeStaffMutation = useMutation({
     mutationFn: virujBackend.staff.remove,
-    onSuccess: invalidateStaffData
+    onMutate: () => staffScope,
+    onSettled: (_result, _error, _variables, scope) =>
+      scope && invalidateStaffData(scope),
   });
   const cancelInvitationMutation = useMutation({
     mutationFn: virujBackend.staff.cancelInvitation,
-    onSuccess: invalidateStaffData
+    onMutate: () => staffScope,
+    onSettled: (_result, _error, _variables, scope) =>
+      scope && invalidateStaffData(scope),
   });
 
   const members = membersQuery.data ?? [];
@@ -180,8 +188,6 @@ export function ErpDemoStaff({
     (typeof members)[number] | null
   >(null);
   const [editRole, setEditRole] = useState<StaffRole>("DOCTOR");
-
-  const currentUserId = session?.user?.id;
 
   const pendingInvitations = invitations.filter(
     (invitation) => invitation.status === "pending"
@@ -213,7 +219,7 @@ export function ErpDemoStaff({
       email,
       name,
       organizationId: activeOrganizationId,
-      role
+      role,
     });
   };
 
@@ -407,7 +413,7 @@ export function ErpDemoStaff({
                       onClick={() =>
                         cancelInvitationMutation.mutate({
                           invitationId: invitation.id,
-                          organizationId: activeOrganizationId
+                          organizationId: activeOrganizationId,
                         })
                       }
                       type="button"
@@ -473,7 +479,7 @@ export function ErpDemoStaff({
               email,
               name,
               organizationId: activeOrganizationId,
-              role
+              role,
             });
           }}
           onRoleChange={setRole}
@@ -498,10 +504,10 @@ export function ErpDemoStaff({
               {
                 memberId: editingStaff.id,
                 organizationId: activeOrganizationId,
-                role: editRole
+                role: editRole,
               },
               {
-                onSuccess: () => setEditingStaff(null)
+                onSuccess: () => setEditingStaff(null),
               }
             );
           }}
@@ -518,10 +524,10 @@ export function ErpDemoStaff({
             removeStaffMutation.mutate(
               {
                 memberId: deletingStaff.id,
-                organizationId: activeOrganizationId
+                organizationId: activeOrganizationId,
               },
               {
-                onSuccess: () => setDeletingStaff(null)
+                onSuccess: () => setDeletingStaff(null),
               }
             );
           }}
@@ -573,7 +579,7 @@ function getRoleOptionsForOrganization(
       "CLINIC_ADMIN",
       "CLINIC_STAFF",
       "DOCTOR",
-      "RECEPTIONIST"
+      "RECEPTIONIST",
     ];
   }
 
@@ -588,12 +594,19 @@ function getRoleOptionsForOrganization(
       "DOCTOR",
       "TECHNICIAN",
       "RECEPTIONIST",
-      "STAFF"
+      "STAFF",
     ];
   }
 
   if (organizationType === "pathology") {
-    return ["ADMIN", "MANAGER", "DOCTOR", "TECHNICIAN", "RECEPTIONIST", "STAFF"];
+    return [
+      "ADMIN",
+      "MANAGER",
+      "DOCTOR",
+      "TECHNICIAN",
+      "RECEPTIONIST",
+      "STAFF",
+    ];
   }
 
   return [
@@ -604,7 +617,7 @@ function getRoleOptionsForOrganization(
     "DOCTOR",
     "STAFF",
     "RECEPTIONIST",
-    "TECHNICIAN"
+    "TECHNICIAN",
   ];
 }
 
@@ -615,7 +628,7 @@ function getStaffWorkspaceTheme(organizationLabel: string) {
         "Real-time status of clinic owners, admins, doctors, reception, and front-desk coverage.",
       hero: "bg-gradient-to-br from-[#35206f] via-[#5b32b4] to-[#8b5cf6]",
       shadow: "shadow-[0_20px_60px_rgba(91,50,180,0.22)]",
-      title: "Clinic Staff Overview"
+      title: "Clinic Staff Overview",
     };
   }
 
@@ -624,6 +637,6 @@ function getStaffWorkspaceTheme(organizationLabel: string) {
       "Real-time status of clinical and administrative personnel across all active departments.",
     hero: "bg-[#002a52]",
     shadow: "shadow-sm",
-    title: "Staff Workforce Overview"
+    title: "Staff Workforce Overview",
   };
 }

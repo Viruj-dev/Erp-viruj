@@ -1,19 +1,16 @@
 "use client";
 
-import {
-  QueryClient,
-  QueryClientProvider,
-  useQueryClient
-} from "@tanstack/react-query";
+import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { setCentralApiTokenIdentity } from "./central-api-token";
 import { authClient } from "./auth-client";
 import { NotificationProvider } from "@/features/notifications";
 import { ThemeProvider } from "./theme-provider";
 import { PostHogAnalytics } from "./posthog-analytics";
+import { createQueryClient } from "./query-cache";
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(createQueryClient);
 
   return (
     <ThemeProvider>
@@ -64,11 +61,7 @@ function SessionScopedQueryReset() {
     }
 
     setCentralApiTokenIdentity(identity);
-  }, [
-    activeOrganizationState.data,
-    queryClient,
-    session
-  ]);
+  }, [activeOrganizationState.data, queryClient, session]);
 
   return null;
 }

@@ -27,6 +27,7 @@ import {
   getCentralApiToken,
   signOutAfterCentralApiUnauthorized,
 } from "./central-api-token";
+import { resourceKey } from "./query-cache";
 
 const directApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 const sameOriginUrl =
@@ -869,13 +870,35 @@ function compactObject<T extends Record<string, unknown>>(value: T) {
     >;
   };
 }
-export type AccessReview = { status: "unsubmitted" | "draft" | "pending" | "approved" | "rejected"; completed?: boolean; reason?: string | null };
+export type AccessReview = {
+  status: "unsubmitted" | "draft" | "pending" | "approved" | "rejected";
+  completed?: boolean;
+  reason?: string | null;
+};
 export const virujBackend = {
   accessReview: {
-    draft: (organizationId: string) => request<{data: unknown}>("/access-review/draft", {organizationId, suppressToast: true}),
-    status: (organizationId: string) => request<AccessReview>("/access-review", {organizationId, suppressToast: true}),
-    submit: (organizationId: string) => request<AccessReview>("/access-review/submit", {organizationId, method: "POST", suppressToast: true}),
-    reapply: (organizationId: string) => request<AccessReview>("/access-review/reapply", {organizationId, method: "POST", suppressToast: true}),
+    draft: (organizationId: string) =>
+      request<{ data: unknown }>("/access-review/draft", {
+        organizationId,
+        suppressToast: true,
+      }),
+    status: (organizationId: string) =>
+      request<AccessReview>("/access-review", {
+        organizationId,
+        suppressToast: true,
+      }),
+    submit: (organizationId: string) =>
+      request<AccessReview>("/access-review/submit", {
+        organizationId,
+        method: "POST",
+        suppressToast: true,
+      }),
+    reapply: (organizationId: string) =>
+      request<AccessReview>("/access-review/reapply", {
+        organizationId,
+        method: "POST",
+        suppressToast: true,
+      }),
   },
   doctorDocuments: {
     upload: (file: File, organizationId: string) => {
@@ -1237,14 +1260,8 @@ export const virujBackend = {
       ] as const,
   },
   audit: {
-    key: (organizationId?: string) =>
-      [
-        "viruj-backend",
-        "erp",
-        "audit",
-        "recent",
-        organizationId ?? "none",
-      ] as const,
+    key: (userId: string, organizationId: string) =>
+      resourceKey(userId, organizationId, "audit", "recent"),
     recent: (input?: { organizationId?: string }) =>
       request<VirujAuditLog[]>("/audit/recent", {
         organizationId: input?.organizationId,
@@ -1307,7 +1324,10 @@ export const virujBackend = {
         method: "POST",
         organizationId: input.organizationId,
       }),
-    delete: (input: { id: string; organizationId?: string }, options: Pick<RequestOptions, "suppressToast"> = {}) =>
+    delete: (
+      input: { id: string; organizationId?: string },
+      options: Pick<RequestOptions, "suppressToast"> = {}
+    ) =>
       request<{ deleted: number }>(`/appointments/${input.id}`, {
         ...options,
         method: "DELETE",
@@ -1495,11 +1515,14 @@ export const virujBackend = {
       items: Array<{ displayOrder: number; id: string }>;
       organizationId?: string;
     }) => ({ success: true as const }),
-    update: (input: {
-      facility: VirujFacilityInput;
-      id: string;
-      organizationId?: string;
-    }, options: Pick<RequestOptions, "suppressToast"> = {}) =>
+    update: (
+      input: {
+        facility: VirujFacilityInput;
+        id: string;
+        organizationId?: string;
+      },
+      options: Pick<RequestOptions, "suppressToast"> = {}
+    ) =>
       request<VirujFacility>(`/facilities/${input.id}`, {
         ...options,
         body: input.facility,
@@ -1554,11 +1577,14 @@ export const virujBackend = {
       items: Array<{ displayOrder: number; id: string }>;
       organizationId?: string;
     }) => ({ success: true as const }),
-    update: (input: {
-      facility: VirujFacilityInput;
-      id: string;
-      organizationId?: string;
-    }, options: Pick<RequestOptions, "suppressToast"> = {}) =>
+    update: (
+      input: {
+        facility: VirujFacilityInput;
+        id: string;
+        organizationId?: string;
+      },
+      options: Pick<RequestOptions, "suppressToast"> = {}
+    ) =>
       request<VirujFacility>(`/services/${input.id}`, {
         ...options,
         body: input.facility,
@@ -1631,7 +1657,10 @@ export const virujBackend = {
         method: "POST",
         organizationId: input.organizationId,
       }),
-    delete: (input: { id: string; organizationId?: string }, options: Pick<RequestOptions, "suppressToast"> = {}) =>
+    delete: (
+      input: { id: string; organizationId?: string },
+      options: Pick<RequestOptions, "suppressToast"> = {}
+    ) =>
       request<{ success: true }>(`/doctors/${input.id}`, {
         ...options,
         method: "DELETE",
@@ -1737,12 +1766,12 @@ export const virujBackend = {
         "viruj-backend",
         "erp",
         "onboarding-status",
-        organizationId ?? "none"
+        organizationId ?? "none",
       ] as const,
     status: (organizationId?: string) =>
       request<VirujOnboardingStatus>("/onboarding-status", {
         organizationId,
-        suppressToast: true
+        suppressToast: true,
       }),
   },
   modules: {
@@ -1774,14 +1803,8 @@ export const virujBackend = {
       }>(`/staff/invitations/${input.invitationId}/confirm`, {
         method: "POST",
       }),
-    invitationsKey: (organizationId?: string) =>
-      [
-        "viruj-backend",
-        "erp",
-        "staff",
-        "invitations",
-        organizationId ?? "none",
-      ] as const,
+    invitationsKey: (userId: string, organizationId: string) =>
+      resourceKey(userId, organizationId, "staff", "invitations"),
     invite: (input: {
       email: string;
       name?: string;
@@ -1801,14 +1824,8 @@ export const virujBackend = {
       request<VirujStaffMember[]>("/staff/members", {
         organizationId: input?.organizationId,
       }),
-    membersKey: (organizationId?: string) =>
-      [
-        "viruj-backend",
-        "erp",
-        "staff",
-        "members",
-        organizationId ?? "none",
-      ] as const,
+    membersKey: (userId: string, organizationId: string) =>
+      resourceKey(userId, organizationId, "staff", "members"),
     remove: (input: { memberId: string; organizationId?: string }) =>
       request<{ success: true }>(`/staff/members/${input.memberId}`, {
         method: "DELETE",
