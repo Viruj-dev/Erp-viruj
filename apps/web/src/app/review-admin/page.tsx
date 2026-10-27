@@ -218,7 +218,7 @@ export default function ReviewAdminPage() {
         </form>
       ) : (
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-          <section aria-label="Application list" className="space-y-3">
+          <section aria-label="Application list" className="min-w-0 space-y-3">
             <nav aria-label="Application views" className="flex gap-2">
               {(["requests", "logs"] as const).map((tab) => (
                 <Button
@@ -259,40 +259,78 @@ export default function ReviewAdminPage() {
                   : "No applications on this page."}
               </p>
             )}
-            {requests.map((item) => (
-              <button
-                key={item.organization_id}
-                onClick={() => {
-                  setSelected(item);
-                  setReason("");
-                }}
-                className={`w-full rounded-xl border bg-white dark:bg-[#17241f] p-5 text-left ${selected?.organization_id === item.organization_id ? "border-emerald-700 ring-1 ring-emerald-700 dark:border-emerald-400 dark:ring-emerald-400" : "border-[#d5e2de] dark:border-[#2a4036]"}`}
-              >
-                <span
-                  className={`mb-3 block text-xs font-semibold uppercase tracking-wider ${item.status === "rejected" ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300"}`}
-                >
-                  {item.status} · {item.organization_type}
-                </span>
-                <strong className="block">{item.organization_name}</strong>
-                <span className="mt-1 block truncate text-sm text-slate-500 dark:text-slate-400">
-                  {item.applicant_id
-                    ? `${item.applicant_name} · ${item.email}`
-                    : "Applicant account deleted"}
-                </span>
-                <span className="mt-3 block text-xs text-slate-500 dark:text-slate-400">
-                  {view === "logs" && item.reviewed_at
-                    ? `${item.status === "rejected" ? "Rejected" : "Approved"} ${new Date(item.reviewed_at).toLocaleString()}`
-                    : new Date(item.submitted_at).toLocaleString()}
-                </span>
-                {item.applicant_id &&
-                  item.reviewed_at &&
-                  !item.email_sent_at && (
-                    <span className="mt-2 block text-xs text-red-700 dark:text-red-300">
-                      Email delivery needs retry
-                    </span>
-                  )}
-              </button>
-            ))}
+            {!!requests.length && (
+              <ul className="overflow-hidden rounded-xl border border-[#d5e2de] bg-white divide-y divide-[#d5e2de] dark:border-[#2a4036] dark:bg-[#17241f] dark:divide-[#2a4036]">
+                {requests.map((item) => (
+                  <li key={item.organization_id}>
+                    <button
+                      type="button"
+                      aria-pressed={
+                        selected?.organization_id === item.organization_id
+                      }
+                      onClick={() => {
+                        setSelected(item);
+                        setReason("");
+                      }}
+                      className={`block w-full border-l-2 px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600 ${selected?.organization_id === item.organization_id ? "border-emerald-700 bg-emerald-50 dark:border-emerald-400 dark:bg-emerald-950/40" : "border-transparent hover:bg-slate-50 dark:hover:bg-white/5"}`}
+                    >
+                      <span className="flex min-w-0 items-center justify-between gap-3">
+                        <strong
+                          className="truncate text-sm"
+                          title={item.organization_name}
+                        >
+                          {item.organization_name}
+                        </strong>
+                        <span
+                          className={`shrink-0 text-[10px] font-semibold uppercase tracking-wide ${item.status === "rejected" ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300"}`}
+                        >
+                          {item.status}
+                        </span>
+                      </span>
+                      <span
+                        className="mt-1 block truncate text-xs text-slate-500 dark:text-slate-400"
+                        title={
+                          item.applicant_id
+                            ? [item.applicant_name, item.email]
+                                .filter(Boolean)
+                                .join(" · ")
+                            : undefined
+                        }
+                      >
+                        {item.applicant_id
+                          ? `${item.applicant_name} · ${item.email}`
+                          : "Applicant account deleted"}
+                      </span>
+                      <span className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                        <span className="capitalize">
+                          {item.organization_type}
+                        </span>
+                        <time
+                          dateTime={
+                            view === "logs" && item.reviewed_at
+                              ? item.reviewed_at
+                              : item.submitted_at
+                          }
+                        >
+                          {new Date(
+                            view === "logs" && item.reviewed_at
+                              ? item.reviewed_at
+                              : item.submitted_at
+                          ).toLocaleString()}
+                        </time>
+                      </span>
+                      {item.applicant_id &&
+                        item.reviewed_at &&
+                        !item.email_sent_at && (
+                          <span className="mt-1 block text-xs text-red-700 dark:text-red-300">
+                            Email delivery needs retry
+                          </span>
+                        )}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
             <div className="flex gap-3">
               <Button
                 variant="outline"
@@ -324,7 +362,8 @@ export default function ReviewAdminPage() {
                   {selected.organization_name}
                 </h2>
                 <p className="mb-8 mt-2 text-sm text-slate-500 dark:text-slate-400">
-                  {selected.email ?? "Applicant account deleted"} · Submission {selected.revision}
+                  {selected.email ?? "Applicant account deleted"} · Submission{" "}
+                  {selected.revision}
                   {selected.reviewed_at && (
                     <span
                       className={`mt-2 block ${selected.status === "rejected" ? "text-amber-700 dark:text-amber-300" : "text-emerald-700 dark:text-emerald-300"}`}
