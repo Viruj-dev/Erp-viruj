@@ -29,6 +29,8 @@ const fieldTitles: Record<string, string> = {
   gstNumber: "GST number",
   panNumber: "PAN number",
   certificateUrl: "License / certificate",
+  additionalCertificateUrl: "Additional certificate / accreditation",
+  additionalCertificateName: "Additional certificate filename",
   logoUrl: "Organization logo",
   coverUrl: "Cover image",
   fileUrl: "Uploaded document",
@@ -122,6 +124,8 @@ export function reviewSections(snapshot: unknown): ReviewSection[] {
           "coverName",
           "certificateUrl",
           "certificateName",
+          "additionalCertificateUrl",
+          "additionalCertificateName",
           "profilePhoto",
           "photoUrl",
         ]);

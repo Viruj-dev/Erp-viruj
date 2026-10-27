@@ -3,6 +3,8 @@ export const diagnosticSetupFields = [
   "logoName",
   "certificateUrl",
   "certificateName",
+  "additionalCertificateUrl",
+  "additionalCertificateName",
   "establishedYear",
   "website",
   "instagram",

@@ -1,6 +1,6 @@
 import { ErpSelect } from "@/components/ui/erp/select";
 import { cn } from "@/lib/utils";
-import { ImagePlus } from "lucide-react";
+import { FileUp, ImagePlus } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 export function PreviewRow({
@@ -100,10 +100,12 @@ export function UploadField({
   name,
   onChange,
   required = false,
+  allowPdf = false,
 }: {
   label: string;
   name: string;
   required?: boolean;
+  allowPdf?: boolean;
   onChange: (file: {
     file: File;
     name: string;
@@ -116,12 +118,21 @@ export function UploadField({
     if (!file) return;
     setError("");
     if (
-      !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(
-        file.type
-      ) ||
+      ![
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+        ...(allowPdf ? ["application/pdf"] : []),
+      ].includes(file.type) ||
+      !file.size ||
       file.size > 5 * 1024 * 1024
     ) {
-      setError("Choose a JPG, PNG, WebP, or GIF image up to 5 MB.");
+      setError(
+        allowPdf
+          ? "Choose a PDF, JPG, PNG, WebP, or GIF file up to 5 MB."
+          : "Choose a JPG, PNG, WebP, or GIF image up to 5 MB."
+      );
       return;
     }
     setPending(true);
@@ -129,7 +140,7 @@ export function UploadField({
     try {
       await onChange({ file, name: file.name, previewUrl });
     } catch {
-      setError("Upload failed. Please choose the image again to retry.");
+      setError("Upload failed. Please choose the file again to retry.");
     } finally {
       setPending(false);
     }
@@ -140,12 +151,21 @@ export function UploadField({
       <FieldLabel required={required}>{label}</FieldLabel>
       <div className="flex h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-[var(--onboarding-border-strong)] bg-[var(--onboarding-panel-muted)] px-3.5 text-sm font-medium text-[var(--onboarding-muted)] shadow-sm transition hover:border-[var(--onboarding-accent)] hover:bg-[var(--onboarding-panel)]">
         <span className="truncate">
-          {pending ? "Uploading…" : name || "Choose image · up to 5 MB"}
+          {pending
+            ? "Uploading…"
+            : name ||
+              (allowPdf
+                ? "Choose document · up to 5 MB"
+                : "Choose image · up to 5 MB")}
         </span>
-        <ImagePlus size={17} />
+        {allowPdf ? <FileUp size={17} /> : <ImagePlus size={17} />}
       </div>
       <input
-        accept="image/jpeg,image/png,image/webp,image/gif"
+        accept={
+          allowPdf
+            ? "application/pdf,image/jpeg,image/png,image/webp,image/gif"
+            : "image/jpeg,image/png,image/webp,image/gif"
+        }
         aria-required={required}
         disabled={pending}
         className="sr-only"

@@ -50,6 +50,35 @@ const snapshot = {
     },
   },
 };
+
+test("diagnostic additional certificates appear as private documents in the review", () => {
+  const snapshot = {
+    tenant: {
+      metadata: {
+        diagnosticOnboarding: {
+          data: {
+            centreName: "Lab",
+            additionalCertificateUrl:
+              "https://api.test/api/erp/directory/certificates/extra.pdf",
+            additionalCertificateName: "Accreditation.pdf",
+          },
+        },
+      },
+    },
+  };
+  const sections = reviewSections(snapshot);
+  expect(sections[1]?.value).toMatchObject({
+    additionalCertificateName: "Accreditation.pdf",
+  });
+  const html = renderToStaticMarkup(
+    <ApplicationInformation snapshot={snapshot} documentLink={() => {}} />
+  );
+  expect(html).toContain("Additional certificate / accreditation");
+  expect(html).toContain("View certificate");
+  expect(html).not.toContain(
+    'href="https://api.test/api/erp/directory/certificates/extra.pdf"'
+  );
+});
 test("the review opens submitted sections rather than nesting database wrappers", () => {
   const sections = reviewSections(snapshot);
   expect(sections.map((section) => section.title)).toEqual([

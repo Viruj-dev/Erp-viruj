@@ -58,7 +58,7 @@ export function DiagnosticOnboarding({
   const query = useQuery({
     queryKey: diagnosticSetupKey(userId, tenant.organizationId),
     queryFn: () => virujBackend.diagnostics.onboarding(tenant.organizationId),
-    enabled: Boolean(userId) && (canManageDiagnosticSetup(tenant.role)),
+    enabled: Boolean(userId) && canManageDiagnosticSetup(tenant.role),
     retry: false,
   });
   if (!canManageDiagnosticSetup(tenant.role))
@@ -123,6 +123,7 @@ function SetupForm({
   const draftKey = `viruj:diagnostic-onboarding:draft:${tenant.organizationId}`;
   const [locationStatus, setLocationStatus] = useState("");
   const [locating, setLocating] = useState(false);
+  const [pendingUploads, setPendingUploads] = useState(0);
   const steps = pathology
     ? ["Identity", "Branch", "Contact & hours", "Review"]
     : [
@@ -145,11 +146,19 @@ function SetupForm({
       setInvitationPending((result.doctorInvitationsPending ?? 0) > 0);
       setVersion(result.version);
       setDraftSaved(true);
-      client.setQueryData(diagnosticSetupKey(userId, tenant.organizationId), result);
+      client.setQueryData(
+        diagnosticSetupKey(userId, tenant.organizationId),
+        result
+      );
       if (complete) {
         window.localStorage.removeItem(draftKey);
         void client.invalidateQueries({
-          queryKey: resourceKey(userId, tenant.organizationId, "diagnostics.bookings", "availability"),
+          queryKey: resourceKey(
+            userId,
+            tenant.organizationId,
+            "diagnostics.bookings",
+            "availability"
+          ),
         });
         setComplete(true);
       }
@@ -409,20 +418,29 @@ function SetupForm({
       setLocating(false);
     }
   }
-  const upload = (kind: "logo" | "certificate") => (
+  const upload = (kind: "logo" | "certificate" | "additionalCertificate") => (
     <UploadField
-      label={kind === "logo" ? "Organization logo" : "License / certificate"}
-      name={kind === "logo" ? data.logoName : data.certificateName}
+      label={
+        kind === "logo"
+          ? "Organization logo"
+          : kind === "certificate"
+            ? "License / certificate"
+            : "Additional certificate / accreditation"
+      }
+      name={data[`${kind}Name`]}
+      allowPdf={kind !== "logo"}
       onChange={async ({ file, name, previewUrl }) => {
+        setPendingUploads((count) => count + 1);
         try {
           const media = await virujBackend.organizationProfile.uploadMedia({
             file,
-            kind,
+            kind: kind === "logo" ? "logo" : "certificate",
             organizationId: tenant.organizationId,
           });
-          update(kind === "logo" ? "logoUrl" : "certificateUrl", media.url);
-          update(kind === "logo" ? "logoName" : "certificateName", name);
+          update(`${kind}Url`, media.url);
+          update(`${kind}Name`, name);
         } finally {
+          setPendingUploads((count) => count - 1);
           URL.revokeObjectURL(previewUrl);
         }
       }}
@@ -466,7 +484,7 @@ function SetupForm({
       saveState={
         save.isPending || draftSaving ? "saving" : draftSaved ? "saved" : "idle"
       }
-      launching={save.isPending}
+      launching={save.isPending || pendingUploads > 0}
       errorMessage={validationError || (save.isError ? save.error.message : "")}
       handleContinue={handleContinue}
       handleLaunch={handleLaunch}
@@ -506,12 +524,15 @@ function SetupForm({
                 </>
               }
               <div className="sm:col-span-2">
-                {field(
-                  "additionalCertificates",
-                  "Additional certificates / accreditation identifiers",
-                  {
-                    hint: "Optional. Enter identifiers and issuing bodies where applicable. This does not verify or approve them.",
-                  }
+                {upload("additionalCertificate")}
+                <p className="mt-2 text-xs text-[var(--onboarding-muted)]">
+                  Optional. Upload a PDF or image up to 5 MB. Documents are
+                  reviewed privately.
+                </p>
+                {data.additionalCertificates && (
+                  <p className="mt-2 text-xs text-[var(--onboarding-muted)]">
+                    Previously saved identifiers: {data.additionalCertificates}
+                  </p>
                 )}
               </div>
             </div>
@@ -764,6 +785,10 @@ function SetupForm({
                   ["Website", data.website],
                   ["Logo", data.logoName],
                   ["License / certificate", data.certificateName],
+                  [
+                    "Additional certificate / accreditation",
+                    data.additionalCertificateName,
+                  ],
                 ],
                 [
                   "Registration",

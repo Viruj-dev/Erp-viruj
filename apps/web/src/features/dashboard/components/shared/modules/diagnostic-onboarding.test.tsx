@@ -5,7 +5,7 @@ import { createErpTenantContext } from "@/features/dashboard/lib/erp-tenant";
 import { diagnosticSetupKey } from "@/features/dashboard/lib/diagnostic-onboarding";
 mock.module("next/navigation", () => ({
   useRouter: () => ({ push() {}, replace() {} }),
-  usePathname: () => "/pathology/lab-a/dashboard"
+  usePathname: () => "/pathology/lab-a/dashboard",
 }));
 const { DiagnosticOnboarding } = await import("./diagnostic-onboarding");
 test("pathology setup uses orange and radiology setup uses rose", () => {
@@ -14,12 +14,12 @@ test("pathology setup uses orange and radiology setup uses rose", () => {
     client.setQueryData(diagnosticSetupKey("", "tenant-a"), {
       data: null,
       completedAt: null,
-      version: 0
+      version: 0,
     });
     const tenant = createErpTenantContext({
       organizationId: "tenant-a",
       providerType: kind,
-      role: "OWNER"
+      role: "OWNER",
     })!;
     const html = renderToStaticMarkup(
       <QueryClientProvider client={client}>
@@ -36,6 +36,12 @@ test("pathology setup uses orange and radiology setup uses rose", () => {
     );
     expect(html).toContain("Year of establishment");
     expect(html).toContain("License / certificate");
+    expect(html).toContain("Additional certificate / accreditation");
+    expect(html).toContain(
+      'accept="application/pdf,image/jpeg,image/png,image/webp,image/gif"'
+    );
+    expect(html.match(/type="file"/g)).toHaveLength(3);
+    expect(html).not.toContain("Enter identifiers and issuing bodies");
     expect(html).toContain("Contact &amp; hours");
     if (kind === "radiology") expect(html).toContain("Imaging setup");
     if (kind === "pathology") {
@@ -51,7 +57,7 @@ test("technicians see the administrator message instead of editable business fie
   const tenant = createErpTenantContext({
     organizationId: "tenant-a",
     providerType: "pathology",
-    role: "TECHNICIAN"
+    role: "TECHNICIAN",
   })!;
   const html = renderToStaticMarkup(
     <QueryClientProvider client={client}>

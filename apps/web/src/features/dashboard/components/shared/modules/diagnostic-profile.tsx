@@ -53,7 +53,8 @@ export function DiagnosticProfile({ tenant }: { tenant: ErpTenantContext }) {
         ["Registration number", data.registrationNumber],
         ["Issuing authority", data.registrationAuthority],
         ["Established", data.establishedYear],
-        ["Accreditations", data.additionalCertificates]
+        ["Accreditations", data.additionalCertificates],
+        ["Additional certificate", data.additionalCertificateName]
       ]
     },
     {
