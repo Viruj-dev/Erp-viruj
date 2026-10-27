@@ -18,7 +18,8 @@ test("sends the reset link only to the account email", async () => {
   const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
     new Response(null, { status: 200 })
   );
-  const url = "https://auth.example.com/auth/reset-password/test-token";
+  const url =
+    "https://auth.example.com/auth/reset-password/test-token?callbackURL=https%3A%2F%2Ferp.example.com&test=\"<tag>'";
 
   await sendPasswordResetEmail({ email: "registered@example.com", url });
 
@@ -33,6 +34,16 @@ test("sends the reset link only to the account email", async () => {
   expect(payload.to).toEqual(["registered@example.com"]);
   expect(payload.text).toContain(url);
   expect(payload.text).toContain("expires in one hour");
+  expect(payload.html).toContain("Reset my password");
+  expect(payload.html).toContain("one hour");
+  expect(payload.html).toContain("Your password will stay the same");
+  expect(payload.html).toContain('name="viewport"');
+  const escapedUrl = url.replace(
+    /[&<>"']/g,
+    (character) => `&#${character.charCodeAt(0)};`
+  );
+  expect(payload.html.split(`href="${escapedUrl}"`)).toHaveLength(3);
+  expect(payload.html).not.toContain('"<tag>');
 });
 
 test("reports mail provider failures without exposing response details", async () => {
