@@ -30,6 +30,7 @@ let mailFails = false,
   delivered = 0;
 let sentEmail: { text: string; html?: string } | null = null;
 let listQuery = "";
+let additionalApplications: (typeof row)[] = [];
 const dialect = new PgDialect();
 mock.module("@erp_virujhealth/db", () => ({
   db: {
@@ -38,30 +39,39 @@ mock.module("@erp_virujhealth/db", () => ({
       if (sql.includes("AS applicant_name")) {
         listQuery = sql;
         const logs = sql.includes("WHERE r.status IN ('approved','rejected')");
-        return (
-          logs
-            ? ["approved", "rejected"].includes(row.status)
-            : row.status === "pending"
-        )
-          ? [{ ...row }]
-          : [];
+        return [row, ...additionalApplications]
+          .filter((application) =>
+            logs
+              ? ["approved", "rejected"].includes(application.status)
+              : application.status === "pending"
+          )
+          .map((application) => ({ ...application }));
       }
+      const application = [row, ...additionalApplications].find(
+        (item) =>
+          item.organization_id ===
+          params[
+            sql.startsWith("UPDATE erp_access_reviews SET status=") ? 2 : 0
+          ]
+      );
+      if (!application) return [];
       if (sql.startsWith("UPDATE erp_access_reviews SET status=")) {
         if (
-          row.status !== "pending" ||
-          params[3] !== row.revision ||
-          (sql.includes("AND applicant_id IS NOT NULL") && !row.applicant_id)
+          application.status !== "pending" ||
+          params[3] !== application.revision ||
+          (sql.includes("AND applicant_id IS NOT NULL") &&
+            !application.applicant_id)
         )
           return [];
-        row.status = String(params[0]);
-        row.reason = params[1] as string | null;
-        return [{ organization_id: row.organization_id }];
+        application.status = String(params[0]);
+        application.reason = params[1] as string | null;
+        return [{ organization_id: application.organization_id }];
       }
       if (sql.includes("SET email_sent_at")) {
-        row.email_sent_at = "sent";
+        application.email_sent_at = "sent";
         return [];
       }
-      return [{ ...row }];
+      return [{ ...application }];
     },
   },
 }));
@@ -119,6 +129,7 @@ beforeEach(async () => {
   delivered = 0;
   sentEmail = null;
   listQuery = "";
+  additionalApplications = [];
   cookie = "";
   globalThis.fetch = (async () =>
     new Response("{}", { status: 200 })) as unknown as typeof fetch;
@@ -214,6 +225,66 @@ test("approved and rejected applications move from requests to logs", async () =
   row.status = "draft";
   expect(await list("requests")).toHaveLength(0);
   expect(await list("logs")).toHaveLength(0);
+});
+
+test("four provider applications sharing one email stay separate in admin decisions", async () => {
+  additionalApplications = ["hospital", "pathology", "radiology"].map(
+    (type) => ({
+      ...row,
+      organization_id: `${type}-org`,
+      organization_type: type,
+      slug: `${type}-workspace`,
+    })
+  );
+  const list = async (view = "requests") => {
+    const response = await app().request(
+      `/auth/review-admin/requests?view=${view}`,
+      {
+        headers: { Origin: "https://admin.virujhealth.com", Cookie: cookie },
+      }
+    );
+    expect(response.status).toBe(200);
+    return (await response.json()) as (typeof row)[];
+  };
+  const pending = await list();
+  expect(pending).toHaveLength(4);
+  expect(new Set(pending.map((item) => item.email))).toEqual(
+    new Set(["owner@example.com"])
+  );
+  expect(new Set(pending.map((item) => item.organization_id)).size).toBe(4);
+  expect(listQuery).not.toContain("GROUP BY");
+  expect(
+    (
+      await post("/requests/pathology-org/decision", {
+        status: "approved",
+        revision: 1,
+      })
+    ).status
+  ).toBe(200);
+  expect((await list()).map((item) => item.organization_id)).toEqual([
+    "org",
+    "hospital-org",
+    "radiology-org",
+  ]);
+  expect(await list("logs")).toMatchObject([
+    { organization_id: "pathology-org", status: "approved" },
+  ]);
+  expect(delivered).toBe(1);
+  expect(
+    (
+      await post("/requests/radiology-org/decision", {
+        status: "rejected",
+        revision: 1,
+        reason: "Update the registration.",
+      })
+    ).status
+  ).toBe(200);
+  expect(row.status).toBe("pending");
+  expect(additionalApplications.map((item) => item.status)).toEqual([
+    "pending",
+    "approved",
+    "rejected",
+  ]);
 });
 test("deleted applicants remain visible but cannot be approved or notified", async () => {
   row.applicant_id = null;

@@ -100,6 +100,10 @@ export function ErpAuthScreen() {
       router.replace(`/doctor/${doctorWorkspace}/dashboard`);
       return;
     }
+    if ((organizationsState.data?.length ?? 0) !== 1) {
+      router.replace("/workspaces");
+      return;
+    }
     if (
       activeOrganizationType &&
       isDashboardOrganizationType(activeOrganizationType)
@@ -127,6 +131,7 @@ export function ErpAuthScreen() {
     isHydrated,
     sessionState.isPending,
     organizationsState.isPending,
+    organizationsState.data,
     router,
     sessionState.data?.user,
   ]);

@@ -3,6 +3,7 @@ import { WorkspaceApprovalContext } from "@/features/dashboard/lib/workspace-app
 import { resolveReviewWorkspace } from "@/features/dashboard/lib/review-workspace";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import {
   clearCentralApiToken,
@@ -81,6 +82,9 @@ export function ReviewCard({
           </Button>
           <Button variant="ghost" onClick={() => void signOut()}>
             Back to sign in
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/workspaces">Provider roles & workspaces</Link>
           </Button>
         </div>
         <p className="mt-8 border-t border-[#e3ece9] pt-5 text-xs leading-5 text-[#55706a]">
@@ -172,7 +176,7 @@ export function AccessReviewGate({ children }: { children: ReactNode }) {
     try {
       const review = await loadAccessReview(org.id);
       if (
-        review.status === "draft" &&
+        ["draft", "unsubmitted"].includes(review.status) &&
         (type === "hospital" || type === "clinic")
       )
         window.sessionStorage.setItem(

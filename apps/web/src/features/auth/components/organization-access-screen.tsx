@@ -3,6 +3,8 @@
 import { VirujLogo } from "@/components/brand/viruj-logo";
 
 import { ArrowRight, LogOut } from "lucide-react";
+import Link from "next/link";
+import type { ReactNode } from "react";
 
 export function OrganizationAccessScreen({
   isLoading,
@@ -12,6 +14,7 @@ export function OrganizationAccessScreen({
   organizations,
   signingOut,
   userEmail,
+  children,
 }: {
   isLoading: boolean;
   onRefresh: () => Promise<void>;
@@ -25,6 +28,7 @@ export function OrganizationAccessScreen({
   }>;
   signingOut: boolean;
   userEmail: string;
+  children?: ReactNode;
 }) {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface px-6 py-12">
@@ -40,13 +44,13 @@ export function OrganizationAccessScreen({
               Choose the workspace you want to run.
             </h1>
             <p className="mt-4 max-w-xl text-sm leading-relaxed text-on-surface-variant">
-              Signed in as {userEmail}. Your account is authenticated, but an
-              active organization is required before the ERP dashboard can load.
+              Signed in as {userEmail}. All your provider roles stay linked to
+              this email. Each workspace has its own details and admin approval.
             </p>
           </div>
           <button
             className="inline-flex items-center gap-2 self-start rounded-full border border-outline-variant/40 px-4 py-2 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-container-low"
-            disabled={signingOut}
+            disabled={isLoading || signingOut}
             onClick={() => void onSignOut()}
             type="button"
           >
@@ -60,6 +64,7 @@ export function OrganizationAccessScreen({
             <button
               className="group flex min-h-20 items-center justify-between gap-4 rounded-2xl border border-outline-variant/25 bg-surface px-5 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md"
               key={organization.id}
+              disabled={isLoading || signingOut}
               onClick={() => void onSelectOrganization(organization.id)}
               type="button"
             >
@@ -99,6 +104,14 @@ export function OrganizationAccessScreen({
             </button>
           </div>
         ) : null}
+        {children ?? (
+          <Link
+            className="mt-6 inline-block text-sm font-semibold text-primary underline underline-offset-4"
+            href="/workspaces"
+          >
+            Add or switch provider roles
+          </Link>
+        )}
       </div>
     </div>
   );

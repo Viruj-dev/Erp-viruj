@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, expect, mock, spyOn, test } from "bun:test";
 import { Hono } from "hono";
+import { PgDialect } from "drizzle-orm/pg-core";
+import type { SQL } from "drizzle-orm";
 
 // Use inert configuration; all database operations below are intercepted.
 Bun.env.DATABASE_URL = "postgres://test:test@localhost:5432/viruj_test";
@@ -22,6 +24,7 @@ let session: unknown;
 let createdOrganization: unknown[];
 let memberFailure: boolean;
 const writes: Array<{ table: unknown; values: Record<string, unknown> }> = [];
+const selectParameters: unknown[][] = [];
 const transaction = mock(async (callback: (tx: unknown) => Promise<unknown>) =>
   callback(db)
 );
@@ -32,6 +35,7 @@ beforeEach(() => {
   createdOrganization = [];
   memberFailure = false;
   writes.length = 0;
+  selectParameters.length = 0;
   transaction.mockClear();
   session = {
     user: { id: "attacker", name: "Test", email: "test@example.test" },
@@ -47,7 +51,10 @@ beforeEach(() => {
     const query = {
       from: () => query,
       innerJoin: () => query,
-      where: () => query,
+      where: (predicate: SQL) => {
+        selectParameters.push(new PgDialect().sqlToQuery(predicate).params);
+        return query;
+      },
       limit: async () => rows,
       orderBy: async () => rows,
     };
@@ -195,6 +202,95 @@ test("bootstrap keeps an existing membership without elevating its role", async 
   expect((await bootstrap()).status).toBe(200);
   expect(transaction).not.toHaveBeenCalled();
   expect(writes.some((write) => write.table === member)).toBe(false);
+});
+
+test("one email retains four provider roles and tokens follow only the selected workspace", async () => {
+  const { jwtVerify } = await import("jose");
+  const app = createApp();
+  const providerTypes = ["hospital", "clinic", "pathology", "radiology"];
+  for (const type of providerTypes) {
+    selectResults = [[]];
+    createdOrganization = [
+      { organizationId: `${type}-id`, organizationType: type },
+    ];
+    const created = await app.request("/auth/bootstrap-organization", {
+      method: "POST",
+      headers: {
+        Origin: "http://localhost:3001",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: `My ${type}`,
+        slug: `${type}-test`,
+        organizationType: type,
+      }),
+    });
+    expect(created.status).toBe(200);
+    expect(selectParameters.at(-1)).toEqual(["attacker", type]);
+  }
+  const memberships = writes.filter((write) => write.table === member);
+  expect(memberships).toHaveLength(4);
+  expect(memberships.map((write) => write.values.userId)).toEqual(
+    Array(4).fill("attacker")
+  );
+  expect(
+    new Set(memberships.map((write) => write.values.organizationId)).size
+  ).toBe(4);
+  for (const type of providerTypes) {
+    selectResults = [
+      [{ organizationId: `${type}-id`, organizationType: type }],
+    ];
+    const activated = await app.request("/auth/activate-organization", {
+      method: "POST",
+      headers: {
+        Origin: "http://localhost:3001",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ organizationId: `${type}-id` }),
+    });
+    expect(activated.status).toBe(200);
+    expect(selectParameters.at(-1)).toEqual([`${type}-id`, "attacker"]);
+    expect(writes.at(-1)?.values).toEqual({
+      activeOrganizationId: `${type}-id`,
+    });
+    (session as { activeOrganization: unknown }).activeOrganization = {
+      id: `${type}-id`,
+      organizationType: type,
+    };
+    selectResults = [
+      [{ organizationId: `${type}-id`, organizationType: type, role: "OWNER" }],
+    ];
+    const response = await app.request("/auth/central-api-token");
+    expect(response.status).toBe(200);
+    expect(selectParameters.at(-1)).toEqual([`${type}-id`, "attacker"]);
+    const { token } = (await response.json()) as { token: string };
+    const { payload } = await jwtVerify(
+      token,
+      new TextEncoder().encode(Bun.env.CENTRAL_API_JWT_SECRET)
+    );
+    expect(payload.sub).toBe("attacker");
+    expect(payload.tenant_id).toBe(`${type}-id`);
+    expect(payload.organization_type).toBe(type);
+  }
+  expect(writes.filter((write) => write.table === member)).toHaveLength(4);
+});
+
+test("provider switching cannot activate a workspace outside the account's memberships", async () => {
+  selectResults = [[]];
+  const response = await createApp().request("/auth/activate-organization", {
+    method: "POST",
+    headers: {
+      Origin: "http://localhost:3001",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ organizationId: "someone-elses-workspace" }),
+  });
+  expect(response.status).toBe(403);
+  expect(selectParameters.at(-1)).toEqual([
+    "someone-elses-workspace",
+    "attacker",
+  ]);
+  expect(writes).toHaveLength(0);
 });
 
 test("failed owner creation never activates the organization or leaks database errors", async () => {

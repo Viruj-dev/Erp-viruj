@@ -2,7 +2,7 @@
 
 import { authClient } from "@/lib/auth-client";
 import { useTheme } from "@/lib/theme-provider";
-import { LogOut, Moon, Sun, User } from "lucide-react";
+import { Building2, LogOut, Moon, Sun, User } from "lucide-react";
 import {
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -73,6 +73,10 @@ export function ProfileDropdown({
       <DropdownMenuItem id="profile-menu-profile" onClick={onNavigateToProfile}>
         <User />
         Profile
+      </DropdownMenuItem>
+      <DropdownMenuItem id="profile-menu-workspaces" onClick={() => window.location.assign("/workspaces")}>
+        <Building2 />
+        Provider roles & workspaces
       </DropdownMenuItem>
       <DropdownMenuCheckboxItem
         id="profile-menu-appearance-toggle"
