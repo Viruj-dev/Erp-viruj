@@ -24,6 +24,7 @@ export function OrganizationAccessScreen({
     id: string;
     name: string;
     organizationType?: string;
+    membershipRole?: string;
     slug: string;
   }>;
   signingOut: boolean;
@@ -70,7 +71,9 @@ export function OrganizationAccessScreen({
             >
               <div>
                 <p className="text-[10px] font-semi-bold uppercase tracking-[0.2em] text-primary">
-                  {organization.organizationType ?? "organization"}
+                  {organization.organizationType
+                    ? `${organization.organizationType} ERP`
+                    : "Provider type unavailable"}
                 </p>
                 <h2 className="mt-1 font-headline text-lg font-bold leading-tight text-on-surface">
                   {organization.name}
@@ -78,6 +81,16 @@ export function OrganizationAccessScreen({
                 <p className="mt-0.5 text-xs text-on-surface-variant">
                   @{organization.slug}
                 </p>
+                {organization.membershipRole && (
+                  <p className="mt-1 text-xs text-on-surface-variant">
+                    Your role:{" "}
+                    <span className="capitalize">
+                      {organization.membershipRole
+                        .replace(/_/g, " ")
+                        .toLowerCase()}
+                    </span>
+                  </p>
+                )}
               </div>
               <div className="shrink-0 rounded-full bg-primary/10 p-2 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
                 <ArrowRight size={18} />

@@ -9,6 +9,7 @@ const workspaces = ["hospital", "clinic", "pathology", "radiology"].map(
     id: `${type}-id`,
     name: `My ${type}`,
     organizationType: type,
+    membershipRole: type === "hospital" ? "OWNER" : "ADMIN",
     slug: `${type}-workspace`,
   })
 );
@@ -58,14 +59,18 @@ beforeEach(() => {
   navigate.mockClear();
 });
 
-test("one email displays all four linked provider workspaces and the five available provider roles", () => {
+test("existing email shows linked ERPs and assigned roles without asking the user to define them", () => {
   const html = renderToStaticMarkup(<ProviderWorkspacesScreen />);
   expect(html).toContain("provider@example.test");
   for (const workspace of workspaces) expect(html).toContain(workspace.name);
-  for (const role of ["hospital", "clinic", "doctor", "pathology", "radiology"])
-    expect(html).toContain(`value="${role}"`);
-  expect(html).toContain("reviews every workspace separately");
-  expect(html).toContain("Workspace name");
+  for (const workspace of workspaces)
+    expect(html).toContain(`${workspace.organizationType} ERP`);
+  expect(html).toContain("Your role:");
+  expect(html).toContain("owner");
+  expect(html).toContain("admin");
+  expect(html).toContain("Add another ERP workspace");
+  expect(html).not.toContain("Workspace name");
+  expect(html).not.toContain("Provider type unavailable");
 });
 
 test("switching reloads the selected provider dashboard only after successful activation", async () => {
@@ -95,5 +100,25 @@ test("switching reloads the selected provider dashboard only after successful ac
     expect(navigate).not.toHaveBeenCalled();
   } finally {
     globalThis.window = originalWindow;
+  }
+});
+
+test("provider setup is shown when the email has no linked ERP", () => {
+  const saved = workspaces.splice(0);
+  try {
+    const html = renderToStaticMarkup(<ProviderWorkspacesScreen />);
+    expect(html).toContain("Workspace name");
+    expect(html).toContain("Provider type");
+    expect(html).toContain("Add ERP workspace");
+    for (const type of [
+      "hospital",
+      "clinic",
+      "doctor",
+      "pathology",
+      "radiology",
+    ])
+      expect(html).toContain(`value="${type}"`);
+  } finally {
+    workspaces.push(...saved);
   }
 });

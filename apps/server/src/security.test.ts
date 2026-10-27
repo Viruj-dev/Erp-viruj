@@ -90,6 +90,44 @@ beforeEach(() => {
 
 afterEach(() => mock.restore());
 
+test("workspace picker returns saved ERP types and membership roles for only the signed-in user", async () => {
+  const organizations = [
+    {
+      id: "hospital-a",
+      name: "Testing",
+      slug: "testing",
+      organizationType: "hospital",
+      membershipRole: "OWNER",
+    },
+    {
+      id: "clinic-a",
+      name: "My clinic",
+      slug: "my-clinic",
+      organizationType: "clinic",
+      membershipRole: "ADMIN",
+    },
+  ];
+  selectResults = [organizations];
+  const response = await createApp().request("/auth/organization/list");
+  expect(response.status).toBe(200);
+  expect(response.headers.get("Cache-Control")).toBe("no-store");
+  expect(await response.json()).toEqual(organizations);
+  expect(db.select).toHaveBeenCalledWith(
+    expect.objectContaining({
+      organizationType: organization.organizationType,
+      membershipRole: member.role,
+    })
+  );
+  expect(selectParameters).toEqual([["attacker"]]);
+  expect(writes).toHaveLength(0);
+  session = null;
+  selectParameters.length = 0;
+  expect((await createApp().request("/auth/organization/list")).status).toBe(
+    401
+  );
+  expect(selectParameters).toHaveLength(0);
+});
+
 test("pending applicants get no sign-in session and review status is checked only after password verification", async () => {
   const context = await auth.$context;
   const now = new Date();

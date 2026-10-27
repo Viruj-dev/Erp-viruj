@@ -12,7 +12,7 @@ import {
   normalizeOrganizationType,
   session,
 } from "@erp_virujhealth/db/schema/auth";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, getTableColumns, sql } from "drizzle-orm";
 import type { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { SignJWT } from "jose";
@@ -20,12 +20,29 @@ import { SignJWT } from "jose";
 const defaultOrganizationType = "hospital";
 
 export function registerAuthRoutes(app: Hono) {
+  app.get("/auth/organization/list", async (c) => {
+    c.header("Cache-Control", "no-store");
+    const authSession = await auth.api.getSession({
+      headers: c.req.raw.headers,
+    });
+    if (!authSession?.user) return c.json({ error: "Not authenticated" }, 401);
+    // Keep saved provider types and the user's membership roles together for the picker.
+    const organizations = await db
+      .select({ ...getTableColumns(organization), membershipRole: member.role })
+      .from(member)
+      .innerJoin(organization, eq(member.organizationId, organization.id))
+      .where(eq(member.userId, authSession.user.id))
+      .orderBy(organization.name);
+    return c.json(organizations);
+  });
   app.get("/auth/magic-link/verify", (c) => {
     c.header("Referrer-Policy", "no-referrer");
     c.header("Cache-Control", "no-store");
     if (!env.ERP_WEB_URL)
       return c.json(
-        { error: "Open Viruj Health and sign in with your email and password." },
+        {
+          error: "Open Viruj Health and sign in with your email and password.",
+        },
         410
       );
     return c.redirect(new URL("/auth", env.ERP_WEB_URL).toString(), 303);

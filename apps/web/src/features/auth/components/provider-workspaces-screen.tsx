@@ -30,6 +30,7 @@ export function ProviderWorkspacesScreen() {
   const [busy, setBusy] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState("");
+  const [addingWorkspace, setAddingWorkspace] = useState(false);
 
   useEffect(() => {
     if (!session.isPending && !session.data?.user) router.replace("/auth");
@@ -111,80 +112,91 @@ export function ProviderWorkspacesScreen() {
         }
       }}
     >
-      <form
-        className="mt-8 border-t border-outline-variant/30 pt-7"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void createWorkspace();
-        }}
-      >
-        <h2 className="font-headline text-xl font-semibold text-on-surface">
-          Add a provider role
-        </h2>
-        <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-          Use your existing account. Complete onboarding for each provider role;
-          our admin team reviews every workspace separately. Already have this
-          role? We’ll reopen your linked workspace.
-        </p>
-        <fieldset
-          disabled={busy || organizations.isPending}
-          className="mt-5 grid gap-4 sm:grid-cols-2"
+      {!addingWorkspace && (organizations.data?.length ?? 0) > 0 ? (
+        <Button
+          className="mt-7"
+          variant="outline"
+          disabled={busy}
+          onClick={() => setAddingWorkspace(true)}
         >
-          <div className="grid gap-2 text-sm font-semibold">
-            <label htmlFor="provider-role">Provider role</label>
-            <ErpSelect
-              id="provider-role"
-              value={providerType}
-              onChange={(event) => {
-                if (isDashboardOrganizationType(event.target.value))
-                  setProviderType(event.target.value);
-              }}
-            >
-              {organizationTypeOptions.map((type) => (
-                <option key={type} value={type}>
-                  {organizationTypeLabels[type]}
-                </option>
-              ))}
-            </ErpSelect>
-          </div>
-          <label className="grid gap-2 text-sm font-semibold">
-            Workspace name
-            <input
-              className="rounded-lg border border-outline-variant/40 bg-surface px-3 py-2 font-normal"
-              required
-              maxLength={150}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-          </label>
-          <Button
-            className="sm:col-span-2"
-            disabled={!name.trim()}
-            type="submit"
-          >
-            {busy ? "Please wait…" : "Add provider role"}
-          </Button>
-        </fieldset>
-        {organizations.error && (
-          <div className="mt-4">
-            <p className="text-sm text-error" role="alert">
-              Unable to load your workspaces.
-            </p>
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => void organizations.refetch()}
-            >
-              Retry loading workspaces
-            </Button>
-          </div>
-        )}
-        {error && (
-          <p className="mt-4 text-sm text-error" role="alert">
-            {error}
+          Add another ERP workspace
+        </Button>
+      ) : (
+        <form
+          className="mt-8 border-t border-outline-variant/30 pt-7"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void createWorkspace();
+          }}
+        >
+          <h2 className="font-headline text-xl font-semibold text-on-surface">
+            Add an ERP workspace
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+            Your linked ERPs and roles are listed above. Use this form only to
+            add another provider workspace. Each new workspace needs its own
+            onboarding and admin approval.
           </p>
-        )}
-      </form>
+          <fieldset
+            disabled={busy || organizations.isPending}
+            className="mt-5 grid gap-4 sm:grid-cols-2"
+          >
+            <div className="grid gap-2 text-sm font-semibold">
+              <label htmlFor="provider-role">Provider type</label>
+              <ErpSelect
+                id="provider-role"
+                value={providerType}
+                onChange={(event) => {
+                  if (isDashboardOrganizationType(event.target.value))
+                    setProviderType(event.target.value);
+                }}
+              >
+                {organizationTypeOptions.map((type) => (
+                  <option key={type} value={type}>
+                    {organizationTypeLabels[type]}
+                  </option>
+                ))}
+              </ErpSelect>
+            </div>
+            <label className="grid gap-2 text-sm font-semibold">
+              Workspace name
+              <input
+                className="rounded-lg border border-outline-variant/40 bg-surface px-3 py-2 font-normal"
+                required
+                maxLength={150}
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+              />
+            </label>
+            <Button
+              className="sm:col-span-2"
+              disabled={!name.trim()}
+              type="submit"
+            >
+              {busy ? "Please wait…" : "Add ERP workspace"}
+            </Button>
+          </fieldset>
+        </form>
+      )}
+      {organizations.error && (
+        <div className="mt-4">
+          <p className="text-sm text-error" role="alert">
+            Unable to load your workspaces.
+          </p>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() => void organizations.refetch()}
+          >
+            Retry loading workspaces
+          </Button>
+        </div>
+      )}
+      {error && (
+        <p className="mt-4 text-sm text-error" role="alert">
+          {error}
+        </p>
+      )}
     </OrganizationAccessScreen>
   );
 }
