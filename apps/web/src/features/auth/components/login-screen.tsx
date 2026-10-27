@@ -182,9 +182,9 @@ export function ErpDemoLogin({
         ),
         organizationType: onboardingForm.organizationType,
         slug: buildOrganizationSlug(
-          onboardingForm.organizationName ||
-            onboardingForm.name ||
-            onboardingForm.email,
+          (onboardingForm.organizationType === "doctor"
+            ? onboardingForm.name
+            : onboardingForm.organizationName) || onboardingForm.email,
           onboardingForm.organizationType
         ),
       });
@@ -532,24 +532,22 @@ export function ErpDemoLogin({
                         )}
                       </div>
                     </fieldset>
-                    <FormField
-                      icon={Building2}
-                      label="Workspace name"
-                      onChange={(value) =>
-                        setOnboardingForm((current) => ({
-                          ...current,
-                          organizationName: value,
-                        }))
-                      }
-                      placeholder={
-                        onboardingForm.organizationType === "doctor"
-                          ? "Optional practice name"
-                          : "Your organization name"
-                      }
-                      required={onboardingForm.organizationType !== "doctor"}
-                      type="text"
-                      value={onboardingForm.organizationName}
-                    />
+                    {onboardingForm.organizationType !== "doctor" && (
+                      <FormField
+                        icon={Building2}
+                        label="Workspace name"
+                        onChange={(value) =>
+                          setOnboardingForm((current) => ({
+                            ...current,
+                            organizationName: value,
+                          }))
+                        }
+                        placeholder="Your organization name"
+                        required
+                        type="text"
+                        value={onboardingForm.organizationName}
+                      />
+                    )}
                     <div className="grid gap-4 sm:grid-cols-2">
                       <FormField
                         autoComplete="name"
@@ -1108,10 +1106,6 @@ function buildBootstrapOrganizationName(
 ) {
   const trimmedOrganizationName = organizationName.trim();
 
-  if (trimmedOrganizationName) {
-    return trimmedOrganizationName;
-  }
-
   if (organizationType === "doctor") {
     const owner = ownerName.trim() || email.split("@")[0]?.trim();
     return owner
@@ -1119,7 +1113,7 @@ function buildBootstrapOrganizationName(
       : "Independent Doctor Workspace";
   }
 
-  return "Viruj Health Workspace";
+  return trimmedOrganizationName || "Viruj Health Workspace";
 }
 
 function buildOrganizationSlug(

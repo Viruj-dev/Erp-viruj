@@ -1,6 +1,15 @@
 import { beforeEach, expect, mock, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ComponentProps } from "react";
+import * as React from "react";
+let providerType = "hospital";
+mock.module("react", () => ({
+  ...React,
+  useState: (initial: unknown) => [
+    initial === "hospital" ? providerType : initial,
+    () => {},
+  ],
+}));
 const AccessScreen = (await import("./organization-access-screen"))
   .OrganizationAccessScreen;
 
@@ -54,6 +63,7 @@ const { ProviderWorkspacesScreen } =
   await import("./provider-workspaces-screen");
 const originalWindow = globalThis.window;
 beforeEach(() => {
+  providerType = "hospital";
   activate.mockReset();
   activate.mockResolvedValue({ error: null });
   navigate.mockClear();
@@ -118,6 +128,19 @@ test("provider setup is shown when the email has no linked ERP", () => {
       "radiology",
     ])
       expect(html).toContain(`value="${type}"`);
+  } finally {
+    workspaces.push(...saved);
+  }
+});
+
+test("adding a doctor ERP needs no workspace name", () => {
+  providerType = "doctor";
+  const saved = workspaces.splice(0);
+  try {
+    const html = renderToStaticMarkup(<ProviderWorkspacesScreen />);
+    expect(html).not.toContain("Workspace name");
+    expect(html).toContain('type="submit"');
+    expect(html).not.toContain('disabled=""');
   } finally {
     workspaces.push(...saved);
   }

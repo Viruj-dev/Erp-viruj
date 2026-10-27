@@ -64,7 +64,10 @@ export function ProviderWorkspacesScreen() {
     setError("");
     try {
       const result = await bootstrapOrganization({
-        name: name.trim(),
+        name:
+          providerType === "doctor"
+            ? `${session.data?.user.name?.trim() || session.data?.user.email.split("@")[0]}'s Doctor Practice`
+            : name.trim(),
         organizationType: providerType,
         slug: `${providerType}-${crypto.randomUUID()}`,
       });
@@ -158,19 +161,21 @@ export function ProviderWorkspacesScreen() {
                 ))}
               </ErpSelect>
             </div>
-            <label className="grid gap-2 text-sm font-semibold">
-              Workspace name
-              <input
-                className="rounded-lg border border-outline-variant/40 bg-surface px-3 py-2 font-normal"
-                required
-                maxLength={150}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-              />
-            </label>
+            {providerType !== "doctor" && (
+              <label className="grid gap-2 text-sm font-semibold">
+                Workspace name
+                <input
+                  className="rounded-lg border border-outline-variant/40 bg-surface px-3 py-2 font-normal"
+                  required
+                  maxLength={150}
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                />
+              </label>
+            )}
             <Button
               className="sm:col-span-2"
-              disabled={!name.trim()}
+              disabled={providerType !== "doctor" && !name.trim()}
               type="submit"
             >
               {busy ? "Please wait…" : "Add ERP workspace"}
