@@ -33,8 +33,8 @@ export function OrganizationAccessScreen({
 }) {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface px-6 py-12">
-      <div className="absolute inset-0 bg-[linear-gradient(140deg,rgba(15,23,42,0.08),transparent_40%),radial-gradient(circle_at_20%_20%,rgba(14,165,233,0.22),transparent_30%),radial-gradient(circle_at_80%_80%,rgba(59,130,246,0.14),transparent_32%)]" />
-      <div className="relative w-full max-w-3xl rounded-[2.5rem] border border-white/10 bg-white/80 p-8 shadow-2xl backdrop-blur-xl md:p-12">
+      <div className="absolute inset-0 bg-[linear-gradient(140deg,rgba(15,23,42,0.08),transparent_40%),radial-gradient(circle_at_20%_20%,rgba(14,165,233,0.22),transparent_30%),radial-gradient(circle_at_80%_80%,rgba(59,130,246,0.14),transparent_32%)] dark:opacity-40" />
+      <div className="relative w-full max-w-3xl rounded-[2.5rem] border border-outline-variant/60 bg-surface-container-lowest p-8 text-on-surface shadow-2xl md:p-12">
         <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
           <div>
             <VirujLogo className="mb-4 size-14" />
@@ -63,7 +63,7 @@ export function OrganizationAccessScreen({
         <div className="mt-8 grid gap-2.5">
           {organizations.map((organization) => (
             <button
-              className="group flex min-h-20 items-center justify-between gap-4 rounded-2xl border border-outline-variant/25 bg-surface px-5 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md"
+              className="group flex min-h-20 items-center justify-between gap-4 rounded-2xl border border-outline-variant/60 bg-surface-container-low px-5 py-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/60 hover:bg-surface-container-high hover:shadow-md"
               key={organization.id}
               disabled={isLoading || signingOut}
               onClick={() => void onSelectOrganization(organization.id)}
@@ -92,7 +92,7 @@ export function OrganizationAccessScreen({
                   </p>
                 )}
               </div>
-              <div className="shrink-0 rounded-full bg-primary/10 p-2 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+              <div className="shrink-0 rounded-full bg-primary/10 p-2 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                 <ArrowRight size={18} />
               </div>
             </button>
@@ -109,7 +109,7 @@ export function OrganizationAccessScreen({
               or ADMIN to send you an invitation ID from the Staff page.
             </p>
             <button
-              className="mt-6 rounded-full bg-primary px-5 py-3 text-sm font-bold text-white shadow-md transition-opacity hover:opacity-90"
+              className="mt-6 rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-foreground shadow-md transition-opacity hover:opacity-90"
               onClick={() => void onRefresh()}
               type="button"
             >
