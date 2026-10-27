@@ -569,18 +569,18 @@ function SetupForm({
                 <Button
                   type="button"
                   variant="outline"
-                  className="rounded-full border-[var(--onboarding-border-strong)] bg-[var(--onboarding-accent-soft)] text-[var(--onboarding-accent)]"
+                  className="ml-auto rounded-full border-[var(--onboarding-border-strong)] bg-[var(--onboarding-accent-soft)] text-[var(--onboarding-accent)]"
                   disabled={locating}
                   onClick={() => void locateBranch()}
                 >
                   {locating ? "Finding location…" : "Use current location"}
                 </Button>
-                <p role="status" className="text-sm">
+                <p role="status" className="basis-full text-sm empty:hidden">
                   {locationStatus}
                 </p>
                 {data.mapsLocation && (
                   <a
-                    className="text-sm underline"
+                    className="basis-full text-sm underline"
                     href={data.mapsLocation}
                     target="_blank"
                     rel="noopener noreferrer"
