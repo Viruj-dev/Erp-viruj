@@ -199,25 +199,25 @@
 }
 
 .vh-onboarding--pathology {
-  --onboarding-page: #9a3412;
-  --onboarding-shell: #fff7ed;
+  --onboarding-page: #e9edf2;
+  --onboarding-shell: #f8f9fb;
   --onboarding-panel: #ffffff;
-  --onboarding-panel-muted: #ffedd5;
-  --onboarding-panel-soft: #fffaf5;
-  --onboarding-border: #fed7aa;
-  --onboarding-border-strong: #fdba74;
-  --onboarding-text: #431407;
-  --onboarding-heading: #431407;
-  --onboarding-muted: #9a5b3a;
-  --onboarding-muted-strong: #7c2d12;
-  --onboarding-placeholder: #c28a69;
-  --onboarding-accent: #ea580c;
-  --onboarding-accent-mid: #c2410c;
-  --onboarding-accent-deep: #7c2d12;
-  --onboarding-accent-soft: #ffedd5;
-  --onboarding-accent-ring: rgba(234, 88, 12, 0.16);
-  --onboarding-accent-shadow: rgba(194, 65, 12, 0.25);
-  --onboarding-hero: linear-gradient(135deg, #7c2d12, #c2410c 58%, #fb923c);
+  --onboarding-panel-muted: #f1f3f5;
+  --onboarding-panel-soft: #fafbfc;
+  --onboarding-border: #e3e6ea;
+  --onboarding-border-strong: #d3d8df;
+  --onboarding-text: #252a32;
+  --onboarding-heading: #171c24;
+  --onboarding-muted: #6b7280;
+  --onboarding-muted-strong: #4b5563;
+  --onboarding-placeholder: #6b7280;
+  --onboarding-accent: #b25720;
+  --onboarding-accent-mid: #a94c1b;
+  --onboarding-accent-deep: #92441c;
+  --onboarding-accent-soft: #f9eee5;
+  --onboarding-accent-ring: rgba(192, 95, 36, 0.12);
+  --onboarding-accent-shadow: rgba(192, 95, 36, 0.12);
+  --onboarding-hero: linear-gradient(135deg, #92441c, #b85d22 58%, #de9c67);
 }
 
 .vh-onboarding--radiology {
@@ -287,25 +287,25 @@
 }
 
 .dark .vh-onboarding--pathology {
-  --onboarding-page: #1c0d05;
-  --onboarding-shell: #1c130c;
-  --onboarding-panel: #24180f;
-  --onboarding-panel-muted: #2d1c10;
-  --onboarding-panel-soft: #21160e;
-  --onboarding-border: rgba(251, 146, 60, 0.16);
-  --onboarding-border-strong: rgba(251, 146, 60, 0.26);
-  --onboarding-text: #ffedd5;
-  --onboarding-heading: #fff7ed;
-  --onboarding-muted: #d6a17c;
-  --onboarding-muted-strong: #fed7aa;
-  --onboarding-placeholder: #a87452;
-  --onboarding-accent: #fb923c;
-  --onboarding-accent-mid: #ea580c;
-  --onboarding-accent-deep: #7c2d12;
-  --onboarding-accent-soft: rgba(234, 88, 12, 0.16);
-  --onboarding-accent-ring: rgba(251, 146, 60, 0.2);
-  --onboarding-accent-shadow: rgba(234, 88, 12, 0.3);
-  --onboarding-hero: linear-gradient(135deg, #7c2d12, #c2410c 58%, #fb923c);
+  --onboarding-page: #0e1014;
+  --onboarding-shell: #14171b;
+  --onboarding-panel: #191d23;
+  --onboarding-panel-muted: #22272f;
+  --onboarding-panel-soft: #171b21;
+  --onboarding-border: rgba(255, 255, 255, 0.09);
+  --onboarding-border-strong: rgba(255, 255, 255, 0.14);
+  --onboarding-text: #e5e7eb;
+  --onboarding-heading: #f8fafc;
+  --onboarding-muted: #a0a7b2;
+  --onboarding-muted-strong: #cbd0d8;
+  --onboarding-placeholder: #7f8997;
+  --onboarding-accent: #efa16a;
+  --onboarding-accent-mid: #b85d22;
+  --onboarding-accent-deep: #8c441f;
+  --onboarding-accent-soft: rgba(239, 161, 106, 0.08);
+  --onboarding-accent-ring: rgba(239, 161, 106, 0.14);
+  --onboarding-accent-shadow: rgba(184, 93, 34, 0.14);
+  --onboarding-hero: linear-gradient(135deg, #513220, #965321 58%, #c8844a);
 }
 
 .dark .vh-onboarding--radiology {
